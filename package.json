@@ -1,0 +1,27 @@
+{
+  "name": "gitea-ui-automation",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest run",
+    "test:firefox": "cross-env BROWSER=firefox vitest run",
+    "test:edge": "cross-env BROWSER=edge vitest run",
+    "test:all": "npm-run-all --sequential test:chrome test:firefox test:edge"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "description": "",
+  "dependencies": {
+    "selenium-webdriver": "^4.48.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.4.0",
+    "@types/selenium-webdriver": "^4.35.6",
+    "cross-env": "^10.1.0",
+    "npm-run-all2": "^8.0.4",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11"
+  }
+}
