@@ -50,6 +50,17 @@ It should print the path to `firefox.exe`. If it doesn't, double-check your Fire
 npm install
 ```
 
+## Login credentials
+
+Create a local `.env` file from `.env.example`, then set your Gitea account credentials:
+
+```dotenv
+GITEA_USERNAME=your-username
+GITEA_PASSWORD=your-password
+```
+
+The `.env` file is ignored by Git and must not be committed.
+
 ## Running tests
 
 ```bash

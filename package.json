@@ -5,8 +5,8 @@
   "scripts": {
     "test": "vitest run",
     "test:firefox": "cross-env BROWSER=firefox vitest run",
-    "test:edge": "cross-env BROWSER=edge vitest run",
-    "test:all": "npm-run-all --sequential test:chrome test:firefox test:edge"
+    "test:chrome": "cross-env BROWSER=chrome vitest run",
+    "test:all": "npm-run-all --sequential test:chrome test:firefox"
   },
   "keywords": [],
   "author": "",
@@ -14,6 +14,7 @@
   "type": "commonjs",
   "description": "",
   "dependencies": {
+    "dotenv": "^17.4.2",
     "selenium-webdriver": "^4.48.0"
   },
   "devDependencies": {
