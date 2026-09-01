@@ -6,23 +6,48 @@
     "test": "vitest run",
     "test:firefox": "cross-env BROWSER=firefox vitest run",
     "test:chrome": "cross-env BROWSER=chrome vitest run",
-    "test:all": "npm-run-all --sequential test:chrome test:firefox"
+    "test:all": "npm-run-all --sequential test:chrome test:firefox",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,js}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "description": "",
+  "engines": {
+    "node": ">=22 <23"
+  },
   "dependencies": {
     "dotenv": "^17.4.2",
     "selenium-webdriver": "^4.48.0"
   },
   "devDependencies": {
-    "@types/node": "^26.4.0",
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^22.15.0",
     "@types/selenium-webdriver": "^4.35.6",
     "cross-env": "^10.1.0",
+    "eslint": "^10.9.1",
+    "eslint-config-prettier": "^10.1.8",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.4.1",
     "npm-run-all2": "^8.0.4",
-    "typescript": "^7.0.2",
+    "prettier": "^3.9.6",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.69.0",
     "vitest": "^4.1.11"
   }
 }
