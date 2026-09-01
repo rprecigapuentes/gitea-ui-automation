@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { describe, expect, it } from "vitest";
 import { WebDriver } from "selenium-webdriver";
-import { createDriver } from "../drivers/driver.factory";
+import { createDriver } from "../../core/drivers/driver.factory";
 import { LoginPage } from "../pages/login.page";
 
 const username = process.env.GITEA_USERNAME;
