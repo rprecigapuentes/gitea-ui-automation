@@ -24,6 +24,6 @@ describe("Login test", () => {
     await driver.get(loginPage.baseUrl);
     const mainPage = await loginPage.login(username!, password!);
 
-    expect(await mainPage.isNavbarLogoVisible()).toBe(true);
+    expect(await mainPage.getLoggedInUsername()).toBe(username);
   });
 });
