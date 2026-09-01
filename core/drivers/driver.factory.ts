@@ -1,9 +1,10 @@
-import { Builder, WebDriver } from "selenium-webdriver";
+import { Builder, Browser as SeleniumBrowser, WebDriver } from "selenium-webdriver";
 
 import chrome from "selenium-webdriver/chrome";
 import firefox from "selenium-webdriver/firefox";
+import edge from "selenium-webdriver/edge";
 
-export type Browser = "chrome" | "firefox";
+export type Browser = "chrome" | "firefox" | "edge";
 
 const HEADLESS = process.env.HEADLESS === "true";
 
@@ -28,6 +29,14 @@ export async function createDriver(
       if (HEADLESS) options.addArguments("-headless");
 
       builder.forBrowser("firefox").setFirefoxOptions(options);
+      break;
+    }
+
+    case "edge": {
+      const options = new edge.Options();
+      if (HEADLESS) options.addArguments("--headless=new");
+
+      builder.forBrowser(SeleniumBrowser.EDGE).setEdgeOptions(options);
       break;
     }
 
