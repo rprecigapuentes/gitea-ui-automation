@@ -1,9 +1,11 @@
 import { By, WebDriver } from "selenium-webdriver";
-import { BasePage } from "./base.page";
+import { BasePage } from "../../core/base-pages/base.page";
 
 export class MainPage extends BasePage {
   private readonly locators = {
-    loggedInUsername: By.xpath("/html/body/div/div/div[1]/div/div/div/span/span[1]"),
+    loggedInUsername: By.css(
+      "body > div > div > div.secondary-nav.tw-border-b.tw-border-b-secondary > div > div > div > span > span.gt-ellipsis",
+    ),
   };
 
   constructor(driver: WebDriver) {
