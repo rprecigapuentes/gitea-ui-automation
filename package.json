@@ -11,13 +11,16 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "description": "",
+  "engines": {
+    "node": ">=22 <23"
+  },
   "dependencies": {
     "selenium-webdriver": "^4.48.0"
   },
   "devDependencies": {
-    "@types/node": "^26.4.0",
+    "@types/node": "^22.15.0",
     "@types/selenium-webdriver": "^4.35.6",
     "cross-env": "^10.1.0",
     "npm-run-all2": "^8.0.4",
