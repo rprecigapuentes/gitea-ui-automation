@@ -32,7 +32,7 @@ export async function createDriver(
     }
 
     default:
-      throw new Error(`Navegador no soportado: ${browser}`);
+      throw new Error(`Navegador no soportado: ${String(browser)}`);
   }
 
   const driver = await builder.build();
