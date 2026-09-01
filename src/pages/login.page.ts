@@ -1,5 +1,6 @@
 import { WebDriver, By } from "selenium-webdriver";
 import { BasePage } from "./base.page";
+import { MainPage } from "./main.page";
 
 export class LoginPage extends BasePage {
   private readonly locators = {
@@ -18,9 +19,11 @@ export class LoginPage extends BasePage {
     super(driver);
   }
 
-  async login(username: string, password: string): Promise<void> {
+  async login(username: string, password: string): Promise<MainPage> {
     await this.type(this.locators.usernameInput, username);
     await this.type(this.locators.passwordInput, password);
     await this.click(this.locators.loginButton);
+
+    return new MainPage(this.driver);
   }
 }
