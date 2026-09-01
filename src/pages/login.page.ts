@@ -6,9 +6,7 @@ export class LoginPage extends BasePage {
   private readonly locators = {
     usernameInput: By.id("user_name"),
     passwordInput: By.id("password"),
-    loginButton: By.xpath(
-      "/html/body/div/div/div/div/div[1]/div/form/div[4]/button",
-    ), //just to test xpath locator
+    loginButton: By.xpath("/html/body/div/div/div/div/div[1]/div/form/div[4]/button"), //just to test xpath locator
   };
 
   get baseUrl(): string {
