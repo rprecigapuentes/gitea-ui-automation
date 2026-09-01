@@ -1,5 +1,5 @@
 import { By, WebDriver } from "selenium-webdriver";
-import { BasePage } from "./base.page";
+import { BasePage } from "../../core/base-pages/base.page";
 
 export class MainPage extends BasePage {
   private readonly locators = {
