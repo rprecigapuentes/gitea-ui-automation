@@ -6,7 +6,10 @@
     "test": "vitest run",
     "test:firefox": "cross-env BROWSER=firefox vitest run",
     "test:edge": "cross-env BROWSER=edge vitest run",
-    "test:all": "npm-run-all --sequential test:chrome test:firefox test:edge"
+    "test:all": "npm-run-all --sequential test:chrome test:firefox test:edge",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",
@@ -20,11 +23,15 @@
     "selenium-webdriver": "^4.48.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^22.15.0",
     "@types/selenium-webdriver": "^4.35.6",
     "cross-env": "^10.1.0",
+    "eslint": "^10.9.1",
+    "eslint-config-prettier": "^10.1.8",
     "npm-run-all2": "^8.0.4",
-    "typescript": "^7.0.2",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.69.0",
     "vitest": "^4.1.11"
   }
 }
