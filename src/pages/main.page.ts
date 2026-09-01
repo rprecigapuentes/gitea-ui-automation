@@ -3,6 +3,7 @@ import { BasePage } from "../../core/base-pages/base.page";
 import { baseUrl } from "../../core/config/config";
 
 export class MainPage extends BasePage {
+  //Its ok to test xpath but try to keep css locators and more explicit locators
   private readonly locators = {
     loggedInUsername: By.css(
       "body > div > div > div.secondary-nav.tw-border-b.tw-border-b-secondary > div > div > div > span > span.gt-ellipsis",

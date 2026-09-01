@@ -1,5 +1,7 @@
 import { WebDriver, Locator, WebElement, until } from "selenium-webdriver";
 
+//This can be part of the core, evaluate it
+
 export abstract class BasePage {
   protected constructor(protected readonly driver: WebDriver) {}
 
