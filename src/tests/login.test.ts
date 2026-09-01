@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { describe, expect, it } from "vitest";
 import { WebDriver } from "selenium-webdriver";
-import { createDriver } from "../../core/drivers/driver.factory";
+import { DriverFactory } from "../../core/drivers/driver.factory";
 import { LoginPage } from "../pages/login.page";
 
 const username = process.env.GITEA_USERNAME;
@@ -12,12 +12,12 @@ describe("Login test", () => {
   let loginPage: LoginPage;
 
   beforeEach(async () => {
-    driver = await createDriver();
+    driver = await DriverFactory.getDriver();
     loginPage = new LoginPage(driver);
   });
 
   afterEach(async () => {
-    await driver.quit();
+    await DriverFactory.quitDriver();
   });
 
   it("should log in with valid credentials", async () => {
