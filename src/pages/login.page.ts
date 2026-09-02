@@ -1,6 +1,7 @@
 import { WebDriver, By } from "selenium-webdriver";
 import { BasePage } from "../../core/base-pages/base.page";
 import { MainPage } from "./main.page";
+import { baseUrl } from "../../core/config/config";
 
 export class LoginPage extends BasePage {
   private readonly locators = {
@@ -12,7 +13,7 @@ export class LoginPage extends BasePage {
   };
 
   get baseUrl(): string {
-    return "https://git.estiberz.online/user/login";
+    return `${baseUrl}/user/login`;
   }
 
   constructor(driver: WebDriver) {
