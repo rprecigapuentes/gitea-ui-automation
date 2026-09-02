@@ -6,7 +6,7 @@ import { DriverFactory } from "../../core/drivers/driver.factory";
 const username = process.env.GITEA_USERNAME;
 const password = process.env.GITEA_PASSWORD;
 
-describe("Login test", () => {
+describe("Organization test", () => {
   let context: TestContext;
 
   beforeEach(async () => {
@@ -23,11 +23,12 @@ describe("Login test", () => {
     await DriverFactory.quitDriver();
   });
 
-  it("should log in with valid credentials", async () => {
+  it("should create an organization and add members", async () => {
     await context.driver.get(context.loginPage.baseUrl);
     await context.loginPage.login(username!, password!);
-    const actualUsername = await context.mainPage.getLoggedInUsername();
+    await context.mainPage.navigateCreateOrganization();
+    const formTitle = await context.createOrganizationPage.getFormTitle();
 
-    expect(actualUsername).toBe(username);
+    expect(formTitle).toBe("New Organization");
   });
 });
