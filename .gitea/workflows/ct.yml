@@ -19,12 +19,12 @@ jobs:
         browser: [chrome, firefox, edge]
 
     services:
-      gitea:
+      gitea-test:
         image: docker.gitea.com/gitea:1.27.3
         env:
           USER_UID: "1000"
           USER_GID: "1000"
-          GITEA__server__ROOT_URL: http://gitea:3000/
+          GITEA__server__ROOT_URL: http://gitea-test:3000/
           GITEA__server__HTTP_PORT: "3000"
           GITEA__server__START_SSH_SERVER: "false"
           GITEA__database__DB_TYPE: sqlite3
@@ -39,7 +39,8 @@ jobs:
 
     env:
       BROWSER: ${{ matrix.browser }}
-      GITEA_BASE_URL: http://gitea:3000
+      GITEA_BASE_URL: http://gitea-test:3000
+      ACTIONS_RUNTIME_URL: https://git.estiberz.online/api/actions_pipeline/
       SELENIUM_REMOTE_URL: http://selenium:4444
       GITEA_USERNAME: qabot
       GITEA_PASSWORD: Qa-bot-not-a-secret-1
