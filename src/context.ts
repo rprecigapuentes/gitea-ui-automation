@@ -3,6 +3,7 @@ import { DriverFactory } from "../core/drivers/driver.factory";
 import { LoginPage } from "../src/pages/login.page";
 import { MainPage } from "../src/pages/main.page";
 import { CreateOrganizationPage } from "../src/pages/create-organization.page";
+import { OrganizationPage } from "../src/pages/organization.page";
 import { UserClient } from "./api/clients/user.client";
 
 export class TestContext {
@@ -11,6 +12,7 @@ export class TestContext {
   readonly loginPage: LoginPage;
   readonly mainPage: MainPage;
   readonly createOrganizationPage: CreateOrganizationPage;
+  readonly organizationPage: OrganizationPage;
   //api clients
   readonly userClient: UserClient;
 
@@ -20,6 +22,7 @@ export class TestContext {
     this.loginPage = new LoginPage(driver);
     this.mainPage = new MainPage(driver);
     this.createOrganizationPage = new CreateOrganizationPage(driver);
+    this.organizationPage = new OrganizationPage(driver);
     //api clients
     this.userClient = new UserClient(process.env.GITEA_BASE_URL!, process.env.GITEA_TOKEN!);
   }

@@ -11,7 +11,7 @@ export class LoginPage extends BasePage {
     ),
   };
 
-  get baseUrl(): string {
+  override getUrl(): string {
     return `${baseUrl}/user/login`;
   }
 

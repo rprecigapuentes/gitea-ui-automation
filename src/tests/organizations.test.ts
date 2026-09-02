@@ -24,11 +24,22 @@ describe("Organization test", () => {
   });
 
   it("should create an organization and add members", async () => {
-    await context.driver.get(context.loginPage.baseUrl);
-    await context.loginPage.login(username!, password!);
-    await context.mainPage.navigateCreateOrganization();
-    const formTitle = await context.createOrganizationPage.getFormTitle();
+    const organizationName = `test-organization-${Date.now()}`;
+    const visibility = "public";
 
-    expect(formTitle).toBe("New Organization");
+    await context.driver.get(context.loginPage.getUrl());
+    await context.loginPage.login(username!, password!);
+
+    expect(context.mainPage.getUrl()).toBe(await context.driver.getCurrentUrl());
+    await context.mainPage.navigateCreateOrganization();
+
+    expect(context.createOrganizationPage.getUrl()).toBe(await context.driver.getCurrentUrl());
+    await context.createOrganizationPage.enterOrganizationName(organizationName);
+    await context.createOrganizationPage.selectVisibility(visibility);
+    await context.createOrganizationPage.clickCreateOrganizationButton();
+
+    expect(context.organizationPage.getUrl(organizationName)).toBe(
+      await context.driver.getCurrentUrl(),
+    );
   });
 });

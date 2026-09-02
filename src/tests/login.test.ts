@@ -24,7 +24,7 @@ describe("Login test", () => {
   });
 
   it("should log in with valid credentials", async () => {
-    await context.driver.get(context.loginPage.baseUrl);
+    await context.driver.get(context.loginPage.getUrl());
     await context.loginPage.login(username!, password!);
     const actualUsername = await context.mainPage.getLoggedInUsername();
 

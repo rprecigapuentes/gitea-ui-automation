@@ -1,5 +1,6 @@
 import { By, WebDriver } from "selenium-webdriver";
 import { BasePage } from "../../core/base-pages/base.page";
+import { baseUrl } from "../../core/config/config";
 
 export class MainPage extends BasePage {
   private readonly locators = {
@@ -9,6 +10,10 @@ export class MainPage extends BasePage {
     newDropdown: By.xpath("/html/body/div/nav/div[2]/div[1]"),
     newOrganization: By.id("_aria_dropdown_item_4"),
   };
+
+  override getUrl(): string {
+    return `${baseUrl}/`;
+  }
 
   constructor(driver: WebDriver) {
     super(driver);
