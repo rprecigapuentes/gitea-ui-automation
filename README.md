@@ -77,6 +77,17 @@ cross-env BROWSER=chrome HEADLESS=true vitest run
 cross-env BROWSER=firefox HEADLESS=true vitest run
 ```
 
+## Continuous testing
+
+`.gitea/workflows/ct.yml` is a second pipeline, separate from CI. It deploys a disposable
+Gitea instance and a Chrome container as service containers, registers the first account,
+and runs the suite against them.
+
+Trigger it from the repository's Actions tab, on the CT workflow, with **Run workflow**.
+
+It never runs on a push or a pull request, so it cannot block a merge. CI stays quality
+only: install, format check, lint, typecheck.
+
 ## Project structure
 
 ```

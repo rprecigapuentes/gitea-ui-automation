@@ -1,0 +1,90 @@
+name: CT
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ct
+  cancel-in-progress: true
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chrome, firefox, edge]
+
+    services:
+      gitea:
+        image: docker.gitea.com/gitea:1.27.3
+        env:
+          USER_UID: "1000"
+          USER_GID: "1000"
+          GITEA__server__ROOT_URL: http://gitea:3000/
+          GITEA__server__HTTP_PORT: "3000"
+          GITEA__server__START_SSH_SERVER: "false"
+          GITEA__database__DB_TYPE: sqlite3
+          GITEA__security__INSTALL_LOCK: "true"
+          GITEA__security__SECRET_KEY: gitea-test-not-a-secret
+          GITEA__service__DISABLE_REGISTRATION: "false"
+          GITEA__service__REGISTER_EMAIL_CONFIRM: "false"
+
+      selenium:
+        image: selenium/standalone-all-browsers:4.35.0
+        options: --shm-size=2g
+
+    env:
+      BROWSER: ${{ matrix.browser }}
+      GITEA_BASE_URL: http://gitea:3000
+      SELENIUM_REMOTE_URL: http://selenium:4444
+      GITEA_USERNAME: qabot
+      GITEA_PASSWORD: Qa-bot-not-a-secret-1
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          github-server-url: https://git.estiberz.online
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - run: npm ci
+
+      - name: Wait for the application under test
+        run: |
+          for _ in $(seq 1 60); do
+            curl -fsS "$GITEA_BASE_URL/api/healthz" > /dev/null && exit 0
+            sleep 2
+          done
+          echo "gitea never became healthy"
+          exit 1
+
+      - name: Wait for the browser
+        run: |
+          for _ in $(seq 1 60); do
+            curl -fsS "$SELENIUM_REMOTE_URL/status" | grep -q '"ready": *true' && exit 0
+            sleep 2
+          done
+          echo "the selenium grid never became ready"
+          exit 1
+
+      - name: Register the first account, which Gitea makes an administrator
+        run: |
+          csrf=$(curl -fsS -c /tmp/gitea.jar "$GITEA_BASE_URL/user/sign_up" \
+            | sed -n 's/.*name="_csrf" value="\([^"]*\)".*/\1/p' | head -1)
+          curl -fsS -b /tmp/gitea.jar -o /dev/null \
+            -X POST "$GITEA_BASE_URL/user/sign_up" \
+            --data-urlencode "_csrf=$csrf" \
+            --data-urlencode "user_name=$GITEA_USERNAME" \
+            --data-urlencode "email=$GITEA_USERNAME@example.com" \
+            --data-urlencode "password=$GITEA_PASSWORD" \
+            --data-urlencode "retype=$GITEA_PASSWORD"
+          curl -fsS -u "$GITEA_USERNAME:$GITEA_PASSWORD" "$GITEA_BASE_URL/api/v1/user" > /dev/null
+          echo "account $GITEA_USERNAME is usable"
+
+      - name: Run the suite
+        run: npm test
