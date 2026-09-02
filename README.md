@@ -88,6 +88,18 @@ Trigger it from the repository's Actions tab, on the CT workflow, with **Run wor
 It never runs on a push or a pull request, so it cannot block a merge. CI stays quality
 only: install, format check, lint, typecheck.
 
+### Reports
+
+Every run writes `reports/junit.xml` and `reports/html/`, and the pipeline attaches both to
+the run as the `test-report` artifact, kept for 14 days. A failed run still produces them.
+
+The HTML report is a Vite build, so it does not render when opened from the filesystem.
+Unpack the artifact and serve it:
+
+```bash
+npm run test:report
+```
+
 ## Project structure
 
 ```
