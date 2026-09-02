@@ -9,7 +9,7 @@ concurrency:
 
 jobs:
   regression:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
 
     strategy:
@@ -18,12 +18,12 @@ jobs:
         browser: [chrome, firefox, edge]
 
     services:
-      gitea:
+      gitea-test:
         image: docker.gitea.com/gitea:1.27.3
         env:
           USER_UID: "1000"
           USER_GID: "1000"
-          GITEA__server__ROOT_URL: http://gitea:3000/
+          GITEA__server__ROOT_URL: http://gitea-test:3000/
           GITEA__server__HTTP_PORT: "3000"
           GITEA__server__START_SSH_SERVER: "false"
           GITEA__database__DB_TYPE: sqlite3
@@ -38,15 +38,13 @@ jobs:
 
     env:
       BROWSER: ${{ matrix.browser }}
-      GITEA_BASE_URL: http://gitea:3000
+      GITEA_BASE_URL: http://gitea-test:3000
       SELENIUM_REMOTE_URL: http://selenium:4444
       GITEA_USERNAME: qabot
       GITEA_PASSWORD: Qa-bot-not-a-secret-1
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          github-server-url: https://git.estiberz.online
 
       - uses: actions/setup-node@v4
         with:
@@ -60,7 +58,7 @@ jobs:
             curl -fsS "$GITEA_BASE_URL/api/healthz" > /dev/null && exit 0
             sleep 2
           done
-          echo "gitea never became healthy"
+          echo "gitea-test never became healthy"
           exit 1
 
       - name: Wait for the browser
@@ -88,3 +86,11 @@ jobs:
 
       - name: Run the suite
         run: npm test
+
+      - name: Upload the report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-report-${{ matrix.browser }}
+          path: reports/
+          retention-days: 14
