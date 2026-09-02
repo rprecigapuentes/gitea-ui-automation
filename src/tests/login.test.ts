@@ -1,28 +1,31 @@
 import "dotenv/config";
-import { describe, expect, it } from "vitest";
-import { WebDriver } from "selenium-webdriver";
+import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
+import { TestContext } from "../context";
 import { DriverFactory } from "../../core/drivers/driver.factory";
-import { LoginPage } from "../pages/login.page";
 
 const username = process.env.GITEA_USERNAME;
 const password = process.env.GITEA_PASSWORD;
 
 describe("Login test", () => {
-  let driver: WebDriver;
-  let loginPage: LoginPage;
+  let context: TestContext;
 
   beforeEach(async () => {
-    driver = await DriverFactory.getDriver();
-    loginPage = new LoginPage(driver);
+    context = await TestContext.create();
+    const response = await context.userClient.getUser();
+    expect(response.statusCode).toBe(200);
   });
 
-  afterEach(async () => {
+  afterEach((ctx) => {
+    context.dispose(ctx.task.name);
+  });
+
+  afterAll(async () => {
     await DriverFactory.quitDriver();
   });
 
   it("should log in with valid credentials", async () => {
-    await driver.get(loginPage.baseUrl);
-    const mainPage = await loginPage.login(username!, password!);
+    await context.driver.get(context.loginPage.baseUrl);
+    const mainPage = await context.loginPage.login(username!, password!);
 
     expect(await mainPage.getLoggedInUsername()).toBe(username);
   });

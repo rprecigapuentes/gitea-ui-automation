@@ -20,8 +20,6 @@ export class DriverFactory {
       return DriverFactory.instance;
     }
 
-    console.log(`Starting browser: ${browser}`);
-
     const builder = new Builder();
 
     switch (browser) {
@@ -63,6 +61,7 @@ export class DriverFactory {
     if (DriverFactory.instance) {
       await DriverFactory.instance.quit();
       DriverFactory.instance = null;
+      console.log(`WebDriver quit`);
     }
   }
 }
