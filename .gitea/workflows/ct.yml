@@ -1,6 +1,7 @@
 name: CT
 
 on:
+  push:
   workflow_dispatch:
 
 concurrency:
