@@ -91,6 +91,15 @@ jobs:
       - name: Run the suite
         run: npm test
 
+      - name: Inspect the artifact endpoints
+        run: |
+          echo "RUNTIME = $ACTIONS_RUNTIME_URL"
+          echo "RESULTS = $ACTIONS_RESULTS_URL"
+          echo "CACHE   = $ACTIONS_CACHE_URL"
+          for u in "$ACTIONS_RESULTS_URL" "$ACTIONS_CACHE_URL"; do
+            [ -n "$u" ] && curl -sS -o /dev/null -m 5 -w "%{http_code} <- $u\n" "$u" || echo "(vacío)"
+          done
+
       - name: Upload the report
         if: always()
         uses: actions/upload-artifact@v3
