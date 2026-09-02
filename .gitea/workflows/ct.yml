@@ -1,6 +1,7 @@
 name: CT
 
 on:
+  push:
   workflow_dispatch:
 
 concurrency:
@@ -11,6 +12,11 @@ jobs:
   regression:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chrome, firefox, edge]
 
     services:
       gitea:
@@ -28,10 +34,11 @@ jobs:
           GITEA__service__REGISTER_EMAIL_CONFIRM: "false"
 
       selenium:
-        image: selenium/standalone-chrome:4.35.0
+        image: selenium/standalone-all-browsers:4.35.0
         options: --shm-size=2g
 
     env:
+      BROWSER: ${{ matrix.browser }}
       GITEA_BASE_URL: http://gitea:3000
       SELENIUM_REMOTE_URL: http://selenium:4444
       GITEA_USERNAME: qabot
