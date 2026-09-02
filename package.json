@@ -9,7 +9,7 @@
     "test:edge": "cross-env BROWSER=edge vitest run",
     "test:all": "npm-run-all --sequential test:chrome test:firefox test:edge",
     "report": "allure generate ./allure-results",
-    "report:open": "allure open ./allure-report/awesome",
+    "report:open": "allure open ./allure-report/",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",

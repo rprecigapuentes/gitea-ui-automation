@@ -94,15 +94,23 @@ per browser, and never gates a merge.
 
 ### Reports
 
-Every run writes `reports/junit.xml` and `reports/html/`, and the pipeline attaches both to
-the run as the `test-report` artifact, kept for 14 days. A failed run still produces them.
+Every run writes raw results to `allure-results/`. The pipeline turns them into an Allure
+report and attaches it to the run as `allure-report-<browser>`, one per browser, kept for
+14 days. A failed run still produces one.
 
-The HTML report is a Vite build, so it does not render when opened from the filesystem.
-Unpack the artifact and serve it:
+The report is a single self-contained `index.html`: unpack the artifact and open it, no
+server needed.
+
+Locally:
 
 ```bash
-npm run test:report
+npm test          # writes allure-results/
+npm run report    # generates allure-report/
+npm run report:open
 ```
+
+Runs are independent, so the report shows no trend across runs. Allure history needs a file
+carried between runs, and this runner has nowhere to keep one.
 
 ## Project structure
 
