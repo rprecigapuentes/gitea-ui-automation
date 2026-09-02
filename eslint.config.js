@@ -23,6 +23,10 @@ export default tseslint.config(
       },
     },
   },
-  { files: ["**/*.js"], extends: [tseslint.configs.disableTypeChecked] },
+  {
+    files: ["**/*.js"],
+    languageOptions: { globals: { process: "readonly" } },
+    extends: [tseslint.configs.disableTypeChecked],
+  },
   prettier,
 );

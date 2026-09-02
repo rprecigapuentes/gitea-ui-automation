@@ -4,4 +4,4 @@ test-results/
 package-lock.json
 reports/
 allure-results/
-allure-reports/
+allure-report/
