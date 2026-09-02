@@ -40,7 +40,6 @@ jobs:
     env:
       BROWSER: ${{ matrix.browser }}
       GITEA_BASE_URL: http://gitea-test:3000
-      ACTIONS_RUNTIME_URL: https://git.estiberz.online/api/actions_pipeline/
       SELENIUM_REMOTE_URL: http://selenium:4444
       GITEA_USERNAME: qabot
       GITEA_PASSWORD: Qa-bot-not-a-secret-1
@@ -92,6 +91,7 @@ jobs:
         run: npm test
 
       - name: Inspect the artifact endpoints
+        if: always()
         run: |
           echo "RUNTIME = $ACTIONS_RUNTIME_URL"
           echo "RESULTS = $ACTIONS_RESULTS_URL"
