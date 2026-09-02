@@ -8,6 +8,7 @@
     "test:chrome": "cross-env BROWSER=chrome vitest run",
     "test:edge": "cross-env BROWSER=edge vitest run",
     "test:all": "npm-run-all --sequential test:chrome test:firefox test:edge",
+    "test:report": "npx vite preview --outDir reports/html",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",
