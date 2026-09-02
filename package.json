@@ -40,6 +40,7 @@
     "@eslint/js": "^10.0.1",
     "@types/node": "^22.20.1",
     "@types/selenium-webdriver": "^4.35.6",
+    "@vitest/ui": "^4.1.11",
     "cross-env": "^10.1.0",
     "eslint": "^10.9.1",
     "eslint-config-prettier": "^10.1.8",
