@@ -14,11 +14,6 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 25
 
-    strategy:
-      fail-fast: false
-      matrix:
-        browser: [chrome, firefox, edge]
-
     services:
       gitea-test:
         image: docker.gitea.com/gitea:1.27.3
@@ -37,9 +32,12 @@ jobs:
       selenium:
         image: selenium/standalone-all-browsers:4.35.0
         options: --shm-size=2g
+        env:
+          SE_NODE_MAX_SESSIONS: "3"
+          SE_NODE_OVERRIDE_MAX_SESSIONS: "true"
 
     env:
-      BROWSER: ${{ matrix.browser }}
+      MAX_WORKERS: "3"
       GITEA_BASE_URL: http://gitea-test:3000
       SELENIUM_REMOTE_URL: http://selenium:4444
       GITEA_USERNAME: qabot
@@ -86,6 +84,17 @@ jobs:
           curl -fsS -u "$GITEA_USERNAME:$GITEA_PASSWORD" "$GITEA_BASE_URL/api/v1/user" > /dev/null
           echo "account $GITEA_USERNAME is usable"
 
+      - name: Create an API token for the account
+        run: |
+          token=$(curl -fsS -u "$GITEA_USERNAME:$GITEA_PASSWORD" \
+            -H "Content-Type: application/json" \
+            -X POST "$GITEA_BASE_URL/api/v1/users/$GITEA_USERNAME/tokens" \
+            -d '{"name":"continuous-testing","scopes":["write:user","write:repository","write:issue","write:organization"]}' \
+            | node -pe 'JSON.parse(require("fs").readFileSync(0, "utf8")).sha1')
+          echo "::add-mask::$token"
+          echo "GITEA_TOKEN=$token" >> "$GITHUB_ENV"
+          echo "token minted for $GITEA_USERNAME"
+
       - name: Run the suite
         run: npm test
 
@@ -97,7 +106,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: allure-report-${{ matrix.browser }}
+          name: allure-report
           path: |
             allure-report/
             reports/junit.xml
