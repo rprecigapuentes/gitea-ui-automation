@@ -10,7 +10,7 @@ concurrency:
 
 jobs:
   regression:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
 
     strategy:
@@ -46,8 +46,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          github-server-url: https://git.estiberz.online
 
       - uses: actions/setup-node@v4
         with:
@@ -61,7 +59,7 @@ jobs:
             curl -fsS "$GITEA_BASE_URL/api/healthz" > /dev/null && exit 0
             sleep 2
           done
-          echo "gitea never became healthy"
+          echo "gitea-test never became healthy"
           exit 1
 
       - name: Wait for the browser
@@ -89,16 +87,6 @@ jobs:
 
       - name: Run the suite
         run: npm test
-
-      - name: Inspect the artifact endpoints
-        if: always()
-        run: |
-          echo "RUNTIME = $ACTIONS_RUNTIME_URL"
-          echo "RESULTS = $ACTIONS_RESULTS_URL"
-          echo "CACHE   = $ACTIONS_CACHE_URL"
-          for u in "$ACTIONS_RESULTS_URL" "$ACTIONS_CACHE_URL"; do
-            [ -n "$u" ] && curl -sS -o /dev/null -m 5 -w "%{http_code} <- $u\n" "$u" || echo "(vacío)"
-          done
 
       - name: Upload the report
         if: always()
