@@ -88,6 +88,10 @@ Trigger it from the repository's Actions tab, on the CT workflow, with **Run wor
 It never runs on a push or a pull request, so it cannot block a merge. CI stays quality
 only: install, format check, lint, typecheck.
 
+It also runs on a schedule, 06:00 on weekdays (server time, America/Bogota). A scheduled run
+deploys the application, runs the suite on all three browsers and leaves one report artifact
+per browser, and never gates a merge.
+
 ### Reports
 
 Every run writes `reports/junit.xml` and `reports/html/`, and the pipeline attaches both to
