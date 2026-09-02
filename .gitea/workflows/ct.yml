@@ -1,6 +1,7 @@
 name: CT
 
 on:
+  push:
   workflow_dispatch:
 
 concurrency:
@@ -88,3 +89,11 @@ jobs:
 
       - name: Run the suite
         run: npm test
+
+      - name: Upload the report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-report-${{ matrix.browser }}
+          path: reports/
+          retention-days: 14
