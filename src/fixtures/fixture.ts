@@ -8,14 +8,14 @@ import { IssueClient } from "../api/clients/issue.client";
 import { Organization } from "../entities/organization.entity";
 import { WebDriver } from "selenium-webdriver";
 import { DriverFactory } from "../../core/drivers/driver.factory";
-import { LoginPage } from "../pages/login.page";
-import { MainPage } from "../pages/main.page";
-import { CreateOrganizationPage } from "../pages/create-organization.page";
-import { OrganizationDashboardPage } from "../pages/organization-dashboard.page";
-import { OrganizationRepositoriesPage } from "../pages/organization-repositories.page";
-import { OrganizationTeamsPage } from "../pages/organization-teams.page";
-import { IssuePage } from "../pages/issue.page";
-import { IssueListPage } from "../pages/issue-list.page";
+import { LoginPage } from "../ui/pages/authentication/login.page";
+import { MainPage } from "../ui/pages/main.page";
+import { CreateOrganizationPage } from "../ui/pages/organizations/create-organization.page";
+import { OrganizationDashboardPage } from "../ui/pages/organizations/organization-dashboard.page";
+import { OrganizationRepositoriesPage } from "../ui/pages/organizations/organization-repositories.page";
+import { OrganizationTeamsPage } from "../ui/pages/organizations/organization-teams.page";
+import { IssuePage } from "../ui/pages/issues/issue.page";
+import { IssueListPage } from "../ui/pages/issues/issue-list.page";
 
 interface ScenarioState {
   organization?: Organization;

@@ -1,7 +1,7 @@
 import { By, WebDriver } from "selenium-webdriver";
-import { BasePage } from "../../core/base-pages/base.page";
-import { baseUrl } from "../../core/config/config";
-import { Organization } from "../entities/organization.entity";
+import { BasePage } from "../../../../core/base-pages/base.page";
+import { baseUrl } from "../../../../core/config/config";
+import { Organization } from "../../../entities/organization.entity";
 
 export class OrganizationDashboardPage extends BasePage {
   private readonly organization: Organization;

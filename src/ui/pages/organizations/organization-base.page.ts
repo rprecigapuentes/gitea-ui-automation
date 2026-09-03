@@ -1,8 +1,8 @@
 // organization-base.page.ts
 import { WebDriver, By } from "selenium-webdriver";
-import { BasePage } from "../../core/base-pages/base.page";
-import { baseUrl } from "../../core/config/config";
-import { Organization } from "../entities/organization.entity";
+import { BasePage } from "../../../../core/base-pages/base.page";
+import { baseUrl } from "../../../../core/config/config";
+import { Organization } from "../../../entities/organization.entity";
 
 export abstract class OrganizationBasePage extends BasePage {
   protected readonly organization: Organization;

@@ -1,6 +1,6 @@
 import { By, WebDriver } from "selenium-webdriver";
-import { BasePage } from "../../core/base-pages/base.page";
-import { baseUrl } from "../../core/config/config";
+import { BasePage } from "../../../../core/base-pages/base.page";
+import { baseUrl } from "../../../../core/config/config";
 
 const labelWidget = '.issue-sidebar-combo[data-update-url*="/issues/labels"]';
 

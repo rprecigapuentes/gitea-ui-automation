@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { describe, expect } from "vitest";
-import { test as it } from "../fixtures/fixture";
+import { test as it } from "../src/fixtures/fixture";
 
 const username = process.env.GITEA_USERNAME;
 const password = process.env.GITEA_PASSWORD;
