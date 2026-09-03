@@ -2,6 +2,9 @@ import type { WebDriver } from "selenium-webdriver";
 import { DriverFactory } from "../core/drivers/driver.factory";
 import { LoginPage } from "../src/pages/login.page";
 import { UserClient } from "./api/clients/user.client";
+import { IssueClient } from "./api/clients/issue.client";
+import { LabelClient } from "./api/clients/label.client";
+import { RepositoryClient } from "./api/clients/repository.client";
 
 export class TestContext {
   readonly driver: WebDriver;
@@ -9,6 +12,9 @@ export class TestContext {
   readonly loginPage: LoginPage;
   //api clients
   readonly userClient: UserClient;
+  readonly repositoryClient: RepositoryClient;
+  readonly labelClient: LabelClient;
+  readonly issueClient: IssueClient;
 
   private constructor(driver: WebDriver) {
     this.driver = driver;
@@ -16,7 +22,13 @@ export class TestContext {
     //pages
     this.loginPage = new LoginPage(driver);
     //api clients
-    this.userClient = new UserClient(process.env.GITEA_BASE_URL!, process.env.GITEA_TOKEN!);
+    const baseUrl = process.env.GITEA_BASE_URL!;
+    const token = process.env.GITEA_TOKEN!;
+
+    this.userClient = new UserClient(baseUrl, token);
+    this.repositoryClient = new RepositoryClient(baseUrl, token);
+    this.labelClient = new LabelClient(baseUrl, token);
+    this.issueClient = new IssueClient(baseUrl, token);
   }
 
   static async create(): Promise<TestContext> {
