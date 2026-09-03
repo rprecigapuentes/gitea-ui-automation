@@ -1,6 +1,8 @@
 import type { WebDriver } from "selenium-webdriver";
 import { DriverFactory } from "../core/drivers/driver.factory";
 import { LoginPage } from "../src/pages/login.page";
+import { IssuePage } from "./pages/issue.page";
+import { IssueListPage } from "./pages/issue-list.page";
 import { UserClient } from "./api/clients/user.client";
 import { IssueClient } from "./api/clients/issue.client";
 import { LabelClient } from "./api/clients/label.client";
@@ -10,6 +12,8 @@ export class TestContext {
   readonly driver: WebDriver;
   //pages
   readonly loginPage: LoginPage;
+  readonly issuePage: IssuePage;
+  readonly issueListPage: IssueListPage;
   //api clients
   readonly userClient: UserClient;
   readonly repositoryClient: RepositoryClient;
@@ -23,6 +27,8 @@ export class TestContext {
 
     //pages
     this.loginPage = new LoginPage(driver);
+    this.issuePage = new IssuePage(driver);
+    this.issueListPage = new IssueListPage(driver);
     //api clients
     const baseUrl = process.env.GITEA_BASE_URL!;
     const token = process.env.GITEA_TOKEN!;
