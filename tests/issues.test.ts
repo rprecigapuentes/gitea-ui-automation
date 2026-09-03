@@ -3,7 +3,6 @@ import { describe, expect } from "vitest";
 import { test as it } from "../src/fixtures/fixture";
 
 const username = process.env.GITEA_USERNAME;
-const password = process.env.GITEA_PASSWORD;
 
 describe("Scoped labels test", () => {
   it("should replace the label of the same scope and keep labels of other scopes", async ({
@@ -11,16 +10,10 @@ describe("Scoped labels test", () => {
     repository,
     scopedLabels,
     issue,
-    loginPage,
-    mainPage,
     issuePage,
     issueListPage,
   }) => {
     const owner = username!;
-
-    await driver.get(loginPage.getUrl());
-    await loginPage.login(username!, password!);
-    expect(await mainPage.getLoggedInUsername()).toBe(username);
 
     await driver.get(issuePage.getUrl(owner, repository, issue.number));
 
