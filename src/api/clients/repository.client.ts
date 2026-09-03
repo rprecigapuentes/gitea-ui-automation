@@ -1,10 +1,6 @@
 import { GiteaApiClient } from "./gitea-client.client";
 import type { Response } from "got";
-
-export interface Repository {
-  id: number;
-  name: string;
-}
+import type { Repository } from "../../entities/repository.entity";
 
 export class RepositoryClient extends GiteaApiClient {
   async createRepository(name: string): Promise<Response<Repository>> {
