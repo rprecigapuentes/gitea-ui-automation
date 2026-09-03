@@ -1,6 +1,5 @@
 import { WebDriver, By } from "selenium-webdriver";
 import { BasePage } from "../../core/base-pages/base.page";
-import { MainPage } from "./main.page";
 import { baseUrl } from "../../core/config/config";
 
 export class LoginPage extends BasePage {
@@ -12,7 +11,7 @@ export class LoginPage extends BasePage {
     ),
   };
 
-  get baseUrl(): string {
+  override getUrl(): string {
     return `${baseUrl}/user/login`;
   }
 
@@ -20,11 +19,9 @@ export class LoginPage extends BasePage {
     super(driver);
   }
 
-  async login(username: string, password: string): Promise<MainPage> {
+  async login(username: string, password: string): Promise<void> {
     await this.type(this.locators.usernameInput, username);
     await this.type(this.locators.passwordInput, password);
     await this.click(this.locators.loginButton);
-
-    return new MainPage(this.driver);
   }
 }

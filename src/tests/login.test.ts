@@ -15,8 +15,8 @@ describe("Login test", () => {
     expect(response.statusCode).toBe(200);
   });
 
-  afterEach((ctx) => {
-    context.dispose(ctx.task.name);
+  afterEach(async (ctx) => {
+    await context.dispose(ctx.task.name);
   });
 
   afterAll(async () => {
@@ -24,9 +24,10 @@ describe("Login test", () => {
   });
 
   it("should log in with valid credentials", async () => {
-    await context.driver.get(context.loginPage.baseUrl);
-    const mainPage = await context.loginPage.login(username!, password!);
+    await context.driver.get(context.loginPage.getUrl());
+    await context.loginPage.login(username!, password!);
+    const actualUsername = await context.mainPage.getLoggedInUsername();
 
-    expect(await mainPage.getLoggedInUsername()).toBe(username);
+    expect(actualUsername).toBe(username);
   });
 });
