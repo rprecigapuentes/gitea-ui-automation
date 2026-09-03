@@ -1,12 +1,14 @@
 import type { WebDriver } from "selenium-webdriver";
 import { DriverFactory } from "../core/drivers/driver.factory";
+import type { Organization } from "./entities/organization.entity";
 import { LoginPage } from "../src/pages/login.page";
 import { MainPage } from "../src/pages/main.page";
 import { CreateOrganizationPage } from "../src/pages/create-organization.page";
-import { OrganizationPage } from "./pages/organization-dashboard.page";
-import { ViewOrganizationPage } from "./pages/view-organization.page";
+import { OrganizationDashboardPage } from "../src/pages/organization-dashboard.page";
+import { OrganizationRepositoriesPage } from "../src/pages/organization-repositories.page";
 import { UserClient } from "./api/clients/user.client";
 import { OrganizationClient } from "./api/clients/organizations.client";
+import { OrganizationTeamsPage } from "./pages/organization-teams.page";
 
 export class TestContext {
   readonly driver: WebDriver;
@@ -14,11 +16,14 @@ export class TestContext {
   readonly loginPage: LoginPage;
   readonly mainPage: MainPage;
   readonly createOrganizationPage: CreateOrganizationPage;
-  readonly organizationPage: OrganizationPage;
-  readonly viewOrganizationPage: ViewOrganizationPage;
+  readonly organizationDashboardPage: OrganizationDashboardPage;
+  readonly organizationRepositoriesPage: OrganizationRepositoriesPage;
+  readonly organizationTeamsPage: OrganizationTeamsPage;
   //api clients
   readonly userClient: UserClient;
   readonly organizationClient: OrganizationClient;
+  //entities
+  organization?: Organization;
 
   private constructor(driver: WebDriver) {
     this.driver = driver;
@@ -26,8 +31,12 @@ export class TestContext {
     this.loginPage = new LoginPage(driver);
     this.mainPage = new MainPage(driver);
     this.createOrganizationPage = new CreateOrganizationPage(driver);
-    this.organizationPage = new OrganizationPage(driver);
-    this.viewOrganizationPage = new ViewOrganizationPage(driver);
+    this.organizationDashboardPage = new OrganizationDashboardPage(driver, this.organization!);
+    this.organizationRepositoriesPage = new OrganizationRepositoriesPage(
+      driver,
+      this.organization!,
+    );
+    this.organizationTeamsPage = new OrganizationTeamsPage(driver, this.organization!);
     //api clients
     this.userClient = new UserClient(process.env.GITEA_BASE_URL!, process.env.GITEA_TOKEN!);
     this.organizationClient = new OrganizationClient(

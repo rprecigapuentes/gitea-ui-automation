@@ -2,6 +2,7 @@ import "dotenv/config";
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 import { TestContext } from "../context";
 import { DriverFactory } from "../../core/drivers/driver.factory";
+import { Organization } from "../entities/organization.entity";
 
 const username = process.env.GITEA_USERNAME;
 const password = process.env.GITEA_PASSWORD;
@@ -24,8 +25,10 @@ describe("Organization test", () => {
   });
 
   it("should create an organization and add members", async () => {
-    const organizationName = `test-orgs-${Date.now()}`;
-    const visibility = "public";
+    const organizationToCreate: Organization = {
+      name: `test-orgs-${Date.now()}`,
+      visibility: "public",
+    };
 
     //Login page
     await context.driver.get(context.loginPage.getUrl());
@@ -35,15 +38,21 @@ describe("Organization test", () => {
     await context.mainPage.navigateCreateOrganization();
     //Create Organization page
     expect(context.createOrganizationPage.getUrl()).toBe(await context.driver.getCurrentUrl());
-    await context.createOrganizationPage.enterOrganizationName(organizationName);
-    await context.createOrganizationPage.selectVisibility(visibility);
+    await context.createOrganizationPage.enterOrganizationName(organizationToCreate.name);
+    await context.createOrganizationPage.selectVisibility(organizationToCreate.visibility);
     await context.createOrganizationPage.clickCreateOrganizationButton();
-    //Organization Page
-    expect(context.organizationPage.getUrl(organizationName)).toBe(
+    context.organization = organizationToCreate;
+    //Organization Dashboard Page
+    expect(context.organizationDashboardPage.getUrl()).toBe(await context.driver.getCurrentUrl());
+    await context.organizationDashboardPage.clickViewRepositoryButton();
+
+    //Org repositories page
+    expect(context.organizationRepositoriesPage.getUrl()).toBe(
       await context.driver.getCurrentUrl(),
     );
-    await context.organizationPage.clickViewOrganizationButton();
-    //View Organization page
-    expect(context.viewOrganizationPage.getUrl(organizationName)).toContain(organizationName);
+    await context.organizationRepositoriesPage.navigateToTeams();
+
+    //Org teams page
+    expect(context.organizationTeamsPage.getUrl()).toBe(await context.driver.getCurrentUrl());
   });
 });

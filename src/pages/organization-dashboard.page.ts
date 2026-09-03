@@ -1,23 +1,27 @@
 import { By, WebDriver } from "selenium-webdriver";
 import { BasePage } from "../../core/base-pages/base.page";
 import { baseUrl } from "../../core/config/config";
+import { Organization } from "../entities/organization.entity";
 
-export class OrganizationPage extends BasePage {
+export class OrganizationDashboardPage extends BasePage {
+  private readonly organization: Organization;
+
   private readonly locators = {
-    viewOrganizationButton: By.css(
+    viewRepositoryButton: By.css(
       "body > div > div > div.secondary-nav.tw-border-b.tw-border-b-secondary > div > div.right.menu.tw-flex-wrap.tw-justify-end > div > a",
     ),
   };
 
-  override getUrl(organizationName: string): string {
-    return `${baseUrl}/org/${organizationName}/dashboard`;
+  override getUrl(): string {
+    return `${baseUrl}/org/${this.organization.name}/dashboard`;
   }
 
-  constructor(driver: WebDriver) {
+  constructor(driver: WebDriver, organization: Organization) {
     super(driver);
+    this.organization = organization;
   }
 
-  async clickViewOrganizationButton(): Promise<void> {
-    await this.click(this.locators.viewOrganizationButton);
+  async clickViewRepositoryButton(): Promise<void> {
+    await this.click(this.locators.viewRepositoryButton);
   }
 }
