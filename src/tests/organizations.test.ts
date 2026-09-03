@@ -15,8 +15,8 @@ describe("Organization test", () => {
     expect(response.statusCode).toBe(200);
   });
 
-  afterEach((ctx) => {
-    context.dispose(ctx.task.name);
+  afterEach(async (ctx) => {
+    await context.dispose(ctx.task.name);
   });
 
   afterAll(async () => {
@@ -24,7 +24,7 @@ describe("Organization test", () => {
   });
 
   it("should create an organization and add members", async () => {
-    const organizationName = `test-organization-${Date.now()}`;
+    const organizationName = `test-orgs-${Date.now()}`;
     const visibility = "public";
 
     await context.driver.get(context.loginPage.getUrl());

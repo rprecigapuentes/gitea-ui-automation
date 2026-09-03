@@ -5,6 +5,7 @@ import { MainPage } from "../src/pages/main.page";
 import { CreateOrganizationPage } from "../src/pages/create-organization.page";
 import { OrganizationPage } from "../src/pages/organization.page";
 import { UserClient } from "./api/clients/user.client";
+import { OrganizationClient } from "./api/clients/organizations.client";
 
 export class TestContext {
   readonly driver: WebDriver;
@@ -15,6 +16,7 @@ export class TestContext {
   readonly organizationPage: OrganizationPage;
   //api clients
   readonly userClient: UserClient;
+  readonly organizationClient: OrganizationClient;
 
   private constructor(driver: WebDriver) {
     this.driver = driver;
@@ -25,6 +27,10 @@ export class TestContext {
     this.organizationPage = new OrganizationPage(driver);
     //api clients
     this.userClient = new UserClient(process.env.GITEA_BASE_URL!, process.env.GITEA_TOKEN!);
+    this.organizationClient = new OrganizationClient(
+      process.env.GITEA_BASE_URL!,
+      process.env.GITEA_TOKEN!,
+    );
   }
 
   static async create(): Promise<TestContext> {
@@ -32,7 +38,12 @@ export class TestContext {
     return new TestContext(driver);
   }
 
-  dispose(testName: string): void {
+  async dispose(testName: string): Promise<void> {
+    const response = await this.organizationClient.getAllOrganizations();
+    expect(response.statusCode).toBe(200);
+    const orgs = response.body;
+
+    await Promise.all(orgs.map((org) => this.organizationClient.deleteOrganization(org.name)));
     console.log(`Cleaning data for test: ${testName}`);
   }
 }
