@@ -15,8 +15,8 @@ describe("Login test", () => {
     expect(response.statusCode).toBe(200);
   });
 
-  afterEach((ctx) => {
-    context.dispose(ctx.task.name);
+  afterEach(async (ctx) => {
+    await context.dispose(ctx.task.name);
   });
 
   afterAll(async () => {

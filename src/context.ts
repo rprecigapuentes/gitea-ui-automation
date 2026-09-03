@@ -16,6 +16,8 @@ export class TestContext {
   readonly labelClient: LabelClient;
   readonly issueClient: IssueClient;
 
+  private readonly createdRepositories: string[] = [];
+
   private constructor(driver: WebDriver) {
     this.driver = driver;
 
@@ -37,7 +39,19 @@ export class TestContext {
     return new TestContext(driver);
   }
 
-  dispose(testName: string): void {
+  async createRepository(name: string): Promise<void> {
+    await this.repositoryClient.createRepository(name);
+    this.createdRepositories.push(name);
+  }
+
+  async dispose(testName: string): Promise<void> {
+    const owner = process.env.GITEA_USERNAME!;
+
+    for (const repository of this.createdRepositories) {
+      await this.repositoryClient.deleteRepository(owner, repository);
+    }
+    this.createdRepositories.length = 0;
+
     console.log(`Cleaning data for test: ${testName}`);
   }
 }
