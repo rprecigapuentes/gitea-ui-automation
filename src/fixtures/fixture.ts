@@ -1,5 +1,5 @@
 /* eslint-disable no-empty-pattern */
-import { test as base } from "vitest";
+import { test as base, expect } from "vitest";
 import { UserClient } from "../api/clients/user.client";
 import { OrganizationClient } from "../api/clients/organizations.client";
 import { Organization } from "../entities/organization.entity";
@@ -87,11 +87,11 @@ export const test = base.extend<CustomFixtures>({
   cleanupOrganizations: [
     async ({ organizationClient, task }, use) => {
       await use();
+      console.log(`Cleaning data for test: ${task.name}`);
       const response = await organizationClient.getAllOrganizations();
       expect(response.statusCode).toBe(200);
       const orgs = response.body;
       await Promise.all(orgs.map((org) => organizationClient.deleteOrganization(org.name)));
-      console.log(`Cleaning data for test: ${task.name}`);
     },
     { auto: true },
   ],
