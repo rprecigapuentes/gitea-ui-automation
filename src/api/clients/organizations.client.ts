@@ -1,10 +1,6 @@
+import { Organization } from "../../entities/organization.entity";
 import { GiteaApiClient } from "./gitea-client.client";
 import type { Response } from "got";
-
-export interface Organization {
-  id: number;
-  name: string;
-}
 
 export class OrganizationClient extends GiteaApiClient {
   async getAllOrganizations(): Promise<Response<Organization[]>> {
