@@ -27,19 +27,23 @@ describe("Organization test", () => {
     const organizationName = `test-orgs-${Date.now()}`;
     const visibility = "public";
 
+    //Login page
     await context.driver.get(context.loginPage.getUrl());
     await context.loginPage.login(username!, password!);
-
+    //Main page
     expect(context.mainPage.getUrl()).toBe(await context.driver.getCurrentUrl());
     await context.mainPage.navigateCreateOrganization();
-
+    //Create Organization page
     expect(context.createOrganizationPage.getUrl()).toBe(await context.driver.getCurrentUrl());
     await context.createOrganizationPage.enterOrganizationName(organizationName);
     await context.createOrganizationPage.selectVisibility(visibility);
     await context.createOrganizationPage.clickCreateOrganizationButton();
-
+    //Organization Page
     expect(context.organizationPage.getUrl(organizationName)).toBe(
       await context.driver.getCurrentUrl(),
     );
+    await context.organizationPage.clickViewOrganizationButton();
+    //View Organization page
+    expect(context.viewOrganizationPage.getUrl(organizationName)).toContain(organizationName);
   });
 });

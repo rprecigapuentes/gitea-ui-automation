@@ -4,13 +4,8 @@ import { baseUrl } from "../../core/config/config";
 
 export class OrganizationPage extends BasePage {
   private readonly locators = {
-    formTitle: By.css("body > div > div > div > h3"),
-    organizationNameInput: By.id("org_name"),
-    publicVisibilityRadio: By.id("_aria_label_input_1"),
-    limitedVisibilityRadio: By.id("_aria_label_input_2"),
-    privateVisibilityRadio: By.id("_aria_label_input_3"),
-    createOrganizationButton: By.css(
-      "body > div > div > div > div > form > div:nth-child(4) > button",
+    viewOrganizationButton: By.css(
+      "body > div > div > div.secondary-nav.tw-border-b.tw-border-b-secondary > div > div.right.menu.tw-flex-wrap.tw-justify-end > div > a",
     ),
   };
 
@@ -20,5 +15,9 @@ export class OrganizationPage extends BasePage {
 
   constructor(driver: WebDriver) {
     super(driver);
+  }
+
+  async clickViewOrganizationButton(): Promise<void> {
+    await this.click(this.locators.viewOrganizationButton);
   }
 }
