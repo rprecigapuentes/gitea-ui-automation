@@ -1,63 +1,61 @@
 import type { WebDriver } from "selenium-webdriver";
 import { DriverFactory } from "../core/drivers/driver.factory";
+import type { Organization } from "./entities/organization.entity";
 import { LoginPage } from "../src/pages/login.page";
-import { IssuePage } from "./pages/issue.page";
-import { IssueListPage } from "./pages/issue-list.page";
+import { MainPage } from "../src/pages/main.page";
+import { CreateOrganizationPage } from "../src/pages/create-organization.page";
+import { OrganizationDashboardPage } from "../src/pages/organization-dashboard.page";
+import { OrganizationRepositoriesPage } from "../src/pages/organization-repositories.page";
 import { UserClient } from "./api/clients/user.client";
-import { IssueClient } from "./api/clients/issue.client";
-import { LabelClient } from "./api/clients/label.client";
-import { RepositoryClient } from "./api/clients/repository.client";
+import { OrganizationClient } from "./api/clients/organizations.client";
+import { OrganizationTeamsPage } from "./pages/organization-teams.page";
 
 export class TestContext {
   readonly driver: WebDriver;
   //pages
   readonly loginPage: LoginPage;
-  readonly issuePage: IssuePage;
-  readonly issueListPage: IssueListPage;
+  readonly mainPage: MainPage;
+  readonly createOrganizationPage: CreateOrganizationPage;
+  readonly organizationDashboardPage: OrganizationDashboardPage;
+  readonly organizationRepositoriesPage: OrganizationRepositoriesPage;
+  readonly organizationTeamsPage: OrganizationTeamsPage;
   //api clients
   readonly userClient: UserClient;
-  readonly repositoryClient: RepositoryClient;
-  readonly labelClient: LabelClient;
-  readonly issueClient: IssueClient;
-
-  private readonly createdRepositories: string[] = [];
+  readonly organizationClient: OrganizationClient;
+  //entities
+  organization?: Organization;
 
   private constructor(driver: WebDriver) {
     this.driver = driver;
-
     //pages
     this.loginPage = new LoginPage(driver);
-    this.issuePage = new IssuePage(driver);
-    this.issueListPage = new IssueListPage(driver);
+    this.mainPage = new MainPage(driver);
+    this.createOrganizationPage = new CreateOrganizationPage(driver);
+    this.organizationDashboardPage = new OrganizationDashboardPage(driver, this.organization!);
+    this.organizationRepositoriesPage = new OrganizationRepositoriesPage(
+      driver,
+      this.organization!,
+    );
+    this.organizationTeamsPage = new OrganizationTeamsPage(driver, this.organization!);
     //api clients
-    const baseUrl = process.env.GITEA_BASE_URL!;
-    const token = process.env.GITEA_TOKEN!;
-
-    this.userClient = new UserClient(baseUrl, token);
-    this.repositoryClient = new RepositoryClient(baseUrl, token);
-    this.labelClient = new LabelClient(baseUrl, token);
-    this.issueClient = new IssueClient(baseUrl, token);
+    this.userClient = new UserClient(process.env.GITEA_BASE_URL!, process.env.GITEA_TOKEN!);
+    this.organizationClient = new OrganizationClient(
+      process.env.GITEA_BASE_URL!,
+      process.env.GITEA_TOKEN!,
+    );
   }
 
   static async create(): Promise<TestContext> {
     const driver = await DriverFactory.getDriver();
-
     return new TestContext(driver);
   }
 
-  async createRepository(name: string): Promise<void> {
-    await this.repositoryClient.createRepository(name);
-    this.createdRepositories.push(name);
-  }
-
   async dispose(testName: string): Promise<void> {
-    const owner = process.env.GITEA_USERNAME!;
+    const response = await this.organizationClient.getAllOrganizations();
+    expect(response.statusCode).toBe(200);
+    const orgs = response.body;
 
-    for (const repository of this.createdRepositories) {
-      await this.repositoryClient.deleteRepository(owner, repository);
-    }
-    this.createdRepositories.length = 0;
-
+    await Promise.all(orgs.map((org) => this.organizationClient.deleteOrganization(org.name)));
     console.log(`Cleaning data for test: ${testName}`);
   }
 }

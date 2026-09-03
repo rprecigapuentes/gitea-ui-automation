@@ -27,6 +27,16 @@ export class DriverFactory {
         const options = new chrome.Options();
         if (HEADLESS) options.addArguments("--headless=new");
 
+        options.addArguments(
+          "--lang=en",
+          "--no-first-run",
+          "--no-default-browser-check",
+          "--disable-sync",
+          "--disable-background-networking",
+          "--disable-notifications",
+          "--disable-popup-blocking",
+        );
+
         builder.forBrowser("chrome").setChromeOptions(options);
         break;
       }
