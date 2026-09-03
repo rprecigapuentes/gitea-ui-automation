@@ -6,6 +6,7 @@ import { test as it } from "../fixtures/fixture";
 const username = process.env.GITEA_USERNAME;
 const password = process.env.GITEA_PASSWORD;
 
+//Add move test related verifications
 describe("Organization test", () => {
   it("should create an organization and add members", async ({
     driver,

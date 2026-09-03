@@ -6,6 +6,7 @@ export class LoginPage extends BasePage {
   private readonly locators = {
     usernameInput: By.id("user_name"),
     passwordInput: By.id("password"),
+    //Improve locator
     loginButton: By.css(
       "body > div > div > div > div > div:nth-child(1) > div > form > div:nth-child(4) > button",
     ),

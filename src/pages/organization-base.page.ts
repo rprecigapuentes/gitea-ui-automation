@@ -8,9 +8,11 @@ export abstract class OrganizationBasePage extends BasePage {
   protected readonly organization: Organization;
 
   private readonly navLocators = {
+      //Improve locator [data-text="Repositories"]
     reposTab: By.css(
       "body > div > div > div:nth-child(2) > overflow-menu > div > a.active.item > span",
     ),
+    //Improve locator
     teamsTab: By.css(
       "body > div > div > div:nth-child(2) > overflow-menu > div > a:nth-child(5) > span",
     ),
