@@ -11,7 +11,7 @@ export class IssueListPage extends BasePage {
     super(driver);
   }
 
-  getUrl(owner: string, repository: string, labelId?: number): string {
+  override getUrl(owner: string, repository: string, labelId?: number): string {
     const issues = `${baseUrl}/${owner}/${repository}/issues`;
 
     return labelId === undefined ? issues : `${issues}?labels=${labelId}`;

@@ -16,7 +16,7 @@ export class IssuePage extends BasePage {
     super(driver);
   }
 
-  getUrl(owner: string, repository: string, issueNumber: number): string {
+  override getUrl(owner: string, repository: string, issueNumber: number): string {
     return `${baseUrl}/${owner}/${repository}/issues/${issueNumber}`;
   }
 
