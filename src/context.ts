@@ -51,11 +51,9 @@ export class TestContext {
   }
 
   async dispose(testName: string): Promise<void> {
-    const response = await this.organizationClient.getAllOrganizations();
-    expect(response.statusCode).toBe(200);
-    const orgs = response.body;
-
-    await Promise.all(orgs.map((org) => this.organizationClient.deleteOrganization(org.name)));
+    if (this.organization) {
+      await this.organizationClient.deleteOrganization(this.organization.name);
+    }
     console.log(`Cleaning data for test: ${testName}`);
   }
 }

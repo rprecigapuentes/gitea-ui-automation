@@ -1,7 +1,10 @@
 /* eslint-disable no-empty-pattern */
-import { test as base, expect } from "vitest";
+import { test as base } from "vitest";
 import { UserClient } from "../api/clients/user.client";
 import { OrganizationClient } from "../api/clients/organizations.client";
+import { RepositoryClient } from "../api/clients/repository.client";
+import { LabelClient } from "../api/clients/label.client";
+import { IssueClient } from "../api/clients/issue.client";
 import { Organization } from "../entities/organization.entity";
 import { WebDriver } from "selenium-webdriver";
 import { DriverFactory } from "../../core/drivers/driver.factory";
@@ -11,9 +14,22 @@ import { CreateOrganizationPage } from "../pages/create-organization.page";
 import { OrganizationDashboardPage } from "../pages/organization-dashboard.page";
 import { OrganizationRepositoriesPage } from "../pages/organization-repositories.page";
 import { OrganizationTeamsPage } from "../pages/organization-teams.page";
+import { IssuePage } from "../pages/issue.page";
+import { IssueListPage } from "../pages/issue-list.page";
 
 interface ScenarioState {
   organization?: Organization;
+}
+
+interface ScopedLabels {
+  priorityHigh: number;
+  priorityLow: number;
+  kindBug: number;
+}
+
+interface SeededIssue {
+  number: number;
+  title: string;
 }
 
 interface CustomFixtures {
@@ -22,6 +38,9 @@ interface CustomFixtures {
   //clients
   userClient: UserClient;
   organizationClient: OrganizationClient;
+  repositoryClient: RepositoryClient;
+  labelClient: LabelClient;
+  issueClient: IssueClient;
   //pages
   loginPage: LoginPage;
   mainPage: MainPage;
@@ -31,6 +50,13 @@ interface CustomFixtures {
     repositories: () => OrganizationRepositoriesPage;
     teams: () => OrganizationTeamsPage;
   };
+  issuePage: IssuePage;
+  issueListPage: IssueListPage;
+  //entities
+  scopedLabels: ScopedLabels;
+  issue: SeededIssue;
+  repository: string;
+  //cleanup
   cleanupOrganizations: void;
 }
 
@@ -57,6 +83,23 @@ export const test = base.extend<CustomFixtures>({
       process.env.GITEA_TOKEN!,
     );
     await use(organizationClient);
+  },
+  repositoryClient: async ({}, use) => {
+    await use(new RepositoryClient(process.env.GITEA_BASE_URL!, process.env.GITEA_TOKEN!));
+  },
+  labelClient: async ({}, use) => {
+    await use(new LabelClient(process.env.GITEA_BASE_URL!, process.env.GITEA_TOKEN!));
+  },
+  issueClient: async ({}, use) => {
+    await use(new IssueClient(process.env.GITEA_BASE_URL!, process.env.GITEA_TOKEN!));
+  },
+  issuePage: async ({ driver }, use) => {
+    const issuePage = new IssuePage(driver);
+    await use(issuePage);
+  },
+  issueListPage: async ({ driver }, use) => {
+    const issueListPage = new IssueListPage(driver);
+    await use(issueListPage);
   },
   loginPage: async ({ driver }, use) => {
     const loginPage = new LoginPage(driver);
@@ -85,14 +128,47 @@ export const test = base.extend<CustomFixtures>({
     });
   },
   cleanupOrganizations: [
-    async ({ organizationClient, task }, use) => {
+    async ({ organizationClient, scenarioState, task }, use) => {
       await use();
+      const organization = scenarioState.organization;
+      if (!organization) return;
+
       console.log(`Cleaning data for test: ${task.name}`);
-      const response = await organizationClient.getAllOrganizations();
-      expect(response.statusCode).toBe(200);
-      const orgs = response.body;
-      await Promise.all(orgs.map((org) => organizationClient.deleteOrganization(org.name)));
+      await organizationClient.deleteOrganization(organization.name);
     },
     { auto: true },
   ],
+  repository: async ({ repositoryClient }, use) => {
+    const owner = process.env.GITEA_USERNAME!;
+    const name = `test-issues-${Date.now()}-${process.env.BROWSER ?? "local"}`;
+
+    await repositoryClient.createRepository(name);
+    await use(name);
+    await repositoryClient.deleteRepository(owner, name);
+  },
+  scopedLabels: async ({ labelClient, repository }, use) => {
+    const owner = process.env.GITEA_USERNAME!;
+    const createLabel = async (name: string, color: string): Promise<number> => {
+      const response = await labelClient.createLabel(owner, repository, {
+        name,
+        color,
+        exclusive: true,
+      });
+
+      return response.body.id;
+    };
+
+    await use({
+      priorityHigh: await createLabel("priority/high", "#d73a4a"),
+      priorityLow: await createLabel("priority/low", "#0e8a16"),
+      kindBug: await createLabel("kind/bug", "#1d76db"),
+    });
+  },
+  issue: async ({ issueClient, repository }, use) => {
+    const owner = process.env.GITEA_USERNAME!;
+    const title = "Scoped labels acceptance";
+    const response = await issueClient.createIssue(owner, repository, title);
+
+    await use({ number: response.body.number, title });
+  },
 });
