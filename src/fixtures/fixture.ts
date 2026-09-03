@@ -12,8 +12,11 @@ import { OrganizationDashboardPage } from "../pages/organization-dashboard.page"
 import { OrganizationRepositoriesPage } from "../pages/organization-repositories.page";
 import { OrganizationTeamsPage } from "../pages/organization-teams.page";
 import { NewTeamPage } from "../pages/new-team-organization.page";
+import { SpecificTeamPage } from "../pages/specific-team.page";
+import { Team } from "../entities/teams.entity";
 
 interface ScenarioState {
+  team?: Team;
   organization?: Organization;
 }
 
@@ -32,6 +35,7 @@ interface CustomFixtures {
     repositories: () => OrganizationRepositoriesPage;
     teams: () => OrganizationTeamsPage;
     newTeam: () => NewTeamPage;
+    specificTeam: () => SpecificTeamPage;
   };
   cleanupOrganizations: void;
 }
@@ -79,12 +83,20 @@ export const test = base.extend<CustomFixtures>({
       }
       return scenarioState.organization;
     };
+    const requireTeam = (): Team => {
+      requireOrganization(); // un team no puede existir sin organización — si falla, el mensaje de arriba explica por qué
+      if (!scenarioState.team) {
+        throw new Error("team is not set in scenarioState — créalo antes de acceder a sus páginas");
+      }
+      return scenarioState.team;
+    };
 
     await use({
       dashboard: () => new OrganizationDashboardPage(driver, requireOrganization()),
       repositories: () => new OrganizationRepositoriesPage(driver, requireOrganization()),
       teams: () => new OrganizationTeamsPage(driver, requireOrganization()),
       newTeam: () => new NewTeamPage(driver, requireOrganization()),
+      specificTeam: () => new SpecificTeamPage(driver, requireOrganization(), requireTeam()),
     });
   },
   cleanupOrganizations: [

@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { describe, expect } from "vitest";
 import { Organization } from "../entities/organization.entity";
+import type { Team } from "../entities/teams.entity";
 import { test as it } from "../fixtures/fixture";
 
 const username = process.env.GITEA_USERNAME;
@@ -19,13 +20,14 @@ describe("Organization test", () => {
       name: `test-orgs-${Date.now()}`,
       visibility: "public",
     };
-    /* const teamToCreate = {
-      description: "Test team",
+    const teamToCreate: Team = {
+      name: "test-team",
+      description: "This is a test team",
       visibility: "public",
       permission: "read",
       includes_all_repositories: true,
       can_create_org_repo: false,
-    };*/
+    };
     //login Page
     await driver.get(loginPage.getUrl());
     await loginPage.login(username!, password!);
@@ -48,5 +50,11 @@ describe("Organization test", () => {
     //Organization Teams Page
     await organizationPages.teams().clickNewTeamButton();
     expect(organizationPages.newTeam().getUrl()).toBe(await driver.getCurrentUrl());
+    //New team page
+    await organizationPages.newTeam().enterTeamName(teamToCreate.name);
+    await organizationPages.newTeam().selectVisibility(teamToCreate.visibility);
+    await organizationPages.newTeam().clickCreateTeamButton();
+    scenarioState.team = teamToCreate;
+    expect(organizationPages.specificTeam().getUrl()).toBe(await driver.getCurrentUrl());
   });
 });
