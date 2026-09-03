@@ -19,6 +19,13 @@ describe("Organization test", () => {
       name: `test-orgs-${Date.now()}`,
       visibility: "public",
     };
+    /* const teamToCreate = {
+      description: "Test team",
+      visibility: "public",
+      permission: "read",
+      includes_all_repositories: true,
+      can_create_org_repo: false,
+    };*/
     //login Page
     await driver.get(loginPage.getUrl());
     await loginPage.login(username!, password!);
@@ -38,5 +45,8 @@ describe("Organization test", () => {
     //Organization Repositories Page
     await organizationPages.repositories().navigateToTeams();
     expect(organizationPages.teams().getUrl()).toBe(await driver.getCurrentUrl());
+    //Organization Teams Page
+    await organizationPages.teams().clickNewTeamButton();
+    expect(organizationPages.newTeam().getUrl()).toBe(await driver.getCurrentUrl());
   });
 });

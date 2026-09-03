@@ -11,6 +11,7 @@ import { CreateOrganizationPage } from "../pages/create-organization.page";
 import { OrganizationDashboardPage } from "../pages/organization-dashboard.page";
 import { OrganizationRepositoriesPage } from "../pages/organization-repositories.page";
 import { OrganizationTeamsPage } from "../pages/organization-teams.page";
+import { NewTeamPage } from "../pages/new-team-organization.page";
 
 interface ScenarioState {
   organization?: Organization;
@@ -30,6 +31,7 @@ interface CustomFixtures {
     dashboard: () => OrganizationDashboardPage;
     repositories: () => OrganizationRepositoriesPage;
     teams: () => OrganizationTeamsPage;
+    newTeam: () => NewTeamPage;
   };
   cleanupOrganizations: void;
 }
@@ -82,6 +84,7 @@ export const test = base.extend<CustomFixtures>({
       dashboard: () => new OrganizationDashboardPage(driver, requireOrganization()),
       repositories: () => new OrganizationRepositoriesPage(driver, requireOrganization()),
       teams: () => new OrganizationTeamsPage(driver, requireOrganization()),
+      newTeam: () => new NewTeamPage(driver, requireOrganization()),
     });
   },
   cleanupOrganizations: [
