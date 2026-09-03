@@ -6,6 +6,7 @@ const username = process.env.GITEA_USERNAME;
 const password = process.env.GITEA_PASSWORD;
 
 describe("Scoped labels test", () => {
+  //Add more test related verifications, this flow looks like smoke or functional, do more interactions to be a e2e test
   it("should replace the label of the same scope and keep labels of other scopes", async ({
     driver,
     repository,
