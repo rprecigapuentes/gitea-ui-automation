@@ -1,5 +1,7 @@
 /* eslint-disable no-empty-pattern */
 import { test as base } from "vitest";
+import * as allure from "allure-js-commons";
+import { ContentType } from "allure-js-commons";
 import { UserClient } from "../api/clients/user.client";
 import { OrganizationClient } from "../api/clients/organizations.client";
 import { RepositoryClient } from "../api/clients/repository.client";
@@ -34,6 +36,7 @@ interface SeededIssue {
 
 interface CustomFixtures {
   driver: WebDriver;
+  screenshotOnFailure: void;
   scenarioState: ScenarioState;
   //clients
   userClient: UserClient;
@@ -68,6 +71,26 @@ export const test = base.extend<CustomFixtures>({
       await DriverFactory.quitDriver();
     },
     { scope: "file" },
+  ],
+  screenshotOnFailure: [
+    async ({ driver, task, onTestFailed }, use) => {
+      onTestFailed(async () => {
+        try {
+          const currentUrl = await driver.getCurrentUrl();
+          const screenshot = await driver.takeScreenshot();
+          await allure.attachment(
+            `Screenshot - ${task.name} - ${currentUrl} - ${new Date().toISOString()}`,
+            Buffer.from(screenshot, "base64"),
+            ContentType.PNG,
+          );
+        } catch (err) {
+          console.warn(`Failed to capture screenshot for test ${task.name}:`, err);
+        }
+      });
+
+      await use();
+    },
+    { auto: true },
   ],
   scenarioState: async ({}, use) => {
     const scenarioState: ScenarioState = {};
