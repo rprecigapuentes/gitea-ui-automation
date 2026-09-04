@@ -40,6 +40,7 @@ interface CustomFixtures {
   screenshotOnFailure: void;
   scenarioState: ScenarioState;
   authClient: AuthClient;
+  skipAutoLogin: boolean;
   loggedInSession: void;
   //clients
   userClient: UserClient;
@@ -98,8 +99,15 @@ export const test = base.extend<CustomFixtures>({
   authClient: async ({}, use) => {
     await use(new AuthClient(process.env.GITEA_BASE_URL!));
   },
+  skipAutoLogin: async ({}, use) => {
+    await use(false);
+  },
   loggedInSession: [
-    async ({ driver, authClient }, use) => {
+    async ({ driver, authClient, skipAutoLogin }, use) => {
+      if (skipAutoLogin) {
+        await use();
+        return;
+      }
       const baseUrl = process.env.GITEA_BASE_URL!;
       const username = process.env.GITEA_USERNAME!;
       const password = process.env.GITEA_PASSWORD!;
