@@ -1,5 +1,6 @@
 import got from "got";
 import { CookieJar } from "tough-cookie";
+import { logger } from "../../../core/logging/pino.logger";
 
 export interface SeleniumCookie {
   name: string;
@@ -30,6 +31,8 @@ export class AuthClient {
       headers,
     });
 
+    logger.debug({ url: loginUrl, user: username }, "api login");
+
     await got.post(loginUrl, {
       cookieJar,
       followRedirect: true,
@@ -44,6 +47,8 @@ export class AuthClient {
     });
 
     const cookies = await cookieJar.getCookies(this.baseUrl);
+
+    logger.debug({ url: loginUrl, cookies: cookies.length }, "api login cookies");
 
     return cookies.map((cookie) => ({
       name: cookie.key,
