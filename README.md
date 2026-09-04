@@ -81,6 +81,33 @@ By default, browsers run **visibly** (not headless), so you can watch the tests 
 
 One Vitest worker holds one WebDriver session, because the driver is a singleton per process and Vitest gives each test file its own process. `MAX_WORKERS` is therefore browser capacity rather than CPU tuning: it must never exceed what the machine, or the grid on the other end, can serve. It defaults to 3.
 
+## BrowserStack
+
+The same suite can run against a browser on [BrowserStack Automate](https://automate.browserstack.com/) instead of a local one. BrowserStack is a hosted Selenium Grid, so it replaces the browser and nothing else: no test, page object or fixture changes.
+
+Add the credentials from your [account profile](https://www.browserstack.com/accounts/profile/details) to `.env`, and point the suite at `bs-local.com` rather than `localhost`, because inside a remote browser `localhost` is the remote machine:
+
+```dotenv
+GITEA_BASE_URL=http://bs-local.com:3000
+BROWSERSTACK_USERNAME=your-browserstack-username
+BROWSERSTACK_ACCESS_KEY=your-browserstack-access-key
+```
+
+```bash
+npm run test:browserstack     # every BrowserStack platform
+npm test                      # unchanged: three local browsers, no plan minutes
+```
+
+`npm run test:browserstack` is the only command that reaches the hub, and it starts and stops the BrowserStack Local tunnel itself. Each session is marked passed or failed on the Automate dashboard from the test results, rather than only recorded as having run.
+
+A platform is one entry in `browserStackPlatforms` in `vitest.config.ts`. **Keep the `bs-` prefix**: the npm scripts select and exclude these projects with `--project=bs-*` and `--project=!bs-*`, so a platform named without it joins the default run and spends plan minutes on every `npm test`. `MAX_WORKERS` must not exceed the plan's parallel session limit, which is `parallel_sessions_max_allowed` here:
+
+```bash
+curl -u "$BROWSERSTACK_USERNAME:$BROWSERSTACK_ACCESS_KEY" https://api.browserstack.com/automate/plan.json
+```
+
+`.gitea/workflows/bs.yml` runs the same suite on the pipeline, with the disposable Gitea as its only service container and no Selenium container, because the hub is the grid. It runs on manual dispatch and a weekly schedule only, so it never gates a merge and never spends minutes on a push. It needs `BROWSERSTACK_USERNAME` and `BROWSERSTACK_ACCESS_KEY` as repository secrets, under Settings, Actions, Secrets.
+
 ## Continuous testing
 
 `.gitea/workflows/ct.yml` is a second pipeline, separate from CI. It deploys a disposable
@@ -123,16 +150,19 @@ carried between runs, and this runner has nowhere to keep one.
 ## Project structure
 
 ```
-core/                          # framework, application-agnostic
-├── base-pages/base.page.ts    # shared find, click and type helpers
-├── config/config.ts           # the application under test URL
-├── config/allure.config.ts    # per-test reporting metadata
-└── drivers/driver.factory.ts  # builds and shares one WebDriver per worker
-src/                           # the suite, specific to Gitea
-├── api/clients/               # REST clients built on got
-├── context.ts                 # the pages and clients a test is handed
-├── pages/                     # page objects: actions and locators
-└── tests/                     # specs: assertions only
+core/                            # framework, application-agnostic
+├── base-clients/                # the HTTP client the API clients extend
+├── base-pages/base.page.ts      # shared find, click and type helpers
+├── config/config.ts             # the application under test URL
+├── config/allure.config.ts      # per-test reporting metadata
+├── config/browserstack.*.ts     # hub capabilities and the Local tunnel
+└── drivers/driver.factory.ts    # builds and shares one WebDriver per worker
+src/                             # the suite, specific to Gitea
+├── api/clients/                 # REST clients built on got
+├── entities/                    # the shapes those clients return
+├── fixtures/fixture.ts          # the driver, pages, clients and seeded data a test is handed
+└── ui/pages/                    # page objects by feature: actions and locators
+tests/                           # specs: assertions only
 ```
 
 ## Troubleshooting
@@ -155,3 +185,6 @@ The first run can take longer while Selenium Manager downloads the matching driv
 
 **Three browsers is too many for the machine**
 Run `MAX_WORKERS=1 npm test`, or `npm run test:chrome` for a single browser.
+
+**`BROWSERSTACK_USERNAME and BROWSERSTACK_ACCESS_KEY are required by the browserstack project`**
+Locally, the two variables are missing from `.env`. On the pipeline, the repository secrets are not set, and Gitea expands a missing secret to an empty string rather than failing.
