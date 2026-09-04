@@ -4,6 +4,8 @@ const browsers = ["chrome", "firefox", "edge"] as const;
 
 const browserStackPlatforms = [
   { name: "bs-win-chrome", browser: "chrome", os: "Windows", osVersion: "11" },
+  { name: "bs-win-firefox", browser: "firefox", os: "Windows", osVersion: "11" },
+  { name: "bs-win-edge", browser: "edge", os: "Windows", osVersion: "11" },
 ] as const;
 
 export default defineConfig({
