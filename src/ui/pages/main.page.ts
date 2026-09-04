@@ -4,10 +4,8 @@ import { baseUrl } from "../../../core/config/config";
 
 export class MainPage extends BasePage {
   private readonly locators = {
-    loggedInUsername: By.css(
-      "body > div > div > div.secondary-nav.tw-border-b.tw-border-b-secondary > div > div > div > span > span.gt-ellipsis",
-    ),
-    newDropdown: By.xpath("/html/body/div/nav/div[2]/div[1]"),
+    loggedInUsername: By.css(".text span.gt-ellipsis"),
+    newDropdown: By.css("[aria-label='Create…']"),
     newOrganization: By.id("_aria_dropdown_item_4"),
   };
 

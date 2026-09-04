@@ -8,12 +8,8 @@ export abstract class OrganizationBasePage extends BasePage {
   protected readonly organization: Organization;
 
   private readonly navLocators = {
-    reposTab: By.css(
-      "body > div > div > div:nth-child(2) > overflow-menu > div > a.active.item > span",
-    ),
-    teamsTab: By.css(
-      "body > div > div > div:nth-child(2) > overflow-menu > div > a:nth-child(5) > span",
-    ),
+    reposTab: By.css("[data-text='Repositories']"),
+    teamsTab: By.css("[data-text='Teams']"),
   };
 
   constructor(driver: WebDriver, organization: Organization) {

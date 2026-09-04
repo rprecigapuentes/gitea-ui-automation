@@ -7,9 +7,7 @@ export class OrganizationDashboardPage extends BasePage {
   private readonly organization: Organization;
 
   private readonly locators = {
-    viewRepositoryButton: By.css(
-      "body > div > div > div.secondary-nav.tw-border-b.tw-border-b-secondary > div > div.right.menu.tw-flex-wrap.tw-justify-end > div > a",
-    ),
+    viewRepositoryButton: By.css("a[title^='View test-orgs-']"),
   };
 
   override getUrl(): string {
