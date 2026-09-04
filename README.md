@@ -147,23 +147,68 @@ ones as extra entries in the report.
 Runs are independent, so the report shows no trend across runs. Allure history needs a file
 carried between runs, and this runner has nowhere to keep one.
 
+## Page object architecture
+
+UI code follows a **Page / Fragment / Facade** split, all built on a shared `BaseComponent`:
+
+- **`BaseComponent`** (`core/base-pages/base.page.ts`) — the `find`, `click` and `type`
+  helpers shared by everything below. It has no notion of a URL.
+- **`BasePage extends BaseComponent`** — a page that owns a URL. Implements the `Navigable`
+  interface (`getUrl()` + `open()`).
+- **`Navigable`** — a standalone interface (`getUrl()` + `open()`), not a base class. Any
+  object that represents a navigable URL implements it directly, so a facade that just
+  orchestrates several already-navigable pages isn't forced to carry a `getUrl()` that
+  wouldn't make sense for it.
+- **Facades** (e.g. `OrganizationFacade`) — compose several fragments that together make up
+  one navigable view (for example, a fixed tab-navigation fragment plus a content fragment
+  that changes per tab). A facade implements `Navigable` and exposes high-level flow methods
+  (`navigateToRepositoriesTab()`, `navigateToTeamsTab()`, …) instead of raw locators, hiding
+  which fragment currently owns which piece of the screen.
+
+Tab-style navigation fragments expose a single `navigateToTab(tab: SomeTabEnum)` method
+backed by an enum, rather than one method per tab, to avoid duplicating locator objects and
+to keep tab selection type-safe.
+
+File naming follows the same convention throughout: `*.page.ts`, `*.fragment.ts`,
+`*.facade.ts`, grouped into `pages/`, `fragments/` and `facades/` folders per feature.
+
+### Fixtures and stateful facades/fragments
+
+When a page, fragment or facade depends on data that only exists once the test is running
+(e.g. an organization created mid-test and stored in `scenarioState`), its fixture factory
+must be:
+
+- **Lazy** — a `() => T` function, not a plain value, since the dependency isn't available
+  yet when the fixture itself is set up.
+- **Memoized** — cached on first call (e.g. with `??=`), not re-constructed on every call.
+  Facades and fragments can hold internal state (such as which tab is currently active); a
+  fresh instance on every call silently loses that state between steps of the same test.
+
 ## Project structure
 
 ```
-core/                            # framework, application-agnostic
-├── logging/                     # the Logger adapter and its pino implementation
-├── base-clients/                # the HTTP client the API clients extend
-├── base-pages/base.page.ts      # shared find, click and type helpers
-├── config/config.ts             # the application under test URL
-├── config/allure.config.ts      # per-test reporting metadata
-├── config/browserstack.*.ts     # hub capabilities and the Local tunnel
-└── drivers/driver.factory.ts    # builds and shares one WebDriver per worker
-src/                             # the suite, specific to Gitea
-├── api/clients/                 # REST clients built on got
-├── entities/                    # the shapes those clients return
-├── fixtures/fixture.ts          # the driver, pages, clients and seeded data a test is handed
-└── ui/pages/                    # page objects by feature: actions and locators
-tests/                           # specs: assertions only
+core/                                    # framework, application-agnostic
+├── api/base-clients/                    # the HTTP client the API clients extend
+│   └── gitea-client.client.ts
+├── config/                              # config.ts (app URL), allure.config.ts, browserstack.*.ts
+├── drivers/driver.factory.ts            # builds and shares one WebDriver per worker
+├── logging/                             # the Logger adapter and its pino implementation
+└── ui/base-pages/
+    ├── base-component.ts                # find/click/type helpers, no notion of a URL
+    └── base.page.ts                     # BasePage, Navigable
+src/                                      # the suite, specific to Gitea
+├── api/clients/                         # REST clients built on got
+├── entities/                            # the shapes those clients return
+├── fixtures/fixture.ts                  # the driver, pages, clients and seeded data a test is handed
+└── ui/pages/                            # page objects by feature
+    ├── authentication/
+    ├── issues/
+    ├── organizations/
+    │   ├── facade/
+    │   │   └── organization.facade.ts   # composes the fragments below into one navigable view
+    │   └── fragments/                   # reusable pieces of the organization view, no URL of their own
+    └── main.page.ts
+tests/                                    # specs: assertions only
 ```
 
 ## Troubleshooting
@@ -189,3 +234,6 @@ Run `MAX_WORKERS=1 npm test`, or `npm run test:chrome` for a single browser.
 
 **`BROWSERSTACK_USERNAME and BROWSERSTACK_ACCESS_KEY are required by the browserstack project`**
 Locally, the two variables are missing from `.env`. On the pipeline, the repository secrets are not set, and Gitea expands a missing secret to an empty string rather than failing.
+
+**A test involving a URL assertion right after a click is flaky (passes sometimes, fails others)**
+The click likely triggers a server-side redirect that WebDriver doesn't wait for automatically — only the click itself is awaited, not the navigation it causes. Add an explicit wait after the click (`until.urlContains(...)` or `until.elementLocated(...)` for an element unique to the destination page) instead of asserting the URL immediately.

@@ -1,4 +1,4 @@
-import { GiteaApiClient } from "../../../core/base-clients/gitea-client.client";
+import { GiteaApiClient } from "../../../core/api/base-clients/gitea-client.client";
 import type { Response } from "got";
 
 export class UserClient extends GiteaApiClient {

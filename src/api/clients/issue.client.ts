@@ -1,4 +1,4 @@
-import { GiteaApiClient } from "../../../core/base-clients/gitea-client.client";
+import { GiteaApiClient } from "../../../core/api/base-clients/gitea-client.client";
 import type { Response } from "got";
 import type { Issue } from "../../entities/issue.entity";
 

@@ -1,5 +1,5 @@
 import { By, WebDriver } from "selenium-webdriver";
-import { BasePage } from "../../../../core/base-pages/base.page";
+import { BasePage } from "../../../../core/ui/base-pages/base.page";
 import { baseUrl } from "../../../../core/config/config";
 
 export class CreateOrganizationPage extends BasePage {
@@ -18,10 +18,6 @@ export class CreateOrganizationPage extends BasePage {
 
   constructor(driver: WebDriver) {
     super(driver);
-  }
-
-  async getFormTitle(): Promise<string> {
-    return (await this.find(this.locators.formTitle)).getText();
   }
 
   async enterOrganizationName(name: string): Promise<void> {

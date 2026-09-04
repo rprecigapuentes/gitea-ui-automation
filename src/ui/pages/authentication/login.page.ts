@@ -1,5 +1,5 @@
 import { WebDriver, By } from "selenium-webdriver";
-import { BasePage } from "../../../../core/base-pages/base.page";
+import { BasePage } from "../../../../core/ui/base-pages/base.page";
 import { baseUrl } from "../../../../core/config/config";
 
 export class LoginPage extends BasePage {

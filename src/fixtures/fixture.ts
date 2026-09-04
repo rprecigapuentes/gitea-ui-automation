@@ -18,8 +18,12 @@ import { LoginPage } from "../ui/pages/authentication/login.page";
 import { MainPage } from "../ui/pages/main.page";
 import { CreateOrganizationPage } from "../ui/pages/organizations/create-organization.page";
 import { OrganizationDashboardPage } from "../ui/pages/organizations/organization-dashboard.page";
-import { OrganizationRepositoriesPage } from "../ui/pages/organizations/organization-repositories.page";
-import { OrganizationTeamsPage } from "../ui/pages/organizations/organization-teams.page";
+//Org Fragments
+import { OrgRepositoriesFragment } from "../ui/pages/organizations/fragments/org-repositories.fragment";
+import { OrgTeamsFragment } from "../ui/pages/organizations/fragments/org-teams.fragment";
+import { OrgNavigationFragment } from "../ui/pages/organizations/fragments/org-navigation.fragment";
+//Org facade
+import { OrganizationFacade } from "../ui/pages/organizations/facade/organization.facade";
 import { IssuePage } from "../ui/pages/issues/issue.page";
 import { IssueListPage } from "../ui/pages/issues/issue-list.page";
 import { AuthClient } from "../api/clients/auth.client";
@@ -46,8 +50,10 @@ interface CustomFixtures {
   createOrganizationPage: CreateOrganizationPage;
   organizationPages: {
     dashboard: () => OrganizationDashboardPage;
-    repositories: () => OrganizationRepositoriesPage;
-    teams: () => OrganizationTeamsPage;
+    navigation: () => OrgNavigationFragment;
+    repositories: () => OrgRepositoriesFragment;
+    teams: () => OrgTeamsFragment;
+    orgFacade: () => OrganizationFacade;
   };
   issuePage: IssuePage;
   issueListPage: IssueListPage;
@@ -201,10 +207,25 @@ export const test = base.extend<CustomFixtures>({
       return scenarioState.organization;
     };
 
+    let dashboard: OrganizationDashboardPage | undefined;
+    let navigation: OrgNavigationFragment | undefined;
+    let repositories: OrgRepositoriesFragment | undefined;
+    let teams: OrgTeamsFragment | undefined;
+    let facade: OrganizationFacade | undefined;
+
     await use({
-      dashboard: () => new OrganizationDashboardPage(driver, requireOrganization()),
-      repositories: () => new OrganizationRepositoriesPage(driver, requireOrganization()),
-      teams: () => new OrganizationTeamsPage(driver, requireOrganization()),
+      dashboard: () => (dashboard ??= new OrganizationDashboardPage(driver, requireOrganization())),
+      navigation: () => (navigation ??= new OrgNavigationFragment(driver)),
+      repositories: () => (repositories ??= new OrgRepositoriesFragment(driver)),
+      teams: () => (teams ??= new OrgTeamsFragment(driver)),
+      orgFacade: () =>
+        (facade ??= new OrganizationFacade(
+          driver,
+          requireOrganization(),
+          (navigation ??= new OrgNavigationFragment(driver)),
+          (repositories ??= new OrgRepositoriesFragment(driver)),
+          (teams ??= new OrgTeamsFragment(driver)),
+        )),
     });
   },
   cleanupOrganizations: [

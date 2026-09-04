@@ -15,7 +15,7 @@ describe("Organization test", () => {
       name: `test-orgs-${Date.now()}`,
       visibility: "public",
     };
-    await driver.get(mainPage.getUrl());
+    await mainPage.open();
 
     expect(mainPage.getUrl()).toBe(await driver.getCurrentUrl());
     //main page
@@ -29,9 +29,10 @@ describe("Organization test", () => {
     expect(organizationPages.dashboard().getUrl()).toBe(await driver.getCurrentUrl());
     //Organization Dashboard Page
     await organizationPages.dashboard().clickViewRepositoryButton();
-    expect(organizationPages.repositories().getUrl()).toBe(await driver.getCurrentUrl());
+    expect(organizationPages.orgFacade().getUrl()).toBe(await driver.getCurrentUrl());
     //Organization Repositories Page
-    await organizationPages.repositories().navigateToTeams();
-    expect(organizationPages.teams().getUrl()).toBe(await driver.getCurrentUrl());
+    await organizationPages.orgFacade().navigateToTeamsTab();
+    console.log("URL after navigating to Teams tab: ", organizationPages.orgFacade().getUrl());
+    expect(organizationPages.orgFacade().getUrl()).toBe(await driver.getCurrentUrl());
   });
 });
