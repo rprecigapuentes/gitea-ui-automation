@@ -151,6 +151,7 @@ carried between runs, and this runner has nowhere to keep one.
 
 ```
 core/                            # framework, application-agnostic
+├── logging/                     # the Logger adapter and its pino implementation
 ├── base-clients/                # the HTTP client the API clients extend
 ├── base-pages/base.page.ts      # shared find, click and type helpers
 ├── config/config.ts             # the application under test URL
