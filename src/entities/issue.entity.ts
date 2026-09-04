@@ -3,3 +3,8 @@ export interface Issue {
   number: number;
   title: string;
 }
+
+export interface SeededIssue {
+  number: number;
+  title: string;
+}

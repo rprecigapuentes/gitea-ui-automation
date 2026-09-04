@@ -9,3 +9,9 @@ export interface NewLabel {
   color: string;
   exclusive: boolean;
 }
+
+export interface ScopedLabels {
+  priorityHigh: number;
+  priorityLow: number;
+  kindBug: number;
+}

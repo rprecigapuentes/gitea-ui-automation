@@ -8,6 +8,10 @@ import { RepositoryClient } from "../api/clients/repository.client";
 import { LabelClient } from "../api/clients/label.client";
 import { IssueClient } from "../api/clients/issue.client";
 import { Organization } from "../entities/organization.entity";
+import { ScopedLabels } from "../entities/label.entity";
+import { SeededIssue } from "../entities/issue.entity";
+import { BrowserStackSession } from "../entities/browserstack.entity";
+import { ScenarioState } from "../entities/scenario.entity";
 import { WebDriver } from "selenium-webdriver";
 import { DriverFactory } from "../../core/drivers/driver.factory";
 import { LoginPage } from "../ui/pages/authentication/login.page";
@@ -20,25 +24,6 @@ import { IssuePage } from "../ui/pages/issues/issue.page";
 import { IssueListPage } from "../ui/pages/issues/issue-list.page";
 import { AuthClient } from "../api/clients/auth.client";
 import { isBrowserStack, setSessionStatus } from "../../core/config/browserstack.config";
-
-interface ScenarioState {
-  organization?: Organization;
-}
-
-interface ScopedLabels {
-  priorityHigh: number;
-  priorityLow: number;
-  kindBug: number;
-}
-
-interface SeededIssue {
-  number: number;
-  title: string;
-}
-
-interface BrowserStackSession {
-  failed: boolean;
-}
 
 interface CustomFixtures {
   driver: WebDriver;
