@@ -7,7 +7,7 @@ export default async function setup(): Promise<() => Promise<void>> {
 
   await new Promise<void>((resolve, reject) => {
     tunnel.start(
-      { key: credentials().accessKey, localIdentifier, force: "true", onlyAutomate: "true" },
+      { key: credentials().accessKey, localIdentifier, force: true, onlyAutomate: true },
       (error?: Error) => (error ? reject(error) : resolve()),
     );
   });
