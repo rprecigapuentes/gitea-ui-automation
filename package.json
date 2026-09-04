@@ -39,6 +39,7 @@
   "dependencies": {
     "dotenv": "^17.4.2",
     "got": "^16.0.0",
+    "pino": "^10.3.1",
     "selenium-webdriver": "^4.48.0",
     "tough-cookie": "^6.0.2"
   },
