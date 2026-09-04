@@ -47,6 +47,7 @@
     "@vitest/runner": "^4.1.11",
     "allure": "^3.16.0",
     "allure-vitest": "^3.11.1",
+    "browserstack-local": "^1.5.13",
     "eslint": "^10.9.1",
     "eslint-config-prettier": "^10.1.8",
     "husky": "^9.1.7",
