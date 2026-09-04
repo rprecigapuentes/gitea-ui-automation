@@ -106,9 +106,7 @@ export const test = base.extend<CustomFixtures>({
       await driver.get(baseUrl);
 
       const browserUserAgent = await driver.executeScript("return navigator.userAgent;");
-
       const cookies = await authClient.loginViaApi(username, password, browserUserAgent);
-
       await driver.manage().deleteAllCookies();
 
       for (const cookie of cookies) {
@@ -122,7 +120,6 @@ export const test = base.extend<CustomFixtures>({
       }
 
       await driver.navigate().refresh();
-
       await use();
     },
     { auto: true },
