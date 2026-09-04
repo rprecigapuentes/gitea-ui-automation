@@ -1,4 +1,5 @@
 import { Builder, Browser as SeleniumBrowser, WebDriver } from "selenium-webdriver";
+import { bstackOptions, hubUrl, isBrowserStack } from "../config/browserstack.config";
 
 import chrome from "selenium-webdriver/chrome";
 import firefox from "selenium-webdriver/firefox";
@@ -59,6 +60,11 @@ export class DriverFactory {
 
       default:
         throw new Error(`Navegador no soportado: ${String(browser)}`);
+    }
+
+    if (isBrowserStack) {
+      builder.usingServer(hubUrl).disableEnvironmentOverrides();
+      builder.getCapabilities().set("bstack:options", bstackOptions());
     }
 
     DriverFactory.instance = await builder.build();

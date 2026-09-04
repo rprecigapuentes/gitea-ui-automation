@@ -18,6 +18,7 @@ import { OrganizationRepositoriesPage } from "../ui/pages/organizations/organiza
 import { OrganizationTeamsPage } from "../ui/pages/organizations/organization-teams.page";
 import { IssuePage } from "../ui/pages/issues/issue.page";
 import { IssueListPage } from "../ui/pages/issues/issue-list.page";
+import { isBrowserStack, setSessionStatus } from "../../core/config/browserstack.config";
 
 interface ScenarioState {
   organization?: Organization;
@@ -34,8 +35,14 @@ interface SeededIssue {
   title: string;
 }
 
+interface BrowserStackSession {
+  failed: boolean;
+}
+
 interface CustomFixtures {
   driver: WebDriver;
+  browserstackSession: BrowserStackSession;
+  browserstackStatus: void;
   screenshotOnFailure: void;
   scenarioState: ScenarioState;
   //clients
@@ -86,6 +93,31 @@ export const test = base.extend<CustomFixtures>({
         } catch (err) {
           console.warn(`Failed to capture screenshot for test ${task.name}:`, err);
         }
+      });
+
+      await use();
+    },
+    { auto: true },
+  ],
+  browserstackSession: [
+    async ({ driver }, use) => {
+      const session = { failed: false };
+      await use(session);
+
+      if (!isBrowserStack) return;
+
+      await setSessionStatus(
+        driver,
+        session.failed ? "failed" : "passed",
+        session.failed ? "a test in this file failed" : "every test in this file passed",
+      );
+    },
+    { scope: "file", auto: true },
+  ],
+  browserstackStatus: [
+    async ({ browserstackSession, onTestFailed }, use) => {
+      onTestFailed(() => {
+        browserstackSession.failed = true;
       });
 
       await use();

@@ -1,0 +1,100 @@
+name: BrowserStack
+
+on:
+  schedule:
+    - cron: "0 12 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: browserstack
+  cancel-in-progress: true
+
+jobs:
+  cross-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+
+    services:
+      gitea-test:
+        image: docker.gitea.com/gitea:1.27.3
+        env:
+          USER_UID: "1000"
+          USER_GID: "1000"
+          GITEA__server__ROOT_URL: http://gitea-test:3000/
+          GITEA__server__HTTP_PORT: "3000"
+          GITEA__server__START_SSH_SERVER: "false"
+          GITEA__database__DB_TYPE: sqlite3
+          GITEA__security__INSTALL_LOCK: "true"
+          GITEA__security__SECRET_KEY: gitea-test-not-a-secret
+          GITEA__service__DISABLE_REGISTRATION: "false"
+          GITEA__service__REGISTER_EMAIL_CONFIRM: "false"
+
+    env:
+      MAX_WORKERS: "3"
+      GITEA_BASE_URL: http://gitea-test:3000
+      GITEA_USERNAME: qabot
+      GITEA_PASSWORD: Qa-bot-not-a-secret-1
+      BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+      BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+      BROWSERSTACK_LOCAL_IDENTIFIER: gitea-ui-${{ github.run_id }}
+      BROWSERSTACK_BUILD_NAME: ${{ github.ref_name }}-${{ github.run_number }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - run: npm ci
+
+      - name: Wait for the application under test
+        run: |
+          for _ in $(seq 1 60); do
+            curl -fsS "$GITEA_BASE_URL/api/healthz" > /dev/null && exit 0
+            sleep 2
+          done
+          echo "gitea-test never became healthy"
+          exit 1
+
+      - name: Register the first account, which Gitea makes an administrator
+        run: |
+          csrf=$(curl -fsS -c /tmp/gitea.jar "$GITEA_BASE_URL/user/sign_up" \
+            | sed -n 's/.*name="_csrf" value="\([^"]*\)".*/\1/p' | head -1)
+          curl -fsS -b /tmp/gitea.jar -o /dev/null \
+            -X POST "$GITEA_BASE_URL/user/sign_up" \
+            --data-urlencode "_csrf=$csrf" \
+            --data-urlencode "user_name=$GITEA_USERNAME" \
+            --data-urlencode "email=$GITEA_USERNAME@example.com" \
+            --data-urlencode "password=$GITEA_PASSWORD" \
+            --data-urlencode "retype=$GITEA_PASSWORD"
+          curl -fsS -u "$GITEA_USERNAME:$GITEA_PASSWORD" "$GITEA_BASE_URL/api/v1/user" > /dev/null
+          echo "account $GITEA_USERNAME is usable"
+
+      - name: Create an API token for the account
+        run: |
+          token=$(curl -fsS -u "$GITEA_USERNAME:$GITEA_PASSWORD" \
+            -H "Content-Type: application/json" \
+            -X POST "$GITEA_BASE_URL/api/v1/users/$GITEA_USERNAME/tokens" \
+            -d '{"name":"browserstack","scopes":["write:user","write:repository","write:issue","write:organization"]}' \
+            | node -pe 'JSON.parse(require("fs").readFileSync(0, "utf8")).sha1')
+          echo "::add-mask::$token"
+          echo "GITEA_TOKEN=$token" >> "$GITHUB_ENV"
+          echo "token minted for $GITEA_USERNAME"
+
+      - name: Run the suite on BrowserStack
+        run: npm run test:browserstack
+
+      - name: Generate the Allure report
+        if: always()
+        run: npx allure generate ./allure-results
+
+      - name: Upload the report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: allure-report-browserstack
+          path: |
+            allure-report/
+            reports/junit.xml
+          retention-days: 14
