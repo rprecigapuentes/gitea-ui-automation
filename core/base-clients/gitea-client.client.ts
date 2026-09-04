@@ -1,4 +1,5 @@
 import got, { Got, Response } from "got";
+import { logger } from "../logging/pino.logger";
 
 export abstract class GiteaApiClient {
   protected readonly client: Got;
@@ -11,6 +12,20 @@ export abstract class GiteaApiClient {
         Accept: "application/json",
       },
       responseType: "json",
+      hooks: {
+        beforeRequest: [
+          (options) => {
+            logger.debug({ method: options.method, url: options.url?.toString() }, "api request");
+          },
+        ],
+        afterResponse: [
+          (response) => {
+            logger.debug({ url: response.url, status: response.statusCode }, "api response");
+
+            return response;
+          },
+        ],
+      },
     });
   }
 

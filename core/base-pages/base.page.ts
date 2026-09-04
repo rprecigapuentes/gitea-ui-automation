@@ -1,4 +1,5 @@
 import { WebDriver, Locator, WebElement, until } from "selenium-webdriver";
+import { logger } from "../logging/pino.logger";
 
 export abstract class BasePage {
   protected constructor(protected readonly driver: WebDriver) {}
@@ -11,6 +12,7 @@ export abstract class BasePage {
   }
 
   protected async click(locator: Locator): Promise<void> {
+    logger.debug({ locator: locator }, "click");
     const element = await this.find(locator);
     await this.driver.wait(until.elementIsVisible(element), 10000);
     await element.click();
