@@ -3,15 +3,11 @@ import { describe, expect } from "vitest";
 import { Organization } from "../src/entities/organization.entity";
 import { test as it } from "../src/fixtures/fixture";
 
-const username = process.env.GITEA_USERNAME;
-const password = process.env.GITEA_PASSWORD;
-
 describe("Organization test", () => {
   it("should create an organization and add members", async ({
     driver,
     organizationPages,
     scenarioState,
-    loginPage,
     mainPage,
     createOrganizationPage,
   }) => {
@@ -19,9 +15,8 @@ describe("Organization test", () => {
       name: `test-orgs-${Date.now()}`,
       visibility: "public",
     };
-    //login Page
-    await driver.get(loginPage.getUrl());
-    await loginPage.login(username!, password!);
+    await driver.get(mainPage.getUrl());
+
     expect(mainPage.getUrl()).toBe(await driver.getCurrentUrl());
     //main page
     await mainPage.navigateCreateOrganization();

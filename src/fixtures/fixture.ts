@@ -18,6 +18,7 @@ import { OrganizationRepositoriesPage } from "../ui/pages/organizations/organiza
 import { OrganizationTeamsPage } from "../ui/pages/organizations/organization-teams.page";
 import { IssuePage } from "../ui/pages/issues/issue.page";
 import { IssueListPage } from "../ui/pages/issues/issue-list.page";
+import { AuthClient } from "../api/clients/auth.client";
 import { isBrowserStack, setSessionStatus } from "../../core/config/browserstack.config";
 
 interface ScenarioState {
@@ -45,6 +46,9 @@ interface CustomFixtures {
   browserstackStatus: void;
   screenshotOnFailure: void;
   scenarioState: ScenarioState;
+  authClient: AuthClient;
+  skipAutoLogin: boolean;
+  loggedInSession: void;
   //clients
   userClient: UserClient;
   organizationClient: OrganizationClient;
@@ -95,6 +99,42 @@ export const test = base.extend<CustomFixtures>({
         }
       });
 
+      await use();
+    },
+    { auto: true },
+  ],
+  authClient: async ({}, use) => {
+    await use(new AuthClient(process.env.GITEA_BASE_URL!));
+  },
+  skipAutoLogin: async ({}, use) => {
+    await use(false);
+  },
+  loggedInSession: [
+    async ({ driver, authClient, skipAutoLogin }, use) => {
+      if (skipAutoLogin) {
+        await use();
+        return;
+      }
+      const baseUrl = process.env.GITEA_BASE_URL!;
+      const username = process.env.GITEA_USERNAME!;
+      const password = process.env.GITEA_PASSWORD!;
+      await driver.get(baseUrl);
+
+      const browserUserAgent = await driver.executeScript("return navigator.userAgent;");
+      const cookies = await authClient.loginViaApi(username, password, browserUserAgent as string);
+      await driver.manage().deleteAllCookies();
+
+      for (const cookie of cookies) {
+        await driver.manage().addCookie({
+          name: cookie.name,
+          value: cookie.value,
+          path: cookie.path || "/",
+          secure: cookie.secure,
+          httpOnly: cookie.httpOnly,
+        });
+      }
+
+      await driver.navigate().refresh();
       await use();
     },
     { auto: true },
