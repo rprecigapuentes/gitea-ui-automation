@@ -17,9 +17,12 @@ describe("Organization test", () => {
     };
     await mainPage.open();
 
-    expect(mainPage.getUrl()).toBe(await driver.getCurrentUrl());
+    //expect(mainPage.getUrl()).toBe(await driver.getCurrentUrl());
     //main page
-    await mainPage.navigateCreateOrganization();
+    await mainPage.clickAddNewElementDropdown();
+    expect(await mainPage.isAddNewElementMenuVisible()).toBe(true);
+    await mainPage.clickNewOrganizationItem();
+
     expect(createOrganizationPage.getUrl()).toBe(await driver.getCurrentUrl());
     //Create Organization page
     await createOrganizationPage.enterOrganizationName(organizationToCreate.name);

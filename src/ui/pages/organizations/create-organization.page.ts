@@ -28,13 +28,13 @@ export class CreateOrganizationPage extends BasePage {
     let radio;
     switch (option) {
       case "public":
-        radio = await this.find(this.locators.publicVisibilityRadio);
+        radio = await this.findElement(this.locators.publicVisibilityRadio);
         break;
       case "limited":
-        radio = await this.find(this.locators.limitedVisibilityRadio);
+        radio = await this.findElement(this.locators.limitedVisibilityRadio);
         break;
       case "private":
-        radio = await this.find(this.locators.privateVisibilityRadio);
+        radio = await this.findElement(this.locators.privateVisibilityRadio);
         break;
     }
     await radio.click();
