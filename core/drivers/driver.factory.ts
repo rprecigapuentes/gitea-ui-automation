@@ -68,6 +68,7 @@ export class DriverFactory {
     }
 
     DriverFactory.instance = await builder.build();
+    await DriverFactory.instance.manage().setTimeouts({ implicit: 3000 });
     console.log(`WebDriver started: ${browser}`);
 
     return DriverFactory.instance;
