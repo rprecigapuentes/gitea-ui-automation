@@ -3,13 +3,15 @@ import { logger } from "../../logging/pino.logger";
 
 type SearchRoot = WebDriver | WebElement;
 
+const DEFAULT_TIMEOUT_MS = 5000;
+
 export abstract class BaseComponent {
   constructor(protected driver: WebDriver) {}
 
   protected async findElement(
     locator: By,
     root: SearchRoot = this.driver,
-    timeoutMs: number = 5000,
+    timeoutMs: number = DEFAULT_TIMEOUT_MS,
   ): Promise<WebElement> {
     const elements = await this.findElements(locator, root, timeoutMs);
 
@@ -25,7 +27,7 @@ export abstract class BaseComponent {
   protected async findElements(
     locator: By,
     root: SearchRoot = this.driver,
-    timeoutMs: number = 5000,
+    timeoutMs: number = DEFAULT_TIMEOUT_MS,
   ): Promise<WebElement[]> {
     const elements = (await this.driver.wait(async () => {
       const found = await root.findElements(locator);
@@ -42,7 +44,7 @@ export abstract class BaseComponent {
   async click(
     locator: By,
     root: SearchRoot = this.driver,
-    timeoutMs: number = 5000,
+    timeoutMs: number = DEFAULT_TIMEOUT_MS,
   ): Promise<void> {
     const element = await this.findElement(locator, root, timeoutMs);
     await element.click();
@@ -52,7 +54,7 @@ export abstract class BaseComponent {
     locator: By,
     text: string,
     root: SearchRoot = this.driver,
-    timeoutMs: number = 5000,
+    timeoutMs: number = DEFAULT_TIMEOUT_MS,
   ): Promise<void> {
     const element = await this.findElement(locator, root, timeoutMs);
     await element.sendKeys(text);
