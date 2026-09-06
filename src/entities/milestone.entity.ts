@@ -15,7 +15,7 @@ export interface SeededMilestone {
   id: number;
   title: string;
   description: string;
-  dueDate: string;
+  dueDate: Date;
 }
 
 export interface MilestoneRow {
