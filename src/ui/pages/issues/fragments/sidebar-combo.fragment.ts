@@ -3,22 +3,36 @@ import { BaseComponent } from "../../../../../core/ui/base-pages/base-component"
 import { labelIdFromHref } from "./label-chip.fragment";
 
 export class SidebarComboFragment extends BaseComponent {
-  private readonly root: string;
-
   private readonly locators: {
     trigger: By;
     menuItem: (value: number) => By;
     selectedItems: By;
   };
 
-  constructor(driver: WebDriver, updateUrlFragment: string) {
+  private constructor(
+    driver: WebDriver,
+    private readonly root: string,
+  ) {
     super(driver);
-    this.root = `.issue-sidebar-combo[data-update-url*="${updateUrlFragment}"]`;
     this.locators = {
-      trigger: By.css(`${this.root} .ui.dropdown a.fixed-text`),
-      menuItem: (value: number) => By.css(`${this.root} .menu a.item[data-value="${value}"]`),
-      selectedItems: By.css(`${this.root} .labels-list a.item`),
+      trigger: By.css(`${root} .ui.dropdown a.fixed-text`),
+      menuItem: (value: number) => By.css(`${root} .menu a.item[data-value="${value}"]`),
+      selectedItems: By.css(`${root} .ui.list .item:not(.empty-list)`),
     };
+  }
+
+  static onIssue(driver: WebDriver, updateUrlFragment: string): SidebarComboFragment {
+    return new SidebarComboFragment(
+      driver,
+      `.issue-sidebar-combo[data-update-url*="${updateUrlFragment}"]`,
+    );
+  }
+
+  static byField(driver: WebDriver, fieldName: string): SidebarComboFragment {
+    return new SidebarComboFragment(
+      driver,
+      `.issue-sidebar-combo:has(> input.combo-value[name="${fieldName}"])`,
+    );
   }
 
   async toggle(value: number): Promise<void> {

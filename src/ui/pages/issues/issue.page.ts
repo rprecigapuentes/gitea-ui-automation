@@ -14,7 +14,7 @@ export class IssuePage extends BasePage {
 
   constructor(driver: WebDriver) {
     super(driver);
-    this.labelCombo = new SidebarComboFragment(driver, "/issues/labels");
+    this.labelCombo = SidebarComboFragment.onIssue(driver, "/issues/labels");
   }
 
   override getUrl(owner: string, repository: string, issueNumber: number): string {
