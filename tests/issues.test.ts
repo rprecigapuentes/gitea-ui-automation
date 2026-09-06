@@ -60,13 +60,19 @@ describe("Scoped labels test", () => {
     await issuePage.applyLabel(bug);
     await issuePage.waitForAppliedLabels([low, bug]);
 
-    await driver.get(issueListPage.getUrl(owner, repository, low));
+    await driver.get(issueListPage.getUrl(owner, repository));
+    await issueListPage.filterByLabel(low);
+    expect(await issueListPage.getIssueTitles()).toContain(issue.title);
+    expect(await issueListPage.getLabelIdsOf(issue.title)).toEqual(
+      expect.arrayContaining([low, bug]),
+    );
+
+    await driver.get(issueListPage.getUrl(owner, repository));
+    await issueListPage.filterByLabel(bug);
     expect(await issueListPage.getIssueTitles()).toContain(issue.title);
 
-    await driver.get(issueListPage.getUrl(owner, repository, bug));
-    expect(await issueListPage.getIssueTitles()).toContain(issue.title);
-
-    await driver.get(issueListPage.getUrl(owner, repository, high));
+    await driver.get(issueListPage.getUrl(owner, repository));
+    await issueListPage.filterByLabel(high);
     expect(await issueListPage.getIssueTitles()).not.toContain(issue.title);
   });
 });
