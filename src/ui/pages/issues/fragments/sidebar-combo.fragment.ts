@@ -42,10 +42,33 @@ export class SidebarComboFragment extends BaseComponent {
     );
   }
 
+  /**
+   * A combo in `multiple` selection mode defers its apply to `onHide`, so closing the menu is part
+   * of the action rather than cleanup after it.
+   */
   async toggle(value: number): Promise<void> {
     await this.click(this.locators.trigger);
     await this.click(this.locators.menuItem(value));
     await this.click(this.locators.trigger);
+  }
+
+  /**
+   * A combo in `single` selection mode applies on click and hides itself, so clicking the trigger
+   * again would reopen the menu and leave it covering the sidebar.
+   */
+  async select(value: number): Promise<void> {
+    await this.click(this.locators.trigger);
+    await this.click(this.locators.menuItem(value));
+  }
+
+  async getSelectedTexts(): Promise<string[]> {
+    try {
+      const items = await this.driver.findElements(this.locators.selectedItems);
+
+      return await Promise.all(items.map((item) => item.getText()));
+    } catch {
+      return [];
+    }
   }
 
   async getSelectedIds(): Promise<number[]> {
