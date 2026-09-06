@@ -2,23 +2,44 @@ import { By, WebDriver } from "selenium-webdriver";
 import { BaseComponent } from "../../../../../core/ui/base-pages/base-component";
 import { labelIdFromHref } from "./label-chip.fragment";
 
+/**
+ * Gitea renders the same combo widget for labels, the milestone, the assignees and the projects.
+ * The four differ by the name of their hidden `combo-value` input, and on an existing issue they
+ * also differ by `data-update-url`. The creation form has no issue yet, so it renders no update
+ * URL at all: `byField` is the scoping that works on both pages, `onIssue` the one that reads as
+ * the endpoint the widget writes to.
+ */
 export class SidebarComboFragment extends BaseComponent {
-  private readonly root: string;
-
   private readonly locators: {
     trigger: By;
     menuItem: (value: number) => By;
     selectedItems: By;
   };
 
-  constructor(driver: WebDriver, updateUrlFragment: string) {
+  private constructor(
+    driver: WebDriver,
+    private readonly root: string,
+  ) {
     super(driver);
-    this.root = `.issue-sidebar-combo[data-update-url*="${updateUrlFragment}"]`;
     this.locators = {
-      trigger: By.css(`${this.root} .ui.dropdown a.fixed-text`),
-      menuItem: (value: number) => By.css(`${this.root} .menu a.item[data-value="${value}"]`),
-      selectedItems: By.css(`${this.root} .labels-list a.item`),
+      trigger: By.css(`${root} .ui.dropdown a.fixed-text`),
+      menuItem: (value: number) => By.css(`${root} .menu a.item[data-value="${value}"]`),
+      selectedItems: By.css(`${root} .ui.list .item:not(.empty-list)`),
     };
+  }
+
+  static onIssue(driver: WebDriver, updateUrlFragment: string): SidebarComboFragment {
+    return new SidebarComboFragment(
+      driver,
+      `.issue-sidebar-combo[data-update-url*="${updateUrlFragment}"]`,
+    );
+  }
+
+  static byField(driver: WebDriver, fieldName: string): SidebarComboFragment {
+    return new SidebarComboFragment(
+      driver,
+      `.issue-sidebar-combo:has(> input.combo-value[name="${fieldName}"])`,
+    );
   }
 
   async toggle(value: number): Promise<void> {
