@@ -3,7 +3,13 @@ import { logger } from "../../logging/pino.logger";
 
 type SearchRoot = WebDriver | WebElement;
 
-const DEFAULT_TIMEOUT_MS = 5000;
+/**
+ * The driver carries a 3000 ms implicit wait, so a poll that matches nothing costs three seconds
+ * inside findElements and a 5000 ms budget buys barely two attempts. Ten seconds is what the
+ * explicit waits in the page objects already use and what a page under three parallel browsers
+ * needs.
+ */
+const DEFAULT_TIMEOUT_MS = 10000;
 
 export abstract class BaseComponent {
   constructor(protected driver: WebDriver) {}
@@ -35,7 +41,13 @@ export abstract class BaseComponent {
     }, timeoutMs)) as WebElement[];
 
     await Promise.all(
-      elements.map((element) => this.driver.wait(until.elementIsVisible(element), timeoutMs)),
+      elements.map((element) =>
+        this.driver.wait(
+          until.elementIsVisible(element),
+          timeoutMs,
+          `An element matching "${locator.toString()}" never became visible`,
+        ),
+      ),
     );
 
     return elements;

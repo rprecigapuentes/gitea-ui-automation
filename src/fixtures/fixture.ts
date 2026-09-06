@@ -8,10 +8,11 @@ import { RepositoryClient } from "../api/clients/repository.client";
 import { LabelClient } from "../api/clients/label.client";
 import { IssueClient } from "../api/clients/issue.client";
 import { MilestoneClient } from "../api/clients/milestone.client";
+import { TeamClient } from "../api/clients/team.client";
 import { Organization } from "../entities/organization.entity";
 import { ScopedLabels, SeededLabel } from "../entities/label.entity";
 import { SeededMilestone } from "../entities/milestone.entity";
-import { User } from "../entities/user.entity";
+import { SeededUser, User } from "../entities/user.entity";
 import { SeededIssue } from "../entities/issue.entity";
 import { testDataName } from "../../core/utils/test-data.util";
 import { BrowserStackSession } from "../entities/browserstack.entity";
@@ -36,6 +37,9 @@ import { isBrowserStack, setSessionStatus } from "../../core/config/browserstack
 import { LabelListPage } from "../ui/pages/issues/label-list.page";
 import { CreateIssuePage } from "../ui/pages/issues/create-issue.page";
 import { MilestoneListPage } from "../ui/pages/issues/milestone-list.page";
+import { CreateProjectPage } from "../ui/pages/projects/create-project.page";
+import { ProjectListPage } from "../ui/pages/projects/project-list.page";
+import { ProjectBoardPage } from "../ui/pages/projects/project-board.page";
 
 interface CustomFixtures {
   driver: WebDriver;
@@ -54,6 +58,7 @@ interface CustomFixtures {
   labelClient: LabelClient;
   issueClient: IssueClient;
   milestoneClient: MilestoneClient;
+  teamClient: TeamClient;
   //pages
   loginPage: LoginPage;
   mainPage: MainPage;
@@ -70,6 +75,9 @@ interface CustomFixtures {
   labelListPage: LabelListPage;
   createIssuePage: CreateIssuePage;
   milestoneListPage: MilestoneListPage;
+  createProjectPage: CreateProjectPage;
+  projectListPage: ProjectListPage;
+  projectBoardPage: ProjectBoardPage;
   //entities
   scopedLabels: ScopedLabels;
   issue: SeededIssue;
@@ -77,6 +85,10 @@ interface CustomFixtures {
   maintainer: User;
   classificationLabel: SeededLabel;
   milestone: SeededMilestone;
+  collaborator: SeededUser;
+  organization: string;
+  organizationRepositories: string[];
+  organizationIssues: SeededIssue[];
   //cleanup
   cleanupOrganizations: void;
 }
@@ -208,11 +220,23 @@ export const test = base.extend<CustomFixtures>({
   milestoneClient: async ({}, use) => {
     await use(new MilestoneClient(process.env.GITEA_BASE_URL!, process.env.GITEA_TOKEN!));
   },
+  teamClient: async ({}, use) => {
+    await use(new TeamClient(process.env.GITEA_BASE_URL!, process.env.GITEA_TOKEN!));
+  },
   createIssuePage: async ({ driver }, use) => {
     await use(new CreateIssuePage(driver));
   },
   milestoneListPage: async ({ driver }, use) => {
     await use(new MilestoneListPage(driver));
+  },
+  createProjectPage: async ({ driver }, use) => {
+    await use(new CreateProjectPage(driver));
+  },
+  projectListPage: async ({ driver }, use) => {
+    await use(new ProjectListPage(driver));
+  },
+  projectBoardPage: async ({ driver }, use) => {
+    await use(new ProjectBoardPage(driver));
   },
   issuePage: async ({ driver }, use) => {
     const issuePage = new IssuePage(driver);
@@ -274,9 +298,15 @@ export const test = base.extend<CustomFixtures>({
     },
     { auto: true },
   ],
-  repository: async ({ repositoryClient }, use) => {
+  /**
+   * The name carries the id of the test as well as the timestamp: two spec files running on the
+   * same browser at the same time reach this line inside the same millisecond, and Gitea answers
+   * the second one with a 409.
+   */
+  repository: async ({ repositoryClient, task }, use) => {
     const owner = process.env.GITEA_USERNAME!;
-    const name = `test-issues-${Date.now()}-${process.env.BROWSER ?? "local"}`;
+    const taskId = task.id.replace(/[^a-zA-Z0-9-_]/g, "-");
+    const name = `test-issues-${Date.now()}-${process.env.BROWSER ?? "local"}-${taskId}`;
 
     await repositoryClient.createRepository(name);
     await use(name);
@@ -332,6 +362,55 @@ export const test = base.extend<CustomFixtures>({
     const title = "Scoped labels acceptance";
     const response = await issueClient.createIssue(owner, repository, title);
 
-    await use({ number: response.body.number, title });
+    await use({ id: response.body.id, number: response.body.number, title });
+  },
+  collaborator: async ({ userClient }, use) => {
+    const username = testDataName("ISS-03", "User");
+    const password = "Aut0mation!Collaborator";
+
+    await userClient.createUser({
+      username,
+      email: `${username.toLowerCase()}@example.com`,
+      password,
+    });
+
+    await use({ username, password });
+    await userClient.deleteUser(username);
+  },
+  organization: async ({ organizationClient, scenarioState }, use) => {
+    const organization: Organization = {
+      name: testDataName("ISS-03", "Org"),
+      visibility: "public",
+    };
+
+    await organizationClient.createOrganization(organization);
+    scenarioState.organization = organization;
+
+    await use(organization.name);
+  },
+  organizationRepositories: async ({ repositoryClient, organization }, use) => {
+    const names = [testDataName("ISS-03", "RepoA"), testDataName("ISS-03", "RepoB")];
+
+    for (const name of names) {
+      await repositoryClient.createOrgRepository(organization, name);
+    }
+
+    await use(names);
+
+    for (const name of names) {
+      await repositoryClient.deleteRepository(organization, name);
+    }
+  },
+  organizationIssues: async ({ issueClient, organization, organizationRepositories }, use) => {
+    const issues: SeededIssue[] = [];
+
+    for (const repository of organizationRepositories) {
+      const title = `${repository} tracked issue`;
+      const response = await issueClient.createIssue(organization, repository, title);
+
+      issues.push({ id: response.body.id, number: response.body.number, title });
+    }
+
+    await use(issues);
   },
 });

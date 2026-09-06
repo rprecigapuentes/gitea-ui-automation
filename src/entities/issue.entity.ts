@@ -5,6 +5,7 @@ export interface Issue {
 }
 
 export interface SeededIssue {
+  id: number;
   number: number;
   title: string;
 }

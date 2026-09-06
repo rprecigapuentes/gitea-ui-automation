@@ -10,6 +10,7 @@ export class IssuePage extends BasePage {
   private readonly labelCombo: SidebarComboFragment;
   private readonly milestoneCombo: SidebarComboFragment;
   private readonly assigneeCombo: SidebarComboFragment;
+  private readonly projectCombo: SidebarComboFragment;
 
   private readonly locators = {
     timelineEvents: By.css(".timeline-item.event"),
@@ -23,6 +24,8 @@ export class IssuePage extends BasePage {
     dueDateSubmit: By.css("form.issue-due-form button"),
     statusButton: By.css("#status-button"),
     statusButtonReopen: By.css("#status-button[value='reopen']"),
+    projectCardTitles: By.css(".issue-sidebar-project-cards > .item > a.suppressed .gt-ellipsis"),
+    projectColumnName: By.css(".sidebar-project-column-combo .fixed-text .gt-ellipsis"),
   };
 
   constructor(driver: WebDriver) {
@@ -30,6 +33,7 @@ export class IssuePage extends BasePage {
     this.labelCombo = SidebarComboFragment.onIssue(driver, "/issues/labels");
     this.milestoneCombo = SidebarComboFragment.byField(driver, "milestone_id");
     this.assigneeCombo = SidebarComboFragment.byField(driver, "assignee_ids");
+    this.projectCombo = SidebarComboFragment.byField(driver, "project_ids");
   }
 
   override getUrl(owner: string, repository: string, issueNumber: number): string {
@@ -151,6 +155,29 @@ export class IssuePage extends BasePage {
 
   async getDueDate(): Promise<string> {
     return (await this.findElement(this.locators.dueDate)).getText();
+  }
+
+  /**
+   * The project combo applies when the menu closes and the sidebar is then replaced wholesale, so
+   * the project card is waited for rather than read straight after the click.
+   */
+  async attachProject(projectId: number): Promise<void> {
+    await this.projectCombo.toggle(projectId);
+    await this.driver.wait(
+      async () => (await this.driver.findElements(this.locators.projectCardTitles)).length > 0,
+      WAIT_TIMEOUT_MS,
+      `the issue never carried the project ${projectId}`,
+    );
+  }
+
+  async getAttachedProjectTitles(): Promise<string[]> {
+    const titles = await this.driver.findElements(this.locators.projectCardTitles);
+
+    return Promise.all(titles.map((title) => title.getText()));
+  }
+
+  async getProjectColumnName(): Promise<string> {
+    return (await this.findElement(this.locators.projectColumnName)).getText();
   }
 
   /**
