@@ -11,7 +11,7 @@ const labels = {
 };
 
 describe("Scoped labels test", () => {
-  it("should replace the label of the same scope and keep labels of other scopes", async ({
+  it("AT-ISS-02 Verify that a scoped label replaces the label of its own scope, coexists with labels of other scopes, and leaves the issue when it is removed", async ({
     driver,
     repository,
     issue,
@@ -74,5 +74,17 @@ describe("Scoped labels test", () => {
     await driver.get(issueListPage.getUrl(owner, repository));
     await issueListPage.filterByLabel(high);
     expect(await issueListPage.getIssueTitles()).not.toContain(issue.title);
+
+    await driver.get(issuePage.getUrl(owner, repository, issue.number));
+    await issuePage.removeLabel(bug);
+    await issuePage.waitForAppliedLabels([low]);
+
+    await driver.get(issueListPage.getUrl(owner, repository));
+    await issueListPage.filterByLabel(bug);
+    expect(await issueListPage.getIssueTitles()).not.toContain(issue.title);
+
+    await driver.get(labelListPage.getUrl(owner, repository));
+    expect((await labelListPage.waitForLabel(labels.priorityLow.name)).issueCount).toBe(1);
+    expect((await labelListPage.waitForLabel(labels.kindBug.name)).issueCount).toBe(0);
   });
 });
