@@ -41,6 +41,21 @@ export class SidebarComboFragment extends BaseComponent {
     await this.click(this.locators.trigger);
   }
 
+  async select(value: number): Promise<void> {
+    await this.click(this.locators.trigger);
+    await this.click(this.locators.menuItem(value));
+  }
+
+  async getSelectedTexts(): Promise<string[]> {
+    try {
+      const items = await this.driver.findElements(this.locators.selectedItems);
+
+      return await Promise.all(items.map((item) => item.getText()));
+    } catch {
+      return [];
+    }
+  }
+
   async getSelectedIds(): Promise<number[]> {
     try {
       const links = await this.driver.findElements(this.locators.selectedItems);
