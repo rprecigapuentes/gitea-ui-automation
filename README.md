@@ -203,6 +203,7 @@ src/                                      # the suite, specific to Gitea
 └── ui/pages/                            # page objects by feature
     ├── authentication/
     ├── issues/
+    │   └── fragments/
     ├── organizations/
     │   ├── facade/
     │   │   └── organization.facade.ts   # composes the fragments below into one navigable view
