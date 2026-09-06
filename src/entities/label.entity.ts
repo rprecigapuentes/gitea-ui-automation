@@ -10,6 +10,11 @@ export interface NewLabel {
   exclusive: boolean;
 }
 
+export interface SeededLabel {
+  id: number;
+  name: string;
+}
+
 export interface ScopedLabels {
   priorityHigh: number;
   priorityLow: number;

@@ -7,9 +7,13 @@ import { OrganizationClient } from "../api/clients/organizations.client";
 import { RepositoryClient } from "../api/clients/repository.client";
 import { LabelClient } from "../api/clients/label.client";
 import { IssueClient } from "../api/clients/issue.client";
+import { MilestoneClient } from "../api/clients/milestone.client";
 import { Organization } from "../entities/organization.entity";
-import { ScopedLabels } from "../entities/label.entity";
+import { ScopedLabels, SeededLabel } from "../entities/label.entity";
+import { SeededMilestone } from "../entities/milestone.entity";
+import { User } from "../entities/user.entity";
 import { SeededIssue } from "../entities/issue.entity";
+import { testDataName } from "../../core/utils/test-data.util";
 import { BrowserStackSession } from "../entities/browserstack.entity";
 import { ScenarioState } from "../entities/scenario.entity";
 import { WebDriver } from "selenium-webdriver";
@@ -29,6 +33,8 @@ import { IssueListPage } from "../ui/pages/issues/issue-list.page";
 import { AuthClient } from "../api/clients/auth.client";
 import { isBrowserStack, setSessionStatus } from "../../core/config/browserstack.config";
 import { LabelListPage } from "../ui/pages/issues/label-list.page";
+import { CreateIssuePage } from "../ui/pages/issues/create-issue.page";
+import { MilestoneListPage } from "../ui/pages/issues/milestone-list.page";
 
 interface CustomFixtures {
   driver: WebDriver;
@@ -45,6 +51,7 @@ interface CustomFixtures {
   repositoryClient: RepositoryClient;
   labelClient: LabelClient;
   issueClient: IssueClient;
+  milestoneClient: MilestoneClient;
   //pages
   loginPage: LoginPage;
   mainPage: MainPage;
@@ -59,10 +66,15 @@ interface CustomFixtures {
   issuePage: IssuePage;
   issueListPage: IssueListPage;
   labelListPage: LabelListPage;
+  createIssuePage: CreateIssuePage;
+  milestoneListPage: MilestoneListPage;
   //entities
   scopedLabels: ScopedLabels;
   issue: SeededIssue;
   repository: string;
+  maintainer: User;
+  classificationLabel: SeededLabel;
+  milestone: SeededMilestone;
   //cleanup
   cleanupOrganizations: void;
 }
@@ -184,6 +196,15 @@ export const test = base.extend<CustomFixtures>({
   issueClient: async ({}, use) => {
     await use(new IssueClient(process.env.GITEA_BASE_URL!, process.env.GITEA_TOKEN!));
   },
+  milestoneClient: async ({}, use) => {
+    await use(new MilestoneClient(process.env.GITEA_BASE_URL!, process.env.GITEA_TOKEN!));
+  },
+  createIssuePage: async ({ driver }, use) => {
+    await use(new CreateIssuePage(driver));
+  },
+  milestoneListPage: async ({ driver }, use) => {
+    await use(new MilestoneListPage(driver));
+  },
   issuePage: async ({ driver }, use) => {
     const issuePage = new IssuePage(driver);
     await use(issuePage);
@@ -269,6 +290,33 @@ export const test = base.extend<CustomFixtures>({
       priorityLow: await createLabel("priority/low", "#0e8a16"),
       kindBug: await createLabel("kind/bug", "#1d76db"),
     });
+  },
+  maintainer: async ({ userClient }, use) => {
+    await use((await userClient.getUser()).body);
+  },
+  classificationLabel: async ({ labelClient, repository }, use) => {
+    const owner = process.env.GITEA_USERNAME!;
+    const name = testDataName("ISS-01", "Label");
+    const response = await labelClient.createLabel(owner, repository, {
+      name,
+      color: "#5319e7",
+      exclusive: false,
+    });
+
+    await use({ id: response.body.id, name });
+  },
+  milestone: async ({ milestoneClient, repository }, use) => {
+    const owner = process.env.GITEA_USERNAME!;
+    const title = testDataName("ISS-01", "Milestone");
+    const description = "Milestone the created issue has to advance when it is closed";
+    const dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    const response = await milestoneClient.createMilestone(owner, repository, {
+      title,
+      description,
+      due_on: dueDate.toISOString(),
+    });
+
+    await use({ id: response.body.id, title, description, dueDate });
   },
   issue: async ({ issueClient, repository }, use) => {
     const owner = process.env.GITEA_USERNAME!;
