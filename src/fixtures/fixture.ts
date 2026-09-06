@@ -16,6 +16,7 @@ import { SeededIssue } from "../entities/issue.entity";
 import { testDataName } from "../../core/utils/test-data.util";
 import { BrowserStackSession } from "../entities/browserstack.entity";
 import { ScenarioState } from "../entities/scenario.entity";
+import { BrowserSession } from "../entities/session.entity";
 import { WebDriver } from "selenium-webdriver";
 import { DriverFactory } from "../../core/drivers/driver.factory";
 import { LoginPage } from "../ui/pages/authentication/login.page";
@@ -44,6 +45,7 @@ interface CustomFixtures {
   scenarioState: ScenarioState;
   authClient: AuthClient;
   skipAutoLogin: boolean;
+  session: BrowserSession;
   loggedInSession: void;
   //clients
   userClient: UserClient;
@@ -114,32 +116,39 @@ export const test = base.extend<CustomFixtures>({
   skipAutoLogin: async ({}, use) => {
     await use(false);
   },
+  session: async ({ driver, authClient }, use) => {
+    await use({
+      loginAs: async (username: string, password: string) => {
+        await driver.get(process.env.GITEA_BASE_URL!);
+
+        const browserUserAgent = await driver.executeScript("return navigator.userAgent;");
+        const cookies = await authClient.loginViaApi(
+          username,
+          password,
+          browserUserAgent as string,
+        );
+        await driver.manage().deleteAllCookies();
+
+        for (const cookie of cookies) {
+          await driver.manage().addCookie({
+            name: cookie.name,
+            value: cookie.value,
+            path: cookie.path || "/",
+            secure: cookie.secure,
+            httpOnly: cookie.httpOnly,
+          });
+        }
+
+        await driver.navigate().refresh();
+      },
+    });
+  },
   loggedInSession: [
-    async ({ driver, authClient, skipAutoLogin }, use) => {
-      if (skipAutoLogin) {
-        await use();
-        return;
-      }
-      const baseUrl = process.env.GITEA_BASE_URL!;
-      const username = process.env.GITEA_USERNAME!;
-      const password = process.env.GITEA_PASSWORD!;
-      await driver.get(baseUrl);
-
-      const browserUserAgent = await driver.executeScript("return navigator.userAgent;");
-      const cookies = await authClient.loginViaApi(username, password, browserUserAgent as string);
-      await driver.manage().deleteAllCookies();
-
-      for (const cookie of cookies) {
-        await driver.manage().addCookie({
-          name: cookie.name,
-          value: cookie.value,
-          path: cookie.path || "/",
-          secure: cookie.secure,
-          httpOnly: cookie.httpOnly,
-        });
+    async ({ session, skipAutoLogin }, use) => {
+      if (!skipAutoLogin) {
+        await session.loginAs(process.env.GITEA_USERNAME!, process.env.GITEA_PASSWORD!);
       }
 
-      await driver.navigate().refresh();
       await use();
     },
     { auto: true },
