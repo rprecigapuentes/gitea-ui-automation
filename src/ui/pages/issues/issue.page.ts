@@ -1,19 +1,14 @@
-import { By, WebDriver } from "selenium-webdriver";
+import { WebDriver } from "selenium-webdriver";
 import { BasePage } from "../../../../core/ui/base-pages/base.page";
 import { baseUrl } from "../../../../core/config/config";
-
-const labelWidget = '.issue-sidebar-combo[data-update-url*="/issues/labels"]';
+import { SidebarComboFragment } from "./fragments/sidebar-combo.fragment";
 
 export class IssuePage extends BasePage {
-  private readonly locators = {
-    labelDropdown: By.css(`${labelWidget} .ui.dropdown a.fixed-text`),
-    labelMenuItem: (labelId: number) =>
-      By.css(`${labelWidget} .menu a.item[data-value="${labelId}"]`),
-    appliedLabels: By.css(`${labelWidget} .labels-list a.item`),
-  };
+  private readonly labelCombo: SidebarComboFragment;
 
   constructor(driver: WebDriver) {
     super(driver);
+    this.labelCombo = new SidebarComboFragment(driver, "/issues/labels");
   }
 
   override getUrl(owner: string, repository: string, issueNumber: number): string {
@@ -21,23 +16,11 @@ export class IssuePage extends BasePage {
   }
 
   async applyLabel(labelId: number): Promise<void> {
-    await this.click(this.locators.labelDropdown);
-    await this.click(this.locators.labelMenuItem(labelId));
-    await this.click(this.locators.labelDropdown);
+    await this.labelCombo.toggle(labelId);
   }
 
   async getAppliedLabelIds(): Promise<number[]> {
-    try {
-      const links = await this.driver.findElements(this.locators.appliedLabels);
-      const hrefs = await Promise.all(links.map((link) => link.getAttribute("href")));
-
-      return hrefs
-        .map((href) => new URL(href ?? "", baseUrl).searchParams.get("labels"))
-        .filter((labelId): labelId is string => labelId !== null)
-        .map(Number);
-    } catch {
-      return [];
-    }
+    return this.labelCombo.getSelectedIds();
   }
 
   async waitForAppliedLabels(expected: number[]): Promise<void> {
