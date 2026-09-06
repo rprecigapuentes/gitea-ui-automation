@@ -3,6 +3,11 @@ import { BasePage } from "../../../../core/ui/base-pages/base.page";
 import { baseUrl } from "../../../../core/config/config";
 import { labelIdFromHref } from "./fragments/label-chip.fragment";
 
+const WAIT_TIMEOUT_MS = 10000;
+
+const milestoneQuery = (milestoneId: number): string =>
+  `a.item[href*="milestone=${milestoneId}&"], a.item[href$="milestone=${milestoneId}"]`;
+
 export class IssueListPage extends BasePage {
   private readonly locators = {
     rows: By.css("#issue-list > .item"),
@@ -11,6 +16,12 @@ export class IssueListPage extends BasePage {
     filterDropdown: By.css(".label-filter"),
     filterItem: (labelId: number) =>
       By.css(`.label-filter a.item.label-filter-query-item[data-label-id="${labelId}"]`),
+    milestoneFilterDropdown: (milestoneId: number) =>
+      By.css(`#issue-filters .ui.dropdown:has(${milestoneQuery(milestoneId)})`),
+    milestoneFilterItem: (milestoneId: number) =>
+      By.css(
+        `#issue-filters .ui.dropdown a.item[href*="milestone=${milestoneId}&"], #issue-filters .ui.dropdown a.item[href$="milestone=${milestoneId}"]`,
+      ),
   };
 
   constructor(driver: WebDriver) {
@@ -25,6 +36,18 @@ export class IssueListPage extends BasePage {
     await this.click(this.locators.filterDropdown);
     await this.click(this.locators.filterItem(labelId));
     await this.driver.wait(until.urlContains(`labels=${labelId}`), 10000);
+  }
+
+  async filterByMilestone(milestoneId: number): Promise<void> {
+    await this.click(this.locators.milestoneFilterDropdown(milestoneId));
+    await this.click(this.locators.milestoneFilterItem(milestoneId));
+    await this.driver.wait(
+      until.urlMatches(new RegExp(`milestone=${milestoneId}(&|$)`)),
+      WAIT_TIMEOUT_MS,
+    );
+  }
+  async filterByNoMilestone(): Promise<void> {
+    await this.filterByMilestone(-1);
   }
 
   async getIssueTitles(): Promise<string[]> {
