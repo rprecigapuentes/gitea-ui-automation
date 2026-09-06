@@ -28,6 +28,7 @@ import { IssuePage } from "../ui/pages/issues/issue.page";
 import { IssueListPage } from "../ui/pages/issues/issue-list.page";
 import { AuthClient } from "../api/clients/auth.client";
 import { isBrowserStack, setSessionStatus } from "../../core/config/browserstack.config";
+import { LabelListPage } from "../ui/pages/issues/label-list.page";
 
 interface CustomFixtures {
   driver: WebDriver;
@@ -57,6 +58,7 @@ interface CustomFixtures {
   };
   issuePage: IssuePage;
   issueListPage: IssueListPage;
+  labelListPage: LabelListPage;
   //entities
   scopedLabels: ScopedLabels;
   issue: SeededIssue;
@@ -175,6 +177,9 @@ export const test = base.extend<CustomFixtures>({
   },
   labelClient: async ({}, use) => {
     await use(new LabelClient(process.env.GITEA_BASE_URL!, process.env.GITEA_TOKEN!));
+  },
+  labelListPage: async ({ driver }, use) => {
+    await use(new LabelListPage(driver));
   },
   issueClient: async ({}, use) => {
     await use(new IssueClient(process.env.GITEA_BASE_URL!, process.env.GITEA_TOKEN!));

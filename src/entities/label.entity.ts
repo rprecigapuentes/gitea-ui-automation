@@ -15,3 +15,18 @@ export interface ScopedLabels {
   priorityLow: number;
   kindBug: number;
 }
+
+export interface NewScopedLabel {
+  name: string;
+  description: string;
+  color: string;
+}
+
+export interface LabelRow {
+  id: number;
+  name: string;
+  color: string;
+  description: string;
+  exclusive: boolean;
+  issueCount: number;
+}
