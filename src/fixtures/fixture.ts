@@ -8,7 +8,6 @@ import { RepositoryClient } from "../api/clients/repository.client";
 import { LabelClient } from "../api/clients/label.client";
 import { IssueClient } from "../api/clients/issue.client";
 import { Organization } from "../entities/organization.entity";
-import { ScopedLabels } from "../entities/label.entity";
 import { SeededIssue } from "../entities/issue.entity";
 import { BrowserStackSession } from "../entities/browserstack.entity";
 import { ScenarioState } from "../entities/scenario.entity";
@@ -29,6 +28,13 @@ import { IssueListPage } from "../ui/pages/issues/issue-list.page";
 import { AuthClient } from "../api/clients/auth.client";
 import { isBrowserStack, setSessionStatus } from "../../core/config/browserstack.config";
 import { LabelListPage } from "../ui/pages/issues/label-list.page";
+import { MilestoneClient } from "../api/clients/milestone.client";
+import { ScopedLabels, SeededLabel } from "../entities/label.entity";
+import { SeededMilestone } from "../entities/milestone.entity";
+import { User } from "../entities/user.entity";
+import { testDataName } from "../../core/utils/test-data.util";
+import { CreateIssuePage } from "../ui/pages/issues/create-issue.page";
+import { MilestoneListPage } from "../ui/pages/issues/milestone-list.page";
 
 interface CustomFixtures {
   driver: WebDriver;
@@ -45,6 +51,7 @@ interface CustomFixtures {
   repositoryClient: RepositoryClient;
   labelClient: LabelClient;
   issueClient: IssueClient;
+  milestoneClient: MilestoneClient;
   //pages
   loginPage: LoginPage;
   mainPage: MainPage;
@@ -59,10 +66,15 @@ interface CustomFixtures {
   issuePage: IssuePage;
   issueListPage: IssueListPage;
   labelListPage: LabelListPage;
+  createIssuePage: CreateIssuePage;
+  milestoneListPage: MilestoneListPage;
   //entities
   scopedLabels: ScopedLabels;
   issue: SeededIssue;
   repository: string;
+  maintainer: User;
+  classificationLabel: SeededLabel;
+  milestone: SeededMilestone;
   //cleanup
   cleanupOrganizations: void;
 }
@@ -276,5 +288,41 @@ export const test = base.extend<CustomFixtures>({
     const response = await issueClient.createIssue(owner, repository, title);
 
     await use({ number: response.body.number, title });
+  },
+  milestoneClient: async ({}, use) => {
+    await use(new MilestoneClient(process.env.GITEA_BASE_URL!, process.env.GITEA_TOKEN!));
+  },
+  createIssuePage: async ({ driver }, use) => {
+    await use(new CreateIssuePage(driver));
+  },
+  milestoneListPage: async ({ driver }, use) => {
+    await use(new MilestoneListPage(driver));
+  },
+  maintainer: async ({ userClient }, use) => {
+    await use((await userClient.getUser()).body);
+  },
+  classificationLabel: async ({ labelClient, repository }, use) => {
+    const owner = process.env.GITEA_USERNAME!;
+    const name = testDataName("ISS-01", "Label");
+    const response = await labelClient.createLabel(owner, repository, {
+      name,
+      color: "#5319e7",
+      exclusive: false,
+    });
+
+    await use({ id: response.body.id, name });
+  },
+  milestone: async ({ milestoneClient, repository }, use) => {
+    const owner = process.env.GITEA_USERNAME!;
+    const title = testDataName("ISS-01", "Milestone");
+    const description = "Milestone the created issue has to advance when it is closed";
+    const dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    const response = await milestoneClient.createMilestone(owner, repository, {
+      title,
+      description,
+      due_on: dueDate.toISOString(),
+    });
+
+    await use({ id: response.body.id, title, description, dueDate });
   },
 });

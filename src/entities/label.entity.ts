@@ -30,3 +30,8 @@ export interface LabelRow {
   exclusive: boolean;
   issueCount: number;
 }
+
+export interface SeededLabel {
+  id: number;
+  name: string;
+}
