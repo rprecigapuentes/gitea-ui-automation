@@ -6,6 +6,29 @@ const WAIT_TIMEOUT_MS = 10000;
 const CLICK_TIMEOUT_MS = 3000;
 const OPEN_TIMEOUT_MS = 4000;
 const OPEN_ATTEMPTS = 3;
+const POLL_INTERVAL_MS = 100;
+
+const ANY_OPEN_DROPDOWN = By.css(".issue-sidebar-combo > .ui.dropdown.active.visible");
+
+/**
+ * Whether a combo's menu is up, answered in the page. Reading it through `findElements` instead
+ * would cost the driver's 3000 ms implicit wait on every miss, and these polls run dozens of times
+ * per test; mixing the two kinds of wait is also what the Selenium documentation warns against.
+ */
+const MENU_IS_OPEN = `
+  const root = document.querySelector(arguments[0]);
+  if (!root) return false;
+  const menu = root.querySelector(":scope > .ui.dropdown > .menu");
+  return Boolean(menu) && getComputedStyle(menu).display !== "none";
+`;
+
+const OPEN_MENU_COUNT = `
+  return Array.from(document.querySelectorAll(".issue-sidebar-combo > .ui.dropdown"))
+    .filter((dropdown) => {
+      const menu = dropdown.querySelector(":scope > .menu");
+      return Boolean(menu) && getComputedStyle(menu).display !== "none";
+    }).length;
+`;
 
 /**
  * Gitea renders the same combo widget for labels, the milestone, the assignees and the projects.
@@ -18,7 +41,6 @@ export class SidebarComboFragment extends BaseComponent {
   private readonly locators: {
     trigger: By;
     dropdown: By;
-    menu: By;
     menuItem: (value: number) => By;
     selectedItems: By;
   };
@@ -31,7 +53,6 @@ export class SidebarComboFragment extends BaseComponent {
     this.locators = {
       trigger: By.css(`${root} > .ui.dropdown > a.fixed-text`),
       dropdown: By.css(`${root} > .ui.dropdown`),
-      menu: By.css(`${root} > .ui.dropdown > .menu`),
       menuItem: (value: number) =>
         By.css(`${root} > .ui.dropdown .menu a.item[data-value="${value}"]`),
       selectedItems: By.css(`${root} .ui.list .item:not(.empty-list)`),
@@ -53,15 +74,37 @@ export class SidebarComboFragment extends BaseComponent {
   }
 
   private async isOpen(): Promise<boolean> {
-    const [menu] = await this.driver.findElements(this.locators.menu);
+    return (await this.driver.executeScript<boolean>(MENU_IS_OPEN, this.root)) === true;
+  }
 
-    if (!menu) return false;
+  private async countOpenMenus(): Promise<number> {
+    return this.driver.executeScript<number>(OPEN_MENU_COUNT);
+  }
 
-    try {
-      return await menu.isDisplayed();
-    } catch {
-      return false;
+  /**
+   * An open menu is laid out over the combos beneath it, so the click meant for the next one lands
+   * on that menu and is lost, and the combo it covers then never opens. Every menu still up is
+   * therefore dismissed before one is opened, whichever combo left it there. The page is asked
+   * first and the driver only when there is something to dismiss, so the common case costs one
+   * script call.
+   */
+  private async dismissOpenMenus(): Promise<void> {
+    if ((await this.countOpenMenus()) === 0) return;
+
+    for (const dropdown of await this.driver.findElements(ANY_OPEN_DROPDOWN)) {
+      try {
+        await dropdown.sendKeys(Key.ESCAPE);
+      } catch {
+        continue;
+      }
     }
+
+    await this.driver.wait(
+      async () => (await this.countOpenMenus()) === 0,
+      WAIT_TIMEOUT_MS,
+      "a sidebar combo menu stayed open over the rest of the sidebar",
+      POLL_INTERVAL_MS,
+    );
   }
 
   /**
@@ -69,16 +112,17 @@ export class SidebarComboFragment extends BaseComponent {
    * the list under the trigger, which moves every combo below it. A click computed just before
    * that reflow lands beside the trigger and is lost, so opening is retried. Each attempt gives
    * the menu its own window to appear before another click is sent, because the trigger toggles:
-   * re-clicking it while the menu is still on its way in closes it again. Closing is not retried
-   * at all, since there the open menu covers the trigger and would intercept the second click.
+   * re-clicking it while the menu is still on its way in closes it again.
    */
   private async open(): Promise<void> {
     for (let attempt = 0; attempt < OPEN_ATTEMPTS; attempt++) {
       if (await this.isOpen()) return;
 
+      await this.dismissOpenMenus();
+
       try {
         await this.click(this.locators.trigger, this.driver, CLICK_TIMEOUT_MS);
-        await this.driver.wait(async () => this.isOpen(), OPEN_TIMEOUT_MS);
+        await this.driver.wait(async () => this.isOpen(), OPEN_TIMEOUT_MS, "", POLL_INTERVAL_MS);
 
         return;
       } catch {
@@ -92,8 +136,8 @@ export class SidebarComboFragment extends BaseComponent {
   /**
    * The menu is dismissed with Escape rather than by clicking the trigger again. An open menu is
    * laid out over its own trigger, so the second click is either intercepted by the menu or, worse,
-   * swallowed and left covering the combo below, which then cannot be opened at all. Escape is a
-   * dismissal the widget handles itself, and it runs the same `onHide` the apply depends on.
+   * swallowed and left covering the combo below. Escape is a dismissal the widget handles itself,
+   * and it runs the same `onHide` the apply depends on.
    */
   private async close(): Promise<void> {
     if (!(await this.isOpen())) return;
@@ -108,6 +152,7 @@ export class SidebarComboFragment extends BaseComponent {
       async () => !(await this.isOpen()),
       WAIT_TIMEOUT_MS,
       `the combo "${this.root}" never closed`,
+      POLL_INTERVAL_MS,
     );
   }
 
