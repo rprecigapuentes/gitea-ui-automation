@@ -1,3 +1,4 @@
+import { By } from "selenium-webdriver";
 import { BaseComponent } from "./base-component";
 
 export interface Navigable {
@@ -8,7 +9,18 @@ export interface Navigable {
 export abstract class BasePage extends BaseComponent implements Navigable {
   abstract getUrl(...args: unknown[]): string;
 
+  protected getReadyLocators(): By[] {
+    return [];
+  }
+
   async open(...args: unknown[]): Promise<void> {
-    await this.driver.get(this.getUrl(...args));
+    const readyLocators = this.getReadyLocators();
+
+    if (readyLocators.length === 0) {
+      await this.driver.get(this.getUrl(...args));
+      return;
+    }
+
+    await this.actAndWaitFor(() => this.driver.get(this.getUrl(...args)), readyLocators);
   }
 }

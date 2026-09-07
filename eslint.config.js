@@ -24,6 +24,11 @@ export default tseslint.config(
     },
   },
   {
+    rules: {
+      "no-empty-pattern": ["error", { allowObjectPatternsAsParameters: true }],
+    },
+  },
+  {
     files: ["**/*.js"],
     languageOptions: { globals: { process: "readonly" } },
     extends: [tseslint.configs.disableTypeChecked],

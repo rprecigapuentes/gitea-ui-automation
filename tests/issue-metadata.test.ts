@@ -2,8 +2,7 @@ import "dotenv/config";
 import { describe, expect } from "vitest";
 import { test as it } from "../src/fixtures/fixture";
 import { testDataName } from "../core/utils/test-data.util";
-
-const username = process.env.GITEA_USERNAME;
+import { resolveOwnerCredentials } from "../src/utils/session-credentials.util";
 
 const body = {
   heading: "Acceptance criteria",
@@ -24,7 +23,7 @@ describe("Issue metadata test", () => {
     issueListPage,
     milestoneListPage,
   }) => {
-    const owner = username!;
+    const { username: owner } = resolveOwnerCredentials();
     const title = testDataName("ISS-01", "Issue");
 
     await driver.get(createIssuePage.getUrl(owner, repository));

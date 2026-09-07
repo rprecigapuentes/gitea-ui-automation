@@ -5,7 +5,9 @@ import { LabelRow, NewScopedLabel } from "../../../entities/label.entity";
 import { LabelChipFragment } from "./fragments/label-chip.fragment";
 
 const modal = "#issue-label-edit-modal";
-const WAIT_TIMEOUT_MS = 10000;
+// The modal's fade-in animation can outlast 10s when the machine is busy running the other
+// browsers in parallel, so it gets the same generous budget as the other Fomantic UI modals.
+const WAIT_TIMEOUT_MS = 15000;
 
 export class LabelListPage extends BasePage {
   private readonly locators = {
@@ -32,36 +34,54 @@ export class LabelListPage extends BasePage {
 
   async openNewLabelForm(): Promise<void> {
     await this.click(this.locators.newLabelButton);
-    await this.findElement(this.locators.modal, this.driver, WAIT_TIMEOUT_MS);
+
+    // Chrome's WebElement.isDisplayed() can report false for this modal even while Fomantic UI
+    // has genuinely opened it (its dimmer already intercepts clicks), so the real DOM/CSS state
+    // is checked directly instead of trusting Selenium's visibility atom.
+    await this.driver.wait(
+      async () => {
+        const isActive = await this.driver.executeScript<boolean>(
+          `const el = document.querySelector(${JSON.stringify(modal)});
+         return !!el && el.classList.contains("active") && getComputedStyle(el).display !== "none";`,
+        );
+        return isActive;
+      },
+      WAIT_TIMEOUT_MS,
+      "the new label modal never became active",
+    );
   }
 
   async isExclusiveFieldEnabled(): Promise<boolean> {
-    const field = await this.findElement(this.locators.exclusiveField);
+    const field = await this.findElement(
+      this.locators.exclusiveField,
+      this.driver,
+      WAIT_TIMEOUT_MS,
+    );
     const classes = (await field.getAttribute("class")) ?? "";
 
     return !classes.split(/\s+/).includes("disabled");
   }
 
   async fillName(name: string): Promise<void> {
-    await this.type(this.locators.nameInput, name);
+    await this.type(this.locators.nameInput, name, this.driver, WAIT_TIMEOUT_MS);
   }
 
   async markExclusive(): Promise<void> {
-    await this.click(this.locators.exclusiveCheckbox);
+    await this.click(this.locators.exclusiveCheckbox, this.driver, WAIT_TIMEOUT_MS);
   }
 
   async fillDescription(description: string): Promise<void> {
-    await this.type(this.locators.descriptionInput, description);
+    await this.type(this.locators.descriptionInput, description, this.driver, WAIT_TIMEOUT_MS);
   }
 
   async fillColor(color: string): Promise<void> {
-    const input = await this.findElement(this.locators.colorInput);
+    const input = await this.findElement(this.locators.colorInput, this.driver, WAIT_TIMEOUT_MS);
     await input.clear();
     await input.sendKeys(color);
   }
 
   async submitLabelForm(): Promise<void> {
-    await this.click(this.locators.submitButton);
+    await this.click(this.locators.submitButton, this.driver, WAIT_TIMEOUT_MS);
   }
 
   async createScopedLabel(label: NewScopedLabel): Promise<LabelRow> {

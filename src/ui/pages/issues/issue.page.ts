@@ -111,21 +111,26 @@ export class IssuePage extends BasePage {
   }
 
   /**
-   * A native date input is typed in the format its browser displays and the browsers disagree:
-   * Firefox takes the ISO string and ignores bare digits, Chromium takes the digits of the
-   * localized order and mangles the ISO string. What both agree on is that the `value` property
-   * reads back as ISO, so each spelling is typed and verified rather than assumed. The form
-   * carries `form-fetch-action`, so a successful submit reloads the page and the rendered date has
-   * to be waited for rather than read straight after the click.
+   * A native date input is typed in the format its browser and OS locale expect, and that order
+   * varies: Firefox takes the ISO string, Chromium takes bare digits in the locale's date order,
+   * which is month-first on US-locale machines but day-first elsewhere. What every combination
+   * agrees on is that the `value` property reads back as ISO, so each spelling is typed and
+   * verified rather than assumed. The form carries `form-fetch-action`, so a successful submit
+   * reloads the page and the rendered date has to be waited for rather than read straight after
+   * the click.
    */
   async setDueDate(date: Date): Promise<void> {
     const pad = (value: number): string => String(value).padStart(2, "0");
-    const isoDate = `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`;
-    const localizedDigits = `${pad(date.getUTCMonth() + 1)}${pad(date.getUTCDate())}${date.getUTCFullYear()}`;
+    const year = date.getUTCFullYear();
+    const month = pad(date.getUTCMonth() + 1);
+    const day = pad(date.getUTCDate());
+    const isoDate = `${year}-${month}-${day}`;
+    const monthFirstDigits = `${month}${day}${year}`;
+    const dayFirstDigits = `${day}${month}${year}`;
     const input = await this.findElement(this.locators.dueDateInput);
     let accepted = false;
 
-    for (const spelling of [isoDate, localizedDigits]) {
+    for (const spelling of [isoDate, monthFirstDigits, dayFirstDigits]) {
       await input.clear();
       await input.sendKeys(spelling);
 

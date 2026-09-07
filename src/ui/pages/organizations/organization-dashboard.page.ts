@@ -7,6 +7,7 @@ export class OrganizationDashboardPage extends BasePage {
   private readonly organization: Organization;
 
   private readonly locators = {
+    organizationName: By.css(".organization.profile h1"),
     viewRepositoryButton: By.css("a[title^='View test-orgs-']"),
   };
 
@@ -17,9 +18,5 @@ export class OrganizationDashboardPage extends BasePage {
   constructor(driver: WebDriver, organization: Organization) {
     super(driver);
     this.organization = organization;
-  }
-
-  async clickViewRepositoryButton(): Promise<void> {
-    await this.click(this.locators.viewRepositoryButton);
   }
 }

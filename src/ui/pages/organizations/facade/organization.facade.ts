@@ -2,6 +2,8 @@ import { WebDriver } from "selenium-webdriver";
 import { OrgNavigationFragment, OrgTab } from "../fragments/org-navigation.fragment";
 import { OrgRepositoriesFragment } from "../fragments/org-repositories.fragment";
 import { OrgTeamsFragment } from "../fragments/org-teams.fragment";
+import { NewTeamFragment } from "../fragments/new-team.fragment";
+import { SpecificTeamFragment } from "../fragments/specific-team.fragment";
 import { Navigable } from "../../../../../core/ui/base-pages/base.page";
 import { baseUrl } from "../../../../../core/config/config";
 import { Organization } from "../../../../entities/organization.entity";
@@ -12,6 +14,8 @@ export class OrganizationFacade implements Navigable {
   private readonly navigation: OrgNavigationFragment;
   private readonly reposFragment: OrgRepositoriesFragment;
   private readonly teamsFragment: OrgTeamsFragment;
+  private readonly newTeamFragment: NewTeamFragment;
+  private readonly specificTeamFragment: SpecificTeamFragment;
 
   constructor(
     private readonly driver: WebDriver,
@@ -19,12 +23,16 @@ export class OrganizationFacade implements Navigable {
     navigation: OrgNavigationFragment,
     reposFragment: OrgRepositoriesFragment,
     teamsFragment: OrgTeamsFragment,
+    newTeamFragment: NewTeamFragment,
+    specificTeamFragment: SpecificTeamFragment,
   ) {
     this.organization = organization;
     this.currentUrl = `${baseUrl}/${organization.name}`;
     this.navigation = navigation;
     this.reposFragment = reposFragment;
     this.teamsFragment = teamsFragment;
+    this.newTeamFragment = newTeamFragment;
+    this.specificTeamFragment = specificTeamFragment;
   }
 
   getUrl(): string {
@@ -42,10 +50,27 @@ export class OrganizationFacade implements Navigable {
   }
 
   async navigateToTeamsTab(): Promise<OrgTeamsFragment> {
-    console.log("Navigating to Teams tab");
     await this.navigation.navigateToTab(OrgTab.Teams);
+    await this.teamsFragment.waitUntilDisplayed();
     this.currentUrl = `${baseUrl}/org/${this.organization.name}/teams`;
-    console.log("URL after navigating to Teams tab: ", this.currentUrl);
     return this.teamsFragment;
+  }
+
+  async navigateToNewTeam(): Promise<NewTeamFragment> {
+    await this.teamsFragment.clickNewTeamButton();
+    await this.newTeamFragment.waitUntilDisplayed();
+    return this.newTeamFragment;
+  }
+
+  async createTeam(teamName: string): Promise<SpecificTeamFragment> {
+    await this.newTeamFragment.clickCreateTeamButton();
+    await this.specificTeamFragment.waitUntilTeamDisplayed(teamName);
+    return this.specificTeamFragment;
+  }
+
+  async navigateToSpecificTeam(teamName: string): Promise<SpecificTeamFragment> {
+    await this.teamsFragment.clickTeamName(teamName);
+    await this.specificTeamFragment.waitUntilTeamDisplayed(teamName);
+    return this.specificTeamFragment;
   }
 }

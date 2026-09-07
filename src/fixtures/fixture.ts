@@ -1,4 +1,3 @@
-/* eslint-disable no-empty-pattern */
 import { test as base } from "vitest";
 import * as allure from "allure-js-commons";
 import { ContentType } from "allure-js-commons";
@@ -14,27 +13,37 @@ import { ScenarioState } from "../entities/scenario.entity";
 import { WebDriver } from "selenium-webdriver";
 import { DriverFactory } from "../../core/drivers/driver.factory";
 import { LoginPage } from "../ui/pages/authentication/login.page";
-import { MainPage } from "../ui/pages/main.page";
+import { MainPage } from "../ui/pages/common/main.page";
 import { CreateOrganizationPage } from "../ui/pages/organizations/create-organization.page";
 import { OrganizationDashboardPage } from "../ui/pages/organizations/organization-dashboard.page";
 //Org Fragments
 import { OrgRepositoriesFragment } from "../ui/pages/organizations/fragments/org-repositories.fragment";
 import { OrgTeamsFragment } from "../ui/pages/organizations/fragments/org-teams.fragment";
+import { NewTeamFragment } from "../ui/pages/organizations/fragments/new-team.fragment";
+import { SpecificTeamFragment } from "../ui/pages/organizations/fragments/specific-team.fragment";
 import { OrgNavigationFragment } from "../ui/pages/organizations/fragments/org-navigation.fragment";
+import { NavBarFragment } from "../ui/pages/common/fragments/nav-bar.fragment";
 //Org facade
 import { OrganizationFacade } from "../ui/pages/organizations/facade/organization.facade";
 import { IssuePage } from "../ui/pages/issues/issue.page";
 import { IssueListPage } from "../ui/pages/issues/issue-list.page";
 import { AuthClient } from "../api/clients/auth.client";
 import { isBrowserStack, setSessionStatus } from "../../core/config/browserstack.config";
+import { applySession, clearSession } from "../utils/session.util";
+import { SessionManager } from "../entities/session-manager.entity";
 import { LabelListPage } from "../ui/pages/issues/label-list.page";
 import { MilestoneClient } from "../api/clients/milestone.client";
 import { ScopedLabels, SeededLabel } from "../entities/label.entity";
 import { SeededMilestone } from "../entities/milestone.entity";
 import { User } from "../entities/user.entity";
-import { testDataName } from "../../core/utils/test-data.util";
+import { testDataName, uniqueSuffix } from "../../core/utils/test-data.util";
 import { CreateIssuePage } from "../ui/pages/issues/create-issue.page";
 import { MilestoneListPage } from "../ui/pages/issues/milestone-list.page";
+import {
+  resolveInvitedCredentials,
+  resolveOwnerCredentials,
+  resolveOwnerToken,
+} from "../utils/session-credentials.util";
 
 interface CustomFixtures {
   driver: WebDriver;
@@ -44,6 +53,7 @@ interface CustomFixtures {
   scenarioState: ScenarioState;
   authClient: AuthClient;
   skipAutoLogin: boolean;
+  sessionManager: SessionManager;
   loggedInSession: void;
   //clients
   userClient: UserClient;
@@ -61,10 +71,13 @@ interface CustomFixtures {
     navigation: () => OrgNavigationFragment;
     repositories: () => OrgRepositoriesFragment;
     teams: () => OrgTeamsFragment;
+    newTeam: () => NewTeamFragment;
+    specificTeam: () => SpecificTeamFragment;
     orgFacade: () => OrganizationFacade;
   };
   issuePage: IssuePage;
   issueListPage: IssueListPage;
+  navBarFragment: NavBarFragment;
   labelListPage: LabelListPage;
   createIssuePage: CreateIssuePage;
   milestoneListPage: MilestoneListPage;
@@ -120,30 +133,28 @@ export const test = base.extend<CustomFixtures>({
         await use();
         return;
       }
-      const baseUrl = process.env.GITEA_BASE_URL!;
-      const username = process.env.GITEA_USERNAME!;
-      const password = process.env.GITEA_PASSWORD!;
-      await driver.get(baseUrl);
 
-      const browserUserAgent = await driver.executeScript("return navigator.userAgent;");
-      const cookies = await authClient.loginViaApi(username, password, browserUserAgent as string);
-      await driver.manage().deleteAllCookies();
-
-      for (const cookie of cookies) {
-        await driver.manage().addCookie({
-          name: cookie.name,
-          value: cookie.value,
-          path: cookie.path || "/",
-          secure: cookie.secure,
-          httpOnly: cookie.httpOnly,
-        });
-      }
-
-      await driver.navigate().refresh();
+      const { username, password } = resolveOwnerCredentials();
+      await applySession(driver, authClient, username, password);
       await use();
     },
     { auto: true },
   ],
+  sessionManager: async ({ driver, authClient }, use) => {
+    await use({
+      loginAs: (username: string, password: string) =>
+        applySession(driver, authClient, username, password),
+      logout: () => clearSession(driver),
+      loginAsOwner: () => {
+        const { username, password } = resolveOwnerCredentials();
+        return applySession(driver, authClient, username, password);
+      },
+      loginAsUser2: () => {
+        const { username, password } = resolveInvitedCredentials();
+        return applySession(driver, authClient, username, password);
+      },
+    });
+  },
   browserstackSession: [
     async ({ driver }, use) => {
       const session = { failed: false };
@@ -174,27 +185,27 @@ export const test = base.extend<CustomFixtures>({
     await use(scenarioState);
   },
   userClient: async ({}, use) => {
-    const userClient = new UserClient(process.env.GITEA_BASE_URL!, process.env.GITEA_TOKEN!);
+    const userClient = new UserClient(process.env.GITEA_BASE_URL!, resolveOwnerToken());
     await use(userClient);
   },
   organizationClient: async ({}, use) => {
     const organizationClient = new OrganizationClient(
       process.env.GITEA_BASE_URL!,
-      process.env.GITEA_TOKEN!,
+      resolveOwnerToken(),
     );
     await use(organizationClient);
   },
   repositoryClient: async ({}, use) => {
-    await use(new RepositoryClient(process.env.GITEA_BASE_URL!, process.env.GITEA_TOKEN!));
+    await use(new RepositoryClient(process.env.GITEA_BASE_URL!, resolveOwnerToken()));
   },
   labelClient: async ({}, use) => {
-    await use(new LabelClient(process.env.GITEA_BASE_URL!, process.env.GITEA_TOKEN!));
+    await use(new LabelClient(process.env.GITEA_BASE_URL!, resolveOwnerToken()));
   },
   labelListPage: async ({ driver }, use) => {
     await use(new LabelListPage(driver));
   },
   issueClient: async ({}, use) => {
-    await use(new IssueClient(process.env.GITEA_BASE_URL!, process.env.GITEA_TOKEN!));
+    await use(new IssueClient(process.env.GITEA_BASE_URL!, resolveOwnerToken()));
   },
   issuePage: async ({ driver }, use) => {
     const issuePage = new IssuePage(driver);
@@ -228,6 +239,8 @@ export const test = base.extend<CustomFixtures>({
     let navigation: OrgNavigationFragment | undefined;
     let repositories: OrgRepositoriesFragment | undefined;
     let teams: OrgTeamsFragment | undefined;
+    let newTeam: NewTeamFragment | undefined;
+    let specificTeam: SpecificTeamFragment | undefined;
     let facade: OrganizationFacade | undefined;
 
     await use({
@@ -235,14 +248,27 @@ export const test = base.extend<CustomFixtures>({
       navigation: () => (navigation ??= new OrgNavigationFragment(driver)),
       repositories: () => (repositories ??= new OrgRepositoriesFragment(driver)),
       teams: () => (teams ??= new OrgTeamsFragment(driver)),
-      orgFacade: () =>
-        (facade ??= new OrganizationFacade(
+      newTeam: () => (newTeam ??= new NewTeamFragment(driver)),
+      specificTeam: () => (specificTeam ??= new SpecificTeamFragment(driver)),
+      orgFacade: () => {
+        navigation ??= new OrgNavigationFragment(driver);
+        repositories ??= new OrgRepositoriesFragment(driver);
+        teams ??= new OrgTeamsFragment(driver);
+        newTeam ??= new NewTeamFragment(driver);
+        specificTeam ??= new SpecificTeamFragment(driver);
+
+        facade ??= new OrganizationFacade(
           driver,
           requireOrganization(),
-          (navigation ??= new OrgNavigationFragment(driver)),
-          (repositories ??= new OrgRepositoriesFragment(driver)),
-          (teams ??= new OrgTeamsFragment(driver)),
-        )),
+          navigation,
+          repositories,
+          teams,
+          newTeam,
+          specificTeam,
+        );
+
+        return facade;
+      },
     });
   },
   cleanupOrganizations: [
@@ -257,22 +283,21 @@ export const test = base.extend<CustomFixtures>({
     { auto: true },
   ],
   repository: async ({ repositoryClient }, use) => {
-    const owner = process.env.GITEA_USERNAME!;
-    const name = `test-issues-${Date.now()}-${process.env.BROWSER ?? "local"}`;
+    const { username: owner } = resolveOwnerCredentials();
+    const name = `test-issues-${Date.now()}-${process.env.BROWSER ?? "local"}-${uniqueSuffix()}`;
 
     await repositoryClient.createRepository(name);
     await use(name);
     await repositoryClient.deleteRepository(owner, name);
   },
   scopedLabels: async ({ labelClient, repository }, use) => {
-    const owner = process.env.GITEA_USERNAME!;
+    const { username: owner } = resolveOwnerCredentials();
     const createLabel = async (name: string, color: string): Promise<number> => {
       const response = await labelClient.createLabel(owner, repository, {
         name,
         color,
         exclusive: true,
       });
-
       return response.body.id;
     };
 
@@ -283,14 +308,14 @@ export const test = base.extend<CustomFixtures>({
     });
   },
   issue: async ({ issueClient, repository }, use) => {
-    const owner = process.env.GITEA_USERNAME!;
+    const { username: owner } = resolveOwnerCredentials();
     const title = "Scoped labels acceptance";
     const response = await issueClient.createIssue(owner, repository, title);
 
     await use({ number: response.body.number, title });
   },
   milestoneClient: async ({}, use) => {
-    await use(new MilestoneClient(process.env.GITEA_BASE_URL!, process.env.GITEA_TOKEN!));
+    await use(new MilestoneClient(process.env.GITEA_BASE_URL!, resolveOwnerToken()));
   },
   createIssuePage: async ({ driver }, use) => {
     await use(new CreateIssuePage(driver));
@@ -302,7 +327,7 @@ export const test = base.extend<CustomFixtures>({
     await use((await userClient.getUser()).body);
   },
   classificationLabel: async ({ labelClient, repository }, use) => {
-    const owner = process.env.GITEA_USERNAME!;
+    const { username: owner } = resolveOwnerCredentials();
     const name = testDataName("ISS-01", "Label");
     const response = await labelClient.createLabel(owner, repository, {
       name,
@@ -313,7 +338,7 @@ export const test = base.extend<CustomFixtures>({
     await use({ id: response.body.id, name });
   },
   milestone: async ({ milestoneClient, repository }, use) => {
-    const owner = process.env.GITEA_USERNAME!;
+    const { username: owner } = resolveOwnerCredentials();
     const title = testDataName("ISS-01", "Milestone");
     const description = "Milestone the created issue has to advance when it is closed";
     const dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
@@ -324,5 +349,9 @@ export const test = base.extend<CustomFixtures>({
     });
 
     await use({ id: response.body.id, title, description, dueDate });
+  },
+  navBarFragment: async ({ driver }, use) => {
+    const navBarFragment = new NavBarFragment(driver);
+    await use(navBarFragment);
   },
 });

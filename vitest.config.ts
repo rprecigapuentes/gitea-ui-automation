@@ -25,6 +25,7 @@ export default defineConfig({
         test: {
           name: browser,
           env: { BROWSER: browser },
+          fileParallelism: false,
         },
       })),
 

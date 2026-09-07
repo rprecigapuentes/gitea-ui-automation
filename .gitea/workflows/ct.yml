@@ -40,8 +40,18 @@ jobs:
       MAX_WORKERS: "3"
       GITEA_BASE_URL: http://gitea-test:3000
       SELENIUM_REMOTE_URL: http://selenium:4444
-      GITEA_USERNAME: qabot
-      GITEA_PASSWORD: Qa-bot-not-a-secret-1
+      GITEA_OWNER_CHROME: chrome-owner
+      GITEA_OWNER_CHROME_PASSWORD: Qa-bot-not-a-secret-1
+      GITEA_OWNER_FIREFOX: firefox-owner
+      GITEA_OWNER_FIREFOX_PASSWORD: Qa-bot-not-a-secret-1
+      GITEA_OWNER_EDGE: edge-owner
+      GITEA_OWNER_EDGE_PASSWORD: Qa-bot-not-a-secret-1
+      GITEA_INV_CHROME: inv-chrome
+      GITEA_INV_CHROME_PASSWORD: Qa-bot2-not-a-secret-1
+      GITEA_INV_FIREFOX: inv-firefox
+      GITEA_INV_FIREFOX_PASSWORD: Qa-bot2-not-a-secret-1
+      GITEA_INV_EDGE: inv-edge
+      GITEA_INV_EDGE_PASSWORD: Qa-bot2-not-a-secret-1
 
     steps:
       - uses: actions/checkout@v4
@@ -70,30 +80,39 @@ jobs:
           echo "the selenium grid never became ready"
           exit 1
 
-      - name: Register the first account, which Gitea makes an administrator
+      - name: Register the owner and invited accounts, and mint an API token per browser
         run: |
-          csrf=$(curl -fsS -c /tmp/gitea.jar "$GITEA_BASE_URL/user/sign_up" \
-            | sed -n 's/.*name="_csrf" value="\([^"]*\)".*/\1/p' | head -1)
-          curl -fsS -b /tmp/gitea.jar -o /dev/null \
-            -X POST "$GITEA_BASE_URL/user/sign_up" \
-            --data-urlencode "_csrf=$csrf" \
-            --data-urlencode "user_name=$GITEA_USERNAME" \
-            --data-urlencode "email=$GITEA_USERNAME@example.com" \
-            --data-urlencode "password=$GITEA_PASSWORD" \
-            --data-urlencode "retype=$GITEA_PASSWORD"
-          curl -fsS -u "$GITEA_USERNAME:$GITEA_PASSWORD" "$GITEA_BASE_URL/api/v1/user" > /dev/null
-          echo "account $GITEA_USERNAME is usable"
+          register() {
+            local jar="$1" user="$2" pass="$3"
+            csrf=$(curl -fsS -c "$jar" "$GITEA_BASE_URL/user/sign_up" \
+              | sed -n 's/.*name="_csrf" value="\([^"]*\)".*/\1/p' | head -1)
+            curl -fsS -b "$jar" -o /dev/null \
+              -X POST "$GITEA_BASE_URL/user/sign_up" \
+              --data-urlencode "_csrf=$csrf" \
+              --data-urlencode "user_name=$user" \
+              --data-urlencode "email=$user@example.com" \
+              --data-urlencode "password=$pass" \
+              --data-urlencode "retype=$pass"
+            curl -fsS -u "$user:$pass" "$GITEA_BASE_URL/api/v1/user" > /dev/null
+            echo "account $user is usable"
+          }
 
-      - name: Create an API token for the account
-        run: |
-          token=$(curl -fsS -u "$GITEA_USERNAME:$GITEA_PASSWORD" \
-            -H "Content-Type: application/json" \
-            -X POST "$GITEA_BASE_URL/api/v1/users/$GITEA_USERNAME/tokens" \
-            -d '{"name":"continuous-testing","scopes":["write:user","write:repository","write:issue","write:organization"]}' \
-            | node -pe 'JSON.parse(require("fs").readFileSync(0, "utf8")).sha1')
-          echo "::add-mask::$token"
-          echo "GITEA_TOKEN=$token" >> "$GITHUB_ENV"
-          echo "token minted for $GITEA_USERNAME"
+          for b in CHROME FIREFOX EDGE; do
+            owner_user="GITEA_OWNER_$b"; owner_pass="GITEA_OWNER_${b}_PASSWORD"
+            inv_user="GITEA_INV_$b"; inv_pass="GITEA_INV_${b}_PASSWORD"
+
+            register "/tmp/gitea-$b-owner.jar" "${!owner_user}" "${!owner_pass}"
+            register "/tmp/gitea-$b-inv.jar" "${!inv_user}" "${!inv_pass}"
+
+            token=$(curl -fsS -u "${!owner_user}:${!owner_pass}" \
+              -H "Content-Type: application/json" \
+              -X POST "$GITEA_BASE_URL/api/v1/users/${!owner_user}/tokens" \
+              -d '{"name":"continuous-testing","scopes":["write:user","write:repository","write:issue","write:organization"]}' \
+              | node -pe 'JSON.parse(require("fs").readFileSync(0, "utf8")).sha1')
+            echo "::add-mask::$token"
+            echo "GITEA_TOKEN_$b=$token" >> "$GITHUB_ENV"
+            echo "token minted for ${!owner_user}"
+          done
 
       - name: Run the suite
         run: npm test

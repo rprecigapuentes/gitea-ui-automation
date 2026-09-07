@@ -11,6 +11,12 @@ export class OrganizationClient extends GiteaApiClient {
     return this.client.get<Organization[]>("orgs");
   }
 
+  // Organizations the authenticated (owner) token belongs to, used to find leftovers from
+  // previous runs that failed before their own cleanup could delete them.
+  async getUserOrganizations(): Promise<Response<Organization[]>> {
+    return this.client.get<Organization[]>("user/orgs");
+  }
+
   async deleteOrganization(organizationName: string): Promise<Response> {
     return this.client.delete(`orgs/${organizationName}`);
   }

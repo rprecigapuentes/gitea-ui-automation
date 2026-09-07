@@ -18,6 +18,10 @@ export class AuthClient {
     password: string,
     userAgent?: string,
   ): Promise<SeleniumCookie[]> {
+    if (!username || !password) {
+      throw new Error("Gitea login requires both a username and a password");
+    }
+
     const cookieJar = new CookieJar();
     const loginUrl = `${this.baseUrl}/user/login`;
 
@@ -33,7 +37,7 @@ export class AuthClient {
 
     logger.debug({ url: loginUrl, user: username }, "api login");
 
-    await got.post(loginUrl, {
+    const loginResponse = await got.post(loginUrl, {
       cookieJar,
       followRedirect: true,
       form: {
@@ -45,6 +49,10 @@ export class AuthClient {
         Referer: loginUrl,
       },
     });
+
+    if (new URL(loginResponse.url).pathname === "/user/login") {
+      throw new Error(`Gitea login failed for user "${username}"`);
+    }
 
     const cookies = await cookieJar.getCookies(this.baseUrl);
 

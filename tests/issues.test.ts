@@ -1,8 +1,7 @@
 import "dotenv/config";
 import { describe, expect } from "vitest";
 import { test as it } from "../src/fixtures/fixture";
-
-const username = process.env.GITEA_USERNAME;
+import { resolveOwnerCredentials } from "../src/utils/session-credentials.util";
 
 const labels = {
   priorityHigh: { name: "priority/high", description: "Blocks the release", color: "#d73a4a" },
@@ -19,7 +18,7 @@ describe("Scoped labels test", () => {
     issuePage,
     issueListPage,
   }) => {
-    const owner = username!;
+    const { username: owner } = resolveOwnerCredentials();
 
     await driver.get(labelListPage.getUrl(owner, repository));
 
