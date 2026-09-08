@@ -6,15 +6,12 @@ An `npm workspaces` monorepo grouping Gitea UI/API automation into several indep
 /
 ├── core/                          # shared package: automation framework + Gitea domain
 ├── services/
-│   ├── gitea-selenium-vitest/     # Selenium + Vitest — active project, full suite
-│   ├── gitea-selenium-cucumber/   # Selenium + Cucumber (BDD) — under construction
-│   ├── playwright-native/         # reserved — no code yet
-│   └── playwright-bdd/            # reserved — no code yet
-└── docs/
-    └── PROJECT_CONTEXT.md         # full project context (read it to pick the repo back up without re-reading the code)
-```
+    ├── gitea-selenium-vitest/     # Selenium + Vitest — active project, full suite
+    ├── gitea-selenium-cucumber/   # Selenium + Cucumber (BDD) — under construction
+    ├── playwright-native/         # reserved — no code yet
+    └── playwright-bdd/            # reserved — no code yet
 
-To understand why it's organized this way, what each project shares via `core/`, and what stays inside each one, read **[docs/PROJECT_CONTEXT.md](docs/PROJECT_CONTEXT.md)**.
+```
 
 ## Installation
 
