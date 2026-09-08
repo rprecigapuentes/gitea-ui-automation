@@ -8,5 +8,5 @@ allure-results/
 allure-report/
 local.log
 
-# Claude Code local permissions
-.claude/settings.local.json
+# Claude Code
+.claude/
