@@ -1,0 +1,25 @@
+{
+  "name": "@gitea-automation/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./logging/*": "./logging/*.ts",
+    "./utils/*": "./utils/*.ts",
+    "./gitea/*": "./gitea/*.ts",
+    "./selenium/*": "./selenium/*.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "got": "^16.0.0",
+    "pino": "^10.3.1",
+    "selenium-webdriver": "^4.48.0",
+    "tough-cookie": "^6.0.2"
+  },
+  "devDependencies": {
+    "@types/selenium-webdriver": "^4.35.6",
+    "@types/tough-cookie": "^4.0.5"
+  }
+}
