@@ -1,20 +1,30 @@
 {
   "name": "gitea-ui-automation",
   "version": "1.0.0",
-  "main": "index.js",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "core",
+    "services/*"
+  ],
+  "engines": {
+    "node": ">=22 <23"
+  },
   "scripts": {
-    "pretest": "node -e \"require('fs').rmSync('allure-results', { recursive: true, force: true })\"",
-    "test": "vitest run --project=!bs-*",
-    "test:chrome": "vitest run --project=chrome",
-    "test:firefox": "vitest run --project=firefox",
-    "test:edge": "vitest run --project=edge",
-    "test:serial": "vitest run --no-file-parallelism",
-    "test:browserstack": "vitest run --project=bs-*",
-    "report": "allure generate ./allure-results",
-    "report:open": "allure open ./allure-report/",
+    "test": "npm test -w @gitea-automation/gitea-selenium-vitest",
+    "test:chrome": "npm run test:chrome -w @gitea-automation/gitea-selenium-vitest",
+    "test:firefox": "npm run test:firefox -w @gitea-automation/gitea-selenium-vitest",
+    "test:edge": "npm run test:edge -w @gitea-automation/gitea-selenium-vitest",
+    "test:parallel": "npm run test:parallel -w @gitea-automation/gitea-selenium-vitest",
+    "test:serial": "npm run test:serial -w @gitea-automation/gitea-selenium-vitest",
+    "test:browserstack": "npm run test:browserstack -w @gitea-automation/gitea-selenium-vitest",
+    "test:cucumber": "npm test -w @gitea-automation/gitea-selenium-cucumber",
+    "test:cucumber:parallel": "npm run test:parallel -w @gitea-automation/gitea-selenium-cucumber",
+    "report": "npm run report -w @gitea-automation/gitea-selenium-vitest",
+    "report:open": "npm run report:open -w @gitea-automation/gitea-selenium-vitest",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "npm run typecheck --workspaces --if-present",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky"
@@ -31,34 +41,16 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "module",
   "description": "",
-  "engines": {
-    "node": ">=22 <23"
-  },
-  "dependencies": {
-    "dotenv": "^17.4.2",
-    "got": "^16.0.0",
-    "pino": "^10.3.1",
-    "selenium-webdriver": "^4.48.0",
-    "tough-cookie": "^6.0.2"
-  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^22.20.1",
-    "@types/selenium-webdriver": "^4.35.6",
-    "@types/tough-cookie": "^4.0.5",
-    "@vitest/runner": "^4.1.11",
-    "allure": "^3.16.0",
-    "allure-vitest": "^3.11.1",
-    "browserstack-local": "^1.5.13",
     "eslint": "^10.9.1",
     "eslint-config-prettier": "^10.1.8",
     "husky": "^9.1.7",
     "lint-staged": "^17.4.1",
     "prettier": "^3.9.6",
     "typescript": "~5.9.3",
-    "typescript-eslint": "^8.69.0",
-    "vitest": "^4.1.11"
+    "typescript-eslint": "^8.69.0"
   }
 }

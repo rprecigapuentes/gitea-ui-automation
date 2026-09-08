@@ -119,7 +119,7 @@ jobs:
 
       - name: Generate the Allure report
         if: always()
-        run: npx allure generate ./allure-results
+        run: npm run report -w @gitea-automation/gitea-selenium-vitest
 
       - name: Upload the report
         if: always()
@@ -127,6 +127,6 @@ jobs:
         with:
           name: allure-report
           path: |
-            allure-report/
-            reports/junit.xml
+            services/gitea-selenium-vitest/allure-report/
+            services/gitea-selenium-vitest/reports/junit.xml
           retention-days: 14
