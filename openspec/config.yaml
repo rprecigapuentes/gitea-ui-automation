@@ -1,0 +1,33 @@
+schema: spec-driven
+
+context: |
+  Two-person Selenium UI automation framework. The stack is declared in package.json and .nvmrc:
+  read them rather than assuming versions.
+
+  The application under test is Gitea, running on a DIFFERENT instance from the one that hosts this
+  repository. Tests create and delete users, repositories and organizations. Never point a test,
+  fixture or script at the instance that holds the code.
+
+  Specs describe this automation framework, never Gitea's own behaviour. Behaviour of the
+  application under test belongs in Cucumber .feature files.
+
+  Spec domains mirror the framework layers: core-driver, core-api, page-objects, pipeline.
+
+  The repository wiki is a separate git repository. Never edit wiki pages from here.
+
+rules:
+  proposal:
+    - Under 400 words.
+    - State what is out of scope, not only what is in it.
+  specs:
+    - A requirement describes the automation framework. If the sentence would still be true on a different framework, it belongs in a .feature file.
+    - Describe only what this change adds, modifies or removes. Never backfill requirements for code the change does not touch.
+  design:
+    - Skip this artifact when the change touches a single layer and introduces no new pattern.
+  tasks:
+    - Each task should be completable as one Conventional Commit.
+
+operations:
+  apply:
+    guidance:
+      - Before finishing, run npm run format, npm run lint and npm run typecheck. These are the three checks the pipeline runs.
