@@ -9,7 +9,7 @@ import { IssueClient } from "@gitea-automation/business-logic-selenium/api/clien
 import { Organization } from "@gitea-automation/business-logic-selenium/api/entities/organization.entity";
 import { SeededIssue } from "@gitea-automation/business-logic-selenium/api/entities/issue.entity";
 import { BrowserStackSession } from "../entities/browserstack.entity";
-import { ScenarioState } from "../entities/scenario.entity";
+import { ScenarioState } from "@gitea-automation/business-logic-selenium/state/scenario.entity";
 import { WebDriver } from "selenium-webdriver";
 import { DriverFactory } from "@gitea-automation/core-selenium/ui/drivers/driver.factory";
 import { LoginPage } from "@gitea-automation/business-logic-selenium/ui/pages/authentication/login.page";
