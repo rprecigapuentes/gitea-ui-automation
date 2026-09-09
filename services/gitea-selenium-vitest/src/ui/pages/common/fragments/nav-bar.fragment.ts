@@ -1,6 +1,6 @@
 import { By, WebDriver } from "selenium-webdriver";
-import { logger } from "@gitea-automation/core/logging/pino.logger";
-import { BaseComponent } from "@gitea-automation/core/selenium/ui/base-pages/base-component";
+import { logger } from "@gitea-automation/core/logger/pino.logger";
+import { BaseComponent } from "@gitea-automation/core/ui/base-pages/base-component";
 
 export class NavBarFragment extends BaseComponent {
   private readonly barOptionsLocators = {

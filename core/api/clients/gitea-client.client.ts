@@ -1,5 +1,5 @@
 import got, { Got, Response } from "got";
-import { logger } from "../../logging/pino.logger";
+import { logger } from "../../logger/pino.logger";
 
 export abstract class GiteaApiClient {
   protected readonly client: Got;

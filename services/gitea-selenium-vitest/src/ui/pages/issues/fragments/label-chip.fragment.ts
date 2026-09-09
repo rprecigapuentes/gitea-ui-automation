@@ -1,6 +1,6 @@
 import { By, WebDriver, WebElement } from "selenium-webdriver";
-import { BaseComponent } from "@gitea-automation/core/selenium/ui/base-pages/base-component";
-import { baseUrl } from "@gitea-automation/core/gitea/config";
+import { BaseComponent } from "@gitea-automation/core/ui/base-pages/base-component";
+import { baseUrl } from "@gitea-automation/core/config/gitea.config";
 
 export function labelIdFromHref(href: string | null): number | null {
   const labelId = new URL(href ?? "", baseUrl).searchParams.get("labels");

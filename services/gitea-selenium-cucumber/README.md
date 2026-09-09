@@ -22,14 +22,14 @@ services/gitea-selenium-cucumber/
 
 ## What it reuses from `@gitea-automation/core`
 
-- `core/selenium/drivers/driver.factory.ts` — same `DriverFactory` as `gitea-selenium-vitest`, driver lifecycle managed in `features/support/hooks.ts`.
-- `core/selenium/ui/base-pages/base.page.ts` — `LoginPage` in `features/pages/` extends the same `BasePage`.
-- `core/gitea/config.ts` — `baseUrl`.
-- Not used yet, but available when this suite grows: `core/gitea/api-clients/**` and `core/gitea/entities/**` for seeding/querying Gitea via its API, exactly like `gitea-selenium-vitest`'s fixtures do.
+- `core/ui/drivers/driver.factory.ts` — same `DriverFactory` as `gitea-selenium-vitest`, driver lifecycle managed in `features/support/hooks.ts`.
+- `core/ui/base-pages/base.page.ts` — `LoginPage` in `features/pages/` extends the same `BasePage`.
+- `core/config/gitea.config.ts` — `baseUrl`.
+- Not used yet, but available when this suite grows: `core/api/clients/**` and `core/api/entities/**` for seeding/querying Gitea via its API, exactly like `gitea-selenium-vitest`'s fixtures do.
 
 ## What it does NOT reuse (on purpose, for now)
 
-`features/pages/login.page.ts` is this service's **own** page object, not the `LoginPage` from `services/gitea-selenium-vitest`. Concrete Gitea page objects are intentionally per-project today (see [`core/README.md`](../../core/README.md)) — if real duplication builds up between this service and `gitea-selenium-vitest`, promoting shared ones to `core/selenium/gitea/pages/` is a refactor to evaluate then, not something forced now.
+`features/pages/login.page.ts` is this service's **own** page object, not the `LoginPage` from `services/gitea-selenium-vitest`. Concrete Gitea page objects are intentionally per-project today (see [`core/README.md`](../../core/README.md)) — if real duplication builds up between this service and `gitea-selenium-vitest`, promoting shared ones to `core` is a refactor to evaluate then, not something forced now.
 
 ## Running
 
@@ -47,4 +47,4 @@ Needs a `.env` in this folder (copy `.env.example`) with `GITEA_BASE_URL` and, p
 
 ## Next steps
 
-This is where the suite grows from here — more features, more step definitions, its own credential-resolution helper (mirroring `gitea-selenium-vitest/src/utils/session-credentials.util.ts` if a multi-account/multi-browser scheme turns out to be needed here too), and its own seeded-data fixtures via `@gitea-automation/core/gitea/api-clients/**`.
+This is where the suite grows from here — more features, more step definitions, its own credential-resolution helper (mirroring `gitea-selenium-vitest/src/utils/session-credentials.util.ts` if a multi-account/multi-browser scheme turns out to be needed here too), and its own seeded-data fixtures via `@gitea-automation/core/api/clients/**`.

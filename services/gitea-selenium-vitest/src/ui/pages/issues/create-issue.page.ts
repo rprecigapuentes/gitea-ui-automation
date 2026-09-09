@@ -1,6 +1,6 @@
 import { By, WebDriver, until } from "selenium-webdriver";
-import { BasePage } from "@gitea-automation/core/selenium/ui/base-pages/base.page";
-import { baseUrl } from "@gitea-automation/core/gitea/config";
+import { BasePage } from "@gitea-automation/core/ui/base-pages/base.page";
+import { baseUrl } from "@gitea-automation/core/config/gitea.config";
 import { SidebarComboFragment } from "./fragments/sidebar-combo.fragment";
 
 const form = "#new-issue";

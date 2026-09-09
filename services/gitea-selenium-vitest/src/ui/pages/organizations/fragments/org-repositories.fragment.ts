@@ -1,4 +1,4 @@
-import { BaseComponent } from "@gitea-automation/core/selenium/ui/base-pages/base-component";
+import { BaseComponent } from "@gitea-automation/core/ui/base-pages/base-component";
 import { By } from "selenium-webdriver";
 
 export class OrgRepositoriesFragment extends BaseComponent {

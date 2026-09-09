@@ -1,9 +1,6 @@
 import "dotenv/config";
 import { Local } from "browserstack-local";
-import {
-  credentials,
-  localIdentifier,
-} from "@gitea-automation/core/selenium/config/browserstack.config";
+import { credentials, localIdentifier } from "@gitea-automation/core/config/browserstack.config";
 
 export default async function setup(): Promise<() => Promise<void>> {
   const tunnel = new Local();

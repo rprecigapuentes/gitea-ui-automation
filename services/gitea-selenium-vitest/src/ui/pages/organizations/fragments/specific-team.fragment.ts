@@ -1,5 +1,5 @@
 import { By } from "selenium-webdriver";
-import { BaseComponent } from "@gitea-automation/core/selenium/ui/base-pages/base-component";
+import { BaseComponent } from "@gitea-automation/core/ui/base-pages/base-component";
 
 export class SpecificTeamFragment extends BaseComponent {
   private readonly locators = {

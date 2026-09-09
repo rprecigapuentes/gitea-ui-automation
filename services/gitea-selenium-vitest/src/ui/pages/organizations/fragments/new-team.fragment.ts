@@ -1,6 +1,6 @@
 import { By } from "selenium-webdriver";
-import { BaseComponent } from "@gitea-automation/core/selenium/ui/base-pages/base-component";
-import { TeamVisibility } from "@gitea-automation/core/gitea/entities/team.entity";
+import { BaseComponent } from "@gitea-automation/core/ui/base-pages/base-component";
+import { TeamVisibility } from "@gitea-automation/core/api/entities/team.entity";
 
 export class NewTeamFragment extends BaseComponent {
   private readonly locators = {

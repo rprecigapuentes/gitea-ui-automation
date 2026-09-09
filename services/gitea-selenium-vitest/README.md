@@ -160,9 +160,9 @@ carried between runs, and this runner has nowhere to keep one.
 
 UI code follows a **Page / Fragment / Facade** split, all built on the shared `BaseComponent` from `@gitea-automation/core`:
 
-- **`BaseComponent`** (`@gitea-automation/core/selenium/ui/base-pages/base-component`) — the `find`, `click` and `type`
+- **`BaseComponent`** (`@gitea-automation/core/ui/base-pages/base-component`) — the `find`, `click` and `type`
   helpers shared by everything below. It has no notion of a URL.
-- **`BasePage extends BaseComponent`** (`@gitea-automation/core/selenium/ui/base-pages/base.page`) — a page that owns a URL. Implements the `Navigable`
+- **`BasePage extends BaseComponent`** (`@gitea-automation/core/ui/base-pages/base.page`) — a page that owns a URL. Implements the `Navigable`
   interface (`getUrl()` + `open()`).
 - **`Navigable`** — a standalone interface (`getUrl()` + `open()`), not a base class. Any
   object that represents a navigable URL implements it directly, so a facade that just

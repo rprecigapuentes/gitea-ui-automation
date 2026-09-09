@@ -1,6 +1,6 @@
 import got from "got";
 import { CookieJar } from "tough-cookie";
-import { logger } from "../../logging/pino.logger";
+import { logger } from "../../logger/pino.logger";
 
 export interface SeleniumCookie {
   name: string;

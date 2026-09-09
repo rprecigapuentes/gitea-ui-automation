@@ -4,9 +4,9 @@ import { OrgRepositoriesFragment } from "../fragments/org-repositories.fragment"
 import { OrgTeamsFragment } from "../fragments/org-teams.fragment";
 import { NewTeamFragment } from "../fragments/new-team.fragment";
 import { SpecificTeamFragment } from "../fragments/specific-team.fragment";
-import { Navigable } from "@gitea-automation/core/selenium/ui/base-pages/base.page";
-import { baseUrl } from "@gitea-automation/core/gitea/config";
-import { Organization } from "@gitea-automation/core/gitea/entities/organization.entity";
+import { Navigable } from "@gitea-automation/core/ui/base-pages/base.page";
+import { baseUrl } from "@gitea-automation/core/config/gitea.config";
+import { Organization } from "@gitea-automation/core/api/entities/organization.entity";
 
 export class OrganizationFacade implements Navigable {
   private readonly organization: Organization;

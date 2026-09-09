@@ -1,7 +1,7 @@
 import { By, WebDriver } from "selenium-webdriver";
-import { BasePage } from "@gitea-automation/core/selenium/ui/base-pages/base.page";
-import { baseUrl } from "@gitea-automation/core/gitea/config";
-import { Organization } from "@gitea-automation/core/gitea/entities/organization.entity";
+import { BasePage } from "@gitea-automation/core/ui/base-pages/base.page";
+import { baseUrl } from "@gitea-automation/core/config/gitea.config";
+import { Organization } from "@gitea-automation/core/api/entities/organization.entity";
 
 export class OrganizationDashboardPage extends BasePage {
   private readonly organization: Organization;

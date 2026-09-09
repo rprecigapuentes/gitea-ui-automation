@@ -4,10 +4,11 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./logging/*": "./logging/*.ts",
+    "./logger/*": "./logger/*.ts",
     "./utils/*": "./utils/*.ts",
-    "./gitea/*": "./gitea/*.ts",
-    "./selenium/*": "./selenium/*.ts"
+    "./api/*": "./api/*.ts",
+    "./ui/*": "./ui/*.ts",
+    "./config/*": "./config/*.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

@@ -1,5 +1,5 @@
-import { Organization } from "@gitea-automation/core/gitea/entities/organization.entity";
-import { Team } from "@gitea-automation/core/gitea/entities/team.entity";
+import { Organization } from "@gitea-automation/core/api/entities/organization.entity";
+import { Team } from "@gitea-automation/core/api/entities/team.entity";
 
 export interface ScenarioState {
   organization?: Organization;

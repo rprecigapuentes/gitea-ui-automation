@@ -1,5 +1,5 @@
 import { Builder, Browser as SeleniumBrowser, WebDriver } from "selenium-webdriver";
-import { bstackOptions, hubUrl, isBrowserStack } from "../config/browserstack.config";
+import { bstackOptions, hubUrl, isBrowserStack } from "../../config/browserstack.config";
 
 import chrome from "selenium-webdriver/chrome";
 import firefox from "selenium-webdriver/firefox";

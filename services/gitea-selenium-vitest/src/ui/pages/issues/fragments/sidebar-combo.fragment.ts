@@ -1,5 +1,5 @@
 import { By, WebDriver } from "selenium-webdriver";
-import { BaseComponent } from "@gitea-automation/core/selenium/ui/base-pages/base-component";
+import { BaseComponent } from "@gitea-automation/core/ui/base-pages/base-component";
 import { labelIdFromHref } from "./label-chip.fragment";
 
 export class SidebarComboFragment extends BaseComponent {

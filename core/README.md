@@ -6,40 +6,40 @@ Shared package of the monorepo. Not installed on its own — it's consumed by th
 
 ```
 core/
-├── logging/     # Logger adapter + Pino implementation — 100% agnostic of the app and of the UI tool
-├── utils/       # test-data.util: test-data naming (AT-<caseId>-<object>-<date>-<time>-<browser>-<suffix>) — 100% agnostic
-├── gitea/       # Gitea domain: API clients (got) + entities — agnostic of the UI tool (Selenium/Playwright/whatever)
-│   ├── config.ts
-│   ├── api-clients/
-│   └── entities/
-└── selenium/    # everything coupled to selenium-webdriver: driver factory, base pages, BrowserStack (WebDriver)
-    ├── drivers/
-    ├── config/
-    └── ui/base-pages/
+├── api/         # HTTP layer against the Gitea API
+│   ├── clients/     # GiteaApiClient base + auth/issue/label/milestone/organizations/repository/user
+│   └── entities/     # issue/label/milestone/organization/repository/team/user (API response shapes)
+├── ui/          # browser automation layer (built on selenium-webdriver today)
+│   ├── base-pages/   # BaseComponent (find/click/type) + BasePage (+URL) + Navigable
+│   └── drivers/       # driver.factory.ts — builds/quits a WebDriver, supports a remote grid and BrowserStack
+├── config/      # configuration values and credentials
+│   ├── gitea.config.ts        # baseUrl, from GITEA_BASE_URL
+│   └── browserstack.config.ts # BrowserStack credentials, bstackOptions(), setSessionStatus()
+├── utils/       # generic helpers
+│   └── test-data.util.ts
+└── logger/      # Logger adapter (interface) + Pino implementation
 ```
 
 ## Why this split
 
-- **`logging/` and `utils/`** know nothing about Gitea or Selenium — any service in the monorepo can use them as-is.
-- **`gitea/`** is pure HTTP/JSON (via `got`) against the Gitea API. It doesn't import `selenium-webdriver` anywhere. It's domain of the application under test, not of the automation tool — that's why `gitea-selenium-vitest`, `gitea-selenium-cucumber`, and in the future a Playwright project, can all reuse it without pulling in Selenium as a dependency if they don't need it.
-- **`selenium/`** is the opposite: `selenium-webdriver` mechanics (`WebDriver`, `By`, `until`), knowing nothing about Gitea. Today it's consumed by two real services (`gitea-selenium-vitest` and `gitea-selenium-cucumber`).
+Organized by technical layer rather than by domain: `api/` is the HTTP/JSON layer against Gitea, `ui/` is the browser-automation layer, `config/` holds configuration values and credentials, `utils/` and `logger/` are generic. `utils/` and `logger/` know nothing about Gitea or Selenium — any service can use them as-is. `api/` doesn't import `selenium-webdriver` anywhere, so it's reusable regardless of which UI tool a service uses.
 
 ## What deliberately does NOT live here
 
-Concrete Gitea page objects (real selectors: `LoginPage`, `IssuePage`, `OrganizationFacade`, fragments, etc.) are not in `core/selenium/` — they stay inside each service that uses them (`services/gitea-selenium-vitest/src/ui/pages/**`, and its own equivalent in `services/gitea-selenium-cucumber/features/pages/**`). The long-term idea is for `core` to hold the base pages (it already does) and each project its own concrete pages; if real duplication ever builds up between two Selenium services, promoting shared ones to a `core/selenium/gitea/pages/` is a separate refactor to evaluate then, not something forced now.
+Concrete Gitea page objects (real selectors: `LoginPage`, `IssuePage`, `OrganizationFacade`, fragments, etc.) are not in `core/ui/` — they stay inside each service that uses them (`services/gitea-selenium-vitest/src/ui/pages/**`, and its own equivalent in `services/gitea-selenium-cucumber/features/pages/**`).
 
 Nothing specific to a test runner (Vitest, Cucumber) lives here either: fixtures, hooks, world objects and reporting config are each service's own "internal core".
 
-## The seam for a future Playwright project
+## A note on `core/ui/` and future tools
 
-`services/playwright-native/` and `services/playwright-bdd/` exist today as empty workspaces. When real work starts on either, the pattern to follow is adding a **`core/playwright/`** parallel to `core/selenium/` (with its own `drivers/`, `config/`, and a base page/component built on Playwright's `Page`/`Locator` instead of `WebDriver`/`By`), without touching `core/selenium/**`. `core/gitea/` doesn't change — the Gitea domain (API clients + entities) is just as valid for a Playwright project.
+`core/ui/base-pages/` and `core/ui/drivers/driver.factory.ts` are built on `selenium-webdriver` today — a future project using a different browser automation tool (e.g. Playwright) can't reuse them as-is, since the underlying APIs (`WebDriver`/`By` vs `Page`/`Locator`) aren't compatible. `core/ui/` isn't namespaced by tool, so when that work starts, distinguishing new files from these (by name, or by introducing a subfolder at that point) is a decision to make then — not resolved in advance.
 
 ## Imports
 
-Each subtree is exposed as its own subpath export in `package.json` (`./logging/*`, `./utils/*`, `./gitea/*`, `./selenium/*`) — there is no `"."` (bare) export on purpose, to force every import to explicitly declare whether it touches `gitea` or `selenium`. Example from a service:
+Each subtree is exposed as its own subpath export in `package.json` (`./api/*`, `./ui/*`, `./config/*`, `./utils/*`, `./logger/*`) — there is no `"."` (bare) export. Example from a service:
 
 ```ts
-import { DriverFactory } from "@gitea-automation/core/selenium/drivers/driver.factory";
-import { IssueClient } from "@gitea-automation/core/gitea/api-clients/issue.client";
+import { DriverFactory } from "@gitea-automation/core/ui/drivers/driver.factory";
+import { IssueClient } from "@gitea-automation/core/api/clients/issue.client";
 import { testDataName } from "@gitea-automation/core/utils/test-data.util";
 ```

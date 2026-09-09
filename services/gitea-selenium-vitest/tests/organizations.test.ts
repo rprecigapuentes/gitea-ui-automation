@@ -1,7 +1,7 @@
 import { describe, expect } from "vitest";
 import { OrgTab } from "../src/ui/pages/organizations/fragments/org-navigation.fragment";
-import { Organization } from "@gitea-automation/core/gitea/entities/organization.entity";
-import { Team } from "@gitea-automation/core/gitea/entities/team.entity";
+import { Organization } from "@gitea-automation/core/api/entities/organization.entity";
+import { Team } from "@gitea-automation/core/api/entities/team.entity";
 import { test } from "../src/fixtures/fixture";
 import * as allure from "allure-js-commons";
 import "dotenv/config";
