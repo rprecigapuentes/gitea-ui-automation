@@ -31,3 +31,5 @@ operations:
   apply:
     guidance:
       - Before finishing, run npm run format, npm run lint and npm run typecheck. These are the three checks the pipeline runs.
+      - Comment only where the code cannot speak for itself. One or two plain sentences, never a paragraph.
+      - Do not comment what the next line already says, and do not narrate the change, the alternatives considered or the history. That belongs in the commit message or in design.md.
