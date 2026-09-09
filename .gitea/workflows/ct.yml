@@ -45,8 +45,21 @@ jobs:
           echo "this run covers: ${CHOICE:-all}"
 
   regression:
+    needs: select
     runs-on: ubuntu-24.04
     timeout-minutes: 25
+
+    strategy:
+      # A failing suite must not cancel the other. The Cucumber suite is still
+      # under construction, and losing the vitest results to it would make the
+      # nightly run useless on exactly the days it matters.
+      fail-fast: false
+      # One suite at a time. Each job starts a job container plus its own
+      # gitea-test and browser, on a VPS that also hosts the Git server this run
+      # was triggered from. Raise it once the host has been measured.
+      max-parallel: 1
+      matrix:
+        suite: ${{ fromJSON(needs.select.outputs.suites) }}
 
     services:
       gitea-test:
@@ -149,7 +162,7 @@ jobs:
           done
 
       - name: Run the suite
-        run: npm test
+        run: npm test -w @gitea-automation/${{ matrix.suite }}
 
       - name: Generate the Allure report
         if: always()

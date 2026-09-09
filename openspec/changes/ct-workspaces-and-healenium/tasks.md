@@ -5,7 +5,7 @@
 ## 2. Suite selection in ct.yml
 
 - [x] 2.1 Add the `suite` choice input to `workflow_dispatch` and a `select` job that emits the matrix as JSON, falling back to every test-bearing workspace when no input is supplied. Verify with two manual dispatches: one naming a single suite, whose `select` output must hold only that suite, and one asking for all, whose output must hold both. Confirm on the same run which input context `act_runner` actually populates, per the open question in `design.md`.
-- [ ] 2.2 Turn the `regression` job into a matrix over `select`'s output, running `npm test -w @gitea-automation/${{ matrix.suite }}`, with `fail-fast: false` and `max-parallel: 1`. Leave `SELENIUM_REMOTE_URL` pointed at the Selenium container for now. Verify that an all-suites run produces one job per suite, that each provisions its own `gitea-test` and browser, and that a failing suite does not cancel the other.
+- [x] 2.2 Turn the `regression` job into a matrix over `select`'s output, running `npm test -w @gitea-automation/${{ matrix.suite }}`, with `fail-fast: false` and `max-parallel: 1`. Leave `SELENIUM_REMOTE_URL` pointed at the Selenium container for now. Verify that an all-suites run produces one job per suite, that each provisions its own `gitea-test` and browser, and that a failing suite does not cancel the other.
 - [ ] 2.3 Make the report step and the uploaded artifact per suite: generate with `-w @gitea-automation/${{ matrix.suite }}` and name the artifact after the suite. Verify that a two-suite run yields two artifacts with distinct names, both downloadable, and that the artifact of a deliberately failed suite is still uploaded.
 
 ## 3. Routing the browser through Healenium
