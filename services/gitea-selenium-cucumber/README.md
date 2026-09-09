@@ -2,7 +2,7 @@
 
 Selenium WebDriver + Cucumber (BDD/Gherkin) automation against Gitea. Part of the `gitea-ui-automation` monorepo.
 
-**Status: scaffold.** One working feature (`login`) proves the wiring end-to-end (driver lifecycle, `@gitea-automation/core-selenium`/`@gitea-automation/business-logic-selenium` resolution, env loading); the rest of the suite is still to be built.
+**Status: scaffold.** One working feature (`login`) proves the wiring end-to-end (driver lifecycle, World/`ScenarioState`/`PageFactory`, `@gitea-automation/core-selenium`/`@gitea-automation/business-logic-selenium` resolution, env loading); the rest of the suite is still to be built.
 
 ## What's here
 
@@ -14,17 +14,27 @@ services/gitea-selenium-cucumber/
     ├── scenarios/login.feature         # illustrative Gherkin scenario — .feature files live here, kept separate from steps/support as the suite grows
     ├── step-definitions/login.steps.ts # Given/When/Then for login.feature
     └── support/
-        ├── world.ts                    # Cucumber World — holds the WebDriver + page objects for the current scenario
-        ├── hooks.ts                    # Before/After (driver lifecycle via @gitea-automation/core-selenium's DriverFactory) + setDefaultTimeout
+        ├── world.ts                    # Cucumber World — driver, scenarioState (ScenarioState), pages (PageFactory) for the current scenario
+        ├── page.factory.ts             # PageFactory — lazy, memoized getters for the page objects a scenario needs (this.pages.loginPage, ...)
+        ├── hooks.ts                    # Before/After — driver lifecycle (DriverFactory) + initializes scenarioState/pages + setDefaultTimeout
         └── credentials.ts              # resolveOwnerCredentials() — same GITEA_OWNER_<BROWSER>[_PASSWORD] scheme as gitea-selenium-vitest
 ```
 
 `cucumber.mjs`'s `paths` glob is `features/**/*.feature`, so any nesting under `features/` (like `scenarios/`) is picked up automatically — no config change needed when adding more `.feature` files or grouping them further.
 
+## Custom World
+
+`GiteaWorld` (`features/support/world.ts`) is Cucumber's per-scenario state container, populated in the `Before` hook (`features/support/hooks.ts`):
+
+- `driver: WebDriver` — from `DriverFactory.getDriver()`, same as `gitea-selenium-vitest`.
+- `scenarioState: ScenarioState` — starts as `{}` each scenario, mutated by steps as they create Gitea resources (organization, teams); the same type `gitea-selenium-vitest`'s fixtures use, imported from `@gitea-automation/business-logic-selenium/state/scenario.entity` rather than duplicated.
+- `pages: PageFactory` — a `PageFactory` instance (`features/support/page.factory.ts`). Steps never construct a page object directly; they read it off `pages` (`this.pages.loginPage.login(...)`, `this.pages.mainPage.waitUntilLoaded()`). Each page is built lazily on first access and memoized (`??=`) for the rest of the scenario — same pattern this repo already uses for `organizationPages` in `gitea-selenium-vitest`'s fixture. Today it only covers `loginPage`, `mainPage`, `navBar`; adding a page later is one more getter, no changes to `world.ts` or `hooks.ts`.
+
 ## What it reuses
 
 - [`@gitea-automation/core-selenium/ui/drivers/driver.factory.ts`](../../core/selenium/README.md) — same `DriverFactory` as `gitea-selenium-vitest`, driver lifecycle managed in `features/support/hooks.ts`.
-- [`@gitea-automation/business-logic-selenium/ui/pages/**`](../../business-logic/selenium/README.md) — the same concrete page objects as `gitea-selenium-vitest` (`LoginPage`, `MainPage`, and everything else in there). This service keeps no page objects of its own.
+- [`@gitea-automation/business-logic-selenium/ui/pages/**`](../../business-logic/selenium/README.md) — the same concrete page objects as `gitea-selenium-vitest` (`LoginPage`, `MainPage`, and everything else in there), built through `PageFactory`. This service keeps no page objects of its own.
+- [`@gitea-automation/business-logic-selenium/state/scenario.entity.ts`](../../business-logic/selenium/README.md) — `ScenarioState`, the same type `gitea-selenium-vitest` uses to pass Gitea resources created mid-scenario between steps.
 - Not used yet, but available when this suite grows: `@gitea-automation/business-logic-selenium/api/clients/**` and `.../api/entities/**` for seeding/querying Gitea via its API, exactly like `gitea-selenium-vitest`'s fixtures do.
 
 ## Running
