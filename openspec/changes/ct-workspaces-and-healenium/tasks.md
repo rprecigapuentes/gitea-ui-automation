@@ -16,4 +16,4 @@
 
 ## 4. Documentation
 
-- [ ] 4.1 Update the CI/CD section of the root `README.md`, which still describes `ct.yml` as deploying a Gitea and a Selenium and running the vitest suite alone. State which suites run, how to select one manually, and that the pipeline depends on the Healenium stack deployed from `automindai-infra`. Verify by reading it against the final `ct.yml`.
+- [x] 4.1 Update the CI/CD section of the root `README.md`, which still describes `ct.yml` as deploying a Gitea and a Selenium and running the vitest suite alone. State which suites run, how to select one manually, and that the pipeline depends on the Healenium stack deployed from `automindai-infra`. Verify by reading it against the final `ct.yml`.
