@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     "./ui/*": "./ui/*.ts",
-    "./api/*": "./api/*.ts"
+    "./api/*": "./api/*.ts",
+    "./state/*": "./state/*.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
