@@ -1,4 +1,5 @@
 import { Given, When, Then } from "@cucumber/cucumber";
+import { expect } from "vitest";
 import { resolveOwnerCredentials } from "../support/credentials";
 import type { GiteaWorld } from "../support/world";
 
@@ -12,5 +13,5 @@ When("I log in with valid credentials", async function (this: GiteaWorld) {
 });
 
 Then("I should land on the Gitea dashboard", async function (this: GiteaWorld) {
-  await this.pages.mainPage.waitUntilLoaded();
+  expect(await this.pages.mainPage.hasExpectedElementsDisplayed()).toBe(true);
 });
