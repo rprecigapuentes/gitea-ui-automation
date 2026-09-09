@@ -166,14 +166,21 @@ jobs:
 
       - name: Generate the Allure report
         if: always()
-        run: npm run report -w @gitea-automation/gitea-selenium-vitest
+        run: npm run report -w @gitea-automation/${{ matrix.suite }}
 
+      # The artifact name has to carry the suite: two matrix jobs uploading
+      # under one name collide, and the second one loses.
+      #
+      # junit.xml exists for the vitest suite only — Cucumber reports through
+      # Allure alone — so that path is absent there and the upload warns rather
+      # than fails, which is the intended behaviour until the Cucumber suite
+      # grows a JUnit formatter of its own.
       - name: Upload the report
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: allure-report
+          name: allure-report-${{ matrix.suite }}
           path: |
-            services/gitea-selenium-vitest/allure-report/
-            services/gitea-selenium-vitest/reports/junit.xml
+            services/${{ matrix.suite }}/allure-report/
+            services/${{ matrix.suite }}/reports/junit.xml
           retention-days: 14
