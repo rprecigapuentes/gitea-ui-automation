@@ -19,14 +19,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # The suites are the service workspaces that expose a `test` script.
-  # playwright-native and playwright-bdd expose none, so they stay out until
-  # they do.
-  #
-  # This job exists because a schedule carries no dispatch inputs: on the
-  # nightly run `github.event.inputs.suite` arrives empty, and `strategy.matrix`
-  # has no way to express that fallback. The list is computed here and read back
-  # through `fromJSON`.
+  # The suites are the workspaces that expose a `test` script.
+  # A schedule sends no input, so `suite` arrives empty and the matrix has to be
+  # computed rather than declared.
   select:
     runs-on: ubuntu-24.04
     outputs:
@@ -50,13 +45,10 @@ jobs:
     timeout-minutes: 25
 
     strategy:
-      # A failing suite must not cancel the other. The Cucumber suite is still
-      # under construction, and losing the vitest results to it would make the
-      # nightly run useless on exactly the days it matters.
+      # Cucumber is under construction; its failure must not take the vitest
+      # results with it.
       fail-fast: false
-      # One suite at a time. Each job starts a job container plus its own
-      # gitea-test and browser, on a VPS that also hosts the Git server this run
-      # was triggered from. Raise it once the host has been measured.
+      # Each job runs its own gitea-test, browser and proxy on a small VPS.
       max-parallel: 1
       matrix:
         suite: ${{ fromJSON(needs.select.outputs.suites) }}
@@ -83,24 +75,16 @@ jobs:
           SE_NODE_MAX_SESSIONS: "3"
           SE_NODE_OVERRIDE_MAX_SESSIONS: "true"
 
-      # Healenium's proxy sits between the suite and Selenium: it forwards every
-      # command, and steps in only when a locator matches nothing, resolving it
-      # against the node path recorded for it on an earlier run.
-      #
-      # The proxy and the browser are per job; the store they consult is not. It
-      # lives on the gitea-lab VPS, deployed from automindai-infra, because a
-      # store created per run holds no earlier run to compare against and can
-      # therefore never heal.
-      #
-      # It is reached by public hostname rather than over a network, the same
-      # path the Actions runner already takes to reach Gitea itself: a job's
-      # network is created fresh for that job and nothing outside can enter it.
-      # HEALENIUM_SERVER_URL and HEALENIUM_SERVICE are the external and internal
-      # addresses of the same backend, and here there is no internal one.
+      # The store must outlive the run to heal anything, so the backend is
+      # permanent on the gitea-lab VPS, deployed from automindai-infra. It is
+      # reached by public hostname because a job's network is created fresh and
+      # nothing outside can enter it.
       hlm-proxy:
         image: healenium/hlm-proxy:2.2.1
         env:
           SELENIUM_SERVER_URL: http://selenium:4444/wd/hub
+          # External and internal address of one backend; here there is no
+          # internal one.
           HEALENIUM_SERVER_URL: https://healenium.estiberz.online
           HEALENIUM_SERVICE: https://healenium.estiberz.online
           IMITATE_SERVICE: https://imitator.estiberz.online
@@ -144,9 +128,7 @@ jobs:
           echo "gitea-test never became healthy"
           exit 1
 
-      # The suite now addresses the proxy, so the proxy is what has to answer.
-      # It forwards /status to Selenium, which means a ready answer proves both
-      # hops at once: the proxy is up, and the browser behind it is up.
+      # The proxy forwards /status to Selenium, so a ready answer covers both.
       - name: Wait for the browser, through the healing proxy
         run: |
           for _ in $(seq 1 60); do
@@ -156,15 +138,9 @@ jobs:
           echo "hlm-proxy at $SELENIUM_REMOTE_URL never reported the browser ready"
           exit 1
 
-      # Separate from the check above, and deliberately so: the proxy answers
-      # /status perfectly well while the store behind it is unreachable, and a
-      # suite in that state runs to green having healed nothing and recorded
-      # nothing. Failing here, before a single test executes, is the difference
-      # between a pipeline that is broken and one that is quietly useless.
-      #
-      # The URL is written out rather than read from the job's env because the
-      # env context does not reach a service container's own environment, so it
-      # is spelled out in the hlm-proxy service above too.
+      # The proxy answers /status while the store behind it is down, and a suite
+      # in that state passes having healed and recorded nothing.
+      # The URL is repeated because the env context does not reach a service.
       - name: Check the healing store is answering
         run: |
           store=https://healenium.estiberz.online
@@ -216,13 +192,9 @@ jobs:
         if: always()
         run: npm run report -w @gitea-automation/${{ matrix.suite }}
 
-      # The artifact name has to carry the suite: two matrix jobs uploading
-      # under one name collide, and the second one loses.
-      #
-      # junit.xml exists for the vitest suite only — Cucumber reports through
-      # Allure alone — so that path is absent there and the upload warns rather
-      # than fails, which is the intended behaviour until the Cucumber suite
-      # grows a JUnit formatter of its own.
+      # Two jobs uploading under one name collide, so the name carries the suite.
+      # junit.xml is the vitest suite's only; the path is absent for Cucumber
+      # and the upload warns.
       - name: Upload the report
         if: always()
         uses: actions/upload-artifact@v3
