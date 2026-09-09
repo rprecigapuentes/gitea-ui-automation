@@ -112,7 +112,7 @@ jobs:
     env:
       MAX_WORKERS: "3"
       GITEA_BASE_URL: http://gitea-test:3000
-      SELENIUM_REMOTE_URL: http://selenium:4444
+      SELENIUM_REMOTE_URL: http://hlm-proxy:8085
       GITEA_OWNER_CHROME: chrome-owner
       GITEA_OWNER_CHROME_PASSWORD: Qa-bot-not-a-secret-1
       GITEA_OWNER_FIREFOX: firefox-owner
@@ -144,14 +144,36 @@ jobs:
           echo "gitea-test never became healthy"
           exit 1
 
-      - name: Wait for the browser
+      # The suite now addresses the proxy, so the proxy is what has to answer.
+      # It forwards /status to Selenium, which means a ready answer proves both
+      # hops at once: the proxy is up, and the browser behind it is up.
+      - name: Wait for the browser, through the healing proxy
         run: |
           for _ in $(seq 1 60); do
             curl -fsS "$SELENIUM_REMOTE_URL/status" | grep -q '"ready": *true' && exit 0
             sleep 2
           done
-          echo "the selenium grid never became ready"
+          echo "hlm-proxy at $SELENIUM_REMOTE_URL never reported the browser ready"
           exit 1
+
+      # Separate from the check above, and deliberately so: the proxy answers
+      # /status perfectly well while the store behind it is unreachable, and a
+      # suite in that state runs to green having healed nothing and recorded
+      # nothing. Failing here, before a single test executes, is the difference
+      # between a pipeline that is broken and one that is quietly useless.
+      #
+      # The URL is written out rather than read from the job's env because the
+      # env context does not reach a service container's own environment, so it
+      # is spelled out in the hlm-proxy service above too.
+      - name: Check the healing store is answering
+        run: |
+          store=https://healenium.estiberz.online
+          if ! curl -fsS "$store/actuator/health" | grep -q '"status":"UP"'; then
+            echo "the healing store at $store is not answering"
+            echo "the suite would run unhealed and record no baselines, so this run stops here"
+            exit 1
+          fi
+          echo "the healing store is up"
 
       - name: Register the owner and invited accounts, and mint an API token per browser
         run: |
