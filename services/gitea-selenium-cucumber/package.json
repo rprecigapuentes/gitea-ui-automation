@@ -4,11 +4,14 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "pretest": "node -e \"require('fs').rmSync('allure-results', { recursive: true, force: true })\"",
     "test": "cross-env NODE_OPTIONS=--import=tsx cucumber-js",
     "test:chrome": "cross-env BROWSER=chrome NODE_OPTIONS=--import=tsx cucumber-js",
     "test:firefox": "cross-env BROWSER=firefox NODE_OPTIONS=--import=tsx cucumber-js",
     "test:edge": "cross-env BROWSER=edge NODE_OPTIONS=--import=tsx cucumber-js",
     "test:parallel": "concurrently -n chrome,firefox,edge -c blue,yellow,cyan \"npm:test:chrome\" \"npm:test:firefox\" \"npm:test:edge\"",
+    "report": "allure generate ./allure-results",
+    "report:open": "allure open ./allure-report/",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -20,6 +23,8 @@
   "devDependencies": {
     "@cucumber/cucumber": "^11.2.0",
     "@types/selenium-webdriver": "^4.35.6",
+    "allure": "^3.16.0",
+    "allure-cucumberjs": "^3.12.1",
     "concurrently": "^9.1.2",
     "cross-env": "^7.0.3",
     "tsx": "^4.19.2",
