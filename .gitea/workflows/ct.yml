@@ -4,12 +4,46 @@ on:
   schedule:
     - cron: "0 11 * * 1-5"
   workflow_dispatch:
+    inputs:
+      suite:
+        description: Which suite to run
+        type: choice
+        default: all
+        options:
+          - all
+          - gitea-selenium-vitest
+          - gitea-selenium-cucumber
 
 concurrency:
   group: ct
   cancel-in-progress: true
 
 jobs:
+  # The suites are the service workspaces that expose a `test` script.
+  # playwright-native and playwright-bdd expose none, so they stay out until
+  # they do.
+  #
+  # This job exists because a schedule carries no dispatch inputs: on the
+  # nightly run `github.event.inputs.suite` arrives empty, and `strategy.matrix`
+  # has no way to express that fallback. The list is computed here and read back
+  # through `fromJSON`.
+  select:
+    runs-on: ubuntu-24.04
+    outputs:
+      suites: ${{ steps.pick.outputs.suites }}
+    steps:
+      - name: Work out which suites this run covers
+        id: pick
+        env:
+          CHOICE: ${{ github.event.inputs.suite }}
+        run: |
+          if [ -z "$CHOICE" ] || [ "$CHOICE" = "all" ]; then
+            echo 'suites=["gitea-selenium-vitest","gitea-selenium-cucumber"]' >> "$GITHUB_OUTPUT"
+          else
+            echo "suites=[\"$CHOICE\"]" >> "$GITHUB_OUTPUT"
+          fi
+          echo "this run covers: ${CHOICE:-all}"
+
   regression:
     runs-on: ubuntu-24.04
     timeout-minutes: 25
