@@ -1,6 +1,6 @@
 # gitea-selenium-cucumber
 
-Selenium WebDriver + Cucumber (BDD/Gherkin) automation against Gitea. Part of the `gitea-ui-automation` monorepo — see [`docs/PROJECT_CONTEXT.md`](../../docs/PROJECT_CONTEXT.md) at the repo root for the full picture.
+Selenium WebDriver + Cucumber (BDD/Gherkin) automation against Gitea. Part of the `gitea-ui-automation` monorepo.
 
 **Status: scaffold.** One working feature (`login`) proves the wiring end-to-end (driver lifecycle, `@gitea-automation/core` resolution, env loading); the rest of the suite is still to be built.
 

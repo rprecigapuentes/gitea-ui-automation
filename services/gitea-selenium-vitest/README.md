@@ -1,6 +1,6 @@
 # gitea-selenium-vitest
 
-UI automation project using **Selenium WebDriver + TypeScript + Vitest**, supporting Chrome, Firefox and Edge. Part of the `gitea-ui-automation` monorepo — shared framework and Gitea domain code live in [`@gitea-automation/core`](../../core/README.md); see [`docs/PROJECT_CONTEXT.md`](../../docs/PROJECT_CONTEXT.md) at the repo root for the full picture.
+UI automation project using **Selenium WebDriver + TypeScript + Vitest**, supporting Chrome, Firefox and Edge. Part of the `gitea-ui-automation` monorepo — shared framework and Gitea domain code live in [`@gitea-automation/core`](../../core/README.md).
 
 ## Prerequisites
 

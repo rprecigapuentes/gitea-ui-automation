@@ -9,9 +9,6 @@ const browserStackPlatforms = [
   { name: "bs-win-edge", browser: "edge", os: "Windows", osVersion: "11" },
 ] as const;
 
-// Set by test:chrome/test:firefox/test:edge (via cross-env) when each browser runs as its own
-// process — e.g. through test:parallel. Keeps their JUnit output from colliding when written
-// concurrently. The combined `npm test` run (no BROWSER set here) keeps the single junit.xml.
 const singleBrowser = process.env.BROWSER;
 
 export default defineConfig({
