@@ -83,6 +83,32 @@ jobs:
           SE_NODE_MAX_SESSIONS: "3"
           SE_NODE_OVERRIDE_MAX_SESSIONS: "true"
 
+      # Healenium's proxy sits between the suite and Selenium: it forwards every
+      # command, and steps in only when a locator matches nothing, resolving it
+      # against the node path recorded for it on an earlier run.
+      #
+      # The proxy and the browser are per job; the store they consult is not. It
+      # lives on the gitea-lab VPS, deployed from automindai-infra, because a
+      # store created per run holds no earlier run to compare against and can
+      # therefore never heal.
+      #
+      # It is reached by public hostname rather than over a network, the same
+      # path the Actions runner already takes to reach Gitea itself: a job's
+      # network is created fresh for that job and nothing outside can enter it.
+      # HEALENIUM_SERVER_URL and HEALENIUM_SERVICE are the external and internal
+      # addresses of the same backend, and here there is no internal one.
+      hlm-proxy:
+        image: healenium/hlm-proxy:2.2.1
+        env:
+          SELENIUM_SERVER_URL: http://selenium:4444/wd/hub
+          HEALENIUM_SERVER_URL: https://healenium.estiberz.online
+          HEALENIUM_SERVICE: https://healenium.estiberz.online
+          IMITATE_SERVICE: https://imitator.estiberz.online
+          HEAL_ENABLED: "true"
+          RECOVERY_TRIES: "1"
+          SCORE_CAP: ".6"
+          HLM_LOG_LEVEL: info
+
     env:
       MAX_WORKERS: "3"
       GITEA_BASE_URL: http://gitea-test:3000

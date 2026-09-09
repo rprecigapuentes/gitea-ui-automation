@@ -10,7 +10,7 @@
 
 ## 3. Routing the browser through Healenium
 
-- [ ] 3.1 Add `hlm-proxy` as a service container in the `regression` job, configured to forward to the in-job Selenium container and to reach the backend and the imitator by their public hostnames. Verify by curling the proxy's status endpoint from the job and seeing it report ready.
+- [x] 3.1 Add `hlm-proxy` as a service container in the `regression` job, configured to forward to the in-job Selenium container and to reach the backend and the imitator by their public hostnames. Verify by curling the proxy's status endpoint from the job and seeing it report ready.
 - [ ] 3.2 Point `SELENIUM_REMOTE_URL` at the proxy and retarget the browser-readiness step at the same URL. Verify that a full run passes with no framework code change, and that the run's selectors appear in the Healenium backend afterwards, which is what proves the persistent store is being written rather than a per-job one.
 - [ ] 3.3 Verify the failure mode across 3.1 and 3.2: with the backend unreachable, the job must fail at the readiness step, before any test executes, and the failure must name the component that did not answer. Confirm the suite does not fall through to running unhealed.
 
