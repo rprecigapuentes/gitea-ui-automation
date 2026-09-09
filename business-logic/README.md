@@ -1,38 +1,22 @@
-# @gitea-automation/business-logic
+# business-logic/
 
-Shared package of the monorepo, like `@gitea-automation/core` — not installed on its own, consumed by `services/*` via `npm workspaces`.
-
-**Proposed change to the earlier per-project approach:** the original migration deliberately kept concrete Gitea page objects and API clients/entities local to each service (`gitea-selenium-vitest` had its own `src/ui/pages/**`, `gitea-selenium-cucumber` had its own duplicate `LoginPage`/`MainPage`). This package reverses that: since both `gitea-selenium-vitest` and `gitea-selenium-cucumber` test the same Gitea instance with the same tool (Selenium), their concrete page objects and API layer are now shared here instead of duplicated.
-
-## Structure
+Purely organizational — **not an npm workspace itself** (no `package.json` here). Each subfolder below is its own independent package, split by tool.
 
 ```
 business-logic/
-├── ui/
-│   └── pages/    # concrete Gitea page objects — Page/Fragment/Facade, by feature (authentication/, common/, issues/, organizations/)
-└── api/
-    ├── clients/   # auth/issue/label/milestone/organizations/repository/user — extend GiteaApiClient from core/api/
-    └── entities/   # issue/label/milestone/organization/repository/team/user (API response shapes)
+├── selenium/    @gitea-automation/business-logic-selenium   — ui/pages + api/{clients,entities} for Selenium-based services
+└── playwright/  @gitea-automation/business-logic-playwright — reserved, empty
 ```
 
-The abstract `GiteaApiClient` base that `clients/**` (except `auth.client.ts`, which is standalone) extends lives in `@gitea-automation/core/api/gitea-client.client` — it's shared `got` setup/framework, not concrete Gitea domain knowledge, so it stays with `core`. Only the concrete clients (real Gitea endpoints) and entities (real Gitea response shapes) are here.
+## Why this exists
 
-## Relationship to `@gitea-automation/core`
+Both `services/gitea-selenium-vitest` and `services/gitea-selenium-cucumber` test the same Gitea instance with the same tool (Selenium) — they used to each keep their own copy of page objects (and `gitea-selenium-vitest` alone had the API clients/entities), which meant duplicating the same selectors and endpoint knowledge. `business-logic/selenium` is that shared layer now; neither service keeps its own copy.
 
-`business-logic` depends on `core`: `ui/pages/**` builds on `core/ui/base-pages/**` (`BaseComponent`/`BasePage`) and reads `core/config/gitea.config` for `baseUrl`; `api/clients/**` extends `core/api/gitea-client.client` (`GiteaApiClient`). `core` stays the tool-and-domain-agnostic foundation (driver factory, base pages, config, logging, generic utils, the API client framework); `business-logic` is the concrete Gitea application knowledge built on top of it — page objects with real selectors, and the REST clients/entities for Gitea's actual endpoints.
+## `selenium/` is now split into `ui/`+`api/`, like `core/selenium/` is
 
-## Who uses this
+**Revision:** this package used to sit flat — `pages/`, `clients/`, `entities/` as direct siblings, deliberately without a `ui/`+`api/` wrapper, on the reasoning that at this level the axis that matters is "which tool" (Selenium vs. Playwright), not "which layer." That reasoning still holds one level up (`selenium/` vs. `playwright/` stays the top-level split), but within `selenium/` itself the same layer distinction `core/selenium/` already draws — browser-facing code (`ui/`) vs. HTTP-facing code (`api/`) — turned out to earn its keep here too, so `business-logic/selenium/` now nests `ui/pages/` and `api/{clients,entities}/` the same way `core/selenium/` nests `ui/` and `api/`. `business-logic/playwright/` will follow the same pattern once it starts.
 
-`services/gitea-selenium-vitest` and `services/gitea-selenium-cucumber` both depend on `@gitea-automation/business-logic` for every concrete page object and every API client/entity. Neither service keeps its own copy anymore — each service's remaining "internal core" is only what's genuinely specific to its test runner (Vitest fixtures, Cucumber World/hooks, credential-resolution helpers).
+## Read each package's own README
 
-## Selenium today, tool-agnostic boundary tomorrow
-
-`ui/pages/**` is built on Selenium (via `core/ui/base-pages`), same as `core/ui/` itself — not reusable as-is by a future Playwright project. `api/**` has no such constraint (pure HTTP/JSON) and should be reusable by any future project regardless of UI tool. How a future Playwright-based project gets its own concrete page objects (its own copy here, a new package, or something else) is a decision for when that work starts.
-
-## Imports
-
-```ts
-import { LoginPage } from "@gitea-automation/business-logic/ui/pages/authentication/login.page";
-import { IssueClient } from "@gitea-automation/business-logic/api/clients/issue.client";
-import type { Organization } from "@gitea-automation/business-logic/api/entities/organization.entity";
-```
+- [`business-logic/selenium/README.md`](selenium/README.md)
+- [`business-logic/playwright/README.md`](playwright/README.md)

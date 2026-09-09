@@ -1,6 +1,6 @@
 import { Given, When, Then } from "@cucumber/cucumber";
-import { LoginPage } from "@gitea-automation/business-logic/ui/pages/authentication/login.page";
-import { MainPage } from "@gitea-automation/business-logic/ui/pages/common/main.page";
+import { LoginPage } from "@gitea-automation/business-logic-selenium/ui/pages/authentication/login.page";
+import { MainPage } from "@gitea-automation/business-logic-selenium/ui/pages/common/main.page";
 import { resolveOwnerCredentials } from "../support/credentials";
 import type { GiteaWorld } from "../support/world";
 

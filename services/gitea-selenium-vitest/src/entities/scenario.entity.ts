@@ -1,5 +1,5 @@
-import { Organization } from "@gitea-automation/business-logic/api/entities/organization.entity";
-import { Team } from "@gitea-automation/business-logic/api/entities/team.entity";
+import { Organization } from "@gitea-automation/business-logic-selenium/api/entities/organization.entity";
+import { Team } from "@gitea-automation/business-logic-selenium/api/entities/team.entity";
 
 export interface ScenarioState {
   organization?: Organization;

@@ -1,11 +1,18 @@
 # Gitea UI Automation — monorepo
 
-An `npm workspaces` monorepo grouping Gitea UI/API automation into several independent projects, each with its own testing tool or style, sharing common code in `core/` and `business-logic/`.
+An `npm workspaces` monorepo grouping Gitea UI/API automation into several independent projects, each with its own testing tool or style, sharing common code under `core/` and `business-logic/`.
 
 ```
 /
-├── core/                          # shared package: tool-agnostic + Selenium automation framework
-├── business-logic/                # shared package: concrete Gitea page objects + API clients/entities
+├── core/                          # organizational only — each subfolder is its own package
+│   ├── selenium/                   # @gitea-automation/core-selenium — Selenium driver, base pages, BrowserStack
+│   ├── playwright/                 # @gitea-automation/core-playwright — reserved, empty
+│   ├── config/                     # @gitea-automation/core-config — Gitea app config, tool-agnostic
+│   ├── data-handler/               # @gitea-automation/core-data-handler — test-data naming, tool-agnostic
+│   └── logger/                     # @gitea-automation/core-logger — logging, tool-agnostic
+├── business-logic/                # organizational only — each subfolder is its own package
+│   ├── selenium/                   # @gitea-automation/business-logic-selenium — concrete Gitea pages + API clients/entities
+│   └── playwright/                 # @gitea-automation/business-logic-playwright — reserved, empty
 ├── services/
 │   ├── gitea-selenium-vitest/     # Selenium + Vitest — active project, full suite
 │   ├── gitea-selenium-cucumber/   # Selenium + Cucumber (BDD) — under construction
@@ -13,13 +20,15 @@ An `npm workspaces` monorepo grouping Gitea UI/API automation into several indep
 │   └── playwright-bdd/            # reserved — no code yet
 ```
 
+`core/` and `business-logic/` are **not workspaces themselves** — no `package.json` at that level, purely folders for organizing their subfolder-packages. Each subfolder underneath them is.
+
 ## Installation
 
 ```bash
 npm install
 ```
 
-Installs the dependencies of every workspace (`core`, `business-logic`, and the 4 services) in one shot.
+Installs the dependencies of every workspace (5 under `core/`, 2 under `business-logic/`, and the 4 services) in one shot.
 
 ## Root scripts (delegate to the matching workspace)
 
@@ -41,8 +50,8 @@ Installs the dependencies of every workspace (`core`, `business-logic`, and the 
 
 ## Each project
 
-- **[core](core/README.md)** — tool-and-domain-agnostic foundation, plus the Selenium browser-automation primitives (driver factory, base pages).
-- **[business-logic](business-logic/README.md)** — concrete Gitea page objects (Page/Fragment/Facade) and API clients/entities, shared by every Selenium-based service below. Neither `gitea-selenium-vitest` nor `gitea-selenium-cucumber` keeps its own copy.
+- **[core](core/README.md)** — organizational root for 5 packages: [`core-selenium`](core/selenium/README.md) (Selenium driver + base pages), [`core-playwright`](core/playwright/README.md) (reserved), [`core-config`](core/config/README.md), [`core-data-handler`](core/data-handler/README.md), [`core-logger`](core/logger/README.md) — all tool-and-domain-agnostic except `core-selenium`.
+- **[business-logic](business-logic/README.md)** — organizational root for 2 packages: [`business-logic-selenium`](business-logic/selenium/README.md) (concrete Gitea page objects + API clients/entities, shared by every Selenium-based service below — neither `gitea-selenium-vitest` nor `gitea-selenium-cucumber` keeps its own copy) and [`business-logic-playwright`](business-logic/playwright/README.md) (reserved).
 - **[services/gitea-selenium-vitest](services/gitea-selenium-vitest/README.md)** — the original suite: Selenium WebDriver + Vitest, BrowserStack, Allure, multi-account/multi-browser credentials. Full documentation in its own README.
 - **[services/gitea-selenium-cucumber](services/gitea-selenium-cucumber/README.md)** — Selenium + Cucumber (BDD/Gherkin). Scaffold with a working login feature, run across all 3 browsers; under construction.
 - **services/playwright-native** and **services/playwright-bdd** — reserved for future Playwright-based automation. Today they're empty workspaces (just a `package.json`), no code or dependencies.

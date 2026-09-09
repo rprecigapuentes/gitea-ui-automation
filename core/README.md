@@ -1,44 +1,26 @@
-# @gitea-automation/core
+# core/
 
-Shared package of the monorepo. Not installed on its own — it's consumed by the services under `services/*` (and by `@gitea-automation/business-logic`) via `npm workspaces` (`"@gitea-automation/core": "*"` in their `package.json`, resolved by npm as a symlink).
-
-## Structure
+Purely organizational — **not an npm workspace itself** (no `package.json` here). Each subfolder below is its own independent package, separated by tool/concern so a future Playwright implementation doesn't get tangled up with the existing Selenium one.
 
 ```
 core/
-├── api/         # the one piece of the Gitea API layer that stays here — see below
-│   └── gitea-client.client.ts  # abstract GiteaApiClient: got instance, auth header, request/response logging
-├── ui/          # browser automation layer (built on selenium-webdriver today)
-│   ├── base-pages/   # BaseComponent (find/click/type) + BasePage (+URL) + Navigable
-│   └── drivers/       # driver.factory.ts — builds/quits a WebDriver, supports a remote grid and BrowserStack
-├── config/      # configuration values and credentials
-│   ├── gitea.config.ts        # baseUrl, from GITEA_BASE_URL
-│   └── browserstack.config.ts # BrowserStack credentials, bstackOptions(), setSessionStatus()
-├── utils/       # generic helpers
-│   └── test-data.util.ts
-└── logger/      # Logger adapter (interface) + Pino implementation
+├── selenium/      @gitea-automation/core-selenium      — Selenium driver, base pages, BrowserStack (WebDriver-coupled)
+├── playwright/    @gitea-automation/core-playwright     — reserved, empty
+├── config/        @gitea-automation/core-config         — Gitea app config (baseUrl), tool-agnostic
+├── data-handler/  @gitea-automation/core-data-handler   — test-data naming helpers, tool-agnostic
+└── logger/        @gitea-automation/core-logger         — Logger adapter + Pino implementation, tool-agnostic
 ```
 
-## What moved out (and what stayed)
+## Why split by tool instead of one `core` package
 
-The concrete Gitea API clients (`auth`/`issue`/`label`/`milestone`/`organizations`/`repository`/`user`) and entities moved to **`@gitea-automation/business-logic`**, alongside the concrete Gitea page objects that used to be duplicated per service. See [`business-logic/README.md`](../business-logic/README.md) for why. The abstract base class they all extend, `GiteaApiClient`, stays here in `core/api/` — it's framework (the shared `got` setup, auth header, logging hooks), not concrete Gitea domain knowledge, so it belongs with the rest of `core`'s framework pieces rather than with the concrete clients in `business-logic`. `core` otherwise holds only what's genuinely tool-and-domain-agnostic (`config`, `utils`, `logger`) plus the Selenium browser-automation primitives (`ui/`).
+Each subfolder encapsulates exactly what it depends on: if a file has any real dependency on `selenium-webdriver` — even just one function's parameter type — it lives inside `core/selenium/`, not in a folder that's supposed to be tool-agnostic. `browserstack.config.ts` is the concrete example: it moved from a shared `config/` into `core/selenium/config/` because its `setSessionStatus()` takes a `WebDriver`. `core/config/` now holds only `gitea.config.ts`, which genuinely has zero tool dependency.
 
-## What deliberately does NOT live here
+`core/selenium/` still keeps its own internal `ui/` (base pages, drivers) and `api/` (the abstract `GiteaApiClient`) split — that layer distinction is still useful within a single tool's framework code, even though the folders around it are now organized by tool first.
 
-Concrete Gitea page objects (real selectors: `LoginPage`, `IssuePage`, `OrganizationFacade`, fragments, etc.) are not in `core/ui/` — they live in `@gitea-automation/business-logic/ui/pages/**` instead, shared by every service that needs them.
+## Read each package's own README
 
-Nothing specific to a test runner (Vitest, Cucumber) lives here either: fixtures, hooks, world objects and reporting config are each service's own "internal core".
-
-## A note on `core/ui/` and future tools
-
-`core/ui/base-pages/` and `core/ui/drivers/driver.factory.ts` are built on `selenium-webdriver` today — a future project using a different browser automation tool (e.g. Playwright) can't reuse them as-is, since the underlying APIs (`WebDriver`/`By` vs `Page`/`Locator`) aren't compatible. `core/ui/` isn't namespaced by tool, so when that work starts, distinguishing new files from these (by name, or by introducing a subfolder at that point) is a decision to make then — not resolved in advance.
-
-## Imports
-
-Each subtree is exposed as its own subpath export in `package.json` (`./ui/*`, `./config/*`, `./utils/*`, `./logger/*`, `./api/*`) — there is no `"."` (bare) export. Example:
-
-```ts
-import { DriverFactory } from "@gitea-automation/core/ui/drivers/driver.factory";
-import { testDataName } from "@gitea-automation/core/utils/test-data.util";
-import { GiteaApiClient } from "@gitea-automation/core/api/gitea-client.client";
-```
+- [`core/selenium/README.md`](selenium/README.md)
+- [`core/playwright/README.md`](playwright/README.md)
+- [`core/config/README.md`](config/README.md)
+- [`core/data-handler/README.md`](data-handler/README.md)
+- [`core/logger/README.md`](logger/README.md)

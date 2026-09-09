@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "core",
-    "business-logic",
+    "core/*",
+    "business-logic/*",
     "services/*"
   ],
   "engines": {

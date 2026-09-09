@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { describe, expect } from "vitest";
 import { test as it } from "../src/fixtures/fixture";
-import { testDataName } from "@gitea-automation/core/utils/test-data.util";
+import { testDataName } from "@gitea-automation/core-data-handler/data-handler.util";
 import { resolveOwnerCredentials } from "../src/utils/session-credentials.util";
 
 const body = {

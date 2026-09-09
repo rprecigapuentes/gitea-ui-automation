@@ -1,50 +1,50 @@
 import { test as base } from "vitest";
 import * as allure from "allure-js-commons";
 import { ContentType } from "allure-js-commons";
-import { UserClient } from "@gitea-automation/business-logic/api/clients/user.client";
-import { OrganizationClient } from "@gitea-automation/business-logic/api/clients/organizations.client";
-import { RepositoryClient } from "@gitea-automation/business-logic/api/clients/repository.client";
-import { LabelClient } from "@gitea-automation/business-logic/api/clients/label.client";
-import { IssueClient } from "@gitea-automation/business-logic/api/clients/issue.client";
-import { Organization } from "@gitea-automation/business-logic/api/entities/organization.entity";
-import { SeededIssue } from "@gitea-automation/business-logic/api/entities/issue.entity";
+import { UserClient } from "@gitea-automation/business-logic-selenium/api/clients/user.client";
+import { OrganizationClient } from "@gitea-automation/business-logic-selenium/api/clients/organizations.client";
+import { RepositoryClient } from "@gitea-automation/business-logic-selenium/api/clients/repository.client";
+import { LabelClient } from "@gitea-automation/business-logic-selenium/api/clients/label.client";
+import { IssueClient } from "@gitea-automation/business-logic-selenium/api/clients/issue.client";
+import { Organization } from "@gitea-automation/business-logic-selenium/api/entities/organization.entity";
+import { SeededIssue } from "@gitea-automation/business-logic-selenium/api/entities/issue.entity";
 import { BrowserStackSession } from "../entities/browserstack.entity";
 import { ScenarioState } from "../entities/scenario.entity";
 import { WebDriver } from "selenium-webdriver";
-import { DriverFactory } from "@gitea-automation/core/ui/drivers/driver.factory";
-import { LoginPage } from "@gitea-automation/business-logic/ui/pages/authentication/login.page";
-import { MainPage } from "@gitea-automation/business-logic/ui/pages/common/main.page";
-import { CreateOrganizationPage } from "@gitea-automation/business-logic/ui/pages/organizations/create-organization.page";
-import { OrganizationDashboardPage } from "@gitea-automation/business-logic/ui/pages/organizations/organization-dashboard.page";
+import { DriverFactory } from "@gitea-automation/core-selenium/ui/drivers/driver.factory";
+import { LoginPage } from "@gitea-automation/business-logic-selenium/ui/pages/authentication/login.page";
+import { MainPage } from "@gitea-automation/business-logic-selenium/ui/pages/common/main.page";
+import { CreateOrganizationPage } from "@gitea-automation/business-logic-selenium/ui/pages/organizations/create-organization.page";
+import { OrganizationDashboardPage } from "@gitea-automation/business-logic-selenium/ui/pages/organizations/organization-dashboard.page";
 //Org Fragments
-import { OrgRepositoriesFragment } from "@gitea-automation/business-logic/ui/pages/organizations/fragments/org-repositories.fragment";
-import { OrgTeamsFragment } from "@gitea-automation/business-logic/ui/pages/organizations/fragments/org-teams.fragment";
-import { NewTeamFragment } from "@gitea-automation/business-logic/ui/pages/organizations/fragments/new-team.fragment";
-import { SpecificTeamFragment } from "@gitea-automation/business-logic/ui/pages/organizations/fragments/specific-team.fragment";
-import { OrgNavigationFragment } from "@gitea-automation/business-logic/ui/pages/organizations/fragments/org-navigation.fragment";
-import { NavBarFragment } from "@gitea-automation/business-logic/ui/pages/common/fragments/nav-bar.fragment";
+import { OrgRepositoriesFragment } from "@gitea-automation/business-logic-selenium/ui/pages/organizations/fragments/org-repositories.fragment";
+import { OrgTeamsFragment } from "@gitea-automation/business-logic-selenium/ui/pages/organizations/fragments/org-teams.fragment";
+import { NewTeamFragment } from "@gitea-automation/business-logic-selenium/ui/pages/organizations/fragments/new-team.fragment";
+import { SpecificTeamFragment } from "@gitea-automation/business-logic-selenium/ui/pages/organizations/fragments/specific-team.fragment";
+import { OrgNavigationFragment } from "@gitea-automation/business-logic-selenium/ui/pages/organizations/fragments/org-navigation.fragment";
+import { NavBarFragment } from "@gitea-automation/business-logic-selenium/ui/pages/common/fragments/nav-bar.fragment";
 //Org facade
-import { OrganizationFacade } from "@gitea-automation/business-logic/ui/pages/organizations/facade/organization.facade";
-import { IssuePage } from "@gitea-automation/business-logic/ui/pages/issues/issue.page";
-import { IssueListPage } from "@gitea-automation/business-logic/ui/pages/issues/issue-list.page";
-import { AuthClient } from "@gitea-automation/business-logic/api/clients/auth.client";
+import { OrganizationFacade } from "@gitea-automation/business-logic-selenium/ui/pages/organizations/facade/organization.facade";
+import { IssuePage } from "@gitea-automation/business-logic-selenium/ui/pages/issues/issue.page";
+import { IssueListPage } from "@gitea-automation/business-logic-selenium/ui/pages/issues/issue-list.page";
+import { AuthClient } from "@gitea-automation/business-logic-selenium/api/clients/auth.client";
 import {
   isBrowserStack,
   setSessionStatus,
-} from "@gitea-automation/core/config/browserstack.config";
+} from "@gitea-automation/core-selenium/config/browserstack.config";
 import { applySession, clearSession } from "../utils/session.util";
 import { SessionManager } from "../entities/session-manager.entity";
-import { LabelListPage } from "@gitea-automation/business-logic/ui/pages/issues/label-list.page";
-import { MilestoneClient } from "@gitea-automation/business-logic/api/clients/milestone.client";
+import { LabelListPage } from "@gitea-automation/business-logic-selenium/ui/pages/issues/label-list.page";
+import { MilestoneClient } from "@gitea-automation/business-logic-selenium/api/clients/milestone.client";
 import {
   ScopedLabels,
   SeededLabel,
-} from "@gitea-automation/business-logic/api/entities/label.entity";
-import { SeededMilestone } from "@gitea-automation/business-logic/api/entities/milestone.entity";
-import { User } from "@gitea-automation/business-logic/api/entities/user.entity";
-import { testDataName, uniqueSuffix } from "@gitea-automation/core/utils/test-data.util";
-import { CreateIssuePage } from "@gitea-automation/business-logic/ui/pages/issues/create-issue.page";
-import { MilestoneListPage } from "@gitea-automation/business-logic/ui/pages/issues/milestone-list.page";
+} from "@gitea-automation/business-logic-selenium/api/entities/label.entity";
+import { SeededMilestone } from "@gitea-automation/business-logic-selenium/api/entities/milestone.entity";
+import { User } from "@gitea-automation/business-logic-selenium/api/entities/user.entity";
+import { testDataName, uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.util";
+import { CreateIssuePage } from "@gitea-automation/business-logic-selenium/ui/pages/issues/create-issue.page";
+import { MilestoneListPage } from "@gitea-automation/business-logic-selenium/ui/pages/issues/milestone-list.page";
 import {
   resolveInvitedCredentials,
   resolveOwnerCredentials,

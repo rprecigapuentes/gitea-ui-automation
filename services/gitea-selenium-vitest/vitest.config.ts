@@ -24,7 +24,15 @@ export default defineConfig({
     fileParallelism: true,
     maxWorkers: Number(process.env.MAX_WORKERS ?? 3),
     server: {
-      deps: { inline: ["@gitea-automation/core", "@gitea-automation/business-logic"] },
+      deps: {
+        inline: [
+          "@gitea-automation/core-selenium",
+          "@gitea-automation/core-config",
+          "@gitea-automation/core-logger",
+          "@gitea-automation/core-data-handler",
+          "@gitea-automation/business-logic-selenium",
+        ],
+      },
     },
 
     projects: [

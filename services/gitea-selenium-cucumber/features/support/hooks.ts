@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { Before, After, setDefaultTimeout } from "@cucumber/cucumber";
-import { DriverFactory } from "@gitea-automation/core/ui/drivers/driver.factory";
+import { DriverFactory } from "@gitea-automation/core-selenium/ui/drivers/driver.factory";
 import type { GiteaWorld } from "./world";
 
 setDefaultTimeout(20000);

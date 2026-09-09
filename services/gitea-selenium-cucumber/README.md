@@ -2,7 +2,7 @@
 
 Selenium WebDriver + Cucumber (BDD/Gherkin) automation against Gitea. Part of the `gitea-ui-automation` monorepo.
 
-**Status: scaffold.** One working feature (`login`) proves the wiring end-to-end (driver lifecycle, `@gitea-automation/core`/`@gitea-automation/business-logic` resolution, env loading); the rest of the suite is still to be built.
+**Status: scaffold.** One working feature (`login`) proves the wiring end-to-end (driver lifecycle, `@gitea-automation/core-selenium`/`@gitea-automation/business-logic-selenium` resolution, env loading); the rest of the suite is still to be built.
 
 ## What's here
 
@@ -11,19 +11,21 @@ services/gitea-selenium-cucumber/
 ├── cucumber.mjs                        # @cucumber/cucumber config: TS via tsx, step/support glob, feature glob
 ├── .env.example
 └── features/
-    ├── login.feature                   # illustrative Gherkin scenario
+    ├── scenarios/login.feature         # illustrative Gherkin scenario — .feature files live here, kept separate from steps/support as the suite grows
     ├── step-definitions/login.steps.ts # Given/When/Then for login.feature
     └── support/
         ├── world.ts                    # Cucumber World — holds the WebDriver + page objects for the current scenario
-        ├── hooks.ts                    # Before/After (driver lifecycle via @gitea-automation/core's DriverFactory) + setDefaultTimeout
+        ├── hooks.ts                    # Before/After (driver lifecycle via @gitea-automation/core-selenium's DriverFactory) + setDefaultTimeout
         └── credentials.ts              # resolveOwnerCredentials() — same GITEA_OWNER_<BROWSER>[_PASSWORD] scheme as gitea-selenium-vitest
 ```
 
+`cucumber.mjs`'s `paths` glob is `features/**/*.feature`, so any nesting under `features/` (like `scenarios/`) is picked up automatically — no config change needed when adding more `.feature` files or grouping them further.
+
 ## What it reuses
 
-- `@gitea-automation/core/ui/drivers/driver.factory.ts` — same `DriverFactory` as `gitea-selenium-vitest`, driver lifecycle managed in `features/support/hooks.ts`.
-- `@gitea-automation/business-logic/ui/pages/**` — the same concrete page objects as `gitea-selenium-vitest` (`LoginPage`, `MainPage`, and everything else in there). This service keeps no page objects of its own.
-- Not used yet, but available when this suite grows: `@gitea-automation/business-logic/api/clients/**` and `.../api/entities/**` for seeding/querying Gitea via its API, exactly like `gitea-selenium-vitest`'s fixtures do.
+- [`@gitea-automation/core-selenium/ui/drivers/driver.factory.ts`](../../core/selenium/README.md) — same `DriverFactory` as `gitea-selenium-vitest`, driver lifecycle managed in `features/support/hooks.ts`.
+- [`@gitea-automation/business-logic-selenium/ui/pages/**`](../../business-logic/selenium/README.md) — the same concrete page objects as `gitea-selenium-vitest` (`LoginPage`, `MainPage`, and everything else in there). This service keeps no page objects of its own.
+- Not used yet, but available when this suite grows: `@gitea-automation/business-logic-selenium/api/clients/**` and `.../api/entities/**` for seeding/querying Gitea via its API, exactly like `gitea-selenium-vitest`'s fixtures do.
 
 ## Running
 
@@ -43,4 +45,4 @@ Needs a `.env` in this folder (copy `.env.example`) with `GITEA_BASE_URL` and, p
 
 ## Next steps
 
-This is where the suite grows from here — more features, more step definitions, its own seeded-data fixtures via `@gitea-automation/business-logic/api/clients/**`.
+This is where the suite grows from here — more features, more step definitions, its own seeded-data fixtures via `@gitea-automation/business-logic-selenium/api/clients/**`.

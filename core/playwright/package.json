@@ -1,0 +1,6 @@
+{
+  "name": "@gitea-automation/core-playwright",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module"
+}

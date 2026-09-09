@@ -1,6 +1,6 @@
 # gitea-selenium-vitest
 
-UI automation project using **Selenium WebDriver + TypeScript + Vitest**, supporting Chrome, Firefox and Edge. Part of the `gitea-ui-automation` monorepo — shared framework and Gitea domain code live in [`@gitea-automation/core`](../../core/README.md).
+UI automation project using **Selenium WebDriver + TypeScript + Vitest**, supporting Chrome, Firefox and Edge. Part of the `gitea-ui-automation` monorepo — the shared Selenium framework lives in [`@gitea-automation/core-selenium`](../../core/selenium/README.md), and the concrete Gitea page objects/API layer live in [`@gitea-automation/business-logic-selenium`](../../business-logic/selenium/README.md).
 
 ## Prerequisites
 
@@ -158,11 +158,11 @@ carried between runs, and this runner has nowhere to keep one.
 
 ## Page object architecture
 
-UI code follows a **Page / Fragment / Facade** split, all built on the shared `BaseComponent` from `@gitea-automation/core`:
+UI code follows a **Page / Fragment / Facade** split, all built on the shared `BaseComponent` from `@gitea-automation/core-selenium`:
 
-- **`BaseComponent`** (`@gitea-automation/core/ui/base-pages/base-component`) — the `find`, `click` and `type`
+- **`BaseComponent`** (`@gitea-automation/core-selenium/ui/base-pages/base-component`) — the `find`, `click` and `type`
   helpers shared by everything below. It has no notion of a URL.
-- **`BasePage extends BaseComponent`** (`@gitea-automation/core/ui/base-pages/base.page`) — a page that owns a URL. Implements the `Navigable`
+- **`BasePage extends BaseComponent`** (`@gitea-automation/core-selenium/ui/base-pages/base.page`) — a page that owns a URL. Implements the `Navigable`
   interface (`getUrl()` + `open()`).
 - **`Navigable`** — a standalone interface (`getUrl()` + `open()`), not a base class. Any
   object that represents a navigable URL implements it directly, so a facade that just
@@ -174,7 +174,7 @@ UI code follows a **Page / Fragment / Facade** split, all built on the shared `B
   (`navigateToRepositoriesTab()`, `navigateToTeamsTab()`, …) instead of raw locators, hiding
   which fragment currently owns which piece of the screen.
 
-The concrete page objects themselves (`LoginPage`, `IssuePage`, `OrganizationFacade`, fragments — with real Gitea selectors) live in [`@gitea-automation/business-logic/ui/pages/**`](../../business-logic/README.md), shared with `gitea-selenium-cucumber` — this service doesn't keep its own copy.
+The concrete page objects themselves (`LoginPage`, `IssuePage`, `OrganizationFacade`, fragments — with real Gitea selectors) live in [`@gitea-automation/business-logic-selenium/ui/pages/**`](../../business-logic/selenium/README.md), shared with `gitea-selenium-cucumber` — this service doesn't keep its own copy.
 
 Tab-style navigation fragments expose a single `navigateToTab(tab: SomeTabEnum)` method
 backed by an enum, rather than one method per tab, to avoid duplicating locator objects and
@@ -206,12 +206,12 @@ services/gitea-selenium-vitest/
 │   └── browserstack.global-setup.ts # starts/stops the BrowserStack Local tunnel — Vitest globalSetup
 ├── src/
 │   ├── entities/                   # fixture-orchestration types (BrowserStackSession, ScenarioState, SessionManager) — not Gitea API data, stay local
-│   ├── fixtures/fixture.ts         # composition root: driver, pages, clients (from @gitea-automation/business-logic), seeded data
+│   ├── fixtures/fixture.ts         # composition root: driver (core-selenium), pages/clients (business-logic-selenium), seeded data
 │   └── utils/                      # session.util (applies API-obtained cookies to the WebDriver session), session-credentials.util (per-browser multi-account resolution)
 └── tests/                          # specs: assertions only, import `test` from ../src/fixtures/fixture
 ```
 
-Everything reusable by more than this project lives one level up: the Selenium driver/base pages, config and logging in [`@gitea-automation/core`](../../core/README.md); the concrete Gitea page objects and API clients/entities in [`@gitea-automation/business-logic`](../../business-logic/README.md).
+Everything reusable by more than this project lives under `core/` and `business-logic/` at the repo root, each split into its own package per tool/concern: the Selenium driver/base pages in [`core/selenium`](../../core/selenium/README.md), config in [`core/config`](../../core/config/README.md), logging in [`core/logger`](../../core/logger/README.md), test-data naming in [`core/data-handler`](../../core/data-handler/README.md); the concrete Gitea page objects and API clients/entities in [`business-logic/selenium`](../../business-logic/selenium/README.md).
 
 ## Troubleshooting
 
