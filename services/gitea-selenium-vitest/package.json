@@ -1,0 +1,35 @@
+{
+  "name": "@gitea-automation/gitea-selenium-vitest",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "pretest": "node -e \"require('fs').rmSync('allure-results', { recursive: true, force: true })\"",
+    "test": "vitest run --project=!bs-*",
+    "test:chrome": "cross-env BROWSER=chrome vitest run --project=chrome",
+    "test:firefox": "cross-env BROWSER=firefox vitest run --project=firefox",
+    "test:edge": "cross-env BROWSER=edge vitest run --project=edge",
+    "test:parallel": "concurrently -n chrome,firefox,edge -c blue,yellow,cyan \"npm:test:chrome\" \"npm:test:firefox\" \"npm:test:edge\"",
+    "test:serial": "vitest run --no-file-parallelism",
+    "test:browserstack": "vitest run --project=bs-*",
+    "report": "allure generate ./allure-results",
+    "report:open": "allure open ./allure-report/",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@gitea-automation/business-logic": "*",
+    "@gitea-automation/core": "*",
+    "dotenv": "^17.4.2",
+    "selenium-webdriver": "^4.48.0"
+  },
+  "devDependencies": {
+    "@types/selenium-webdriver": "^4.35.6",
+    "@vitest/runner": "^4.1.11",
+    "allure": "^3.16.0",
+    "allure-vitest": "^3.11.1",
+    "browserstack-local": "^1.5.13",
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
+    "vitest": "^4.1.11"
+  }
+}

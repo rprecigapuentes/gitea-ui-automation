@@ -1,0 +1,27 @@
+{
+  "name": "@gitea-automation/gitea-selenium-cucumber",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "cross-env NODE_OPTIONS=--import=tsx cucumber-js",
+    "test:chrome": "cross-env BROWSER=chrome NODE_OPTIONS=--import=tsx cucumber-js",
+    "test:firefox": "cross-env BROWSER=firefox NODE_OPTIONS=--import=tsx cucumber-js",
+    "test:edge": "cross-env BROWSER=edge NODE_OPTIONS=--import=tsx cucumber-js",
+    "test:parallel": "concurrently -n chrome,firefox,edge -c blue,yellow,cyan \"npm:test:chrome\" \"npm:test:firefox\" \"npm:test:edge\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@gitea-automation/business-logic": "*",
+    "@gitea-automation/core": "*",
+    "dotenv": "^17.4.2",
+    "selenium-webdriver": "^4.48.0"
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "^11.2.0",
+    "@types/selenium-webdriver": "^4.35.6",
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
+    "tsx": "^4.19.2"
+  }
+}

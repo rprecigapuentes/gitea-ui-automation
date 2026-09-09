@@ -1,5 +1,5 @@
 import { WebDriver, By, WebElement, until } from "selenium-webdriver";
-import { logger } from "../../logging/pino.logger";
+import { logger } from "../../logger/pino.logger";
 
 type SearchRoot = WebDriver | WebElement;
 

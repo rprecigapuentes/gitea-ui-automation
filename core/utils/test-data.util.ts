@@ -8,12 +8,6 @@ export function testDataName(testCaseId: string, object: string, at: Date = new 
   return `AT-${testCaseId}-${object}-${date}-${time}-${process.env.BROWSER ?? "local"}-${uniqueSuffix()}`;
 }
 
-/**
- * Millisecond timestamps collide when multiple test files for the same browser (or,
- * for globally-namespaced resources like organizations, different browsers) create
- * resources within the same tick, so every generated Gitea resource name needs this
- * to stay unique under concurrent execution.
- */
 export function uniqueSuffix(): string {
   return randomUUID().slice(0, 8);
 }
