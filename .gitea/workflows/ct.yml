@@ -20,28 +20,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # The suites are the workspaces that expose a `test` script.
-  # A schedule sends no input, so `suite` arrives empty and the matrix has to be
-  # computed rather than declared.
-  select:
-    runs-on: ubuntu-24.04
-    outputs:
-      suites: ${{ steps.pick.outputs.suites }}
-    steps:
-      - name: Work out which suites this run covers
-        id: pick
-        env:
-          CHOICE: ${{ github.event.inputs.suite }}
-        run: |
-          if [ -z "$CHOICE" ] || [ "$CHOICE" = "all" ]; then
-            echo 'suites=["gitea-selenium-vitest","gitea-selenium-cucumber"]' >> "$GITHUB_OUTPUT"
-          else
-            echo "suites=[\"$CHOICE\"]" >> "$GITHUB_OUTPUT"
-          fi
-          echo "this run covers: ${CHOICE:-all}"
-
   regression:
-    needs: select
     runs-on: ubuntu-24.04
     timeout-minutes: 25
 
@@ -51,8 +30,17 @@ jobs:
       fail-fast: false
       # Each job runs its own gitea-test, browser and proxy on a small VPS.
       max-parallel: 1
+      # The suites are the workspaces that expose a `test` script.
+      # act_runner resolves the matrix while planning the run, before any job
+      # output exists, so this may only read the github context. A schedule or a
+      # push sends no input and falls through to every suite.
       matrix:
-        suite: ${{ fromJSON(needs.select.outputs.suites) }}
+        suite: >-
+          ${{ fromJSON(
+          github.event.inputs.suite == 'gitea-selenium-vitest' && '["gitea-selenium-vitest"]'
+          || github.event.inputs.suite == 'gitea-selenium-cucumber' && '["gitea-selenium-cucumber"]'
+          || '["gitea-selenium-vitest","gitea-selenium-cucumber"]'
+          ) }}
 
     services:
       gitea-test:

@@ -36,9 +36,15 @@ The opposite extreme, an ephemeral store, was rejected on the mechanics: healing
 
 The proxy calls the backend and the imitator over their Cloudflare hostnames, the same path `act_runner` already takes to reach Gitea itself. This is an outbound call from the job, which always works, rather than inbound into an ephemeral network, which never does. It also requires no change to `runner-config.yaml`, and publishes no port on the host.
 
-### A `select` job computes the matrix
+### The matrix is computed inline, from the `github` context alone
 
-`strategy.matrix` cannot express "all suites when no input was supplied", and a scheduled run supplies no inputs at all — `github.event.inputs.suite` arrives empty. A small job emits the matrix as JSON and the test job consumes it through `fromJSON`. The alternative, an `if:` on each of a fixed set of jobs, duplicates the whole job body per suite.
+A scheduled or pushed run supplies no dispatch input, so `github.event.inputs.suite` arrives empty and the matrix has to express "then run everything".
+
+The obvious shape — a small job emitting the list as JSON, read back through `fromJSON(needs.select.outputs.suites)` — was built first and does not work here. `act_runner`, which Gitea Actions is built on, resolves `strategy.matrix` while planning the run, before any job has produced an output. The expression evaluates to `invalid`, and the workflow is rejected as unparseable before anything executes: `Cannot parse non-string type invalid as JSON`.
+
+The matrix therefore reads only the `github` context, which is fully populated at planning time, and the `select` job is gone. The cost is one folded expression in place of a readable shell `if`.
+
+Rejected alternatives: an `if:` per suite over a fixed set of jobs duplicates the entire job body, and a job-level `if:` cannot see the `matrix` context in any case; looping over the suites inside a single job would share one `gitea-test` between them, losing the isolation each suite has now.
 
 ### The matrix key is the workspace name, and the contract is its `test` script
 
@@ -77,4 +83,4 @@ Rollback for the second half is pointing `SELENIUM_REMOTE_URL` back at `http://s
 
 ## Open Questions
 
-- Whether `github.event.inputs` populates reliably on this `act_runner` release. GitHub Actions supports both it and the `inputs` context; `act_runner` is less consistent. Answered by the first manual dispatch, and the fallback — reading the other context — changes one expression and neither the specs nor the task breakdown.
+- Whether `github.event.inputs` populates reliably on this `act_runner` release. GitHub Actions supports both it and the `inputs` context; `act_runner` is less consistent. It now carries the whole selection, but it fails in the safe direction: an unpopulated input falls through to running every suite, so a manual run asking for one would run both rather than none. Answered by the first manual dispatch, and the fallback — reading the other context — changes one expression and neither the specs nor the task breakdown.
