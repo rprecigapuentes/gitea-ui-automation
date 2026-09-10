@@ -148,6 +148,8 @@ export abstract class BaseComponent implements Verifiable {
     }
   }
 
+  // A single query with no wait, so an element that has not rendered yet reads as absent. Only
+  // call this once the component itself is confirmed present.
   async doesNotExist(locator: By, root: SearchRoot = this.driver): Promise<boolean> {
     const matches = await root.findElements(locator);
     const doesNotExist = matches.length === 0;
