@@ -21,8 +21,6 @@ concurrency:
 
 jobs:
   regression:
-    # Without this act_runner titles the job from the raw matrix expression.
-    name: ${{ matrix.suite }}
     runs-on: ubuntu-24.04
     timeout-minutes: 25
 
@@ -179,8 +177,12 @@ jobs:
       - name: Run the suite
         run: npm test -w @gitea-automation/${{ matrix.suite }}
 
+      # When an earlier step stops the run there are no results to report on, and
+      # the generator exits 1. That must not add a second red step on top of the
+      # one that actually explains the failure.
       - name: Generate the Allure report
         if: always()
+        continue-on-error: true
         run: npm run report -w @gitea-automation/${{ matrix.suite }}
 
       # Two jobs uploading under one name collide, so the name carries the suite.
