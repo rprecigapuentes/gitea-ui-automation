@@ -145,7 +145,7 @@ describe("Organization test", () => {
         expect(await organizationPages.navigation().isTabNotSelected(OrgTab.Packages)).toBe(true);
         expect(await organizationPages.navigation().isTabNotSelected(OrgTab.Members)).toBe(true);
         expect(await organizationPages.navigation().isTabNotSelected(OrgTab.Worktime)).toBe(true);
-        expect(await organizationPages.teams().isVisible(true)).toBe(true);
+        expect(await organizationPages.teams().isVisibleForOwner()).toBe(true);
         expect(await organizationPages.teams().getTeamContainersCount()).toBe(1);
         expect(await organizationPages.teams().hasTeamContainer("Owners")).toBe(true);
         expect(await organizationPages.teams().getTeamMembersCount("Owners")).toBe("1 members");
@@ -161,7 +161,7 @@ describe("Organization test", () => {
         expect(await organizationPages.navigation().isTabNotSelected(OrgTab.Packages)).toBe(true);
         expect(await organizationPages.navigation().isTabNotSelected(OrgTab.Members)).toBe(true);
         expect(await organizationPages.navigation().isTabNotSelected(OrgTab.Worktime)).toBe(true);
-        expect(await organizationPages.newTeam().isVisible()).toBe(true);
+        expect(await organizationPages.newTeam().hasExpectedFormElements()).toBe(true);
         expect(await organizationPages.newTeam().hasDefaultFormState()).toBe(true);
         await organizationPages.newTeam().enterTeamName(team1ToCreate.name);
         await organizationPages.newTeam().selectVisibility(team1ToCreate.visibility);
