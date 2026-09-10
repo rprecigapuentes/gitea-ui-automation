@@ -4,6 +4,15 @@ on:
   schedule:
     - cron: "0 11 * * 1-5"
   workflow_dispatch:
+    inputs:
+      suite:
+        description: Which suite to run
+        type: choice
+        default: all
+        options:
+          - all
+          - gitea-selenium-vitest
+          - gitea-selenium-cucumber
 
 concurrency:
   group: ct
@@ -13,6 +22,21 @@ jobs:
   regression:
     runs-on: ubuntu-24.04
     timeout-minutes: 25
+
+    strategy:
+      # Cucumber is under construction; it must not sink the vitest run.
+      fail-fast: false
+      # Each job starts its own gitea-test, browser and proxy on one VPS.
+      max-parallel: 1
+      # act_runner plans the matrix before any job output exists, so this can
+      # only read the github context.
+      matrix:
+        suite: >-
+          ${{ fromJSON(
+          github.event.inputs.suite == 'gitea-selenium-vitest' && '["gitea-selenium-vitest"]'
+          || github.event.inputs.suite == 'gitea-selenium-cucumber' && '["gitea-selenium-cucumber"]'
+          || '["gitea-selenium-vitest","gitea-selenium-cucumber"]'
+          ) }}
 
     services:
       gitea-test:
@@ -36,10 +60,24 @@ jobs:
           SE_NODE_MAX_SESSIONS: "3"
           SE_NODE_OVERRIDE_MAX_SESSIONS: "true"
 
+      # Permanent store on the gitea-lab VPS, deployed from automindai-infra.
+      hlm-proxy:
+        image: healenium/hlm-proxy:2.2.1
+        env:
+          SELENIUM_SERVER_URL: http://selenium:4444/wd/hub
+          # External and internal address of the same backend.
+          HEALENIUM_SERVER_URL: https://healenium.estiberz.online
+          HEALENIUM_SERVICE: https://healenium.estiberz.online
+          IMITATE_SERVICE: https://imitator.estiberz.online
+          HEAL_ENABLED: "true"
+          RECOVERY_TRIES: "1"
+          SCORE_CAP: ".6"
+          HLM_LOG_LEVEL: info
+
     env:
       MAX_WORKERS: "3"
       GITEA_BASE_URL: http://gitea-test:3000
-      SELENIUM_REMOTE_URL: http://selenium:4444
+      SELENIUM_REMOTE_URL: http://hlm-proxy:8085
       GITEA_OWNER_CHROME: chrome-owner
       GITEA_OWNER_CHROME_PASSWORD: Qa-bot-not-a-secret-1
       GITEA_OWNER_FIREFOX: firefox-owner
@@ -71,14 +109,25 @@ jobs:
           echo "gitea-test never became healthy"
           exit 1
 
-      - name: Wait for the browser
+      - name: Wait for the browser, through the healing proxy
         run: |
           for _ in $(seq 1 60); do
             curl -fsS "$SELENIUM_REMOTE_URL/status" | grep -q '"ready": *true' && exit 0
             sleep 2
           done
-          echo "the selenium grid never became ready"
+          echo "hlm-proxy at $SELENIUM_REMOTE_URL never reported the browser ready"
           exit 1
+
+      # The proxy answers /status even when the store behind it is down.
+      - name: Check the healing store is answering
+        run: |
+          store=https://healenium.estiberz.online
+          if ! curl -fsS "$store/actuator/health" | grep -q '"status":"UP"'; then
+            echo "the healing store at $store is not answering"
+            echo "the suite would run unhealed and record no baselines, so this run stops here"
+            exit 1
+          fi
+          echo "the healing store is up"
 
       - name: Register the owner and invited accounts, and mint an API token per browser
         run: |
@@ -115,18 +164,21 @@ jobs:
           done
 
       - name: Run the suite
-        run: npm test
+        run: npm test -w @gitea-automation/${{ matrix.suite }}
 
+      # No results to report on when an earlier step stopped the run.
       - name: Generate the Allure report
         if: always()
-        run: npm run report -w @gitea-automation/gitea-selenium-vitest
+        continue-on-error: true
+        run: npm run report -w @gitea-automation/${{ matrix.suite }}
 
+      # junit.xml is the vitest suite's only; absent for Cucumber, upload warns.
       - name: Upload the report
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: allure-report
+          name: allure-report-${{ matrix.suite }}
           path: |
-            services/gitea-selenium-vitest/allure-report/
-            services/gitea-selenium-vitest/reports/junit.xml
+            services/${{ matrix.suite }}/allure-report/
+            services/${{ matrix.suite }}/reports/junit.xml
           retention-days: 14

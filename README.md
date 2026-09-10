@@ -61,7 +61,19 @@ Installs the dependencies of every workspace (5 under `core/`, 2 under `business
 `.gitea/workflows/` runs on the project's own Gitea instance (self-hosted, GitHub Actions-compatible syntax):
 
 - `ci.yml` — on every push/PR: `npm ci` + `format:check` + `lint` + `typecheck` across the whole monorepo. Never runs real tests, never blocked by external infra.
-- `ct.yml` — "Continuous Testing": deploys a disposable Gitea + Selenium and runs the `gitea-selenium-vitest` suite (plain `npm test`, the single-process 3-browser run) against them. Manual dispatch + daily weekday cron.
+- `ct.yml` — "Continuous Testing": one job per suite, each deploying its own disposable Gitea, its own Selenium and Healenium's proxy, then running that suite's `npm test`. Manual dispatch + daily weekday cron.
 - `bs.yml` — same as `ct.yml` but against BrowserStack (`gitea-selenium-vitest` only). Manual dispatch + weekly cron.
 
-Both pipelines stay on `gitea-selenium-vitest` with its normal (non-`:parallel`) scripts for now — `gitea-selenium-cucumber` isn't wired into CI yet.
+### Which suites `ct.yml` runs
+
+Every service workspace that exposes a `test` script: today `gitea-selenium-vitest` and `gitea-selenium-cucumber`. `playwright-native` and `playwright-bdd` expose none and are skipped until they do — adding a suite to CI is adding that script, not editing the workflow.
+
+The cron run covers all of them. A manual dispatch takes a `suite` input to run exactly one; leaving it at `all` runs the lot. Suites run one at a time and a failing suite does not cancel the others, so a red Cucumber run still leaves you the vitest report. Each publishes its own artifact, named `allure-report-<suite>`.
+
+### Healenium
+
+`ct.yml` drives the browser through Healenium's proxy rather than Selenium directly, so a locator whose target has drifted is resolved against the node path recorded for it on an earlier run instead of failing the test.
+
+The proxy and the browser are created per job. The store they consult is not: it runs permanently on the `gitea-lab` VPS, deployed from the `automindai-infra` repository, because a store created per run has no earlier run to compare against and can never heal. The workflow checks that store before any test executes and fails the job if it is unreachable, rather than running green having healed nothing.
+
+Healed locators are debt, not a pass. `ct.yml` is scheduled, never a merge gate; `ci.yml` stays lint, format and typecheck.
