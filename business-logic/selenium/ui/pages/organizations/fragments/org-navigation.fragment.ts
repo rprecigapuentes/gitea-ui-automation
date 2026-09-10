@@ -39,23 +39,15 @@ export class OrgNavigationFragment extends BaseComponent {
     [OrgTab.Worktime]: this.locators.worktimeTab,
   };
 
-  protected override getReadyLocators(): By[] {
-    return [this.locators.organizationPage];
+  async isVisibleForOwner(): Promise<boolean> {
+    return this.isVisible([this.locators.organizationPage, ...Object.values(this.tabLocators)]);
   }
 
-  override async isVisible(isOwner: boolean): Promise<boolean> {
-    if (!(await super.isVisible())) {
-      return false;
-    }
-
-    const expectedTabs = isOwner
-      ? Object.values(OrgTab)
-      : Object.values(OrgTab).filter((tab) => tab !== OrgTab.Worktime);
-    const tabResults = await Promise.all(
-      expectedTabs.map((tab) => this.exists(this.tabLocators[tab])),
-    );
-
-    return tabResults.every(Boolean);
+  async isVisibleForMember(): Promise<boolean> {
+    const memberTabLocators = Object.values(OrgTab)
+      .filter((tab) => tab !== OrgTab.Worktime)
+      .map((tab) => this.tabLocators[tab]);
+    return this.isVisible([this.locators.organizationPage, ...memberTabLocators]);
   }
 
   async hasOrganizationNameDisplayed(organizationName: string): Promise<boolean> {

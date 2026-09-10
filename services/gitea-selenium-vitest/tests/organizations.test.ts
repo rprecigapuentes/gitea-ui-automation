@@ -112,7 +112,7 @@ describe("Organization test", () => {
 
       await allure.step("Navigate to created organization", async () => {
         await navBarFragment.clickViewOrganizationButton();
-        expect(await organizationPages.navigation().isVisible(true)).toBe(true);
+        expect(await organizationPages.navigation().isVisibleForOwner()).toBe(true);
         expect(
           await organizationPages
             .navigation()
@@ -126,7 +126,7 @@ describe("Organization test", () => {
         expect(await organizationPages.navigation().isTabNotSelected(OrgTab.Worktime)).toBe(true);
         expect(await organizationPages.navigation().getTabCount(OrgTab.Members)).toBe("1");
         expect(await organizationPages.navigation().getTabCount(OrgTab.Teams)).toBe("1");
-        expect(await organizationPages.repositories().isVisible(true)).toBe(true);
+        expect(await organizationPages.repositories().isVisibleForOwner()).toBe(true);
         expect(await organizationPages.repositories().getMembersCount()).toBe("1");
         expect(await organizationPages.repositories().getMemberAvatarsCount()).toBe(1);
         expect(await organizationPages.repositories().hasMemberAvatar(owner.username)).toBe(true);
