@@ -24,12 +24,10 @@ jobs:
     timeout-minutes: 25
 
     strategy:
-      # Cucumber is under construction; it must not sink the vitest run.
       fail-fast: false
       # Each job starts its own gitea-test, browser and proxy on one VPS.
       max-parallel: 1
-      # act_runner plans the matrix before any job output exists, so this can
-      # only read the github context.
+      # act_runner plans the matrix before any job output exists.
       matrix:
         suite: >-
           ${{ fromJSON(
@@ -60,7 +58,7 @@ jobs:
           SE_NODE_MAX_SESSIONS: "3"
           SE_NODE_OVERRIDE_MAX_SESSIONS: "true"
 
-      # Permanent store on the gitea-lab VPS, deployed from automindai-infra.
+      # Permanent store on the gitea-lab VPS.
       hlm-proxy:
         image: healenium/hlm-proxy:2.2.1
         env:
