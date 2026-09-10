@@ -20,7 +20,7 @@ describe("Login test", () => {
 
     await driver.get(loginPage.getUrl());
     await loginPage.login(username, password);
-    expect(await mainPage.hasExpectedElementsDisplayed()).toBe(true);
+    expect(await mainPage.isVisible()).toBe(true);
     expect(await navBarFragment.getCurrentOrganization()).toBe(username);
   });
 });

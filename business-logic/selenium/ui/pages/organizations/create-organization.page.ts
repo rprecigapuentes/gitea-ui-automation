@@ -53,9 +53,16 @@ export class CreateOrganizationPage extends BasePage {
     await this.click(this.locators.createOrganizationButton);
   }
 
-  async hasAllFormElements(): Promise<boolean> {
+  protected override getReadyLocators(): By[] {
+    return [this.locators.formTitle];
+  }
+
+  override async isVisible(): Promise<boolean> {
+    if (!(await super.isVisible())) {
+      return false;
+    }
+
     const results = await Promise.all([
-      this.exists(this.locators.formTitle),
       this.exists(this.locators.orgNameLabel),
       this.exists(this.locators.orgNameInput),
       this.exists(this.locators.orgNameHelpText),
