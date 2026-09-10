@@ -21,6 +21,8 @@ concurrency:
 
 jobs:
   regression:
+    # Without this act_runner titles the job from the raw matrix expression.
+    name: ${{ matrix.suite }}
     runs-on: ubuntu-24.04
     timeout-minutes: 25
 
