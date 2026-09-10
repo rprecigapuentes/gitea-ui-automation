@@ -46,11 +46,16 @@ export class SpecificTeamFragment extends BaseComponent {
     );
   }
 
-  async hasExpectedElementsDisplayed(isOwner: boolean): Promise<boolean> {
-    const expectedElements = [
-      this.exists(this.locators.membersCount),
-      this.exists(this.locators.repositoriesCount),
-    ];
+  protected override getReadyLocators(): By[] {
+    return [this.locators.membersCount, this.locators.repositoriesCount];
+  }
+
+  override async isVisible(isOwner: boolean): Promise<boolean> {
+    if (!(await super.isVisible())) {
+      return false;
+    }
+
+    const expectedElements: Promise<boolean>[] = [];
 
     if (isOwner) {
       expectedElements.push(

@@ -17,16 +17,16 @@ export class MainPage extends BasePage {
     super(driver);
   }
 
-  protected getReadyLocators(): By[] {
+  protected override getReadyLocators(): By[] {
     const readyLocators = [this.locators.dashboardRepoList];
     return readyLocators;
   }
 
-  async waitUntilLoaded(): Promise<void> {
-    await this.findElement(this.locators.dashboardRepoList);
-  }
+  override async isVisible(): Promise<boolean> {
+    if (!(await super.isVisible())) {
+      return false;
+    }
 
-  async hasExpectedElementsDisplayed(): Promise<boolean> {
     const root = await this.findElement(this.locators.dashboardRepoList);
     const results = await Promise.all([
       this.getText(this.locators.repositoryOption, root).then((text) => text === "Repository"),

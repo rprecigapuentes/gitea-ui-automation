@@ -5,8 +5,36 @@ type SearchRoot = WebDriver | WebElement;
 
 const DEFAULT_TIMEOUT_MS = 5000;
 
-export abstract class BaseComponent {
+export interface Verifiable {
+  isVisible(...args: unknown[]): Promise<boolean>;
+}
+
+export abstract class BaseComponent implements Verifiable {
   constructor(protected driver: WebDriver) {}
+
+  protected getReadyLocators(): By[] {
+    return [];
+  }
+
+  // The rest parameter is what lets a subclass narrow this to its own signature; a base method
+  // without it rejects any override that adds a parameter. The default itself takes none.
+  async isVisible(...args: unknown[]): Promise<boolean> {
+    void args;
+
+    const readyLocators = this.getReadyLocators();
+
+    if (readyLocators.length === 0) {
+      logger.warn(
+        { component: this.constructor.name },
+        "Component declares no ready locators, so its visibility cannot be established",
+      );
+      return false;
+    }
+
+    const results = await Promise.all(readyLocators.map((locator) => this.exists(locator)));
+
+    return results.every(Boolean);
+  }
 
   protected async findElement(
     locator: By,
@@ -120,6 +148,8 @@ export abstract class BaseComponent {
     }
   }
 
+  // A single query with no wait, so an element that has not rendered yet reads as absent. Only
+  // call this once the component itself is confirmed present.
   async doesNotExist(locator: By, root: SearchRoot = this.driver): Promise<boolean> {
     const matches = await root.findElements(locator);
     const doesNotExist = matches.length === 0;

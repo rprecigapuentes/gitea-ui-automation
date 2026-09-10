@@ -66,36 +66,43 @@ export class NavBarFragment extends BaseComponent {
     );
   }
 
-  async hasExpectedElementsDisplayed(
+  protected override getReadyLocators(): By[] {
+    return [
+      this.barOptionsLocators.organizationDropdown,
+      this.dropdownOrganizationLocators.organizationAvatar,
+    ];
+  }
+
+  override async isVisible(
     username: string,
     pageContext: "main" | "organization" = "main",
   ): Promise<boolean> {
-    const organizationNavigationMatches =
-      pageContext === "main"
-        ? Promise.all([
-            this.doesNotExist(this.barOptionsLocators.teamsDropdown),
-            this.doesNotExist(this.barOptionsLocators.rightOptionsContainer),
-          ])
-        : Promise.all([
-            this.exists(this.barOptionsLocators.teamsDropdown),
-            this.exists(this.barOptionsLocators.rightOptionsContainer),
-          ]);
-    const [
-      [organizationDropdownExists, usernameMatches, organizationAvatarExists],
-      [teamsDropdownMatchesContext, rightOptionsContainerMatchesContext],
-    ] = await Promise.all([
-      Promise.all([
-        this.exists(this.barOptionsLocators.organizationDropdown),
+    // The main-page branch asserts absence, and an element that has not rendered yet is absent
+    // too, so the bar has to be confirmed present before that branch is allowed to run.
+    const readyElementsExist = await super.isVisible();
+
+    if (!readyElementsExist) {
+      logger.info({ pageContext, readyElementsExist }, "Navbar expectations");
+      return false;
+    }
+
+    const [usernameMatches, [teamsDropdownMatchesContext, rightOptionsContainerMatchesContext]] =
+      await Promise.all([
         this.getCurrentOrganization().then((text) => text === username),
-        this.exists(this.dropdownOrganizationLocators.organizationAvatar),
-      ]),
-      organizationNavigationMatches,
-    ]);
+        pageContext === "main"
+          ? Promise.all([
+              this.doesNotExist(this.barOptionsLocators.teamsDropdown),
+              this.doesNotExist(this.barOptionsLocators.rightOptionsContainer),
+            ])
+          : Promise.all([
+              this.exists(this.barOptionsLocators.teamsDropdown),
+              this.exists(this.barOptionsLocators.rightOptionsContainer),
+            ]),
+      ]);
 
     const results = {
-      organizationDropdownExists,
+      readyElementsExist,
       usernameMatches,
-      organizationAvatarExists,
       teamsDropdownMatchesContext,
       rightOptionsContainerMatchesContext,
     };

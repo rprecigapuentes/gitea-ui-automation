@@ -13,5 +13,5 @@ When("I log in with valid credentials", async function (this: GiteaWorld) {
 });
 
 Then("I should land on the Gitea dashboard", async function (this: GiteaWorld) {
-  expect(await this.pages.mainPage.hasExpectedElementsDisplayed()).toBe(true);
+  expect(await this.pages.mainPage.isVisible()).toBe(true);
 });

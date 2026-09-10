@@ -28,19 +28,18 @@ export class NewTeamFragment extends BaseComponent {
     await this.findElement(this.locators.newTeamForm);
   }
 
-  async hasExpectedElementsDisplayed(): Promise<boolean> {
-    const elements = await Promise.all([
-      this.exists(this.locators.newTeamForm),
-      this.exists(this.locators.teamNameInput),
-      this.exists(this.locators.descriptionInput),
-      this.exists(this.locators.publicVisibilityRadio),
-      this.exists(this.locators.privateVisibilityRadio),
-      this.exists(this.locators.specificRepositoryAccessRadio),
-      this.exists(this.locators.createRepositoriesCheckbox),
-      this.exists(this.locators.generalPermissionsRadio),
-      this.exists(this.locators.createTeamButton),
-    ]);
-    return elements.every(Boolean);
+  protected override getReadyLocators(): By[] {
+    return [
+      this.locators.newTeamForm,
+      this.locators.teamNameInput,
+      this.locators.descriptionInput,
+      this.locators.publicVisibilityRadio,
+      this.locators.privateVisibilityRadio,
+      this.locators.specificRepositoryAccessRadio,
+      this.locators.createRepositoriesCheckbox,
+      this.locators.generalPermissionsRadio,
+      this.locators.createTeamButton,
+    ];
   }
 
   async hasDefaultFormState(): Promise<boolean> {

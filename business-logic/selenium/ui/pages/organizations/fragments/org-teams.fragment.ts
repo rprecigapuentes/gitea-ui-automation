@@ -24,12 +24,16 @@ export class OrgTeamsFragment extends BaseComponent {
     await this.findElement(this.locators.teamsPage);
   }
 
-  async hasExpectedElementsDisplayed(isOwner: boolean): Promise<boolean> {
-    const expectedElements = [this.exists(this.locators.teamContainers)];
-    if (isOwner) {
-      expectedElements.push(this.exists(this.locators.newTeamButton));
+  protected override getReadyLocators(): By[] {
+    return [this.locators.teamContainers];
+  }
+
+  override async isVisible(isOwner: boolean): Promise<boolean> {
+    if (!(await super.isVisible())) {
+      return false;
     }
-    return (await Promise.all(expectedElements)).every(Boolean);
+
+    return isOwner ? this.exists(this.locators.newTeamButton) : true;
   }
 
   async getTeamContainersCount(): Promise<number> {
