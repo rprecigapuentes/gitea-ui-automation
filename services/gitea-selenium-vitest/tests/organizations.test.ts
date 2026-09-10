@@ -175,7 +175,7 @@ describe("Organization test", () => {
         expect(await organizationPages.navigation().isTabNotSelected(OrgTab.Members)).toBe(true);
         expect(await organizationPages.navigation().isTabNotSelected(OrgTab.Worktime)).toBe(true);
         expect(await organizationPages.navigation().getTabCount(OrgTab.Teams)).toBe("2");
-        expect(await organizationPages.specificTeam().isVisible(true)).toBe(true);
+        expect(await organizationPages.specificTeam().isVisibleForOwner()).toBe(true);
         expect(
           await organizationPages.specificTeam().hasTeamNameDisplayed(scenarioState.team1.name),
         ).toBe(true);
@@ -213,7 +213,7 @@ describe("Organization test", () => {
         scenarioState.team2 = team2ToCreate;
         await organizationPages.orgFacade().createTeam(scenarioState.team2.name);
         expect(await organizationPages.navigation().getTabCount(OrgTab.Teams)).toBe("3");
-        expect(await organizationPages.specificTeam().isVisible(true)).toBe(true);
+        expect(await organizationPages.specificTeam().isVisibleForOwner()).toBe(true);
         expect(
           await organizationPages.specificTeam().hasTeamNameDisplayed(scenarioState.team2.name),
         ).toBe(true);
@@ -262,7 +262,7 @@ describe("Organization test", () => {
         await organizationPages.orgFacade().navigateToSpecificTeam(scenarioState.team1!.name);
         expect(await organizationPages.navigation().isTabSelected(OrgTab.Teams)).toBe(true);
         expect(await organizationPages.navigation().getTabCount(OrgTab.Teams)).toBe("3");
-        expect(await organizationPages.specificTeam().isVisible(true)).toBe(true);
+        expect(await organizationPages.specificTeam().isVisibleForOwner()).toBe(true);
         expect(
           await organizationPages.specificTeam().hasTeamNameDisplayed(scenarioState.team1!.name),
         ).toBe(true);
