@@ -6,8 +6,8 @@
 ## 2. Page objects: `MainPage`, `CreateOrganizationPage`
 
 - [x] 2.1 In `business-logic/selenium/ui/pages/common/main.page.ts`, add `open()` overriding the base to pass `[this.locators.dashboardRepoList]`, and replace the `isVisible()` override with `hasExpectedElementsDisplayed()` per `main.page.alt.ts`. Update the call site at `services/gitea-selenium-vitest/tests/login.test.ts:23` (`mainPage.isVisible()` → `mainPage.hasExpectedElementsDisplayed()`) and every `mainPage.isVisible()` call in `services/gitea-selenium-vitest/tests/organizations.test.ts` (lines 68, 82, 383) and `services/gitea-selenium-cucumber/features/step-definitions/login.steps.ts:16`. Delete `main.page.alt.ts` once this matches it.
-- [ ] 2.2 In `business-logic/selenium/ui/pages/organizations/create-organization.page.ts`, add `open()` passing `[this.locators.formTitle]`, and replace the 14-call `isVisible()` override with `hasExpectedFormElements()` (a single `this.isVisible([...])` call) per `create-organization.page.alt.ts`. Update the call site at `services/gitea-selenium-vitest/tests/organizations.test.ts:92`. Delete `create-organization.page.alt.ts` once this matches it.
-- [ ] 2.3 Verify group 2 with `npm run typecheck -w @gitea-automation/business-logic-selenium`, `npm run lint`, and `npm run test:chrome -w @gitea-automation/gitea-selenium-vitest` (login + organizations specs) and `npm run test:cucumber`.
+- [x] 2.2 In `business-logic/selenium/ui/pages/organizations/create-organization.page.ts`, add `open()` passing `[this.locators.formTitle]`, and replace the 14-call `isVisible()` override with `hasExpectedFormElements()` (a single `this.isVisible([...])` call) per `create-organization.page.alt.ts`. Update the call site at `services/gitea-selenium-vitest/tests/organizations.test.ts:92`. Delete `create-organization.page.alt.ts` once this matches it.
+- [x] 2.3 Verify group 2 with `npm run typecheck -w @gitea-automation/business-logic-selenium`, `npm run lint`, and `npm run test:chrome -w @gitea-automation/gitea-selenium-vitest` (login + organizations specs) and `npm run test:cucumber`.
 
 ## 3. Page fragments: nav bar and organization fragments
 

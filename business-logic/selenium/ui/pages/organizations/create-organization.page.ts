@@ -41,6 +41,10 @@ export class CreateOrganizationPage extends BasePage {
     return `${baseUrl}/org/create`;
   }
 
+  async open(): Promise<void> {
+    await super.open([this.locators.formTitle]);
+  }
+
   async enterOrganizationName(name: string): Promise<void> {
     await this.type(this.locators.orgNameInput, name);
   }
@@ -53,33 +57,24 @@ export class CreateOrganizationPage extends BasePage {
     await this.click(this.locators.createOrganizationButton);
   }
 
-  protected override getReadyLocators(): By[] {
-    return [this.locators.formTitle];
-  }
-
-  override async isVisible(): Promise<boolean> {
-    if (!(await super.isVisible())) {
-      return false;
-    }
-
-    const results = await Promise.all([
-      this.exists(this.locators.orgNameLabel),
-      this.exists(this.locators.orgNameInput),
-      this.exists(this.locators.orgNameHelpText),
-      this.exists(this.locators.visibilityLabel),
-      this.exists(this.locators.publicVisibilityRadio),
-      this.exists(this.locators.publicVisibilityRadioLabel),
-      this.exists(this.locators.limitedVisibilityRadio),
-      this.exists(this.locators.limitedVisibilityRadioLabel),
-      this.exists(this.locators.privateVisibilityRadio),
-      this.exists(this.locators.privateVisibilityRadioLabel),
-      this.exists(this.locators.permissionsLabel),
-      this.exists(this.locators.adminPermissionsCheckInput),
-      this.exists(this.locators.adminPermissionsCheckLabel),
-      this.exists(this.locators.createOrganizationButton),
+  async hasExpectedFormElements(): Promise<boolean> {
+    return this.isVisible([
+      this.locators.formTitle,
+      this.locators.orgNameLabel,
+      this.locators.orgNameInput,
+      this.locators.orgNameHelpText,
+      this.locators.visibilityLabel,
+      this.locators.publicVisibilityRadio,
+      this.locators.publicVisibilityRadioLabel,
+      this.locators.limitedVisibilityRadio,
+      this.locators.limitedVisibilityRadioLabel,
+      this.locators.privateVisibilityRadio,
+      this.locators.privateVisibilityRadioLabel,
+      this.locators.permissionsLabel,
+      this.locators.adminPermissionsCheckInput,
+      this.locators.adminPermissionsCheckLabel,
+      this.locators.createOrganizationButton,
     ]);
-
-    return results.every(Boolean);
   }
 
   async getFormTitleText(): Promise<string> {

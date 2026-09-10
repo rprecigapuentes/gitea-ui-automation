@@ -89,7 +89,7 @@ describe("Organization test", () => {
 
       await allure.step("Owner: Creates new organization", async () => {
         await navBarFragment.clickNewOrganizationOption();
-        expect(await createOrganizationPage.isVisible()).toBe(true);
+        expect(await createOrganizationPage.hasExpectedFormElements()).toBe(true);
         expect(await createOrganizationPage.hasDefaultFormState()).toBe(true);
         await createOrganizationPage.enterOrganizationName(organizationToCreate.name);
         await createOrganizationPage.selectVisibility(organizationToCreate.visibility);
