@@ -8,7 +8,7 @@
 
 ## 3. The six page fragments
 
-- [ ] 3.1 Rename the predicate to `isVisible()` on `common/fragments/nav-bar.fragment.ts` and on the five fragments under `organizations/fragments/`, keeping each one's existing parameters. `new-team.fragment.ts`, whose body is only a list of `exists()` calls, collapses to a `getReadyLocators()` declaration plus the inherited default. The parameterised fragments keep their own body but delegate the unconditional part to `super.isVisible()`. Update the fifteen call sites in `services/gitea-selenium-vitest/tests/organizations.test.ts`. Verify with the three pipeline checks and both suites, and confirm `grep -rn "hasExpectedElementsDisplayed\|hasAllFormElements\|waitUntilLoaded" business-logic core services` returns nothing.
+- [x] 3.1 Rename the predicate to `isVisible()` on `common/fragments/nav-bar.fragment.ts` and on the five fragments under `organizations/fragments/`, keeping each one's existing parameters. `new-team.fragment.ts`, whose body is only a list of `exists()` calls, collapses to a `getReadyLocators()` declaration plus the inherited default. The parameterised fragments keep their own body but delegate the unconditional part to `super.isVisible()`. Update the fifteen call sites in `services/gitea-selenium-vitest/tests/organizations.test.ts`. Verify with the three pipeline checks and both suites, and confirm `grep -rn "hasExpectedElementsDisplayed\|hasAllFormElements\|waitUntilLoaded" business-logic core services` returns nothing.
 
 ## 4. The order of the negative checks
 

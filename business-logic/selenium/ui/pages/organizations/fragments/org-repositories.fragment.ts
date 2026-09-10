@@ -21,7 +21,15 @@ export class OrgRepositoriesFragment extends BaseComponent {
     newTeamButton: By.css("a[href$='/teams/new']"),
   };
 
-  async hasExpectedElementsDisplayed(isOwner: boolean): Promise<boolean> {
+  protected override getReadyLocators(): By[] {
+    return [this.locators.organizationSidebar];
+  }
+
+  override async isVisible(isOwner: boolean): Promise<boolean> {
+    if (!(await super.isVisible())) {
+      return false;
+    }
+
     const sidebar = await this.findElement(this.locators.organizationSidebar);
     const expectedElements = [
       this.exists(this.locators.membersCount, sidebar),

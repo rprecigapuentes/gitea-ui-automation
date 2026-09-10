@@ -66,7 +66,7 @@ export class NavBarFragment extends BaseComponent {
     );
   }
 
-  async hasExpectedElementsDisplayed(
+  override async isVisible(
     username: string,
     pageContext: "main" | "organization" = "main",
   ): Promise<boolean> {
