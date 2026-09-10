@@ -66,7 +66,7 @@ describe("Organization test", () => {
         await sessionManager.loginAsUser2();
         await mainPage.open();
         expect(await mainPage.hasExpectedElementsDisplayed()).toBe(true);
-        expect(await navBarFragment.isVisible(invited.username)).toBe(true);
+        expect(await navBarFragment.isVisibleOnMainPage(invited.username)).toBe(true);
         await navBarFragment.clickOrganizationsDropdown();
         expect(await navBarFragment.getTotalOrganizations()).toHaveLength(1);
         expect(await navBarFragment.getTotalOrganizations()).toEqual([invited.username]);
@@ -80,7 +80,7 @@ describe("Organization test", () => {
         await sessionManager.loginAsOwner();
         await mainPage.open();
         expect(await mainPage.hasExpectedElementsDisplayed()).toBe(true);
-        expect(await navBarFragment.isVisible(owner.username)).toBe(true);
+        expect(await navBarFragment.isVisibleOnMainPage(owner.username)).toBe(true);
         expect(await navBarFragment.getCurrentOrganization()).toBe(owner.username);
         await navBarFragment.clickOrganizationsDropdown();
         expect(await navBarFragment.getTotalOrganizations()).toHaveLength(1);
@@ -96,7 +96,7 @@ describe("Organization test", () => {
         await createOrganizationPage.clickCreateOrganizationButton();
         scenarioState.organization = organizationToCreate;
         expect(
-          await navBarFragment.isVisible(scenarioState.organization.name, "organization"),
+          await navBarFragment.isVisibleOnOrganizationPage(scenarioState.organization.name),
         ).toBe(true);
         expect(await navBarFragment.getViewOrganizationButtonText()).toContain(
           scenarioState.organization.name,
@@ -381,7 +381,7 @@ describe("Organization test", () => {
       await allure.step("User 2 reviews organization access", async () => {
         await mainPage.open();
         expect(await mainPage.hasExpectedElementsDisplayed()).toBe(true);
-        expect(await navBarFragment.isVisible(invited.username)).toBe(true);
+        expect(await navBarFragment.isVisibleOnMainPage(invited.username)).toBe(true);
         await navBarFragment.clickOrganizationsDropdown();
         expect(await navBarFragment.getTotalOrganizations()).toHaveLength(1);
         expect(await navBarFragment.getTotalOrganizations()).toEqual([invited.username]);
