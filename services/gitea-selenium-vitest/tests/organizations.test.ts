@@ -65,8 +65,8 @@ describe("Organization test", () => {
       await allure.step("Invited user: Login with user 2 credentials", async () => {
         await sessionManager.loginAsUser2();
         await mainPage.open();
-        expect(await mainPage.isVisible()).toBe(true);
-        expect(await navBarFragment.isVisible(invited.username)).toBe(true);
+        expect(await mainPage.hasExpectedElementsDisplayed()).toBe(true);
+        expect(await navBarFragment.isVisibleOnMainPage(invited.username)).toBe(true);
         await navBarFragment.clickOrganizationsDropdown();
         expect(await navBarFragment.getTotalOrganizations()).toHaveLength(1);
         expect(await navBarFragment.getTotalOrganizations()).toEqual([invited.username]);
@@ -79,8 +79,8 @@ describe("Organization test", () => {
       await allure.step("Owner: Login with user 1 credentials", async () => {
         await sessionManager.loginAsOwner();
         await mainPage.open();
-        expect(await mainPage.isVisible()).toBe(true);
-        expect(await navBarFragment.isVisible(owner.username)).toBe(true);
+        expect(await mainPage.hasExpectedElementsDisplayed()).toBe(true);
+        expect(await navBarFragment.isVisibleOnMainPage(owner.username)).toBe(true);
         expect(await navBarFragment.getCurrentOrganization()).toBe(owner.username);
         await navBarFragment.clickOrganizationsDropdown();
         expect(await navBarFragment.getTotalOrganizations()).toHaveLength(1);
@@ -89,14 +89,14 @@ describe("Organization test", () => {
 
       await allure.step("Owner: Creates new organization", async () => {
         await navBarFragment.clickNewOrganizationOption();
-        expect(await createOrganizationPage.isVisible()).toBe(true);
+        expect(await createOrganizationPage.hasExpectedFormElements()).toBe(true);
         expect(await createOrganizationPage.hasDefaultFormState()).toBe(true);
         await createOrganizationPage.enterOrganizationName(organizationToCreate.name);
         await createOrganizationPage.selectVisibility(organizationToCreate.visibility);
         await createOrganizationPage.clickCreateOrganizationButton();
         scenarioState.organization = organizationToCreate;
         expect(
-          await navBarFragment.isVisible(scenarioState.organization.name, "organization"),
+          await navBarFragment.isVisibleOnOrganizationPage(scenarioState.organization.name),
         ).toBe(true);
         expect(await navBarFragment.getViewOrganizationButtonText()).toContain(
           scenarioState.organization.name,
@@ -112,7 +112,7 @@ describe("Organization test", () => {
 
       await allure.step("Navigate to created organization", async () => {
         await navBarFragment.clickViewOrganizationButton();
-        expect(await organizationPages.navigation().isVisible(true)).toBe(true);
+        expect(await organizationPages.navigation().isVisibleForOwner()).toBe(true);
         expect(
           await organizationPages
             .navigation()
@@ -126,7 +126,7 @@ describe("Organization test", () => {
         expect(await organizationPages.navigation().isTabNotSelected(OrgTab.Worktime)).toBe(true);
         expect(await organizationPages.navigation().getTabCount(OrgTab.Members)).toBe("1");
         expect(await organizationPages.navigation().getTabCount(OrgTab.Teams)).toBe("1");
-        expect(await organizationPages.repositories().isVisible(true)).toBe(true);
+        expect(await organizationPages.repositories().isVisibleForOwner()).toBe(true);
         expect(await organizationPages.repositories().getMembersCount()).toBe("1");
         expect(await organizationPages.repositories().getMemberAvatarsCount()).toBe(1);
         expect(await organizationPages.repositories().hasMemberAvatar(owner.username)).toBe(true);
@@ -145,7 +145,7 @@ describe("Organization test", () => {
         expect(await organizationPages.navigation().isTabNotSelected(OrgTab.Packages)).toBe(true);
         expect(await organizationPages.navigation().isTabNotSelected(OrgTab.Members)).toBe(true);
         expect(await organizationPages.navigation().isTabNotSelected(OrgTab.Worktime)).toBe(true);
-        expect(await organizationPages.teams().isVisible(true)).toBe(true);
+        expect(await organizationPages.teams().isVisibleForOwner()).toBe(true);
         expect(await organizationPages.teams().getTeamContainersCount()).toBe(1);
         expect(await organizationPages.teams().hasTeamContainer("Owners")).toBe(true);
         expect(await organizationPages.teams().getTeamMembersCount("Owners")).toBe("1 members");
@@ -161,7 +161,7 @@ describe("Organization test", () => {
         expect(await organizationPages.navigation().isTabNotSelected(OrgTab.Packages)).toBe(true);
         expect(await organizationPages.navigation().isTabNotSelected(OrgTab.Members)).toBe(true);
         expect(await organizationPages.navigation().isTabNotSelected(OrgTab.Worktime)).toBe(true);
-        expect(await organizationPages.newTeam().isVisible()).toBe(true);
+        expect(await organizationPages.newTeam().hasExpectedFormElements()).toBe(true);
         expect(await organizationPages.newTeam().hasDefaultFormState()).toBe(true);
         await organizationPages.newTeam().enterTeamName(team1ToCreate.name);
         await organizationPages.newTeam().selectVisibility(team1ToCreate.visibility);
@@ -175,7 +175,7 @@ describe("Organization test", () => {
         expect(await organizationPages.navigation().isTabNotSelected(OrgTab.Members)).toBe(true);
         expect(await organizationPages.navigation().isTabNotSelected(OrgTab.Worktime)).toBe(true);
         expect(await organizationPages.navigation().getTabCount(OrgTab.Teams)).toBe("2");
-        expect(await organizationPages.specificTeam().isVisible(true)).toBe(true);
+        expect(await organizationPages.specificTeam().isVisibleForOwner()).toBe(true);
         expect(
           await organizationPages.specificTeam().hasTeamNameDisplayed(scenarioState.team1.name),
         ).toBe(true);
@@ -213,7 +213,7 @@ describe("Organization test", () => {
         scenarioState.team2 = team2ToCreate;
         await organizationPages.orgFacade().createTeam(scenarioState.team2.name);
         expect(await organizationPages.navigation().getTabCount(OrgTab.Teams)).toBe("3");
-        expect(await organizationPages.specificTeam().isVisible(true)).toBe(true);
+        expect(await organizationPages.specificTeam().isVisibleForOwner()).toBe(true);
         expect(
           await organizationPages.specificTeam().hasTeamNameDisplayed(scenarioState.team2.name),
         ).toBe(true);
@@ -262,7 +262,7 @@ describe("Organization test", () => {
         await organizationPages.orgFacade().navigateToSpecificTeam(scenarioState.team1!.name);
         expect(await organizationPages.navigation().isTabSelected(OrgTab.Teams)).toBe(true);
         expect(await organizationPages.navigation().getTabCount(OrgTab.Teams)).toBe("3");
-        expect(await organizationPages.specificTeam().isVisible(true)).toBe(true);
+        expect(await organizationPages.specificTeam().isVisibleForOwner()).toBe(true);
         expect(
           await organizationPages.specificTeam().hasTeamNameDisplayed(scenarioState.team1!.name),
         ).toBe(true);
@@ -380,8 +380,8 @@ describe("Organization test", () => {
 
       await allure.step("User 2 reviews organization access", async () => {
         await mainPage.open();
-        expect(await mainPage.isVisible()).toBe(true);
-        expect(await navBarFragment.isVisible(invited.username)).toBe(true);
+        expect(await mainPage.hasExpectedElementsDisplayed()).toBe(true);
+        expect(await navBarFragment.isVisibleOnMainPage(invited.username)).toBe(true);
         await navBarFragment.clickOrganizationsDropdown();
         expect(await navBarFragment.getTotalOrganizations()).toHaveLength(1);
         expect(await navBarFragment.getTotalOrganizations()).toEqual([invited.username]);

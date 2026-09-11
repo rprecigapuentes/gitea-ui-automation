@@ -23,6 +23,11 @@ export class NavBarFragment extends BaseComponent {
     newOrganizationOption: By.css("a[href='/org/create']"),
   };
 
+  private readonly baseLocators = [
+    this.barOptionsLocators.organizationDropdown,
+    this.dropdownOrganizationLocators.organizationAvatar,
+  ];
+
   constructor(driver: WebDriver) {
     super(driver);
   }
@@ -66,48 +71,40 @@ export class NavBarFragment extends BaseComponent {
     );
   }
 
-  protected override getReadyLocators(): By[] {
-    return [
-      this.barOptionsLocators.organizationDropdown,
-      this.dropdownOrganizationLocators.organizationAvatar,
-    ];
-  }
-
-  override async isVisible(
-    username: string,
-    pageContext: "main" | "organization" = "main",
-  ): Promise<boolean> {
-    // The main-page branch asserts absence, and an element that has not rendered yet is absent
-    // too, so the bar has to be confirmed present before that branch is allowed to run.
-    const readyElementsExist = await super.isVisible();
-
-    if (!readyElementsExist) {
-      logger.info({ pageContext, readyElementsExist }, "Navbar expectations");
+  // The base pair has to resolve before getCurrentOrganization() is safe to call (it reads a
+  // locator that only renders once the bar itself is up), so it short-circuits rather than
+  // joining the same Promise.all as the rest.
+  async isVisibleOnMainPage(username: string): Promise<boolean> {
+    if (!(await this.isVisible(this.baseLocators))) {
+      logger.info({ pageContext: "main" }, "Navbar not ready");
       return false;
     }
 
-    const [usernameMatches, [teamsDropdownMatchesContext, rightOptionsContainerMatchesContext]] =
-      await Promise.all([
-        this.getCurrentOrganization().then((text) => text === username),
-        pageContext === "main"
-          ? Promise.all([
-              this.doesNotExist(this.barOptionsLocators.teamsDropdown),
-              this.doesNotExist(this.barOptionsLocators.rightOptionsContainer),
-            ])
-          : Promise.all([
-              this.exists(this.barOptionsLocators.teamsDropdown),
-              this.exists(this.barOptionsLocators.rightOptionsContainer),
-            ]),
-      ]);
+    const [usernameMatches, teamsDropdownAbsent, rightOptionsAbsent] = await Promise.all([
+      this.getCurrentOrganization().then((text) => text === username),
+      this.isVisible(this.barOptionsLocators.teamsDropdown, this.driver, 0).then((v) => !v),
+      this.isVisible(this.barOptionsLocators.rightOptionsContainer, this.driver, 0).then((v) => !v),
+    ]);
 
-    const results = {
-      readyElementsExist,
-      usernameMatches,
-      teamsDropdownMatchesContext,
-      rightOptionsContainerMatchesContext,
-    };
-    logger.info({ pageContext, ...results }, "Navbar expectations");
+    const results = { usernameMatches, teamsDropdownAbsent, rightOptionsAbsent };
+    logger.info({ pageContext: "main", ...results }, "Navbar expectations");
+    return Object.values(results).every(Boolean);
+  }
 
+  async isVisibleOnOrganizationPage(organizationName: string): Promise<boolean> {
+    if (!(await this.isVisible(this.baseLocators))) {
+      logger.info({ pageContext: "organization" }, "Navbar not ready");
+      return false;
+    }
+
+    const [usernameMatches, teamsDropdownVisible, rightOptionsVisible] = await Promise.all([
+      this.getCurrentOrganization().then((text) => text === organizationName),
+      this.isVisible(this.barOptionsLocators.teamsDropdown),
+      this.isVisible(this.barOptionsLocators.rightOptionsContainer),
+    ]);
+
+    const results = { usernameMatches, teamsDropdownVisible, rightOptionsVisible };
+    logger.info({ pageContext: "organization", ...results }, "Navbar expectations");
     return Object.values(results).every(Boolean);
   }
 
