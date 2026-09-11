@@ -28,8 +28,8 @@ export class NewTeamFragment extends BaseComponent {
     await this.findElement(this.locators.newTeamForm);
   }
 
-  protected override getReadyLocators(): By[] {
-    return [
+  async hasExpectedFormElements(): Promise<boolean> {
+    return this.isVisible([
       this.locators.newTeamForm,
       this.locators.teamNameInput,
       this.locators.descriptionInput,
@@ -39,7 +39,7 @@ export class NewTeamFragment extends BaseComponent {
       this.locators.createRepositoriesCheckbox,
       this.locators.generalPermissionsRadio,
       this.locators.createTeamButton,
-    ];
+    ]);
   }
 
   async hasDefaultFormState(): Promise<boolean> {

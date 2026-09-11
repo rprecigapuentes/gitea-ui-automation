@@ -24,16 +24,12 @@ export class OrgTeamsFragment extends BaseComponent {
     await this.findElement(this.locators.teamsPage);
   }
 
-  protected override getReadyLocators(): By[] {
-    return [this.locators.teamContainers];
+  async isVisibleForOwner(): Promise<boolean> {
+    return this.isVisible([this.locators.teamContainers, this.locators.newTeamButton]);
   }
 
-  override async isVisible(isOwner: boolean): Promise<boolean> {
-    if (!(await super.isVisible())) {
-      return false;
-    }
-
-    return isOwner ? this.exists(this.locators.newTeamButton) : true;
+  async isVisibleForMember(): Promise<boolean> {
+    return this.isVisible(this.locators.teamContainers);
   }
 
   async getTeamContainersCount(): Promise<number> {
@@ -71,12 +67,12 @@ export class OrgTeamsFragment extends BaseComponent {
 
   async hasAddTeamMemberLink(teamName: string): Promise<boolean> {
     const teamContainer = await this.findTeamContainer(teamName);
-    return this.exists(this.locators.addTeamMemberLink, teamContainer);
+    return this.isVisible(this.locators.addTeamMemberLink, teamContainer);
   }
 
   async doesNotHaveAddTeamMemberLink(teamName: string): Promise<boolean> {
     const teamContainer = await this.findTeamContainer(teamName);
-    return (await teamContainer.findElements(this.locators.addTeamMemberLink)).length === 0;
+    return !(await this.isVisible(this.locators.addTeamMemberLink, teamContainer, 0));
   }
 
   async clickAddTeamMemberLink(teamName: string): Promise<void> {

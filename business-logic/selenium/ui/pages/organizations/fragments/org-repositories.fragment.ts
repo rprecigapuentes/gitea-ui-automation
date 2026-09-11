@@ -21,26 +21,19 @@ export class OrgRepositoriesFragment extends BaseComponent {
     newTeamButton: By.css("a[href$='/teams/new']"),
   };
 
-  protected override getReadyLocators(): By[] {
-    return [this.locators.organizationSidebar];
+  async isVisibleForOwner(): Promise<boolean> {
+    if (!(await this.isVisible(this.locators.organizationSidebar))) return false;
+    const sidebar = await this.findElement(this.locators.organizationSidebar);
+    return this.isVisible(
+      [this.locators.membersCount, this.locators.teamsCount, this.locators.newTeamButton],
+      sidebar,
+    );
   }
 
-  override async isVisible(isOwner: boolean): Promise<boolean> {
-    if (!(await super.isVisible())) {
-      return false;
-    }
-
+  async isVisibleForMember(): Promise<boolean> {
+    if (!(await this.isVisible(this.locators.organizationSidebar))) return false;
     const sidebar = await this.findElement(this.locators.organizationSidebar);
-    const expectedElements = [
-      this.exists(this.locators.membersCount, sidebar),
-      this.exists(this.locators.teamsCount, sidebar),
-    ];
-
-    if (isOwner) {
-      expectedElements.push(this.exists(this.locators.newTeamButton, sidebar));
-    }
-
-    return (await Promise.all(expectedElements)).every(Boolean);
+    return this.isVisible([this.locators.membersCount, this.locators.teamsCount], sidebar);
   }
 
   async getMembersCount(): Promise<string> {
@@ -75,7 +68,7 @@ export class OrgRepositoriesFragment extends BaseComponent {
 
   async hasNewTeamButton(): Promise<boolean> {
     const sidebar = await this.findElement(this.locators.organizationSidebar);
-    return this.exists(this.locators.newTeamButton, sidebar);
+    return this.isVisible(this.locators.newTeamButton, sidebar);
   }
 
   async searchRepository(repositoryName: string): Promise<void> {

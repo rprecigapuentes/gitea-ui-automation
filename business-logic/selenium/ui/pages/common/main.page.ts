@@ -17,13 +17,12 @@ export class MainPage extends BasePage {
     super(driver);
   }
 
-  protected override getReadyLocators(): By[] {
-    const readyLocators = [this.locators.dashboardRepoList];
-    return readyLocators;
+  async open(): Promise<void> {
+    await super.open([this.locators.dashboardRepoList]);
   }
 
-  override async isVisible(): Promise<boolean> {
-    if (!(await super.isVisible())) {
+  async hasExpectedElementsDisplayed(): Promise<boolean> {
+    if (!(await this.isVisible(this.locators.dashboardRepoList))) {
       return false;
     }
 

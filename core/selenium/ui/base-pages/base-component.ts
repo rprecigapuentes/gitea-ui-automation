@@ -1,39 +1,43 @@
-import { WebDriver, By, WebElement, until } from "selenium-webdriver";
-import { logger } from "@gitea-automation/core-logger/pino.logger";
+import { WebDriver, By, WebElement } from "selenium-webdriver";
 
-type SearchRoot = WebDriver | WebElement;
+export type SearchRoot = WebDriver | WebElement;
 
 const DEFAULT_TIMEOUT_MS = 5000;
 
 export interface Verifiable {
-  isVisible(...args: unknown[]): Promise<boolean>;
+  isVisible(locators: By | By[], root?: SearchRoot, timeoutMs?: number): Promise<boolean>;
 }
 
 export abstract class BaseComponent implements Verifiable {
   constructor(protected driver: WebDriver) {}
 
-  protected getReadyLocators(): By[] {
-    return [];
-  }
+  protected async findElements(
+    locator: By,
+    root: SearchRoot = this.driver,
+    timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  ): Promise<WebElement[]> {
+    const checkOnce = async (): Promise<WebElement[] | null> => {
+      const found = await root.findElements(locator);
+      if (found.length === 0) return null;
+      const visible = await Promise.all(found.map((element) => element.isDisplayed()));
+      return visible.every(Boolean) ? found : null;
+    };
 
-  // The rest parameter is what lets a subclass narrow this to its own signature; a base method
-  // without it rejects any override that adds a parameter. The default itself takes none.
-  async isVisible(...args: unknown[]): Promise<boolean> {
-    void args;
-
-    const readyLocators = this.getReadyLocators();
-
-    if (readyLocators.length === 0) {
-      logger.warn(
-        { component: this.constructor.name },
-        "Component declares no ready locators, so its visibility cannot be established",
-      );
-      return false;
+    // selenium-webdriver's driver.wait() treats a falsy timeout as unbounded, so 0 is
+    // special-cased here to mean the opposite: check once, right now, and fail immediately.
+    if (timeoutMs === 0) {
+      const result = await checkOnce();
+      if (result === null) {
+        throw new Error(`No visible element(s) for locator "${locator.toString()}"`);
+      }
+      return result;
     }
 
-    const results = await Promise.all(readyLocators.map((locator) => this.exists(locator)));
-
-    return results.every(Boolean);
+    return this.driver.wait(
+      checkOnce,
+      timeoutMs,
+      `No visible element(s) for locator "${locator.toString()}"`,
+    ) as Promise<WebElement[]>;
   }
 
   protected async findElement(
@@ -43,69 +47,13 @@ export abstract class BaseComponent implements Verifiable {
   ): Promise<WebElement> {
     const elements = await this.findElements(locator, root, timeoutMs);
 
-    if (elements.length !== 1) {
-      const message = `Expected exactly 1 element for locator "${locator.toString()}", but found ${elements.length}`;
-      const matchedElements = await Promise.all(
-        elements.map(async (element) =>
-          ((await element.getAttribute("outerHTML")) ?? "").slice(0, 500),
-        ),
+    if (elements.length > 1) {
+      throw new Error(
+        `Expected exactly 1 element for locator "${locator.toString()}", found ${elements.length}`,
       );
-      logger.error(
-        { locator: locator.toString(), matches: elements.length, matchedElements },
-        message,
-      );
-      throw new Error(message);
     }
 
     return elements[0];
-  }
-
-  protected async findElements(
-    locator: By,
-    root: SearchRoot = this.driver,
-    timeoutMs: number = DEFAULT_TIMEOUT_MS,
-  ): Promise<WebElement[]> {
-    const locatorText = locator.toString();
-    let phase = "presence";
-    let matches = 0;
-
-    logger.debug({ locator: locatorText, timeoutMs }, "Waiting for element locator");
-
-    try {
-      const elements = (await this.driver.wait(async () => {
-        const found = await root.findElements(locator);
-        matches = found.length;
-        return found.length > 0 ? found : null;
-      }, timeoutMs)) as WebElement[];
-
-      phase = "visibility";
-      await Promise.all(
-        elements.map((element) => this.driver.wait(until.elementIsVisible(element), timeoutMs)),
-      );
-
-      logger.debug({ locator: locatorText, matches }, "Element locator is visible");
-      return elements;
-    } catch (error) {
-      const url = await this.driver.getCurrentUrl().catch(() => "unavailable");
-      const title = await this.driver.getTitle().catch(() => "unavailable");
-      const pageText = await this.driver
-        .executeScript("return document.body?.innerText?.slice(0, 1000) ?? '';")
-        .catch(() => "unavailable");
-      logger.error(
-        {
-          locator: locatorText,
-          matches,
-          phase,
-          timeoutMs,
-          url,
-          title,
-          pageText,
-          error: error instanceof Error ? error.message : String(error),
-        },
-        "Element lookup failed",
-      );
-      throw error;
-    }
   }
 
   async click(
@@ -127,41 +75,6 @@ export abstract class BaseComponent implements Verifiable {
     await element.sendKeys(text);
   }
 
-  async exists(
-    locator: By,
-    root: SearchRoot = this.driver,
-    timeoutMs: number = DEFAULT_TIMEOUT_MS,
-  ): Promise<boolean> {
-    try {
-      await this.findElement(locator, root, timeoutMs);
-      logger.info(
-        { locator: locator.toString() },
-        `Element exists for locator "${locator.toString()}"`,
-      );
-      return true;
-    } catch {
-      logger.warn(
-        { locator: locator.toString() },
-        `Element does not exist for locator "${locator.toString()}"`,
-      );
-      return false;
-    }
-  }
-
-  // A single query with no wait, so an element that has not rendered yet reads as absent. Only
-  // call this once the component itself is confirmed present.
-  async doesNotExist(locator: By, root: SearchRoot = this.driver): Promise<boolean> {
-    const matches = await root.findElements(locator);
-    const doesNotExist = matches.length === 0;
-
-    logger.debug(
-      { locator: locator.toString(), matches: matches.length },
-      doesNotExist ? "Element is absent" : "Element is present",
-    );
-
-    return doesNotExist;
-  }
-
   async getText(
     locator: By,
     root: SearchRoot = this.driver,
@@ -171,20 +84,43 @@ export abstract class BaseComponent implements Verifiable {
     return element.getText();
   }
 
-  //Equivalent to custom wait, make the action and wait for the specified elements to be ready
+  async getAttribute(
+    locator: By,
+    attributeName: string,
+    root: SearchRoot = this.driver,
+    timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  ): Promise<string> {
+    const element = await this.findElement(locator, root, timeoutMs);
+    return (await element.getAttribute(attributeName)) ?? "";
+  }
+
+  async isVisible(
+    locators: By | By[],
+    root: SearchRoot = this.driver,
+    timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  ): Promise<boolean> {
+    const list = Array.isArray(locators) ? locators : [locators];
+
+    if (list.length === 0) return false;
+
+    const results = await Promise.all(
+      list.map((locator) =>
+        this.findElement(locator, root, timeoutMs)
+          .then(() => true)
+          .catch(() => false),
+      ),
+    );
+
+    return results.every(Boolean);
+  }
+
   protected async actAndWaitFor(
     action: () => Promise<void>,
     readyLocators: By[],
     root: SearchRoot = this.driver,
     timeoutMs: number = DEFAULT_TIMEOUT_MS,
   ): Promise<WebElement[]> {
-    logger.info(
-      { readyLocators: readyLocators.map((locator) => locator.toString()) },
-      "Waiting for elements to be ready after action",
-    );
-
     await action();
-
     return Promise.all(readyLocators.map((locator) => this.findElement(locator, root, timeoutMs)));
   }
 
@@ -215,15 +151,5 @@ export abstract class BaseComponent implements Verifiable {
       root,
       timeoutMs,
     );
-  }
-
-  async getAttribute(
-    locator: By,
-    attributeName: string,
-    root: SearchRoot = this.driver,
-    timeoutMs: number = DEFAULT_TIMEOUT_MS,
-  ): Promise<string> {
-    const element = await this.findElement(locator, root, timeoutMs);
-    return (await element.getAttribute(attributeName)) ?? "";
   }
 }

@@ -46,28 +46,20 @@ export class SpecificTeamFragment extends BaseComponent {
     );
   }
 
-  protected override getReadyLocators(): By[] {
-    return [this.locators.membersCount, this.locators.repositoriesCount];
+  async isVisibleForOwner(): Promise<boolean> {
+    return this.isVisible([
+      this.locators.membersCount,
+      this.locators.repositoriesCount,
+      this.locators.addTeamMemberForm,
+      this.locators.searchUserInput,
+      this.locators.addTeamMemberButton,
+      this.locators.joinButton,
+      this.locators.settingsButton,
+    ]);
   }
 
-  override async isVisible(isOwner: boolean): Promise<boolean> {
-    if (!(await super.isVisible())) {
-      return false;
-    }
-
-    const expectedElements: Promise<boolean>[] = [];
-
-    if (isOwner) {
-      expectedElements.push(
-        this.exists(this.locators.addTeamMemberForm),
-        this.exists(this.locators.searchUserInput),
-        this.exists(this.locators.addTeamMemberButton),
-        this.exists(this.locators.joinButton),
-        this.exists(this.locators.settingsButton),
-      );
-    }
-
-    return (await Promise.all(expectedElements)).every(Boolean);
+  async isVisibleForMember(): Promise<boolean> {
+    return this.isVisible([this.locators.membersCount, this.locators.repositoriesCount]);
   }
 
   async hasTeamNameDisplayed(teamName: string): Promise<boolean> {
@@ -97,7 +89,7 @@ export class SpecificTeamFragment extends BaseComponent {
   }
 
   async hasRemoveTeamMemberButton(): Promise<boolean> {
-    return this.exists(this.locators.removeTeamMemberButton);
+    return this.isVisible(this.locators.removeTeamMemberButton);
   }
 
   async clickRemoveTeamMemberButton(): Promise<void> {
@@ -112,16 +104,15 @@ export class SpecificTeamFragment extends BaseComponent {
   }
 
   async isRemoveTeamMemberModalDisplayed(): Promise<boolean> {
-    return this.exists(this.locators.removeTeamMemberModal);
+    return this.isVisible(this.locators.removeTeamMemberModal);
   }
 
   async hasExpectedRemoveTeamMemberModalElements(): Promise<boolean> {
-    const elements = await Promise.all([
-      this.exists(this.locators.removeTeamMemberModalTitle),
-      this.exists(this.locators.removeTeamMemberModalContent),
-      this.exists(this.locators.confirmRemoveTeamMemberButton),
+    return this.isVisible([
+      this.locators.removeTeamMemberModalTitle,
+      this.locators.removeTeamMemberModalContent,
+      this.locators.confirmRemoveTeamMemberButton,
     ]);
-    return elements.every(Boolean);
   }
 
   async confirmRemoveTeamMember(): Promise<void> {
@@ -182,7 +173,7 @@ export class SpecificTeamFragment extends BaseComponent {
   }
 
   async hasNoEmptyMembersMessage(): Promise<boolean> {
-    return this.doesNotExist(this.locators.emptyMembersMessage);
+    return !(await this.isVisible(this.locators.emptyMembersMessage, this.driver, 0));
   }
 
   private async findUserSearchResult(username: string) {
