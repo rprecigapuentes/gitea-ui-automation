@@ -1,4 +1,4 @@
-import { WebDriver, By, WebElement } from "selenium-webdriver";
+import { WebDriver, By, WebElement, until } from "selenium-webdriver";
 
 export type SearchRoot = WebDriver | WebElement;
 
@@ -75,6 +75,17 @@ export abstract class BaseComponent implements Verifiable {
     await element.sendKeys(text);
   }
 
+  async clearAndType(
+    locator: By,
+    text: string,
+    root: SearchRoot = this.driver,
+    timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  ): Promise<void> {
+    const element = await this.findElement(locator, root, timeoutMs);
+    await element.clear();
+    await element.sendKeys(text);
+  }
+
   async getText(
     locator: By,
     root: SearchRoot = this.driver,
@@ -135,6 +146,22 @@ export abstract class BaseComponent implements Verifiable {
       readyLocators,
       root,
       timeoutMs,
+    );
+  }
+
+  // For a click whose outcome is a navigation rather than an element: the page that answers it may
+  // render nothing the previous one did not already have.
+  protected async clickAndWaitForUrl(
+    clickLocator: By,
+    urlPattern: RegExp,
+    root: SearchRoot = this.driver,
+    timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  ): Promise<void> {
+    await this.click(clickLocator, root, timeoutMs);
+    await this.driver.wait(
+      until.urlMatches(urlPattern),
+      timeoutMs,
+      `The browser never reached a URL matching ${urlPattern.toString()}`,
     );
   }
 

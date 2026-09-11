@@ -38,7 +38,7 @@ export class ProjectBoardPage extends BasePage {
   }
 
   async getColumnTitles(): Promise<string[]> {
-    const titles = await this.driver.findElements(this.locators.columnTitles);
+    const titles = await this.findElements(this.locators.columnTitles);
 
     return Promise.all(titles.map(async (title) => (await title.getText()).trim()));
   }
@@ -69,9 +69,7 @@ export class ProjectBoardPage extends BasePage {
   async addColumn(title: string): Promise<void> {
     await this.click(this.locators.newColumnButton);
     // The modal is shared with column editing, so it can arrive holding another title.
-    const titleInput = await this.findElement(this.locators.columnModalTitle);
-    await titleInput.clear();
-    await titleInput.sendKeys(title);
+    await this.clearAndType(this.locators.columnModalTitle, title);
     await this.click(this.locators.columnModalSave);
   }
 
