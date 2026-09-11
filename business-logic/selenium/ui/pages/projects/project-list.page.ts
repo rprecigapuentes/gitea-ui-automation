@@ -21,10 +21,7 @@ export class ProjectListPage extends BasePage {
     await super.open([this.locators.projectLink], owner);
   }
 
-  /**
-   * A seeded organization holds exactly one project, and findElement is what enforces that: it
-   * throws if a second one ever shows up instead of silently reading the first.
-   */
+  /** A seeded organization holds one project, and findElement throws if a second appears. */
   async getOnlyProjectId(): Promise<number> {
     const link = await this.findElement(this.locators.projectLink);
     const projectId = projectIdFromHref(await link.getAttribute("href"));

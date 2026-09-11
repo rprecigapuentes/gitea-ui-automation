@@ -24,17 +24,13 @@ export class ProjectColumnFragment extends BaseComponent {
       menuTrigger: By.css(`${root} .project-column-header .ui.dropdown`),
       editItem: By.css(`${root} .menu a.item.show-project-column-modal-edit`),
       setDefaultItem: By.css(`${root} .menu a.link-action[data-url$="/default"]`),
-      // The set-default item beside it is a link-action too; the HTTP method is what tells the
-      // two apart without reading their translated text.
+      // The set-default item beside it is a link-action too; the method is what tells them apart.
       deleteItem: By.css(`${root} .menu a.link-action[data-fetch-method="DELETE"]`),
       card: (issueId: number) => By.css(`${root} .issue-card[data-issue="${issueId}"]`),
     };
   }
 
-  /**
-   * A column carries its own title as an attribute of its edit item, which is the only place the
-   * title is readable without depending on rendered text.
-   */
+  /** A column title is only readable as an attribute of that column's edit item. */
   static byTitle(driver: WebDriver, title: string): ProjectColumnFragment {
     return new ProjectColumnFragment(
       driver,
@@ -42,7 +38,7 @@ export class ProjectColumnFragment extends BaseComponent {
     );
   }
 
-  /** Only the default column's title carries the tooltip attribute that explains what it is. */
+  /** Only the default column's title carries the tooltip attribute. */
   static default(driver: WebDriver): ProjectColumnFragment {
     return new ProjectColumnFragment(
       driver,
@@ -54,7 +50,7 @@ export class ProjectColumnFragment extends BaseComponent {
     return this.isVisible(this.locators.column);
   }
 
-  /** For a caller that has already confirmed the board and is asking whether the column is gone. */
+  /** Instant check, for a caller that has already confirmed the board. */
   async isVisibleOnBoardNow(): Promise<boolean> {
     return this.isVisible(this.locators.column, this.driver, INSTANT);
   }
@@ -71,15 +67,6 @@ export class ProjectColumnFragment extends BaseComponent {
     return this.isVisible(this.locators.card(issueId));
   }
 
-  async openMenu(): Promise<void> {
-    // Clicking the trigger of an open menu closes it, so an already-open menu is left alone.
-    if (await this.isVisible(this.locators.editItem, this.driver, INSTANT)) return;
-
-    await this.click(this.locators.menuTrigger);
-    // Every column offers editing, so its edit item is what says the menu finished opening.
-    await this.findElement(this.locators.editItem);
-  }
-
   async offersDelete(): Promise<boolean> {
     await this.openMenu();
 
@@ -94,5 +81,13 @@ export class ProjectColumnFragment extends BaseComponent {
   async clickSetAsDefault(): Promise<void> {
     await this.openMenu();
     await this.click(this.locators.setDefaultItem);
+  }
+
+  private async openMenu(): Promise<void> {
+    // Clicking the trigger of an open menu would close it.
+    if (await this.isVisible(this.locators.editItem, this.driver, INSTANT)) return;
+
+    await this.click(this.locators.menuTrigger);
+    await this.findElement(this.locators.editItem);
   }
 }

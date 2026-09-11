@@ -33,8 +33,7 @@ Feature: Organization project board
     When I open the project board
     Then the column "To Do" does not offer to be deleted
     And the column "Backlog" offers to be deleted
-    When I open the project board
-    And I delete the column "Backlog"
+    When I delete the column "Backlog"
     And I open the project board
     Then the board does not show the column "Backlog"
     And the column "To Do" holds the first seeded issue

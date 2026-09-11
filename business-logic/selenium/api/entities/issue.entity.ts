@@ -5,7 +5,7 @@ export interface Issue {
 }
 
 export interface SeededIssue {
-  // The board addresses a card by the issue's internal id, which is not the number the UI shows.
+  // The board addresses a card by this id, not by the issue number.
   id: number;
   number: number;
   title: string;

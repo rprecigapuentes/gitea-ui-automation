@@ -4,8 +4,7 @@ import { baseUrl } from "@gitea-automation/core-config/gitea.config";
 
 const WAIT_TIMEOUT_MS = 10000;
 const form = 'form.ui.form:has(input[name="template_type"])';
-// The form holds two dropdowns built from the same classes, so each one is reached through the
-// hidden input that names it.
+// The form holds two dropdowns with the same classes; the hidden input tells them apart.
 const templateDropdown = `${form} .ui.selection.dropdown:has(input[name="template_type"])`;
 
 export class CreateProjectPage extends BasePage {
@@ -23,14 +22,6 @@ export class CreateProjectPage extends BasePage {
 
   async openFor(owner: string): Promise<void> {
     await super.open([this.locators.title, this.locators.templateDropdown], owner);
-  }
-
-  async hasExpectedFormElements(): Promise<boolean> {
-    return this.isVisible([
-      this.locators.title,
-      this.locators.templateDropdown,
-      this.locators.createButton,
-    ]);
   }
 
   async createFromBasicKanban(title: string): Promise<void> {

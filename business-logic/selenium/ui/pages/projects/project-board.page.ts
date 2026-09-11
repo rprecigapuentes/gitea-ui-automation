@@ -9,12 +9,11 @@ export class ProjectBoardPage extends BasePage {
   private readonly locators = {
     board: By.css(board),
     columnTitles: By.css(`${board} .project-column-title-text`),
-    // The same class is on every column's edit item, so the header is what makes this the button
-    // that adds a column.
+    // Every column edit item carries the same class, so the header is what narrows it.
     newColumnButton: By.css(".project-header button.show-project-column-modal-edit"),
     columnModalTitle: By.css("#project-column-title-input"),
     columnModalSave: By.css("#project-column-modal-edit .project-column-button-save"),
-    // Gitea builds this modal when a link-action asks for confirmation.
+    // Gitea builds this modal on demand for a link-action.
     confirmButton: By.css(".g-modal-confirm.modal .ui.primary.ok.button"),
   };
 
@@ -48,20 +47,13 @@ export class ProjectBoardPage extends BasePage {
     return ProjectColumnFragment.default(this.driver).getTitle();
   }
 
-  async getColumnIssueCount(title: string): Promise<number> {
-    return this.column(title).getIssueCount();
-  }
-
   async getDefaultColumnIssueCount(): Promise<number> {
     return ProjectColumnFragment.default(this.driver).getIssueCount();
   }
 
-  /**
-   * A column that has not rendered yet looks exactly like one that is gone, so the board is
-   * confirmed first and only then is the column checked for, without waiting.
-   */
+  // A column that has not rendered looks exactly like one that is gone, so the board comes first.
   async boardHidesColumn(title: string): Promise<boolean> {
-    if (!(await this.isVisible(this.locators.board))) return false;
+    if (!(await this.isBoardVisible())) return false;
 
     return !(await this.column(title).isVisibleOnBoardNow());
   }
@@ -76,7 +68,7 @@ export class ProjectBoardPage extends BasePage {
 
   async addColumn(title: string): Promise<void> {
     await this.click(this.locators.newColumnButton);
-    // The modal is shared with column editing, so it can arrive carrying another column's title.
+    // The modal is shared with column editing, so it can arrive holding another title.
     const titleInput = await this.findElement(this.locators.columnModalTitle);
     await titleInput.clear();
     await titleInput.sendKeys(title);

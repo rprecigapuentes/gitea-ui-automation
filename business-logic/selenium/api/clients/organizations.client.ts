@@ -8,7 +8,7 @@ export interface Organization {
 }
 
 export class OrganizationClient extends GiteaApiClient {
-  // Gitea names an organization through `username`, the field every owner-type account shares.
+  // Gitea takes the organization name in 'username'.
   async createOrganization(
     name: string,
     visibility: OrganizationVisibility = "private",

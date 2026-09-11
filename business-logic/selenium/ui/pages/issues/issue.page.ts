@@ -46,10 +46,6 @@ export class IssuePage extends BasePage {
     await this.projectCombo.toggle(projectId);
   }
 
-  async getAssignedProjectNames(): Promise<string[]> {
-    return this.projectCombo.getSelectedTexts();
-  }
-
   async applyLabel(labelId: number): Promise<void> {
     await this.labelCombo.toggle(labelId);
   }

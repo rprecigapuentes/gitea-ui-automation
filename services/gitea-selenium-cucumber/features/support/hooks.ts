@@ -15,14 +15,27 @@ import type { GiteaWorld } from "./world";
 
 setDefaultTimeout(20000);
 
-export const PROJECT_BOARD_TAG = "@project-board";
-
+const PROJECT_BOARD_TAG = "@project-board";
 const SEEDED_REPOSITORY_COUNT = 2;
 
-// Gitea caps an organization name at 40 characters, so the name stays short while still carrying
-// the browser that seeded it and a suffix unique to the scenario.
+// Gitea caps an organization name at 40 characters.
 function seededName(prefix: string): string {
   return `at-${prefix}-${process.env.BROWSER ?? "local"}-${uniqueSuffix()}`;
+}
+
+function ownerClients(): {
+  organizations: OrganizationClient;
+  repositories: RepositoryClient;
+  issues: IssueClient;
+} {
+  const baseUrl = process.env.GITEA_BASE_URL!;
+  const token = resolveOwnerToken();
+
+  return {
+    organizations: new OrganizationClient(baseUrl, token),
+    repositories: new RepositoryClient(baseUrl, token),
+    issues: new IssueClient(baseUrl, token),
+  };
 }
 
 Before(async function (this: GiteaWorld) {
@@ -33,19 +46,11 @@ Before(async function (this: GiteaWorld) {
 });
 
 Before({ tags: PROJECT_BOARD_TAG }, async function (this: GiteaWorld) {
-  const baseUrl = process.env.GITEA_BASE_URL!;
-  const token = resolveOwnerToken();
-  const organizationClient = new OrganizationClient(baseUrl, token);
-  const repositoryClient = new RepositoryClient(baseUrl, token);
-  const issueClient = new IssueClient(baseUrl, token);
-
+  const { organizations, repositories: repositoryClient, issues } = ownerClients();
   const organizationName = seededName("board");
-  await organizationClient.createOrganization(organizationName);
-  this.scenarioState.organization = {
-    name: organizationName,
-    visibility: "private",
-    permissions: "true",
-  };
+
+  await organizations.createOrganization(organizationName);
+  this.scenarioState.organization = { name: organizationName, visibility: "private" };
 
   const repositories: SeededRepository[] = [];
 
@@ -54,7 +59,7 @@ Before({ tags: PROJECT_BOARD_TAG }, async function (this: GiteaWorld) {
     await repositoryClient.createOrganizationRepository(organizationName, repositoryName);
 
     const title = testDataName("S2-SMK-ISS", `Issue-${index}`);
-    const { body: issue } = await issueClient.createIssue(organizationName, repositoryName, title);
+    const { body: issue } = await issues.createIssue(organizationName, repositoryName, title);
 
     repositories.push({
       name: repositoryName,
@@ -70,20 +75,16 @@ After({ tags: PROJECT_BOARD_TAG }, async function (this: GiteaWorld) {
 
   if (!organization) return;
 
-  const baseUrl = process.env.GITEA_BASE_URL!;
-  const token = resolveOwnerToken();
-  const organizationClient = new OrganizationClient(baseUrl, token);
-  const repositoryClient = new RepositoryClient(baseUrl, token);
+  const { organizations, repositories } = ownerClients();
 
-  // Gitea refuses to delete an organization that still owns repositories, so the repositories go
-  // first; the issues and the organization-level projects do go with their owner. A failure here
-  // is reported on its own so it cannot replace the scenario's own result.
+  // Gitea refuses to delete an organization that still owns repositories; the issues and the
+  // projects do go with their owner.
   try {
     for (const repository of this.scenarioState.repositories ?? []) {
-      await repositoryClient.deleteRepository(organization.name, repository.name);
+      await repositories.deleteRepository(organization.name, repository.name);
     }
 
-    await organizationClient.deleteOrganization(organization.name);
+    await organizations.deleteOrganization(organization.name);
   } catch (error) {
     console.error(`Could not delete the seeded organization "${organization.name}":`, error);
   }
