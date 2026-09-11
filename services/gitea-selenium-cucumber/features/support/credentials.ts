@@ -3,8 +3,12 @@ export interface Credentials {
   password: string;
 }
 
+function currentBrowserSuffix(): string {
+  return (process.env.BROWSER ?? "chrome").toUpperCase();
+}
+
 export function resolveOwnerCredentials(): Credentials {
-  const browser = (process.env.BROWSER ?? "chrome").toUpperCase();
+  const browser = currentBrowserSuffix();
   const username = process.env[`GITEA_OWNER_${browser}`];
   const password = process.env[`GITEA_OWNER_${browser}_PASSWORD`];
 
@@ -13,4 +17,15 @@ export function resolveOwnerCredentials(): Credentials {
   }
 
   return { username, password };
+}
+
+export function resolveOwnerToken(): string {
+  const browser = currentBrowserSuffix();
+  const token = process.env[`GITEA_TOKEN_${browser}`];
+
+  if (!token) {
+    throw new Error(`Missing API token for browser "${browser}" (GITEA_TOKEN_${browser})`);
+  }
+
+  return token;
 }

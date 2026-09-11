@@ -318,7 +318,7 @@ export const test = base.extend<CustomFixtures>({
     const title = "Scoped labels acceptance";
     const response = await issueClient.createIssue(owner, repository, title);
 
-    await use({ number: response.body.number, title });
+    await use({ id: response.body.id, number: response.body.number, title });
   },
   milestoneClient: async ({}, use) => {
     await use(new MilestoneClient(process.env.GITEA_BASE_URL!, resolveOwnerToken()));

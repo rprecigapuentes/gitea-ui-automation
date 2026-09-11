@@ -1,5 +1,6 @@
 import { GiteaApiClient } from "@gitea-automation/core-selenium/api/gitea-client.client";
 import type { Response } from "got";
+import type { OrganizationVisibility } from "../entities/organization.entity";
 
 export interface Organization {
   id: number;
@@ -7,6 +8,14 @@ export interface Organization {
 }
 
 export class OrganizationClient extends GiteaApiClient {
+  // Gitea names an organization through `username`, the field every owner-type account shares.
+  async createOrganization(
+    name: string,
+    visibility: OrganizationVisibility = "private",
+  ): Promise<Response<Organization>> {
+    return this.client.post<Organization>("orgs", { json: { username: name, visibility } });
+  }
+
   async getAllOrganizations(): Promise<Response<Organization[]>> {
     return this.client.get<Organization[]>("orgs");
   }
