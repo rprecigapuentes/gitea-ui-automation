@@ -13,6 +13,11 @@ context: |
 
   Spec domains mirror the framework layers: core-driver, core-api, page-objects, pipeline.
 
+  A page object or fragment reaches the browser only through BaseComponent. Calling the driver from
+  a page (driver.wait, driver.findElements) or driving a WebElement by hand is a review blocker: use
+  the method that fits, and when none does, add one to BaseComponent or widen an existing one so
+  every page gains it.
+
   The repository wiki is a separate git repository. Never edit wiki pages from here.
 
 rules:
