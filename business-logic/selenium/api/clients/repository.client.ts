@@ -7,6 +7,15 @@ export class RepositoryClient extends GiteaApiClient {
     return this.client.post<Repository>("user/repos", { json: { name, auto_init: true } });
   }
 
+  async createOrganizationRepository(
+    organizationName: string,
+    name: string,
+  ): Promise<Response<Repository>> {
+    return this.client.post<Repository>(`orgs/${organizationName}/repos`, {
+      json: { name, auto_init: true },
+    });
+  }
+
   async deleteRepository(owner: string, name: string): Promise<Response> {
     return this.client.delete(`repos/${owner}/${name}`);
   }

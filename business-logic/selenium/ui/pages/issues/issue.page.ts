@@ -10,6 +10,7 @@ export class IssuePage extends BasePage {
   private readonly labelCombo: SidebarComboFragment;
   private readonly milestoneCombo: SidebarComboFragment;
   private readonly assigneeCombo: SidebarComboFragment;
+  private readonly projectCombo: SidebarComboFragment;
 
   private readonly locators = {
     timelineEvents: By.css(".timeline-item.event"),
@@ -30,10 +31,19 @@ export class IssuePage extends BasePage {
     this.labelCombo = SidebarComboFragment.onIssue(driver, "/issues/labels");
     this.milestoneCombo = SidebarComboFragment.byField(driver, "milestone_id");
     this.assigneeCombo = SidebarComboFragment.byField(driver, "assignee_ids");
+    this.projectCombo = SidebarComboFragment.byField(driver, "project_ids");
   }
 
   override getUrl(owner: string, repository: string, issueNumber: number): string {
     return `${baseUrl}/${owner}/${repository}/issues/${issueNumber}`;
+  }
+
+  async openFor(owner: string, repository: string, issueNumber: number): Promise<void> {
+    await super.open([this.locators.title], owner, repository, issueNumber);
+  }
+
+  async assignProject(projectId: number): Promise<void> {
+    await this.projectCombo.toggle(projectId);
   }
 
   async applyLabel(labelId: number): Promise<void> {
