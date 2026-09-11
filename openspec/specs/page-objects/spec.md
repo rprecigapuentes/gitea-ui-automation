@@ -6,26 +6,26 @@ Defines what a page object and a page fragment must be able to report about thei
 
 ## Requirements
 
-### Requirement: Every page object and page fragment reports its own visibility
+### Requirement: A page object or page fragment reports its own visibility through explicit locators
 
-A page object and a page fragment SHALL each expose one visibility predicate, named `isVisible`, returning whether the component is present and correct on the current screen. The framework SHALL provide a default implementation derived from the elements the component declares as its ready elements, so that a component declaring ready elements and no predicate body of its own still answers. A component SHALL NOT expose a second predicate under another name for the same question.
+A page object and a page fragment SHALL expose visibility checks through `isVisible`, which SHALL accept the locator or locators to check as an explicit argument rather than reading them from a property the component declares. A component with more than one shape of "visible" (for example, differing by the caller's role or by which page context it renders in) SHALL expose one distinctly-named predicate method per shape, each supplying its own locators to `isVisible`, rather than a single predicate branching internally on a parameter.
 
-#### Scenario: A component that declares ready elements inherits its answer
+#### Scenario: A caller checks a set of locators
 
-- **WHEN** a page object or page fragment declares ready elements and defines no visibility predicate of its own
-- **THEN** its visibility predicate reports true once every declared ready element is displayed
-- **AND** it reports false when any declared ready element is absent
+- **WHEN** a caller invokes `isVisible` with one locator or a list of locators
+- **THEN** it reports true once every one of those locators is displayed
+- **AND** it reports false when any of them is absent
 
-#### Scenario: A component verifies more than the presence of its elements
+#### Scenario: A component has more than one shape of "visible"
 
-- **WHEN** a component must also check element text, an attribute or the absence of an element to consider itself correct
-- **THEN** it extends the inherited predicate rather than replacing the framework's name for it
-- **AND** the caller invokes the same predicate name it would invoke on any other component
+- **WHEN** a component's correctness differs by caller role or by page context
+- **THEN** the component exposes one predicate method per shape, each named for what it checks
+- **AND** no single predicate branches on a role or context parameter to decide which locators to check
 
-#### Scenario: A component declares no ready elements
+#### Scenario: A caller checks no locators
 
-- **WHEN** a component declares no ready elements and defines no visibility predicate of its own
-- **THEN** its visibility predicate reports false rather than reporting a vacuous true
+- **WHEN** a caller invokes `isVisible` with an empty list of locators
+- **THEN** it reports false rather than reporting a vacuous true
 
 ### Requirement: The visibility predicate reports rather than raises
 
@@ -39,7 +39,7 @@ The visibility predicate SHALL report its outcome as a boolean and SHALL NOT rai
 
 ### Requirement: Absence checks are evaluated only after the component is confirmed present
 
-A component whose verification includes the absence of an element SHALL confirm its ready elements before evaluating that absence. An absence check SHALL NOT be evaluated concurrently with the presence checks of the same component, because an element that has not yet rendered is indistinguishable from one that is genuinely absent.
+A component whose verification includes the absence of an element SHALL confirm the locators it depends on before evaluating that absence, and SHALL NOT evaluate the absence check concurrently with those presence checks, because an element that has not yet rendered is indistinguishable from one that is genuinely absent. An absence check SHALL be an instant, non-waiting check of `isVisible`, negated, rather than a separately named operation.
 
 #### Scenario: The component has not finished rendering
 
@@ -49,20 +49,20 @@ A component whose verification includes the absence of an element SHALL confirm 
 
 #### Scenario: The element is genuinely absent
 
-- **WHEN** a component's ready elements are confirmed and the element under the absence check is not on the screen
+- **WHEN** the locators a component depends on are confirmed and the element under the absence check is not on the screen
 - **THEN** the absence check reports a satisfied absence
 - **AND** the verification reports true
 
-### Requirement: Opening a page waits for the same elements its visibility predicate checks
+### Requirement: Opening a page waits for the elements its caller specifies
 
-A page object SHALL declare its ready elements once, and SHALL use that one declaration both as its post-navigation wait and as the basis of its visibility predicate, so the two cannot disagree about what anchors the page. A predicate that verifies more than the ready elements SHALL build on that declaration rather than restate it. A page that declares no ready elements SHALL navigate without waiting for any element.
+A page object's navigation SHALL accept the locators to wait for after navigating as an explicit argument. A page that is opened with no locators SHALL navigate without waiting for any element.
 
-#### Scenario: A page with ready elements is opened
+#### Scenario: A page is opened with locators to wait for
 
-- **WHEN** a page object that declares ready elements is opened
-- **THEN** navigation completes only once every declared ready element is displayed
+- **WHEN** a page object is opened and given one or more locators to wait for
+- **THEN** navigation completes only once every one of those locators is displayed
 
-#### Scenario: A page without ready elements is opened
+#### Scenario: A page is opened with no locators to wait for
 
-- **WHEN** a page object that declares no ready elements is opened
+- **WHEN** a page object is opened with no locators to wait for
 - **THEN** navigation completes without waiting for any element
