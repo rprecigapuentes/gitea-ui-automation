@@ -13,7 +13,7 @@ Feature: Organization
       | visibility  | public   |
       | permissions | true     |
     Then I should see the organization created successfully
-    # When I navigate to the "Create Team" page for the organization "test-org"
+    When I navigate to the organization page
     # And I create the following teams:
     #   | name   | name  | description        | visibility | repoAccess | createRepo | permissions |
     #   | team-1 | admin | Team 1 description | public     | read       | true       | admin       |

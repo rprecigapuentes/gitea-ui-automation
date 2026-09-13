@@ -40,3 +40,8 @@ Then("I should see the organization created successfully", async function (this:
   const currentOrganizationDashboard = await this.pages.navBar.getCurrentOrganization();
   expect(currentOrganizationDashboard).toBe(this.scenarioState.organization!.name);
 });
+
+When("I navigate to the organization page", async function (this: GiteaWorld) {
+  await this.pages.navBar.clickViewOrganizationButton();
+  await this.pages.orgFacade.waitForElements();
+});

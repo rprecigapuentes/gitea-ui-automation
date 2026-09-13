@@ -1,14 +1,14 @@
-import { WebDriver } from "selenium-webdriver";
+import { By, WebDriver } from "selenium-webdriver";
 import { OrgNavigationFragment, OrgTab } from "../fragments/org-navigation.fragment";
 import { OrgRepositoriesFragment } from "../fragments/org-repositories.fragment";
 import { OrgTeamsFragment } from "../fragments/org-teams.fragment";
 import { NewTeamFragment } from "../fragments/new-team.fragment";
 import { SpecificTeamFragment } from "../fragments/specific-team.fragment";
-import { Navigable } from "@gitea-automation/core-selenium/ui/base-pages/base.page";
+import { BasePage } from "@gitea-automation/core-selenium/ui/base-pages/base.page";
 import { baseUrl } from "@gitea-automation/core-config/gitea.config";
 import { Organization } from "../../../../api/entities/organization.entity";
 
-export class OrganizationFacade implements Navigable {
+export class OrganizationFacade extends BasePage {
   private readonly organization: Organization;
   private currentUrl: string;
   private readonly navigation: OrgNavigationFragment;
@@ -17,8 +17,13 @@ export class OrganizationFacade implements Navigable {
   private readonly newTeamFragment: NewTeamFragment;
   private readonly specificTeamFragment: SpecificTeamFragment;
 
+  private readonly locators = {
+    // Main content region of an organization profile - present once the facade's view has loaded.
+    organizationPage: By.css("[role='main'].organization.profile"),
+  };
+
   constructor(
-    private readonly driver: WebDriver,
+    driver: WebDriver,
     organization: Organization,
     navigation: OrgNavigationFragment,
     reposFragment: OrgRepositoriesFragment,
@@ -26,6 +31,7 @@ export class OrganizationFacade implements Navigable {
     newTeamFragment: NewTeamFragment,
     specificTeamFragment: SpecificTeamFragment,
   ) {
+    super(driver);
     this.organization = organization;
     this.currentUrl = `${baseUrl}/${organization.name}`;
     this.navigation = navigation;
@@ -39,8 +45,8 @@ export class OrganizationFacade implements Navigable {
     return this.currentUrl;
   }
 
-  async open(): Promise<void> {
-    await this.driver.get(this.getUrl());
+  async waitForElements(): Promise<void> {
+    await this.isVisible(this.locators.organizationPage);
   }
 
   async navigateToRepositoriesTab(): Promise<OrgRepositoriesFragment> {

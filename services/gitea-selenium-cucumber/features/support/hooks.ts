@@ -49,7 +49,7 @@ Before(async function (this: GiteaWorld) {
   this.driver = await DriverFactory.getDriver();
   const scenarioState: ScenarioState = {};
   this.scenarioState = scenarioState;
-  this.pages = new PageFactory(this.driver);
+  this.pages = new PageFactory(this.driver, scenarioState);
 });
 
 Before({ tags: PROJECT_BOARD_TAG }, async function (this: GiteaWorld) {
