@@ -19,6 +19,8 @@ export class OrgNavigationFragment extends BaseComponent {
     organizationPage: By.css("[role='main'].organization.profile"),
     // Visible organization name in the profile header.
     organizationName: By.css("[role='main'].organization.profile .tw-text-2xl"),
+    // Tab container for the organization's navigation tabs.
+    tabsContainer: By.css(".overflow-menu-items"),
     // Tab navigation specific to the organization profile.
     repositoriesTab: By.css("overflow-menu[role='navigation'] a:has([data-text='Repositories'])"),
     projectsTab: By.css("overflow-menu[role='navigation'] a:has([data-text='Projects'])"),
@@ -39,15 +41,20 @@ export class OrgNavigationFragment extends BaseComponent {
     [OrgTab.Worktime]: this.locators.worktimeTab,
   };
 
-  async isVisibleForOwner(): Promise<boolean> {
-    return this.isVisible([this.locators.organizationPage, ...Object.values(this.tabLocators)]);
+  async waitForElements(): Promise<boolean> {
+    return this.isVisible([this.locators.organizationName, this.locators.tabsContainer]);
   }
 
-  async isVisibleForMember(): Promise<boolean> {
-    const memberTabLocators = Object.values(OrgTab)
-      .filter((tab) => tab !== OrgTab.Worktime)
-      .map((tab) => this.tabLocators[tab]);
-    return this.isVisible([this.locators.organizationPage, ...memberTabLocators]);
+  async areOwnerElementsVisible(): Promise<boolean> {
+    const ready = await this.waitForElements();
+    if (!ready) return false;
+    return this.isVisible(Object.values(this.tabLocators));
+  }
+
+  async areMemberElementsVisible(): Promise<boolean> {
+    const ready = await this.waitForElements();
+    if (!ready) return false;
+    return this.isVisible(Object.values(this.tabLocators).slice(0, -1));
   }
 
   async hasOrganizationNameDisplayed(organizationName: string): Promise<boolean> {

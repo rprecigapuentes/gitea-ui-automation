@@ -43,5 +43,6 @@ Then("I should see the organization created successfully", async function (this:
 
 When("I navigate to the organization page", async function (this: GiteaWorld) {
   await this.pages.navBar.clickViewOrganizationButton();
-  await this.pages.orgFacade.waitForElements();
+  expect(await this.pages.orgRepositories.areOwnerElementsVisible()).toBe(true);
+  expect(await this.pages.orgNavigation.areOwnerElementsVisible()).toBe(true);
 });
