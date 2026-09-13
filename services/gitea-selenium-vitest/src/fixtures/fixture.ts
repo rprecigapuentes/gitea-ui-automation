@@ -95,6 +95,7 @@ interface CustomFixtures {
   classificationLabel: SeededLabel;
   milestone: SeededMilestone;
   //cleanup
+  cleanupOrganizationsBeforeRun: void;
   cleanupOrganizations: void;
 }
 
@@ -201,6 +202,18 @@ export const test = base.extend<CustomFixtures>({
     );
     await use(organizationClient);
   },
+  // Clears organizations once per file before any test in it runs.
+  cleanupOrganizationsBeforeRun: [
+    async ({}, use) => {
+      const organizationClient = new OrganizationClient(
+        process.env.GITEA_BASE_URL!,
+        resolveOwnerToken(),
+      );
+      await organizationClient.deleteAllOrganizations();
+      await use();
+    },
+    { scope: "file" },
+  ],
   repositoryClient: async ({}, use) => {
     await use(new RepositoryClient(process.env.GITEA_BASE_URL!, resolveOwnerToken()));
   },
@@ -250,7 +263,7 @@ export const test = base.extend<CustomFixtures>({
     let facade: OrganizationFacade | undefined;
 
     await use({
-      dashboard: () => (dashboard ??= new OrganizationDashboardPage(driver, requireOrganization())),
+      dashboard: () => (dashboard ??= new OrganizationDashboardPage(driver)),
       navigation: () => (navigation ??= new OrgNavigationFragment(driver)),
       repositories: () => (repositories ??= new OrgRepositoriesFragment(driver)),
       teams: () => (teams ??= new OrgTeamsFragment(driver)),

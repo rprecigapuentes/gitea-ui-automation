@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { Before, After, setDefaultTimeout } from "@cucumber/cucumber";
+import { Before, BeforeAll, After, setDefaultTimeout } from "@cucumber/cucumber";
 import { DriverFactory } from "@gitea-automation/core-selenium/ui/drivers/driver.factory";
 import { OrganizationClient } from "@gitea-automation/business-logic-selenium/api/clients/organizations.client";
 import { RepositoryClient } from "@gitea-automation/business-logic-selenium/api/clients/repository.client";
@@ -16,6 +16,7 @@ import type { GiteaWorld } from "./world";
 setDefaultTimeout(20000);
 
 const PROJECT_BOARD_TAG = "@project-board";
+const CLEANUP_TAG = "@cleanup";
 const SEEDED_REPOSITORY_COUNT = 2;
 
 // Gitea caps an organization name at 40 characters.
@@ -37,6 +38,12 @@ function ownerClients(): {
     issues: new IssueClient(baseUrl, token),
   };
 }
+
+// Clears leftovers before any scenario's Before hooks run.
+BeforeAll(async () => {
+  const { organizations } = ownerClients();
+  await organizations.deleteAllOrganizations();
+});
 
 Before(async function (this: GiteaWorld) {
   this.driver = await DriverFactory.getDriver();
@@ -70,7 +77,8 @@ Before({ tags: PROJECT_BOARD_TAG }, async function (this: GiteaWorld) {
   this.scenarioState.repositories = repositories;
 });
 
-After({ tags: PROJECT_BOARD_TAG }, async function (this: GiteaWorld) {
+// Deletes the org for any feature tagged @cleanup.
+After({ tags: CLEANUP_TAG }, async function (this: GiteaWorld) {
   const organization = this.scenarioState.organization;
 
   if (!organization) return;

@@ -3,28 +3,39 @@ import { logger } from "@gitea-automation/core-logger/pino.logger";
 import { BaseComponent } from "@gitea-automation/core-selenium/ui/base-pages/base-component";
 
 export class NavBarFragment extends BaseComponent {
-  private readonly barOptionsLocators = {
+  private readonly navigationBarLocators = {
+    // container for the main navigation bar
+    navigationBarContainer: By.css("#navbar"),
+  };
+
+  private readonly secondaryBarLocators = {
+    // container for the secondary navigation bar
+    secondaryBarContainer: By.css(".ui.secondary.stackable.menu"),
     rightOptionsContainer: By.css(".right.menu.tw-flex-wrap.tw-justify-end"),
-    organizationDropdown: By.css(".secondary-nav .ui.floating.dropdown.jump:has(img.ui.avatar)"),
-    teamsDropdown: By.css(".secondary-nav .ui.floating.dropdown.jump:has(svg.octicon-people)"),
+    // elements within the secondary navigation bar
+    organizationDropdown: By.css(".text [class=gt-ellipsis]"),
+    teamsDropdown: By.css("div.ui.floating.dropdown.jump:nth-of-type(2)"),
     activitiesOption: By.css(".item.tw-ml-auto"),
-    issuesOption: By.css("[aria-controls=_aria_dropdown_menu_16]"),
-    pullRequestsOption: By.css("[aria-controls=_aria_dropdown_menu_17]"),
-    milestonesOption: By.css("[aria-controls=_aria_dropdown_menu_18]"),
+    issuesOption: By.css(".ui.secondary.stackable.menu a[href$='/issues']"),
+    pullRequestsOption: By.css(".ui.secondary.stackable.menu a[href$='/pulls']"),
+    milestonesOption: By.css(".ui.secondary.stackable.menu a[href$='/milestones']"),
     viewOrganizationButton: By.css(".basic.button"),
   };
 
   private readonly dropdownOrganizationLocators = {
+    // container for the options within the organization dropdown
+    menuOptionsContainer: By.css(".menu.context-user-switch.transition"),
+    // List of organizations within the dropdown
+    organizationsContainer: By.css(".scrolling.menu"),
+    // options within the organization dropdown
+    newOrganizationOption: By.css(".tw-ml-1.tw-mr-5.svg.octicon-plus"),
     organizationAvatar: By.css(".secondary-nav .ui.floating.dropdown.jump span.text img.ui.avatar"),
     organizationName: By.css(".secondary-nav .text span.gt-ellipsis"),
-    menuOptions: By.css(".menu.context-user-switch.transition.visible"),
-    scrollingMenu: By.css(".scrolling.menu"),
     totalOrganizations: By.css(".ui.avatar.tw-align-middle"),
-    newOrganizationOption: By.css("a[href='/org/create']"),
   };
 
   private readonly baseLocators = [
-    this.barOptionsLocators.organizationDropdown,
+    this.secondaryBarLocators.organizationDropdown,
     this.dropdownOrganizationLocators.organizationAvatar,
   ];
 
@@ -33,42 +44,16 @@ export class NavBarFragment extends BaseComponent {
   }
 
   async getCurrentOrganization(): Promise<string> {
-    return this.getText(this.dropdownOrganizationLocators.organizationName);
+    return this.getText(this.secondaryBarLocators.organizationDropdown);
   }
 
-  async clickNewOrganizationOption(): Promise<void> {
-    await this.click(
-      this.dropdownOrganizationLocators.newOrganizationOption,
-      await this.findElement(this.dropdownOrganizationLocators.menuOptions),
-    );
+  async clickNewOrganizationDropdownOption(): Promise<void> {
+    await this.click(this.dropdownOrganizationLocators.newOrganizationOption);
   }
 
   async clickOrganizationsDropdown(): Promise<void> {
-    const dropdown = await this.findElement(this.barOptionsLocators.organizationDropdown);
-    const isOpen = (await dropdown.getAttribute("aria-expanded")) === "true";
-
-    if (isOpen) {
-      await dropdown.click();
-      return;
-    }
-
-    const readyLocators = [this.dropdownOrganizationLocators.menuOptions];
-    await this.clickAndWaitFor(this.barOptionsLocators.organizationDropdown, readyLocators);
-  }
-
-  async getTotalOrganizations(): Promise<string[]> {
-    const organizationMenu = await this.findElement(this.dropdownOrganizationLocators.menuOptions);
-    const scrollingMenu = await this.findElement(
-      this.dropdownOrganizationLocators.scrollingMenu,
-      organizationMenu,
-    );
-    const organizations = await this.findElements(
-      this.dropdownOrganizationLocators.totalOrganizations,
-      scrollingMenu,
-    );
-    return Promise.all(
-      organizations.map(async (organization) => (await organization.getAttribute("title")) ?? ""),
-    );
+    const readyLocators = [this.dropdownOrganizationLocators.menuOptionsContainer];
+    await this.clickAndWaitFor(this.secondaryBarLocators.organizationDropdown, readyLocators);
   }
 
   // The base pair has to resolve before getCurrentOrganization() is safe to call (it reads a
@@ -82,8 +67,10 @@ export class NavBarFragment extends BaseComponent {
 
     const [usernameMatches, teamsDropdownAbsent, rightOptionsAbsent] = await Promise.all([
       this.getCurrentOrganization().then((text) => text === username),
-      this.isVisible(this.barOptionsLocators.teamsDropdown, this.driver, 0).then((v) => !v),
-      this.isVisible(this.barOptionsLocators.rightOptionsContainer, this.driver, 0).then((v) => !v),
+      this.isVisible(this.secondaryBarLocators.teamsDropdown, this.driver, 0).then((v) => !v),
+      this.isVisible(this.secondaryBarLocators.rightOptionsContainer, this.driver, 0).then(
+        (v) => !v,
+      ),
     ]);
 
     const results = { usernameMatches, teamsDropdownAbsent, rightOptionsAbsent };
@@ -91,28 +78,21 @@ export class NavBarFragment extends BaseComponent {
     return Object.values(results).every(Boolean);
   }
 
-  async isVisibleOnOrganizationPage(organizationName: string): Promise<boolean> {
-    if (!(await this.isVisible(this.baseLocators))) {
-      logger.info({ pageContext: "organization" }, "Navbar not ready");
-      return false;
-    }
-
-    const [usernameMatches, teamsDropdownVisible, rightOptionsVisible] = await Promise.all([
-      this.getCurrentOrganization().then((text) => text === organizationName),
-      this.isVisible(this.barOptionsLocators.teamsDropdown),
-      this.isVisible(this.barOptionsLocators.rightOptionsContainer),
-    ]);
-
-    const results = { usernameMatches, teamsDropdownVisible, rightOptionsVisible };
-    logger.info({ pageContext: "organization", ...results }, "Navbar expectations");
-    return Object.values(results).every(Boolean);
+  async areOrgDashboardElementsVisible(): Promise<boolean> {
+    const orgDashboardElements = [this.navigationBarLocators.navigationBarContainer];
+    return this.isVisible(orgDashboardElements);
   }
 
   async getViewOrganizationButtonText(): Promise<string> {
-    return this.getAttribute(this.barOptionsLocators.viewOrganizationButton, "title");
+    return this.getAttribute(this.secondaryBarLocators.viewOrganizationButton, "title");
   }
 
   async clickViewOrganizationButton(): Promise<void> {
-    await this.click(this.barOptionsLocators.viewOrganizationButton);
+    await this.click(this.secondaryBarLocators.viewOrganizationButton);
+  }
+
+  async waitForElements(): Promise<void> {
+    await this.isVisible(this.navigationBarLocators.navigationBarContainer);
+    await this.isVisible(this.secondaryBarLocators.secondaryBarContainer);
   }
 }

@@ -2,10 +2,12 @@ import type { WebDriver } from "selenium-webdriver";
 import { LoginPage } from "@gitea-automation/business-logic-selenium/ui/pages/authentication/login.page";
 import { MainPage } from "@gitea-automation/business-logic-selenium/ui/pages/common/main.page";
 import { NavBarFragment } from "@gitea-automation/business-logic-selenium/ui/pages/common/fragments/nav-bar.fragment";
+import { OrganizationDashboardPage } from "@gitea-automation/business-logic-selenium/ui/pages/organizations/organization-dashboard.page";
 import { IssuePage } from "@gitea-automation/business-logic-selenium/ui/pages/issues/issue.page";
 import { CreateProjectPage } from "@gitea-automation/business-logic-selenium/ui/pages/projects/create-project.page";
 import { ProjectListPage } from "@gitea-automation/business-logic-selenium/ui/pages/projects/project-list.page";
 import { ProjectBoardPage } from "@gitea-automation/business-logic-selenium/ui/pages/projects/project-board.page";
+import { CreateOrganizationPage } from "@gitea-automation/business-logic-selenium/ui/pages/organizations/create-organization.page";
 
 export class PageFactory {
   #loginPage?: LoginPage;
@@ -15,6 +17,8 @@ export class PageFactory {
   #createProjectPage?: CreateProjectPage;
   #projectListPage?: ProjectListPage;
   #projectBoardPage?: ProjectBoardPage;
+  #createOrganizationPage?: CreateOrganizationPage;
+  #organizationDashboardPage?: OrganizationDashboardPage;
 
   constructor(private readonly driver: WebDriver) {}
 
@@ -44,5 +48,13 @@ export class PageFactory {
 
   get projectBoardPage(): ProjectBoardPage {
     return (this.#projectBoardPage ??= new ProjectBoardPage(this.driver));
+  }
+
+  get createOrganizationPage(): CreateOrganizationPage {
+    return (this.#createOrganizationPage ??= new CreateOrganizationPage(this.driver));
+  }
+
+  get organizationDashboardPage(): OrganizationDashboardPage {
+    return (this.#organizationDashboardPage ??= new OrganizationDashboardPage(this.driver));
   }
 }

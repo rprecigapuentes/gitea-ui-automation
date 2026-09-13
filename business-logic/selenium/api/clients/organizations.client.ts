@@ -29,4 +29,17 @@ export class OrganizationClient extends GiteaApiClient {
   async deleteOrganization(organizationName: string): Promise<Response> {
     return this.client.delete(`orgs/${organizationName}`);
   }
+
+  // Clears every organization so a suite starts with a clean slate.
+  async deleteAllOrganizations(): Promise<void> {
+    const { body: organizations } = await this.getUserOrganizations();
+
+    for (const organization of organizations) {
+      try {
+        await this.deleteOrganization(organization.name);
+      } catch (error) {
+        console.error(`Could not delete organization "${organization.name}":`, error);
+      }
+    }
+  }
 }
