@@ -31,7 +31,6 @@ export class NavBarFragment extends BaseComponent {
     newOrganizationOption: By.css(".tw-ml-1.tw-mr-5.svg.octicon-plus"),
     organizationAvatar: By.css(".secondary-nav .ui.floating.dropdown.jump span.text img.ui.avatar"),
     organizationName: By.css(".secondary-nav .text span.gt-ellipsis"),
-    totalOrganizations: By.css(".ui.avatar.tw-align-middle"),
   };
 
   private readonly baseLocators = [
@@ -94,5 +93,22 @@ export class NavBarFragment extends BaseComponent {
   async waitForElements(): Promise<void> {
     await this.isVisible(this.navigationBarLocators.navigationBarContainer);
     await this.isVisible(this.secondaryBarLocators.secondaryBarContainer);
+  }
+
+  async getDropdownOrganizationsList(): Promise<string[]> {
+    const organizationsLocator: By = By.css(":scope > *");
+    const menuOptionsContainer = await this.findElement(
+      this.dropdownOrganizationLocators.menuOptionsContainer,
+    );
+    const organizationContainer = await this.findElement(
+      this.dropdownOrganizationLocators.organizationsContainer,
+      menuOptionsContainer,
+    );
+    const organizationElements = await this.findElements(
+      organizationsLocator,
+      organizationContainer,
+    );
+    const organizationNames = await Promise.all(organizationElements.map((el) => el.getText()));
+    return organizationNames;
   }
 }

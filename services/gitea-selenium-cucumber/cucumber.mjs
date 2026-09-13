@@ -8,4 +8,6 @@ export default {
   formatOptions: {
     resultsDir: "allure-results",
   },
+  // Empty and unset both mean "every scenario" - see test:tag:parallel/test:all:parallel.
+  tags: process.env.CUCUMBER_TAGS || undefined,
 };
