@@ -67,6 +67,26 @@ Feature: Organization
     Then the fork repository prompt is displayed
     When I logout
     And I login with valid credentials as "owner"
+    And the seeded organization is open
+    And I change the repository code access for "qa-team" to "none"
+    When I logout
+    And I login with valid credentials as user 1
+    And the seeded organization is open
+    And I view the repository
+    Then the Code tab is not visible
+    And the Issues tab is displayed by default
+    When I logout
+    And I login with valid credentials as "owner"
+    And the seeded organization is open
+    When I remove the following team members:
+      | user | team    |
+      | 2    | qa-team |
+    Then the member count for each created team is correct
+    When I logout
+    And I login with valid credentials as user 2
+    Then the organization is no longer accessible
+    When I logout
+    And I login with valid credentials as "owner"
 
   @smoke
   Scenario: Create a repository for an existing organization

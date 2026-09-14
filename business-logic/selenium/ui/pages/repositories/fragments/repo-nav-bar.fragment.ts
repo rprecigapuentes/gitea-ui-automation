@@ -25,6 +25,7 @@ export class RepoNavBarFragment extends BaseComponent {
     packagesTab: By.css("[data-text=Packages]"),
     issuesTab: By.css("[data-text=Issues]"),
     wikiTab: By.css("[data-text=Wiki]"),
+    activeIssuesTab: By.css("a.active.item span[data-text=Issues]"),
   };
 
   private readonly tabLocators: Record<RepoTab, By> = {
@@ -50,5 +51,13 @@ export class RepoNavBarFragment extends BaseComponent {
   async navigateToTab(tab: RepoTab): Promise<void> {
     await this.click(this.tabLocators[tab]);
     this.currentTab = tab;
+  }
+
+  async isCodeTabVisible(): Promise<boolean> {
+    return this.isVisible(this.locators.codeTab, this.driver, 0);
+  }
+
+  async isIssuesTabActiveByDefault(): Promise<boolean> {
+    return this.isVisible(this.locators.activeIssuesTab, this.driver, 0);
   }
 }

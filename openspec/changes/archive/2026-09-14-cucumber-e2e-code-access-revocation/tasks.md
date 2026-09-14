@@ -1,0 +1,3 @@
+## 1. Prove no code access hides Code and defaults to Issues, and losing team membership cuts org access
+
+- [x] 1.1 Add `RepoNavBarFragment.isCodeTabVisible()`/`isIssuesTabActiveByDefault()` and the new steps. Wire the code-access-to-`none` check for user 1 and the team-removal/org-access check for user 2 into `@e2e`. The active-tab locator needed `a.active.item span[data-text=Issues]`, not a single combined selector, since `data-text` sits on the inner span while `active` is on the anchor - confirmed live via a throwaway probe script before writing the locator. Verified: root `typecheck`/`eslint` clean, `--tags "@e2e"` clean across 3 full runs (65/65 steps each), `--tags "@smoke"` clean (40/40), Vitest's `organizations.test.ts` on chrome.

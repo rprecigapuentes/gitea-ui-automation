@@ -357,3 +357,26 @@ Then("the fork repository prompt is displayed", async function (this: GiteaWorld
   expect(await this.pages.forkPrompt.waitForElements()).toBe(true);
   expect(await this.pages.forkPrompt.getHeadingText()).toContain("Fork Repository");
 });
+
+When("I view the repository", async function (this: GiteaWorld) {
+  const [repository] = this.scenarioState.organization!.repositories!;
+
+  await this.pages.orgRepositories.clickRepository(repository.name);
+  await this.pages.repoNavBar.waitForElements();
+});
+
+Then("the Code tab is not visible", async function (this: GiteaWorld) {
+  expect(await this.pages.repoNavBar.isCodeTabVisible()).toBe(false);
+});
+
+Then("the Issues tab is displayed by default", async function (this: GiteaWorld) {
+  expect(await this.pages.repoNavBar.isIssuesTabActiveByDefault()).toBe(true);
+});
+
+Then("the organization is no longer accessible", async function (this: GiteaWorld) {
+  await this.pages.navBar.clickOrganizationsDropdown();
+  const organizations = await this.pages.navBar.getDropdownOrganizationsList();
+
+  expect(organizations).not.toContain(this.scenarioState.organization!.name);
+  expect(organizations.length).toBe(1);
+});
