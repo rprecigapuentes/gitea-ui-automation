@@ -35,8 +35,7 @@ export class SpecificTeamFragment extends BaseComponent {
     teamMemberUsernames: By.css(".flex-divided-list .item-title a.text.muted"),
     // Scoped by data-modal-name - every row's remove button shares the same data-modal id,
     // so an unscoped selector matches every member once a team has more than one.
-    removeTeamMemberButton: (username: string) =>
-      By.css(`button[data-modal='#remove-team-member'][data-modal-name='${username}']`),
+    removeTeamMemberButton: (username: string) => By.css(`[data-modal-name='${username}']`),
     // Confirmation modal shown when removing a team member.
     removeTeamMemberModal: By.css("#remove-team-member"),
     removeTeamMemberModalTitle: By.css("#remove-team-member .header"),
