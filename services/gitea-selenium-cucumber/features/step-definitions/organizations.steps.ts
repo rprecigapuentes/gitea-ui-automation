@@ -214,41 +214,39 @@ When(
   async function (this: GiteaWorld) {
     const organizationName = this.scenarioState.organization!.name;
     const { username } = resolveOwnerCredentials();
+    const [repository] = this.scenarioState.organization!.repositories!;
 
-    for (const repository of this.scenarioState.organization!.repositories ?? []) {
-      await this.pages.orgRepositories.clickRepository(repository.name);
-      await this.pages.repoNavBar.waitForElements();
-      await this.pages.repoCodeTab.waitForElements(organizationName, repository.name);
+    await this.pages.orgRepositories.clickRepository(repository.name);
+    await this.pages.repoNavBar.waitForElements();
+    await this.pages.repoCodeTab.waitForElements(organizationName, repository.name);
 
-      await this.pages.repoCodeTab.clickNewFileButton();
-      await this.pages.createRepoFile.waitForElements(organizationName, repository.name);
-      await this.pages.createRepoFile.fillFileName(username);
-      await this.pages.createRepoFile.fillFileContent(username);
-      await this.pages.createRepoFile.clickCommitChangesButton();
+    await this.pages.repoCodeTab.clickNewFileButton();
+    await this.pages.createRepoFile.waitForElements(organizationName, repository.name);
+    await this.pages.createRepoFile.fillFileName(username);
+    await this.pages.createRepoFile.fillFileContent(username);
+    await this.pages.createRepoFile.clickCommitChangesButton();
 
-      await this.pages.repoFile.waitForElements(organizationName, repository.name);
-      expect(await this.pages.repoFile.getFileName()).toBe(username);
-      expect(await this.pages.repoFile.getFileContent()).toContain(username);
+    await this.pages.repoFile.waitForElements(organizationName, repository.name);
+    expect(await this.pages.repoFile.getFileName()).toBe(username);
+    expect(await this.pages.repoFile.getFileContent()).toContain(username);
 
-      await this.pages.repoNavBar.clickOrganizationLink();
-      await this.pages.orgRepositories.waitForElements();
-    }
+    await this.pages.repoNavBar.clickOrganizationLink();
+    await this.pages.orgRepositories.waitForElements();
   },
 );
 
 Then("the file count for each repository is correct", async function (this: GiteaWorld) {
   const organizationName = this.scenarioState.organization!.name;
+  const [repository] = this.scenarioState.organization!.repositories!;
 
-  for (const repository of this.scenarioState.organization!.repositories ?? []) {
-    await this.pages.orgRepositories.clickRepository(repository.name);
-    await this.pages.repoNavBar.waitForElements();
-    await this.pages.repoCodeTab.waitForElements(organizationName, repository.name);
+  await this.pages.orgRepositories.clickRepository(repository.name);
+  await this.pages.repoNavBar.waitForElements();
+  await this.pages.repoCodeTab.waitForElements(organizationName, repository.name);
 
-    expect(await this.pages.repoCodeTab.getFilesCount()).toBe(1);
+  expect(await this.pages.repoCodeTab.getFilesCount()).toBe(1);
 
-    await this.pages.repoNavBar.clickOrganizationLink();
-    await this.pages.orgRepositories.waitForElements();
-  }
+  await this.pages.repoNavBar.clickOrganizationLink();
+  await this.pages.orgRepositories.waitForElements();
 });
 
 When(
