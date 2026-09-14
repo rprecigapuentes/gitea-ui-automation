@@ -32,6 +32,10 @@ export class LabelListPage extends BasePage {
     return `${baseUrl}/${owner}/${repository}/labels`;
   }
 
+  async openFor(owner: string, repository: string): Promise<void> {
+    await super.open([this.locators.newLabelButton], owner, repository);
+  }
+
   async openNewLabelForm(): Promise<void> {
     await this.click(this.locators.newLabelButton);
 
