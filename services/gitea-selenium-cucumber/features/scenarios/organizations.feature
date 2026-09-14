@@ -26,10 +26,6 @@ Feature: Organization
       | 2    | qa-team  |
     Then the member count for each created team is correct
     And the avatars for each created team are correct
-    When I remove the following team members:
-      | user | team     |
-      | 1    | dev-team |
-    Then the member count for each created team is correct
     When I navigate to the repositories tab
     And I create the following repositories:
       | name     | visibility |
@@ -40,6 +36,10 @@ Feature: Organization
       | dev-team | monorepo   |
       | qa-team  | monorepo   |
     Then the repositories assigned to each team are correct
+    When I remove the following team members:
+      | user | team     |
+      | 1    | dev-team |
+    Then the member count for each created team is correct
 
   @smoke
   Scenario: Create a repository for an existing organization
