@@ -138,12 +138,9 @@ export class SpecificTeamFragment extends BaseComponent {
   }
 
   // uname is a plain form field, so an exact username needs no suggestion click to submit.
-  // Waits for this username specifically - the member list can already be non-empty, so its
-  // mere presence (what addSelectedUser waits for) doesn't confirm this add landed.
   async addMemberByUsername(username: string): Promise<void> {
     await this.type(this.locators.searchUserInput, username);
-    await this.click(this.locators.addTeamMemberButton);
-    await this.waitUntilTrue(() => this.hasMember(username));
+    await this.clickAndWaitUntil(this.locators.addTeamMemberButton, () => this.hasMember(username));
   }
 
   async hasOnlyMatchingUserSearchResults(query: string): Promise<boolean> {

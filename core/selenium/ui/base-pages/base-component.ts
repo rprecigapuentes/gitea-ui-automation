@@ -125,14 +125,27 @@ export abstract class BaseComponent implements Verifiable {
     return results.every(Boolean);
   }
 
-  // For state a locator alone can't express (e.g. "this specific item is now in a list that
-  // already had others), letting the caller supply its own condition to poll.
-  protected async waitUntilTrue(
+  // Predicate-based counterpart to actAndWaitFor, for state a locator alone can't express.
+  protected async actAndWaitUntil(
+    action: () => Promise<void>,
     predicate: () => Promise<boolean>,
     timeoutMs: number = DEFAULT_TIMEOUT_MS,
-    message?: string,
   ): Promise<void> {
-    await this.driver.wait(predicate, timeoutMs, message);
+    await action();
+    await this.driver.wait(predicate, timeoutMs);
+  }
+
+  protected async clickAndWaitUntil(
+    clickLocator: By,
+    predicate: () => Promise<boolean>,
+    root: SearchRoot = this.driver,
+    timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  ): Promise<void> {
+    await this.actAndWaitUntil(
+      () => this.click(clickLocator, root, timeoutMs),
+      predicate,
+      timeoutMs,
+    );
   }
 
   protected async actAndWaitFor(

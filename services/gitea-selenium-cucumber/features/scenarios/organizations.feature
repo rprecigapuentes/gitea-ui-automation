@@ -19,8 +19,11 @@ Feature: Organization
       | dev-team | private    | none           | true       |
       | qa-team  | private    | write          | true       |
     Then the created teams are displayed in Teams page
-    When I add the first seeded user to every created team
-    And I add the second seeded user to the "qa-team" team
+    When I add the following team members:
+      | user | team     |
+      | 1    | dev-team |
+      | 1    | qa-team  |
+      | 2    | qa-team  |
 
   @smoke
   Scenario: Create Organization

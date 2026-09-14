@@ -124,17 +124,8 @@ Then("the created teams are displayed in Teams page", async function (this: Gite
   expect(teamNames.length).toBe(createdTeams.length + 1);
 });
 
-When("I add the first seeded user to every created team", async function (this: GiteaWorld) {
-  const user = getSeededUser(1);
-
-  for (const team of this.scenarioState.organization!.teams ?? []) {
-    await addUserToTeam(this, user, team.name);
+When("I add the following team members:", async function (this: GiteaWorld, dataTable: DataTable) {
+  for (const row of dataTable.hashes()) {
+    await addUserToTeam(this, getSeededUser(Number(row.user)), row.team);
   }
 });
-
-When(
-  "I add the second seeded user to the {string} team",
-  async function (this: GiteaWorld, teamName: string) {
-    await addUserToTeam(this, getSeededUser(2), teamName);
-  },
-);
