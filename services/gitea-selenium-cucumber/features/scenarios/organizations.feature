@@ -27,10 +27,11 @@ Feature: Organization
     Then the member count for each created team is correct
     And the avatars for each created team are correct
     When I navigate to the repositories tab
-    And I create the following repository:
-      | name      | visibility |
-      | test-repo | true       |
-    Then the created repository's title is correct
+    And I create the following repositories:
+      | name     | visibility |
+      | frontend | true       |
+      | backend  | true       |
+    Then the repositories were created successfully
 
   @smoke
   Scenario: Create Organization

@@ -18,6 +18,7 @@ export class RepoNavBarFragment extends BaseComponent {
     navBarContainer: By.css(".secondary-nav"),
     // reponame
     repoName: By.css(".flex-text-block.tw-flex-wrap.tw-text-18"),
+    organizationLink: By.css(".flex-text-block.tw-flex-wrap.tw-text-18 a:first-child"),
     // tabs
     codeTab: By.css("[data-text=Code]"),
     projectsTab: By.css("[data-text=Projects]"),
@@ -40,5 +41,9 @@ export class RepoNavBarFragment extends BaseComponent {
 
   async getRepoTitle(): Promise<string> {
     return this.getText(this.locators.repoName);
+  }
+
+  async clickOrganizationLink(): Promise<void> {
+    await this.click(this.locators.organizationLink);
   }
 }

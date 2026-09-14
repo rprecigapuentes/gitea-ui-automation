@@ -158,35 +158,43 @@ When("I navigate to the repositories tab", async function (this: GiteaWorld) {
   await this.pages.orgFacade.navigateToRepositoriesTab();
 });
 
-When("I create the following repository:", async function (this: GiteaWorld, dataTable: DataTable) {
-  const [row] = dataTable.hashes();
-  const repository: Repository = {
-    name: row.name,
-    visibility: row.visibility === "true",
-  };
+When(
+  "I create the following repositories:",
+  async function (this: GiteaWorld, dataTable: DataTable) {
+    const organizationName = this.scenarioState.organization!.name;
+    this.scenarioState.organization!.repositories ??= [];
 
-  await this.pages.orgRepositories.clickNewRepositoryButton();
-  await this.pages.createRepositoryPage.waitForElements();
-  await this.pages.createRepositoryPage.enterRepositoryName(repository.name);
-  await this.pages.createRepositoryPage.setPrivate(repository.visibility!);
-  await this.pages.createRepositoryPage.clickCreateRepositoryButton();
+    for (const row of dataTable.hashes()) {
+      const repository: Repository = {
+        name: row.name,
+        visibility: row.visibility === "true",
+      };
 
-  await this.pages.repoNavBar.waitForElements();
-  await this.pages.repoCodeTab.waitForElements(
-    this.scenarioState.organization!.name,
-    repository.name,
+      await this.pages.orgRepositories.clickNewRepositoryButton();
+      await this.pages.createRepositoryPage.waitForElements();
+      await this.pages.createRepositoryPage.createRepository(
+        repository.name,
+        repository.visibility!,
+      );
+
+      await this.pages.repoNavBar.waitForElements();
+      await this.pages.repoCodeTab.waitForElements(organizationName, repository.name);
+
+      const title = await this.pages.repoNavBar.getRepoTitle();
+      expect(title).toContain(organizationName);
+      expect(title).toContain(repository.name);
+
+      await this.pages.repoNavBar.clickOrganizationLink();
+      await this.pages.orgRepositories.waitForElements();
+
+      this.scenarioState.organization!.repositories.push(repository);
+    }
+  },
+);
+
+Then("the repositories were created successfully", async function (this: GiteaWorld) {
+  const repositories = this.scenarioState.organization!.repositories ?? [];
+  expect(await this.pages.orgRepositories.getOwnersRepositoriesCount()).toBe(
+    String(repositories.length),
   );
-
-  this.scenarioState.organization!.repositories ??= [];
-  this.scenarioState.organization!.repositories.push(repository);
-});
-
-Then("the created repository's title is correct", async function (this: GiteaWorld) {
-  const organizationName = this.scenarioState.organization!.name;
-
-  for (const repository of this.scenarioState.organization!.repositories ?? []) {
-    const title = await this.pages.repoNavBar.getRepoTitle();
-    expect(title).toContain(organizationName);
-    expect(title).toContain(repository.name);
-  }
 });

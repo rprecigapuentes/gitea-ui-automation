@@ -95,11 +95,13 @@ After({ tags: CLEANUP_TAG }, async function (this: GiteaWorld) {
   // Gitea refuses to delete an organization that still owns repositories; the issues and the
   // projects do go with their owner.
   try {
-    for (const repository of this.scenarioState.repositories ?? []) {
-      await repositories.deleteRepository(organization.name, repository.name);
-    }
-    for (const repository of organization.repositories ?? []) {
-      await repositories.deleteRepository(organization.name, repository.name);
+    const repositoryNames = [
+      ...(this.scenarioState.repositories ?? []),
+      ...(organization.repositories ?? []),
+    ].map((repository) => repository.name);
+
+    for (const name of repositoryNames) {
+      await repositories.deleteRepository(organization.name, name);
     }
 
     await organizations.deleteOrganization(organization.name);

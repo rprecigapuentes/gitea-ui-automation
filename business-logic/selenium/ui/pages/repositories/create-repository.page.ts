@@ -42,4 +42,10 @@ export class CreateRepositoryPage extends BasePage {
   async clickCreateRepositoryButton(): Promise<void> {
     await this.click(this.locators.createRepositoryButton);
   }
+
+  async createRepository(name: string, isPrivate: boolean): Promise<void> {
+    await this.enterRepositoryName(name);
+    await this.setPrivate(isPrivate);
+    await this.clickCreateRepositoryButton();
+  }
 }
