@@ -2,25 +2,32 @@
 
 Selenium WebDriver + Cucumber (BDD/Gherkin) automation against Gitea. Part of the `gitea-ui-automation` monorepo.
 
-**Status: scaffold.** One working feature (`login`) proves the wiring end-to-end (driver lifecycle, World/`ScenarioState`/`PageFactory`, `@gitea-automation/core-selenium`/`@gitea-automation/business-logic-selenium` resolution, env loading); the rest of the suite is still to be built.
+Three features so far: `login`, `organizations` (org/team/repository creation and assignment, both `@e2e` and `@smoke`), `project-board` (Kanban board over an org's issues). All drive the same shared page objects/API clients from `@gitea-automation/business-logic-selenium`.
 
 ## What's here
 
 ```
 services/gitea-selenium-cucumber/
-├── cucumber.mjs                        # @cucumber/cucumber config: TS via tsx, step/support glob, feature glob
+├── cucumber.mjs                            # @cucumber/cucumber config: TS via tsx, step/support glob, feature glob, tags from CUCUMBER_TAGS
 ├── .env.example
 └── features/
-    ├── scenarios/login.feature         # illustrative Gherkin scenario — .feature files live here, kept separate from steps/support as the suite grows
-    ├── step-definitions/login.steps.ts # Given/When/Then for login.feature
+    ├── scenarios/                          # login.feature, organizations.feature, project-board.feature
+    ├── step-definitions/                   # one .steps.ts per feature, same base name
     └── support/
-        ├── world.ts                    # Cucumber World — driver, scenarioState (ScenarioState), pages (PageFactory) for the current scenario
-        ├── page.factory.ts             # PageFactory — lazy, memoized getters for the page objects a scenario needs (this.pages.loginPage, ...)
-        ├── hooks.ts                    # Before/After — driver lifecycle (DriverFactory) + initializes scenarioState/pages + setDefaultTimeout
-        └── credentials.ts              # resolveOwnerCredentials() — same GITEA_OWNER_<BROWSER>[_PASSWORD] scheme as gitea-selenium-vitest
+        ├── world.ts                        # Cucumber World — driver, scenarioState (ScenarioState), pages (PageFactory) for the current scenario
+        ├── page.factory.ts                 # PageFactory — lazy, memoized getters for the page objects a scenario needs (this.pages.loginPage, ...)
+        ├── hooks.ts                        # Before/After (some tag-scoped) — driver lifecycle, API-side seeding, scenarioState/pages init, cleanup, setDefaultTimeout
+        ├── credentials.ts                  # resolveOwnerCredentials()/resolveOwnerToken() — same GITEA_OWNER_<BROWSER>[_PASSWORD]/GITEA_TOKEN_<BROWSER> scheme as gitea-selenium-vitest
+        └── seeded-users.ts                 # getSeededUser(index) — 2 users provisioned per browser process via BeforeAll/AfterAll, for steps that need an existing user without creating one inline
 ```
 
 `cucumber.mjs`'s `paths` glob is `features/**/*.feature`, so any nesting under `features/` (like `scenarios/`) is picked up automatically — no config change needed when adding more `.feature` files or grouping them further.
+
+## Tags
+
+- `@smoke` / `@e2e` — scope, not mutually exclusive with the others below. Run one or the other with `--tags "@smoke"` / `--tags "@e2e"`, or scope any `npm run test*` script the same way via `CUCUMBER_TAGS` (`cucumber.mjs` reads it straight into its own `tags` field).
+- `@cleanup` — set at the `Feature:` level; its `After` hook (`hooks.ts`) deletes `scenarioState.organization` (and any repositories tracked on it or on `scenarioState.repositories`) once the scenario ends, pass or fail. A feature that creates an organization should carry this tag.
+- `@project-board`, `@team-repository` — tag-scoped `Before` hooks that seed an organization (plus, depending on the tag, repositories/issues or a team+repository) purely through the API clients, before the scenario's own steps run. This is the pattern to follow for any `@smoke` scenario that wants to start mid-flow instead of building its fixture through the UI: add a tag, seed it in `hooks.ts`, keep the scenario itself to the one action under test.
 
 ## Custom World
 
@@ -28,7 +35,7 @@ services/gitea-selenium-cucumber/
 
 - `driver: WebDriver` — from `DriverFactory.getDriver()`, same as `gitea-selenium-vitest`.
 - `scenarioState: ScenarioState` — starts as `{}` each scenario, mutated by steps as they create Gitea resources (organization, teams); the same type `gitea-selenium-vitest`'s fixtures use, imported from `@gitea-automation/business-logic-selenium/state/scenario.entity` rather than duplicated.
-- `pages: PageFactory` — a `PageFactory` instance (`features/support/page.factory.ts`). Steps never construct a page object directly; they read it off `pages` (`this.pages.loginPage.login(...)`, `this.pages.mainPage.waitUntilLoaded()`). Each page is built lazily on first access and memoized (`??=`) for the rest of the scenario — same pattern this repo already uses for `organizationPages` in `gitea-selenium-vitest`'s fixture. Today it only covers `loginPage`, `mainPage`, `navBar`; adding a page later is one more getter, no changes to `world.ts` or `hooks.ts`.
+- `pages: PageFactory` — a `PageFactory` instance (`features/support/page.factory.ts`). Steps never construct a page object directly; they read it off `pages` (`this.pages.loginPage.login(...)`, `this.pages.mainPage.waitUntilLoaded()`). Each page is built lazily on first access and memoized (`??=`) for the rest of the scenario — same pattern this repo already uses for `organizationPages` in `gitea-selenium-vitest`'s fixture. It also exposes `orgFacade`, an `OrganizationFacade` composing the organization fragments (repositories, teams, specific team, ...), resolving the organization lazily from `scenarioState.organization`. Adding a page or fragment later is one more getter, no changes to `world.ts` or `hooks.ts`.
 
 ## Assertions
 
@@ -39,7 +46,7 @@ Step definitions assert with `expect` imported directly from the `vitest` packag
 - [`@gitea-automation/core-selenium/ui/drivers/driver.factory.ts`](../../core/selenium/README.md) — same `DriverFactory` as `gitea-selenium-vitest`, driver lifecycle managed in `features/support/hooks.ts`.
 - [`@gitea-automation/business-logic-selenium/ui/pages/**`](../../business-logic/selenium/README.md) — the same concrete page objects as `gitea-selenium-vitest` (`LoginPage`, `MainPage`, and everything else in there), built through `PageFactory`. This service keeps no page objects of its own.
 - [`@gitea-automation/business-logic-selenium/state/scenario.entity.ts`](../../business-logic/selenium/README.md) — `ScenarioState`, the same type `gitea-selenium-vitest` uses to pass Gitea resources created mid-scenario between steps.
-- Not used yet, but available when this suite grows: `@gitea-automation/business-logic-selenium/api/clients/**` and `.../api/entities/**` for seeding/querying Gitea via its API, exactly like `gitea-selenium-vitest`'s fixtures do.
+- [`@gitea-automation/business-logic-selenium/api/clients/**`](../../business-logic/selenium/README.md) — `OrganizationClient`, `RepositoryClient`, `TeamClient`, `IssueClient`, used both in tag-scoped `hooks.ts` seeding and directly in `Given` steps (e.g. `"an organization already exists"`), exactly like `gitea-selenium-vitest`'s fixtures do.
 
 ## Running
 
@@ -59,4 +66,4 @@ Needs a `.env` in this folder (copy `.env.example`) with `GITEA_BASE_URL` and, p
 
 ## Next steps
 
-This is where the suite grows from here — more features, more step definitions, its own seeded-data fixtures via `@gitea-automation/business-logic-selenium/api/clients/**`.
+More features, more step definitions, more API-seeded `@smoke` scenarios following the `@project-board`/`@team-repository` hook pattern.

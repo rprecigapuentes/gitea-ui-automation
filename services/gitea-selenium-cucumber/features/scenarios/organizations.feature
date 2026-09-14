@@ -49,12 +49,10 @@ Feature: Organization
       | frontend | true       |
     Then the repositories were created successfully
 
-  @smoke
+  @smoke @team-repository
   Scenario: Add a repository to a team
     Given I login with valid credentials as "owner"
-    And an organization already exists
-    And a team named "team-1" already exists
-    And a repository named "frontend" already exists
+    And the seeded organization is open
     When I add the following repositories to each team:
       | team   | repository |
       | team-1 | frontend   |

@@ -6,8 +6,6 @@ import { uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.u
 import { Team } from "@gitea-automation/business-logic-selenium/api/entities/team.entity";
 import { Repository } from "@gitea-automation/business-logic-selenium/api/entities/repository.entity";
 import { OrganizationClient } from "@gitea-automation/business-logic-selenium/api/clients/organizations.client";
-import { TeamClient } from "@gitea-automation/business-logic-selenium/api/clients/team.client";
-import { RepositoryClient } from "@gitea-automation/business-logic-selenium/api/clients/repository.client";
 import { resolveOwnerToken } from "../support/credentials";
 import { getSeededUser } from "../support/seeded-users";
 
@@ -63,32 +61,10 @@ Given("an organization already exists", async function (this: GiteaWorld) {
   await this.pages.orgFacade.waitForElements();
 });
 
-Given("a team named {string} already exists", async function (this: GiteaWorld, teamName: string) {
-  const teamClient = new TeamClient(process.env.GITEA_BASE_URL!, resolveOwnerToken());
-  await teamClient.createTeam(this.scenarioState.organization!.name, teamName, "write");
-
-  this.scenarioState.organization!.teams ??= [];
-  this.scenarioState.organization!.teams.push({
-    name: teamName,
-    visibility: "private",
-    createRepositories: false,
-    permissions: "general",
-  });
+Given("the seeded organization is open", async function (this: GiteaWorld) {
+  await this.pages.orgFacade.open();
+  await this.pages.orgFacade.waitForElements();
 });
-
-Given(
-  "a repository named {string} already exists",
-  async function (this: GiteaWorld, repositoryName: string) {
-    const repositoryClient = new RepositoryClient(process.env.GITEA_BASE_URL!, resolveOwnerToken());
-    await repositoryClient.createOrganizationRepository(
-      this.scenarioState.organization!.name,
-      repositoryName,
-    );
-
-    this.scenarioState.organization!.repositories ??= [];
-    this.scenarioState.organization!.repositories.push({ name: repositoryName, visibility: true });
-  },
-);
 
 When("I navigate to the organization page", async function (this: GiteaWorld) {
   await this.pages.navBar.clickViewOrganizationButton();

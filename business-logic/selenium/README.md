@@ -9,7 +9,7 @@ business-logic/selenium/
 ├── ui/
 │   └── pages/      # Page/Fragment/Facade objects with real Gitea selectors, by feature: authentication/, common/, issues/, organizations/
 ├── api/
-│   ├── clients/     # auth/issue/label/milestone/organizations/repository/user — extend GiteaApiClient from @gitea-automation/core-selenium
+│   ├── clients/     # auth/issue/label/milestone/organizations/repository/team/user — extend GiteaApiClient from @gitea-automation/core-selenium
 │   └── entities/    # issue/label/milestone/organization/repository/team/user — the shapes those clients return
 └── state/
     └── scenario.entity.ts   # ScenarioState — cross-step scenario data (organization/team1/team2), shared by gitea-selenium-vitest and gitea-selenium-cucumber
