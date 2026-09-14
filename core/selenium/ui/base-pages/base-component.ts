@@ -1,8 +1,12 @@
 import { WebDriver, By, WebElement, until } from "selenium-webdriver";
+import { simulateHtml5Drag } from "../utils/html5-drag.util";
 
 export type SearchRoot = WebDriver | WebElement;
 
 const DEFAULT_TIMEOUT_MS = 5000;
+const DRAG_THRESHOLD_PX = 5;
+const DRAG_STEP_PX = 20;
+const DRAG_PAUSE_MS = 200;
 
 export interface Verifiable {
   isVisible(locators: By | By[], root?: SearchRoot, timeoutMs?: number): Promise<boolean>;
@@ -84,6 +88,50 @@ export abstract class BaseComponent implements Verifiable {
     const element = await this.findElement(locator, root, timeoutMs);
     await element.clear();
     await element.sendKeys(text);
+  }
+
+  /**
+   * The gesture a person performs: press on the source, cross the drag threshold with short
+   * offsets, travel to the target and release. Both ends are resolved here, so a caller that has
+   * re-read the screen cannot drag a stale element.
+   */
+  async dragAndDrop(
+    sourceLocator: By,
+    targetLocator: By,
+    root: SearchRoot = this.driver,
+    timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  ): Promise<void> {
+    const source = await this.findElement(sourceLocator, root, timeoutMs);
+    const target = await this.findElement(targetLocator, root, timeoutMs);
+
+    await this.driver
+      .actions()
+      .move({ origin: source })
+      .press()
+      .pause(DRAG_PAUSE_MS)
+      .move({ origin: source, x: DRAG_THRESHOLD_PX, y: DRAG_THRESHOLD_PX })
+      .move({ origin: source, x: DRAG_STEP_PX, y: DRAG_STEP_PX })
+      .move({ origin: target })
+      .move({ origin: target, x: 0, y: DRAG_THRESHOLD_PX })
+      .pause(DRAG_PAUSE_MS)
+      .release()
+      .perform();
+  }
+
+  /**
+   * The same drag as the events a page's own handlers listen for, for a browser driver that moves
+   * the element without ever emitting the drop that finishes it (mozilla/geckodriver#1450).
+   */
+  async dispatchDragEvents(
+    sourceLocator: By,
+    targetLocator: By,
+    root: SearchRoot = this.driver,
+    timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  ): Promise<void> {
+    const source = await this.findElement(sourceLocator, root, timeoutMs);
+    const target = await this.findElement(targetLocator, root, timeoutMs);
+
+    await simulateHtml5Drag(this.driver, source, target);
   }
 
   async getText(
@@ -201,5 +249,25 @@ export abstract class BaseComponent implements Verifiable {
       root,
       timeoutMs,
     );
+  }
+
+  // For an interaction the application saves after it has already changed the screen: what that
+  // screen shows is not yet an answer, so the caller re-reads it and asks again.
+  protected async reload(
+    readyLocators: By[],
+    timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  ): Promise<void> {
+    await this.driver.navigate().refresh();
+    await Promise.all(
+      readyLocators.map((locator) => this.findElement(locator, this.driver, timeoutMs)),
+    );
+  }
+
+  protected async waitUntil(
+    condition: () => Promise<boolean>,
+    message: string,
+    timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  ): Promise<void> {
+    await this.driver.wait(condition, timeoutMs, message);
   }
 }
