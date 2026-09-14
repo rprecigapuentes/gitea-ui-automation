@@ -24,6 +24,8 @@ Feature: Organization
       | 1    | dev-team |
       | 1    | qa-team  |
       | 2    | qa-team  |
+    Then the member count for each created team is correct
+    And the avatars for each created team are correct
 
   @smoke
   Scenario: Create Organization

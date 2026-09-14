@@ -70,10 +70,14 @@ export class OrgTeamsFragment extends BaseComponent {
     return (await teamContainer.findElements(this.locators.teamAvatars)).length;
   }
 
-  async hasTeamAvatar(teamName: string, username: string): Promise<boolean> {
+  async getTeamAvatarUsernames(teamName: string): Promise<string[]> {
     const teamContainer = await this.findTeamContainer(teamName);
     const avatars = await teamContainer.findElements(this.locators.teamAvatars);
-    const usernames = await Promise.all(avatars.map((avatar) => avatar.getAttribute("title")));
+    return Promise.all(avatars.map(async (avatar) => (await avatar.getAttribute("title")) ?? ""));
+  }
+
+  async hasTeamAvatar(teamName: string, username: string): Promise<boolean> {
+    const usernames = await this.getTeamAvatarUsernames(teamName);
     return usernames.includes(username);
   }
 

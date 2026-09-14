@@ -129,3 +129,26 @@ When("I add the following team members:", async function (this: GiteaWorld, data
     await addUserToTeam(this, getSeededUser(Number(row.user)), row.team);
   }
 });
+
+Then("the member count for each created team is correct", async function (this: GiteaWorld) {
+  await this.pages.orgFacade.navigateToTeamsTab();
+
+  for (const team of this.scenarioState.organization!.teams ?? []) {
+    const expectedCount = `${team.users?.length ?? 0} members`;
+    expect(await this.pages.orgTeams.getTeamMembersCount(team.name)).toBe(expectedCount);
+  }
+});
+
+Then("the avatars for each created team are correct", async function (this: GiteaWorld) {
+  await this.pages.orgFacade.navigateToTeamsTab();
+
+  for (const team of this.scenarioState.organization!.teams ?? []) {
+    const avatarUsernames = await this.pages.orgTeams.getTeamAvatarUsernames(team.name);
+    const expectedUsernames = team.users ?? [];
+
+    for (const username of expectedUsernames) {
+      expect(avatarUsernames).toContain(username);
+    }
+    expect(avatarUsernames.length).toBe(expectedUsernames.length);
+  }
+});
