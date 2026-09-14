@@ -9,8 +9,8 @@ export class OrgTeamsFragment extends BaseComponent {
     newTeamButton: By.css("a[href$='/teams/new']"),
     // Grid holding every team card rendered in the Teams tab.
     teamsContainer: By.css(".ui.two.column.stackable.grid"),
-    // Team cards rendered in the Teams tab.
-    ownerTeamContainer: By.css(".team-item-box"),
+    // Team cards rendered in the Teams tab - every team, not just Owners.
+    teamContainer: By.css(".team-item-box"),
     teamName: By.css(".team-item-header a strong"),
     teamNameLink: By.css(".team-item-header .flex-text-inline a"),
     teamMembersCount: By.css(
@@ -40,15 +40,12 @@ export class OrgTeamsFragment extends BaseComponent {
   }
 
   async getTeamContainersCount(): Promise<number> {
-    return (await this.findElements(this.locators.ownerTeamContainer)).length;
+    return (await this.findElements(this.locators.teamContainer)).length;
   }
 
   async getTeamNames(): Promise<string[]> {
     const teamsContainer = await this.findElement(this.locators.teamsContainer);
-    const teamContainers = await this.findElements(
-      this.locators.ownerTeamContainer,
-      teamsContainer,
-    );
+    const teamContainers = await this.findElements(this.locators.teamContainer, teamsContainer);
 
     return Promise.all(
       teamContainers.map((teamContainer) => this.getText(this.locators.teamName, teamContainer)),
@@ -56,7 +53,7 @@ export class OrgTeamsFragment extends BaseComponent {
   }
 
   async hasTeamContainer(teamName: string): Promise<boolean> {
-    const teamContainers = await this.findElements(this.locators.ownerTeamContainer);
+    const teamContainers = await this.findElements(this.locators.teamContainer);
     const teamNames = await Promise.all(
       teamContainers.map((teamContainer) => this.getText(this.locators.teamName, teamContainer)),
     );
@@ -105,7 +102,7 @@ export class OrgTeamsFragment extends BaseComponent {
   }
 
   private async findTeamContainer(teamName: string) {
-    const teamContainers = await this.findElements(this.locators.ownerTeamContainer);
+    const teamContainers = await this.findElements(this.locators.teamContainer);
     const teamContainer = await Promise.all(
       teamContainers.map(async (container) =>
         (await this.getText(this.locators.teamName, container)) === teamName

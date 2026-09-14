@@ -39,7 +39,6 @@ Then("I should see the organization created successfully", async function (this:
   await this.pages.navBar.clickOrganizationsDropdown();
   const actualOrganizations = await this.pages.navBar.getDropdownOrganizationsList();
   expect(actualOrganizations).toContain(this.scenarioState.organization!.name);
-  expect(actualOrganizations).toContain(this.scenarioState.organization!.name);
   const currentOrganizationDashboard = await this.pages.navBar.getCurrentOrganization();
   expect(currentOrganizationDashboard).toBe(this.scenarioState.organization!.name);
 });
