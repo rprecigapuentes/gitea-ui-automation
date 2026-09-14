@@ -71,7 +71,9 @@ jobs:
           HEALENIUM_SERVER_URL: https://healenium.estiberz.online
           HEALENIUM_SERVICE: https://healenium.estiberz.online
           IMITATE_SERVICE: https://imitator.estiberz.online
-          HEAL_ENABLED: "true"
+          # Temporary, for #91: one run with healing off, to prove or disprove that it is what
+          # substitutes the dashboard tab anchors for each other. Back to "true" either way.
+          HEAL_ENABLED: "false"
           RECOVERY_TRIES: "1"
           SCORE_CAP: ".6"
           HLM_LOG_LEVEL: info
