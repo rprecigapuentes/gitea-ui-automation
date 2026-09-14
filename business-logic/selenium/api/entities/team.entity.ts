@@ -7,4 +7,5 @@ export interface Team {
   permissions: "general" | "admin";
   repoCodeAccess?: "none" | "read" | "write";
   users?: string[];
+  repositories?: string[];
 }

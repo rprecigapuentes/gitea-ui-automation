@@ -229,6 +229,10 @@ export abstract class BaseComponent implements Verifiable {
     );
   }
 
+  async getCurrentUrl(): Promise<string> {
+    return this.driver.getCurrentUrl();
+  }
+
   protected async typeAndWaitFor(
     typeLocator: By,
     text: string,

@@ -4,6 +4,7 @@ import { DriverFactory } from "@gitea-automation/core-selenium/ui/drivers/driver
 import { OrganizationClient } from "@gitea-automation/business-logic-selenium/api/clients/organizations.client";
 import { RepositoryClient } from "@gitea-automation/business-logic-selenium/api/clients/repository.client";
 import { IssueClient } from "@gitea-automation/business-logic-selenium/api/clients/issue.client";
+import { TeamClient } from "@gitea-automation/business-logic-selenium/api/clients/team.client";
 import type {
   ScenarioState,
   SeededRepository,
@@ -17,8 +18,11 @@ import type { GiteaWorld } from "./world";
 setDefaultTimeout(20000);
 
 const PROJECT_BOARD_TAG = "@project-board";
+const TEAM_REPOSITORY_TAG = "@team-repository";
 const CLEANUP_TAG = "@cleanup";
 const SEEDED_REPOSITORY_COUNT = 2;
+const SEEDED_TEAM_NAME = "team-1";
+const SEEDED_REPOSITORY_NAME = "frontend";
 
 // Gitea caps an organization name at 40 characters.
 function seededName(prefix: string): string {
@@ -29,6 +33,7 @@ function ownerClients(): {
   organizations: OrganizationClient;
   repositories: RepositoryClient;
   issues: IssueClient;
+  teams: TeamClient;
 } {
   const baseUrl = process.env.GITEA_BASE_URL!;
   const token = resolveOwnerToken();
@@ -37,6 +42,7 @@ function ownerClients(): {
     organizations: new OrganizationClient(baseUrl, token),
     repositories: new RepositoryClient(baseUrl, token),
     issues: new IssueClient(baseUrl, token),
+    teams: new TeamClient(baseUrl, token),
   };
 }
 
@@ -84,6 +90,29 @@ Before({ tags: PROJECT_BOARD_TAG }, async function (this: GiteaWorld) {
   this.scenarioState.repositories = repositories;
 });
 
+Before({ tags: TEAM_REPOSITORY_TAG }, async function (this: GiteaWorld) {
+  const { organizations, repositories: repositoryClient, teams } = ownerClients();
+  const organizationName = seededName("team-repo");
+
+  await organizations.createOrganization(organizationName);
+  await teams.createTeam(organizationName, SEEDED_TEAM_NAME, "write");
+  await repositoryClient.createOrganizationRepository(organizationName, SEEDED_REPOSITORY_NAME);
+
+  this.scenarioState.organization = {
+    name: organizationName,
+    visibility: "private",
+    teams: [
+      {
+        name: SEEDED_TEAM_NAME,
+        visibility: "private",
+        createRepositories: false,
+        permissions: "general",
+      },
+    ],
+    repositories: [{ name: SEEDED_REPOSITORY_NAME, visibility: true }],
+  };
+});
+
 // Deletes the org for any feature tagged @cleanup.
 After({ tags: CLEANUP_TAG }, async function (this: GiteaWorld) {
   const organization = this.scenarioState.organization;
@@ -95,8 +124,13 @@ After({ tags: CLEANUP_TAG }, async function (this: GiteaWorld) {
   // Gitea refuses to delete an organization that still owns repositories; the issues and the
   // projects do go with their owner.
   try {
-    for (const repository of this.scenarioState.repositories ?? []) {
-      await repositories.deleteRepository(organization.name, repository.name);
+    const repositoryNames = [
+      ...(this.scenarioState.repositories ?? []),
+      ...(organization.repositories ?? []),
+    ].map((repository) => repository.name);
+
+    for (const name of repositoryNames) {
+      await repositories.deleteRepository(organization.name, name);
     }
 
     await organizations.deleteOrganization(organization.name);

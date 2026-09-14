@@ -8,11 +8,17 @@ import { CreateProjectPage } from "@gitea-automation/business-logic-selenium/ui/
 import { ProjectListPage } from "@gitea-automation/business-logic-selenium/ui/pages/projects/project-list.page";
 import { ProjectBoardPage } from "@gitea-automation/business-logic-selenium/ui/pages/projects/project-board.page";
 import { CreateOrganizationPage } from "@gitea-automation/business-logic-selenium/ui/pages/organizations/create-organization.page";
+import { CreateRepositoryPage } from "@gitea-automation/business-logic-selenium/ui/pages/repositories/create-repository.page";
 import { OrgNavigationFragment } from "@gitea-automation/business-logic-selenium/ui/pages/organizations/fragments/org-navigation.fragment";
 import { OrgRepositoriesFragment } from "@gitea-automation/business-logic-selenium/ui/pages/organizations/fragments/org-repositories.fragment";
 import { OrgTeamsFragment } from "@gitea-automation/business-logic-selenium/ui/pages/organizations/fragments/org-teams.fragment";
 import { NewTeamFragment } from "@gitea-automation/business-logic-selenium/ui/pages/organizations/fragments/new-team.fragment";
 import { SpecificTeamFragment } from "@gitea-automation/business-logic-selenium/ui/pages/organizations/fragments/specific-team.fragment";
+import { RepoNavBarFragment } from "@gitea-automation/business-logic-selenium/ui/pages/repositories/fragments/repo-nav-bar.fragment";
+import { RepoCodeTabFragment } from "@gitea-automation/business-logic-selenium/ui/pages/repositories/fragments/repo-code-tab.fragment";
+import { CreateRepoFileFragment } from "@gitea-automation/business-logic-selenium/ui/pages/repositories/fragments/create-repo-file.fragment";
+import { RepoFileFragment } from "@gitea-automation/business-logic-selenium/ui/pages/repositories/fragments/repo-file.fragment";
+import { ForkPromptFragment } from "@gitea-automation/business-logic-selenium/ui/pages/repositories/fragments/fork-prompt.fragment";
 import { OrganizationFacade } from "@gitea-automation/business-logic-selenium/ui/pages/organizations/facade/organization.facade";
 import type { Organization } from "@gitea-automation/business-logic-selenium/api/entities/organization.entity";
 import type { ScenarioState } from "@gitea-automation/business-logic-selenium/state/scenario.entity";
@@ -26,12 +32,18 @@ export class PageFactory {
   #projectListPage?: ProjectListPage;
   #projectBoardPage?: ProjectBoardPage;
   #createOrganizationPage?: CreateOrganizationPage;
+  #createRepositoryPage?: CreateRepositoryPage;
   #organizationDashboardPage?: OrganizationDashboardPage;
   #orgNavigation?: OrgNavigationFragment;
   #orgRepositories?: OrgRepositoriesFragment;
   #orgTeams?: OrgTeamsFragment;
   #orgNewTeam?: NewTeamFragment;
   #orgSpecificTeam?: SpecificTeamFragment;
+  #repoNavBar?: RepoNavBarFragment;
+  #repoCodeTab?: RepoCodeTabFragment;
+  #createRepoFile?: CreateRepoFileFragment;
+  #repoFile?: RepoFileFragment;
+  #forkPrompt?: ForkPromptFragment;
   #orgFacade?: OrganizationFacade;
 
   constructor(
@@ -78,6 +90,10 @@ export class PageFactory {
     return (this.#createOrganizationPage ??= new CreateOrganizationPage(this.driver));
   }
 
+  get createRepositoryPage(): CreateRepositoryPage {
+    return (this.#createRepositoryPage ??= new CreateRepositoryPage(this.driver));
+  }
+
   get organizationDashboardPage(): OrganizationDashboardPage {
     return (this.#organizationDashboardPage ??= new OrganizationDashboardPage(this.driver));
   }
@@ -100,6 +116,26 @@ export class PageFactory {
 
   get orgSpecificTeam(): SpecificTeamFragment {
     return (this.#orgSpecificTeam ??= new SpecificTeamFragment(this.driver));
+  }
+
+  get repoNavBar(): RepoNavBarFragment {
+    return (this.#repoNavBar ??= new RepoNavBarFragment(this.driver));
+  }
+
+  get repoCodeTab(): RepoCodeTabFragment {
+    return (this.#repoCodeTab ??= new RepoCodeTabFragment(this.driver));
+  }
+
+  get createRepoFile(): CreateRepoFileFragment {
+    return (this.#createRepoFile ??= new CreateRepoFileFragment(this.driver));
+  }
+
+  get repoFile(): RepoFileFragment {
+    return (this.#repoFile ??= new RepoFileFragment(this.driver));
+  }
+
+  get forkPrompt(): ForkPromptFragment {
+    return (this.#forkPrompt ??= new ForkPromptFragment(this.driver));
   }
 
   get orgFacade(): OrganizationFacade {
