@@ -167,6 +167,17 @@ jobs:
             echo "token minted for ${!owner_user}"
           done
 
+          # One admin token for all three browser processes: only the users it creates
+          # have to be browser-unique, and they already are.
+          admin_token=$(curl -fsS -u "$GITEA_ADMIN_USERNAME:$GITEA_ADMIN_PASSWORD" \
+            -H "Content-Type: application/json" \
+            -X POST "$GITEA_BASE_URL/api/v1/users/$GITEA_ADMIN_USERNAME/tokens" \
+            -d '{"name":"continuous-testing-admin","scopes":["write:admin"]}' \
+            | node -pe 'JSON.parse(require("fs").readFileSync(0, "utf8")).sha1')
+          echo "::add-mask::$admin_token"
+          echo "GITEA_ADMIN_TOKEN=$admin_token" >> "$GITHUB_ENV"
+          echo "admin token minted for $GITEA_ADMIN_USERNAME"
+
       - name: Run the suite
         run: npm test -w @gitea-automation/${{ matrix.suite }}
 
