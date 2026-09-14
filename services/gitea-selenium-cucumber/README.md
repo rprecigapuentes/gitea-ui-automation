@@ -55,6 +55,8 @@ npm run test:parallel                          # the three browsers, three concu
 
 Needs a `.env` in this folder (copy `.env.example`) with `GITEA_BASE_URL` and, per browser, `GITEA_OWNER_<BROWSER>`/`GITEA_OWNER_<BROWSER>_PASSWORD` (same scheme as `gitea-selenium-vitest`, but a separate file — the two services' `.env` don't stay in sync automatically) pointing at a real Gitea instance and account — `features/support/credentials.ts` resolves them by the `BROWSER` env var, same convention as `gitea-selenium-vitest/src/utils/session-credentials.util.ts`.
 
+Also needs `GITEA_ADMIN_TOKEN`, an access token belonging to a Gitea **administrator** of that same instance, with the `write:admin` scope. It is not per-browser: one admin identity is shared, and only the users it creates are browser-unique. `features/support/seeded-users.ts` calls `POST /admin/users` with it in `BeforeAll`, so without it every run dies before its first scenario with `Missing admin API token (GITEA_ADMIN_TOKEN)`.
+
 `features/support/hooks.ts` calls `setDefaultTimeout(20000)` — Cucumber's own default step timeout (5000ms) was racing against `BaseComponent.findElement`'s own internal wait (also 5000ms by default), so a step could fail with a generic "function timed out" from Cucumber before the underlying Selenium wait got a chance to report a clearer error.
 
 ## Next steps
