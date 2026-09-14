@@ -2,9 +2,9 @@
 
 See proposal.md - Why. Three facts shape the approach.
 
-The session switch exists once, inside a service: `services/gitea-selenium-vitest/src/utils/session.util.ts` clears the browser's cookies and installs the ones `AuthClient.loginViaApi` minted. Services are leaves in this repo, so the Cucumber service cannot import it.
+The Cucumber suite already switches users: `I logout` and `I login with valid credentials as user {int}` run the login form against the accounts the run provisions, and the organization end-to-end case uses them eight times. Nothing else is needed to verify what a second user sees.
 
-The `@project-board` hook already seeds an organization, two repositories and one issue in each, and records their identifiers in scenario state. What the new scenario needs beyond that is a milestone and the second provisioned user, which `MilestoneClient` and `seeded-users.ts` already provide.
+The `@project-board` hook already seeds an organization, two repositories and one issue in each, and records their identifiers in scenario state. What the new scenario needs beyond that is a milestone, which `MilestoneClient` already creates.
 
 Gitea only offers a user as an assignee once that user can see the repository, so the membership step is not decoration: it is what makes the assignee dropdown change between two reads of the same locator.
 
@@ -14,26 +14,27 @@ Gitea only offers a user as an assignee once that user can see the repository, s
 
 - One scenario whose steps each depend on the one before it, so that what it verifies is the interaction between features and not a list of independent checks.
 - Both readings of the assignee dropdown, the negative and the positive, come from the same fragment method.
-- The session switch lives where both services can reach it.
+- Every step that already exists is reused rather than reworded.
 
 **Non-Goals:**
 
 - Splitting the case into several scenarios that share seeded state. The rubric rewards one case, and shared state between scenarios is what the seeding contract exists to prevent.
-- Rewriting the session switch. It is moved, not redesigned.
+- A second mechanism for acting as another user. The cookie-injection switch in the Vitest service stays where it is.
 
 ## Decisions
 
-**The session utility moves to `core/selenium` and the Vitest service imports it from there.** It manipulates the driver's cookie store, which is the driver layer's job, and `AuthClient` already sits in `business-logic` minting the cookies it installs. The alternative, copying it into the Cucumber service's `support/`, leaves two copies of an authentication path to drift apart. Re-pointing the Vitest import is one line and no behaviour change.
+**The scenario gets its own tag and its own `Before`, which calls the same seeding helper `@project-board` uses, plus a milestone.** Adding the milestone to the existing hook would grow the seed of five scenarios that do not use it. Carrying both tags would run both hooks and seed the organization twice.
 
-**The scenario gets its own tag and its own `Before`, which calls the same seeding helper `@project-board` uses, plus a milestone.** Adding the milestone to the existing hook would grow the seed of five scenarios that do not use it. The alternative of carrying both tags would run both hooks and seed the organization twice.
+**The label is created through the UI, not the API.** `LabelListPage.createScopedLabel` exists, a scoped label is a form worth showing, and the label filter later in the scenario then verifies something the scenario itself created.
 
-**The label is created through the UI, not the API.** `LabelListPage.createScopedLabel` exists, a scoped label is a form worth showing, and the label-filter assertion later in the scenario then verifies something the scenario itself created.
+**The second user reaches the assignee list through a team, not as a repository collaborator.** The team flow is already built end to end, and the team's empty-members state gives the scenario its first negative assertion.
 
-**The second user reaches the assignee list through a team, not as a repository collaborator.** The team flow is already built end to end (`NewTeamFragment`, `SpecificTeamFragment.addMemberByUsername`), and the team's empty-members state gives the scenario its first negative assertion.
+**The created issue is followed by its number, and the board by the seeded issues' ids.** The internal id a card is addressed by is never displayed, so the issue created through the form is verified on the board by column counts, and the cards named in assertions are the seeded ones whose ids the API returned.
+
+**Two shared waits were added rather than worked around in the steps.** The organization tab click and the project assignment both reported success before the browser had gone anywhere, which is what made the first runs fail; fixing them in the page objects keeps every scenario honest instead of padding this one with re-opens.
 
 ## Risks / Trade-offs
 
-- **One long scenario stops at its first failure, hiding every step after it.** → The granular smoke scenarios already cover the same features independently; this case is additive, and it runs under its own tag so a failure does not block the tagged smoke run.
-- **`IssuePage.assignProject` is unverified for an issue whose repository joined the project after the project was created.** → Verify by hand before writing the step; if it does not hold, the card is added from the board instead and the scenario keeps its shape.
-- **Two drags mean two chances to hit the Firefox fallback**, which reloads the board to decide whether the drop reached the server. → Accepted: the fallback is already proven on one drag, and the extra reload is seconds, not a failure mode.
-- **A switched session that silently does not take would leave the permission assertions answering for the owner.** → The spec requires the switch to fail its step by name rather than continue, and the first assertion after the switch is one the owner would fail.
+- **One long scenario stops at its first failure, hiding every step after it.** → The granular smoke scenarios already cover the same features independently; this case is additive and runs under its own tag.
+- **Two drags mean two chances to hit the Firefox fallback**, which reloads the board to decide whether the drop reached the server. → Measured: both drags fall back on Firefox and the run still finishes in 23.6s.
+- **The demo scenario shares the instance with the organization end-to-end case, which fails on `I add the following repositories to each team:` before this change and after it.** → Out of scope here, but it is the first thing a full-suite demo run will show.

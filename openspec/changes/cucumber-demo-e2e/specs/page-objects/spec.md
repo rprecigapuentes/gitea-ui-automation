@@ -37,3 +37,37 @@ Where a page object drives a control that moves the application between two stat
 - **WHEN** the opposite direction is called on the same page object
 - **THEN** it is a method of its own, named for the direction it drives
 - **AND** it resolves only once the page renders the state it moved to
+
+### Requirement: A tab navigation resolves on the address it reaches
+
+A page object or fragment that moves between the tabs of a screen SHALL treat the address the browser ends up on as the outcome of that move, and SHALL NOT resolve on the click alone. Where the tab bar is rendered by a component that rebuilds its items after the page loads, a click that produced no navigation SHALL be repeated before the move is reported as failed, since the first one can land on a node the rebuild then replaces.
+
+#### Scenario: The click navigates
+
+- **WHEN** a caller moves to a tab and the click navigates
+- **THEN** the move resolves only once the browser is at that tab's address
+
+#### Scenario: The click is swallowed by a rebuilding tab bar
+
+- **WHEN** a caller moves to a tab and the first click leaves the browser where it was
+- **THEN** the click is made again
+- **AND** the move resolves once the browser reaches that tab's address
+
+#### Scenario: The tab is never reached
+
+- **WHEN** no attempt leaves the browser at the tab's address
+- **THEN** the move fails rather than reporting a tab the browser is not on
+
+### Requirement: A choice the page saves by itself is confirmed by what the page then lists
+
+Where a control sends the choice to the server on its own, after the interaction that made it, the page object SHALL confirm the choice against what the screen lists as selected before resolving. It SHALL NOT treat the closing of the control as the save.
+
+#### Scenario: The choice is saved
+
+- **WHEN** a caller makes a choice in a control that saves it with a request of its own
+- **THEN** the call resolves only once the screen lists that choice as selected
+
+#### Scenario: The next step reads the result of the choice
+
+- **WHEN** a later step reads a screen that reflects the choice
+- **THEN** it reads a screen the save has already reached
