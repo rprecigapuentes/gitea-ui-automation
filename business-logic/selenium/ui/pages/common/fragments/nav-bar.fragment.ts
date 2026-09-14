@@ -3,6 +3,9 @@ import { logger } from "@gitea-automation/core-logger/pino.logger";
 import { BaseComponent } from "@gitea-automation/core-selenium/ui/base-pages/base-component";
 
 const INSTANT = 0;
+// Same budget reason as MainPage: a missed INSTANT read costs the 3s implicit wait, and the CI
+// grid renders the bar later than local, so the settle wait needs room for several attempts.
+const SETTLE_TIMEOUT_MS = 20000;
 
 export class NavBarFragment extends BaseComponent {
   private readonly navigationBarLocators = {
@@ -95,7 +98,7 @@ export class NavBarFragment extends BaseComponent {
     const settled = await this.waitUntil(async () => {
       results = await this.readMainPageExpectations(username);
       return Object.values(results).every(Boolean);
-    });
+    }, SETTLE_TIMEOUT_MS);
 
     logger.info({ pageContext: "main", ...results }, "Navbar expectations");
     return settled;

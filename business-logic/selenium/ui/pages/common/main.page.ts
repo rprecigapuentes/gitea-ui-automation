@@ -4,6 +4,9 @@ import { BasePage } from "@gitea-automation/core-selenium/ui/base-pages/base.pag
 import { baseUrl } from "@gitea-automation/core-config/gitea.config";
 
 const INSTANT = 0;
+// The global implicit wait makes a missed INSTANT read cost ~3s, so one poll can eat most of the
+// default 5s settle budget before the retry even happens; the CI grid hydrates slower than local.
+const SETTLE_TIMEOUT_MS = 20000;
 
 interface TabExpectations {
   repositoryLabelled: boolean;
@@ -64,7 +67,7 @@ export class MainPage extends BasePage {
     const settled = await this.waitUntil(async () => {
       lastRead = await this.readTabs();
       return Object.values(lastRead).every(Boolean);
-    });
+    }, SETTLE_TIMEOUT_MS);
 
     if (!settled) {
       logger.warn({ pageContext: "dashboard", ...lastRead }, "Dashboard tabs never settled");
