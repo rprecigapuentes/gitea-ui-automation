@@ -175,6 +175,16 @@ jobs:
             -d '{"name":"continuous-testing-admin","scopes":["write:admin"]}' \
             | node -pe 'JSON.parse(require("fs").readFileSync(0, "utf8")).sha1')
           echo "::add-mask::$admin_token"
+
+          # Gitea grants the scope to any account but honours it only for an administrator,
+          # so the token is proven here rather than four minutes later in BeforeAll.
+          if ! curl -fsS -o /dev/null \
+            -H "Authorization: token $admin_token" \
+            "$GITEA_BASE_URL/api/v1/admin/users?limit=1"; then
+            echo "$GITEA_ADMIN_USERNAME holds no write:admin privilege, so no suite could seed its users"
+            exit 1
+          fi
+
           echo "GITEA_ADMIN_TOKEN=$admin_token" >> "$GITHUB_ENV"
           echo "admin token minted for $GITEA_ADMIN_USERNAME"
 
