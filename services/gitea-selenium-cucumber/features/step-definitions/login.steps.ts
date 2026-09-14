@@ -22,8 +22,8 @@ Given(
     const { username, password } = getSeededUser(userIndex);
     await this.pages.loginPage.open();
     await this.pages.loginPage.login(username, password);
-    await this.pages.mainPage.hasExpectedElementsDisplayed();
-    await this.pages.navBar.waitForElements();
+    expect(await this.pages.mainPage.hasExpectedElementsDisplayed()).toBe(true);
+    expect(await this.pages.navBar.waitForElements()).toBe(true);
   },
 );
 
