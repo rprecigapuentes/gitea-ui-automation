@@ -12,3 +12,4 @@
 
 - [ ] 3.1 Dispatch CT with `suite=gitea-selenium-cucumber` and confirm the run reaches the scenarios: no `Missing admin API token` error, `BeforeAll` completes, and the Allure report artifact contains scenario results rather than a hook failure. Record the run number in the PR.
 - [ ] 3.2 Dispatch CT with no suite selection and confirm both suites still run and publish their own reports, and that the Vitest job is unaffected by the added registration (its failures, if any, are the pre-existing `testTimeout` and `organizations` ones, not provisioning). Run `npm run format`, `npm run lint` and `npm run typecheck` before opening the PR.
+- [ ] 3.3 Remove the temporary `push` trigger on `91-ct-admin-token` from `ct.yml`, added only so the branch could be exercised without a dispatch. Verify the `on:` block is back to `schedule` plus `workflow_dispatch` before the pull request is opened.
