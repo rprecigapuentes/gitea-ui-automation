@@ -45,3 +45,17 @@ Feature: Organization
       | name   | visibility | repoCodeAccess | createRepo |
       | team-1 | private    | none           | true       |
     Then the created team's page is displayed
+
+  @smoke
+  Scenario: Add a user to a team
+    Given I login with valid credentials as "owner"
+    And an organization already exists
+    When I create the following teams:
+      | name   | visibility | repoCodeAccess | createRepo |
+      | team-1 | private    | none           | true       |
+    Then the created teams are displayed in Teams page
+    When I add the following team members:
+      | user | team   |
+      | 1    | team-1 |
+    Then the member count for each created team is correct
+    And the avatars for each created team are correct
