@@ -1,7 +1,7 @@
 ## 1. Give the base class the two things the pages need
 
-- [ ] 1.1 Add `waitUntil(predicate, timeoutMs)` to `BaseComponent`, the action-free counterpart of `actAndWaitUntil`, resolving to `false` on expiry rather than raising. Verify with `npm run typecheck` and by `actAndWaitUntil` being rewritten to delegate to it, so the two cannot drift.
-- [ ] 1.2 Log the failing locator inside `isVisible`'s catch, through the existing pino logger, naming the locator and the browser's current URL. Verify by pointing a scratch check at a locator that does not exist and reading the line in the run output; `openspec/specs/page-objects/spec.md` requires this and the code does not do it today.
+- [x] 1.1 Add `waitUntil(predicate, timeoutMs)` to `BaseComponent`, the action-free counterpart of `actAndWaitUntil`, resolving to `false` on expiry rather than raising. It does not delegate to `actAndWaitUntil` and `actAndWaitUntil` is left raising: its two call sites await it without reading a result, so making it report would turn their failures silent. Verify with `npm run typecheck`.
+- [x] 1.2 Log the failing locator inside `isVisible`'s catch, through the existing pino logger, naming the locator and the browser's current URL. Verify by pointing a scratch check at a locator that does not exist and reading the line in the run output; `openspec/specs/page-objects/spec.md` requires this and the code does not do it today.
 
 ## 2. Wait for what the screen is actually doing
 

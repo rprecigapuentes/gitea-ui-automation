@@ -1,4 +1,5 @@
 import { WebDriver, By, WebElement, until } from "selenium-webdriver";
+import { logger } from "../../../logger/pino.logger";
 import { simulateHtml5Drag } from "../utils/html5-drag.util";
 
 export type SearchRoot = WebDriver | WebElement;
@@ -146,6 +147,16 @@ export abstract class BaseComponent implements Verifiable {
     return (await element.getAttribute(attributeName)) ?? "";
   }
 
+  // A miss at timeoutMs 0 is an absence check doing its job, so it is logged at debug; anything
+  // else is a locator that was expected to resolve and did not.
+  private async reportMiss(locator: By, timeoutMs: number, error: unknown): Promise<void> {
+    const url = await this.driver.getCurrentUrl().catch(() => "unknown");
+    const details = { locator: locator.toString(), url, reason: String(error) };
+
+    if (timeoutMs === 0) logger.debug(details, "Locator absent");
+    else logger.warn(details, "Locator never became visible");
+  }
+
   async isVisible(
     locators: By | By[],
     root: SearchRoot = this.driver,
@@ -159,11 +170,26 @@ export abstract class BaseComponent implements Verifiable {
       list.map((locator) =>
         this.findElement(locator, root, timeoutMs)
           .then(() => true)
-          .catch(() => false),
+          .catch(async (error: unknown) => {
+            await this.reportMiss(locator, timeoutMs, error);
+            return false;
+          }),
       ),
     );
 
     return results.every(Boolean);
+  }
+
+  // Reports instead of raising, unlike actAndWaitUntil, so a readiness check that compares several
+  // values can keep returning a boolean while retrying the whole comparison.
+  protected async waitUntil(
+    predicate: () => Promise<boolean>,
+    timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  ): Promise<boolean> {
+    return this.driver.wait(predicate, timeoutMs).then(
+      () => true,
+      () => false,
+    );
   }
 
   // Predicate-based counterpart to actAndWaitFor, for state a locator alone can't express.
