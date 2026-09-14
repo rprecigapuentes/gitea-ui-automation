@@ -1,4 +1,4 @@
-import { By } from "selenium-webdriver";
+import { By, error as seleniumError } from "selenium-webdriver";
 import { BaseComponent } from "@gitea-automation/core-selenium/ui/base-pages/base-component";
 
 export class SpecificTeamFragment extends BaseComponent {
@@ -109,16 +109,28 @@ export class SpecificTeamFragment extends BaseComponent {
   }
 
   async clickRemoveTeamMemberButton(username: string): Promise<void> {
-    // The button fetches the modal's content over AJAX before showing it, so its reveal can
-    // outlast the default wait when the server or the machine is busy - confirmed live: the
-    // modal was already visible moments after a 10s wait had timed out. Edge specifically can
-    // still miss this locator regardless of the budget - see the flaky-locators diagnosis.
-    await this.clickAndWaitFor(
-      this.locators.removeTeamMemberButton(username),
-      [this.locators.removeTeamMemberModal],
-      this.driver,
-      15000,
-    );
+    const locator = this.locators.removeTeamMemberButton(username);
+
+    try {
+      await this.clickAndWaitFor(
+        locator,
+        [this.locators.removeTeamMemberModal],
+        this.driver,
+        15000,
+      );
+    } catch {
+      try {
+        await this.click(locator, this.driver, 0);
+      } catch (retryClickError) {
+        // A dimmer already covering the button means the first click landed and the modal is
+        // mid-transition under load, not stalled - fall through to just waiting for it instead
+        // of treating a second, blocked click as a real failure.
+        if (!(retryClickError instanceof seleniumError.ElementClickInterceptedError)) {
+          throw retryClickError;
+        }
+      }
+      await this.findElement(this.locators.removeTeamMemberModal, this.driver, 15000);
+    }
   }
 
   async isRemoveTeamMemberModalDisplayed(): Promise<boolean> {
