@@ -137,6 +137,12 @@ export class SpecificTeamFragment extends BaseComponent {
     await this.findElements(this.locators.userSearchResults);
   }
 
+  // uname is a plain form field, so an exact username needs no suggestion click to submit.
+  async addMemberByUsername(username: string): Promise<void> {
+    await this.type(this.locators.searchUserInput, username);
+    await this.addSelectedUser();
+  }
+
   async hasOnlyMatchingUserSearchResults(query: string): Promise<boolean> {
     const results = await this.findElements(this.locators.userSearchResults);
     const usernames = await Promise.all(

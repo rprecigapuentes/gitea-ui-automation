@@ -6,6 +6,7 @@ import { uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.u
 import { Team } from "@gitea-automation/business-logic-selenium/api/entities/team.entity";
 import { OrganizationClient } from "@gitea-automation/business-logic-selenium/api/clients/organizations.client";
 import { resolveOwnerToken } from "../support/credentials";
+import { getSeededUser } from "../support/seeded-users";
 
 When(
   'I navigate to the "Create Organization" page by "organization dropdown" menu',
@@ -107,4 +108,19 @@ Then("the created teams are displayed in Teams page", async function (this: Gite
   }
   // +1 for the organization's own default "Owners" team.
   expect(teamNames.length).toBe(createdTeams.length + 1);
+});
+
+When("I add the first seeded user to every created team", async function (this: GiteaWorld) {
+  const user = getSeededUser(1);
+
+  for (const team of this.scenarioState.organization!.teams ?? []) {
+    await this.pages.orgFacade.navigateToSpecificTeam(team.name);
+    await this.pages.orgSpecificTeam.addMemberByUsername(user.username);
+    expect(await this.pages.orgSpecificTeam.hasMember(user.username)).toBe(true);
+
+    team.users ??= [];
+    team.users.push(user.username);
+
+    await this.pages.orgFacade.navigateToTeamsTab();
+  }
 });

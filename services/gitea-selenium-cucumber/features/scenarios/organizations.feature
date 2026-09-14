@@ -19,6 +19,7 @@ Feature: Organization
       | dev-team | private    | none           | true       |
       | qa-team  | private    | write          | true       |
     Then the created teams are displayed in Teams page
+    When I add the first seeded user to every created team
 
   @smoke
   Scenario: Create Organization
