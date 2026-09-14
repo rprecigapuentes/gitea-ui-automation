@@ -26,14 +26,34 @@ export class MainPage extends BasePage {
       return false;
     }
 
+    try {
+      await this.actAndWaitUntil(
+        async () => {
+          await this.findElement(this.locators.dashboardRepoList);
+        },
+        () => this.tabsSettled(),
+      );
+    } catch {
+      return false;
+    }
+
+    return true;
+  }
+
+  // The dashboard's Repository/Organization toggle is a Vue component (data-v-* attributes);
+  // its active class and label text can still be mid-hydration a moment after the outer
+  // container itself is already visible, so read it through a poll, not a single snapshot.
+  private async tabsSettled(): Promise<boolean> {
     const root = await this.findElement(this.locators.dashboardRepoList);
-    const results = await Promise.all([
-      this.getText(this.locators.repositoryOption, root).then((text) => text === "Repository"),
-      this.getText(this.locators.organizationOption, root).then((text) => text === "Organization"),
-      this.getAttribute(this.locators.repositoryOption, "class", root).then((classValue) =>
-        classValue.includes("active"),
-      ),
+    const [repositoryLabel, organizationLabel, repositoryClass] = await Promise.all([
+      this.getText(this.locators.repositoryOption, root),
+      this.getText(this.locators.organizationOption, root),
+      this.getAttribute(this.locators.repositoryOption, "class", root),
     ]);
-    return results.every(Boolean);
+    return (
+      repositoryLabel === "Repository" &&
+      organizationLabel === "Organization" &&
+      repositoryClass.includes("active")
+    );
   }
 }
