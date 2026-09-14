@@ -8,6 +8,7 @@ import { CreateProjectPage } from "@gitea-automation/business-logic-selenium/ui/
 import { ProjectListPage } from "@gitea-automation/business-logic-selenium/ui/pages/projects/project-list.page";
 import { ProjectBoardPage } from "@gitea-automation/business-logic-selenium/ui/pages/projects/project-board.page";
 import { CreateOrganizationPage } from "@gitea-automation/business-logic-selenium/ui/pages/organizations/create-organization.page";
+import { CreateRepositoryPage } from "@gitea-automation/business-logic-selenium/ui/pages/repositories/create-repository.page";
 import { OrgNavigationFragment } from "@gitea-automation/business-logic-selenium/ui/pages/organizations/fragments/org-navigation.fragment";
 import { OrgRepositoriesFragment } from "@gitea-automation/business-logic-selenium/ui/pages/organizations/fragments/org-repositories.fragment";
 import { OrgTeamsFragment } from "@gitea-automation/business-logic-selenium/ui/pages/organizations/fragments/org-teams.fragment";
@@ -26,6 +27,7 @@ export class PageFactory {
   #projectListPage?: ProjectListPage;
   #projectBoardPage?: ProjectBoardPage;
   #createOrganizationPage?: CreateOrganizationPage;
+  #createRepositoryPage?: CreateRepositoryPage;
   #organizationDashboardPage?: OrganizationDashboardPage;
   #orgNavigation?: OrgNavigationFragment;
   #orgRepositories?: OrgRepositoriesFragment;
@@ -76,6 +78,10 @@ export class PageFactory {
 
   get createOrganizationPage(): CreateOrganizationPage {
     return (this.#createOrganizationPage ??= new CreateOrganizationPage(this.driver));
+  }
+
+  get createRepositoryPage(): CreateRepositoryPage {
+    return (this.#createRepositoryPage ??= new CreateRepositoryPage(this.driver));
   }
 
   get organizationDashboardPage(): OrganizationDashboardPage {

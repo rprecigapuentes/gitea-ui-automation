@@ -4,6 +4,7 @@ import type { GiteaWorld } from "../support/world";
 import { Organization } from "@gitea-automation/business-logic-selenium/api/entities/organization.entity";
 import { uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.util";
 import { Team } from "@gitea-automation/business-logic-selenium/api/entities/team.entity";
+import { Repository } from "@gitea-automation/business-logic-selenium/api/entities/repository.entity";
 import { OrganizationClient } from "@gitea-automation/business-logic-selenium/api/clients/organizations.client";
 import { resolveOwnerToken } from "../support/credentials";
 import { getSeededUser, SeededUser } from "../support/seeded-users";
@@ -151,4 +152,24 @@ Then("the avatars for each created team are correct", async function (this: Gite
     }
     expect(avatarUsernames.length).toBe(expectedUsernames.length);
   }
+});
+
+When("I navigate to the repositories tab", async function (this: GiteaWorld) {
+  await this.pages.orgFacade.navigateToRepositoriesTab();
+});
+
+When("I create the following repository:", async function (this: GiteaWorld, dataTable: DataTable) {
+  const row = dataTable.rowsHash();
+  const repository: Repository = {
+    name: row.name,
+    visibility: row.visibility === "true",
+  };
+
+  await this.pages.orgRepositories.clickNewRepositoryButton();
+  await this.pages.createRepositoryPage.waitForElements();
+  await this.pages.createRepositoryPage.enterRepositoryName(repository.name);
+  await this.pages.createRepositoryPage.setPrivate(repository.visibility!);
+
+  this.scenarioState.organization!.repositories ??= [];
+  this.scenarioState.organization!.repositories.push(repository);
 });

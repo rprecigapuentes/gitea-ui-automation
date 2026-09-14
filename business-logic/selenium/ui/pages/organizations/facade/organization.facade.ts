@@ -51,6 +51,7 @@ export class OrganizationFacade extends BasePage {
 
   async navigateToRepositoriesTab(): Promise<OrgRepositoriesFragment> {
     await this.navigation.navigateToTab(OrgTab.Repos);
+    await this.reposFragment.waitForElements();
     this.currentUrl = `${baseUrl}/${this.organization.name}`;
     return this.reposFragment;
   }

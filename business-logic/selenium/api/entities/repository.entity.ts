@@ -1,4 +1,5 @@
 export interface Repository {
-  id: number;
+  id?: number;
   name: string;
+  visibility?: boolean;
 }

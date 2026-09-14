@@ -1,5 +1,6 @@
 // src/entities/organization.entity.ts
 import { Team } from "./team.entity";
+import { Repository } from "./repository.entity";
 
 export type OrganizationVisibility = "public" | "private" | "limited";
 
@@ -8,4 +9,5 @@ export interface Organization {
   visibility: OrganizationVisibility;
   permissions?: string;
   teams?: Team[];
+  repositories?: Repository[];
 }

@@ -78,6 +78,10 @@ export class OrgRepositoriesFragment extends BaseComponent {
     return this.isVisible(this.locators.newTeamButton, sidebar);
   }
 
+  async clickNewRepositoryButton(): Promise<void> {
+    await this.click(this.locators.newRepositoryButton);
+  }
+
   async searchRepository(repositoryName: string): Promise<void> {
     await this.type(this.locators.searchBar, repositoryName);
   }
