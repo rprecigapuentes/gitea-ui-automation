@@ -1,26 +1,28 @@
-## 1. Give the base class the two things the pages need
+## 1. Make a red run readable
 
-- [x] 1.1 Add `waitUntil(predicate, timeoutMs)` to `BaseComponent`, the action-free counterpart of `actAndWaitUntil`, resolving to `false` on expiry rather than raising. It does not delegate to `actAndWaitUntil` and `actAndWaitUntil` is left raising: its two call sites await it without reading a result, so making it report would turn their failures silent. Verify with `npm run typecheck`.
-- [x] 1.2 Log the failing locator inside `isVisible`'s catch, through the existing pino logger, naming the locator and the browser's current URL. Verify by pointing a scratch check at a locator that does not exist and reading the line in the run output; `openspec/specs/page-objects/spec.md` requires this and the code does not do it today.
+- [x] 1.1 Log the failing locator and the browser's URL inside `isVisible`'s catch, which collapsed timeout, invalid CSS, stale element and "found N elements" into one mute false. An absence check (`timeoutMs` 0) logs at debug; anything else warns. Verified: `page-objects/spec.md` already required this, and the local Cucumber run now prints `Locator absent` lines naming each locator.
+- [x] 1.2 Log the caught error and the URL in `hasExpectedElementsDisplayed()` and `isVisibleOnMainPage()` instead of returning a bare false. Verified by reading both back: no path returns false without a line saying why.
+- [x] 1.3 Retry a stale element, and Chrome's "node does not belong to the document" variant, inside `findElements`' poll instead of letting it escape the wait. A wait meant to tolerate a settling page died the moment the page settled. Verified: `checkOnce` returns null on those and keeps polling.
 
-## 2. Wait for what the screen is actually doing
+## 2. Make the clock measure time
 
-- [x] 2.1 Make `LoginPage.login()` wait for the navigation it triggers, through `clickAndWaitForUrl` with a pattern that matches the dashboard and not `/user/login`. Verify that a deliberately wrong password fails inside `login()` naming the URL it waited for, instead of failing later on a dashboard assertion.
-- [x] 2.2 Rewrite `MainPage.hasExpectedElementsDisplayed()` to compare its three values inside a `waitUntil` predicate, and to log all three with what they resolved to when the wait expires. Same signature, same three checks, no call site touched. Verify the four call sites still typecheck and that the local suites stay green.
-- [x] 2.3 Apply the same predicate wait to `NavBarFragment.isVisibleOnMainPage()`, which has the same read-once shape, keeping its existing log line. Verify the local suites stay green.
+- [x] 2.1 Drop the driver's implicit wait from 3000 to 0. Verified locally over the full Vitest suite: 12/12 pass and total run time falls from 218.9s to 81.4s, AT-ISS-02 from 13.6s to 7.4s, AT-ISS-01 from 7.9s to 4.8s. Its own commit, so it reverts alone.
+- [x] 2.2 Confirm nothing was living on the implicit wait. Cucumber locally: 11/12. The one failure, `addRepository`, was then tested with the implicit wait restored and broke 1 of 3 there too, so it is pre-existing and stays out of this change. Reported rather than fixed quietly: it arrived from main today and belongs to its author.
 
-## 3. Stop discarding the booleans
+## 3. Undo what was calibrated against the broken clock
 
-- [x] 3.1 Make `NavBarFragment.waitForElements()` resolve to a boolean instead of `Promise<void>`, and make its callers in `login.steps.ts`, `organizations.steps.ts` and `organizations.test.ts` assert on it. The other `waitForElements` results discarded in `organizations.steps.ts` belong to the organization fragments and are left alone; they are the same defect in another owner's code. Verify by reading each call site back: no call to a readiness wait may ignore its result.
-- [x] 3.2 Assert the result of `hasExpectedElementsDisplayed()` at `login.steps.ts:14`, where the `Given` step currently computes it and throws it away, so the step passes on a dashboard that never rendered. Verify the scenario now fails at the `Given` rather than three steps later.
+- [x] 3.1 Revert `hasExpectedElementsDisplayed()` to the single read that passed in #280 (chrome 4045ms, firefox 5957ms), dropping the retry loop and the 20s budget that made all three fail at ~23s in #289. Verified: the four call sites are untouched and the local suites pass.
+- [x] 3.2 Revert `isVisibleOnMainPage()` the same way, keeping its existing log line.
+- [x] 3.3 Drop `BaseComponent.waitUntil`. Reverting the loops leaves it with no callers, and main removed it in `7f07f99`; reintroducing it under the same name with a different signature would undo that refactor without discussing it. Verified: no references remain outside the unrelated `waitUntilDisplayed`/`waitUntilTeamDisplayed`.
+- [ ] 3.4 Bring `testTimeout` back down from 60000 once the CT run says what these tests cost without the implicit wait. Marked provisional in the config comment so it is not mistaken for a measured value.
 
-## 4. Give AT-ISS-02 back the round trips it wastes
+## 4. Keep the fixes that were never in question
 
-- [x] 4.1 Return the row from the predicate in `LabelListPage.waitForLabel` instead of re-scanning the list for it. Verify AT-ISS-02 still passes locally and that its `junit.xml` duration drops from the committed 12.8s baseline.
-- [x] 4.2 Do the same in `MilestoneListPage.waitForRow`. Verify AT-ISS-01 still passes locally and its duration drops from the committed 7.6s baseline.
-- [x] 4.3 Adjusted, and the adjustment costs the saving: `getChip` cannot consume the row `waitForLabel` returned without `waitForLabel` handing back the element too, which changes its public return type and the test that reads it. Instead `getChip` and `findRow` now share one `locateRow`, removing the duplicated scan loop but not a scan. The round-trip win in this change is `waitForLabel` and `waitForRow` only.
+- [x] 4.1 `LoginPage.login()` waits for the navigation it triggers, through `clickAndWaitForUrl` with a pattern matching the dashboard and not `/user/login`.
+- [x] 4.2 `NavBarFragment.waitForElements()` resolves to a boolean and its callers assert on it, including the step main added today that also discarded it.
 
-## 5. Confirm it in the environment that actually fails
+## 5. Read the environment that actually fails
 
-- [x] 5.1 Run `npm run format`, `npm run lint`, `npm run typecheck`, then both suites locally. All green: Cucumber 9/9 twice in a row and Vitest 12/12 on chrome. A stale/inspector transient that broke `Change team members permissions` surfaced inside `checkOnce` and is now retried (see commit). Local green still proves nothing about the CI race.
-- [ ] 5.2 Push to `91-ct-admin-token` and read the CT run. Verify `login.feature` passes, the five project-board scenarios execute their steps instead of reporting `0s`, and AT-ISS-02 lands under 30s in all three browsers. If anything is still red, the new log lines name the failing locator and the three compared values, so the next step is reading them rather than guessing.
+- [ ] 5.1 Push to `91-ct-admin-token` and read the CT run. The criterion is not that it passes: it is that the log names the error the dashboard read is throwing. If it still fails, the next step is reading that line, not proposing a fourth theory.
+- [ ] 5.2 Compare all twelve durations against #289. They should fall in a block. One that becomes unstable instead of faster was living on the implicit wait and needs its own explicit one.
+- [ ] 5.3 Before the PR, remove the temporary push trigger (task 3.3 of `ct-admin-token`).
