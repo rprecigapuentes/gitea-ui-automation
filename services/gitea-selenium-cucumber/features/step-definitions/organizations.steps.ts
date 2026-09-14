@@ -210,10 +210,11 @@ Then("the repositories were created successfully", async function (this: GiteaWo
 When(
   "I add a file to each repository",
   // The commit's loader redirect can outlast Cucumber's default step timeout under load.
-  { timeout: 20000 },
+  { timeout: 40000 },
   async function (this: GiteaWorld) {
     const organizationName = this.scenarioState.organization!.name;
     const username = await this.pages.navBar.getCurrentUsername();
+    const fileName = `${username}-${uniqueSuffix()}`;
     const [repository] = this.scenarioState.organization!.repositories!;
 
     await this.pages.orgRepositories.clickRepository(repository.name);
@@ -222,16 +223,16 @@ When(
 
     await this.pages.repoCodeTab.clickNewFileButton();
     await this.pages.createRepoFile.waitForElements(organizationName, repository.name);
-    await this.pages.createRepoFile.fillFileName(username);
+    await this.pages.createRepoFile.fillFileName(fileName);
     await this.pages.createRepoFile.fillFileContent(username);
     await this.pages.createRepoFile.clickCommitChangesButton();
 
     await this.pages.repoFile.waitForElements(organizationName, repository.name);
-    expect(await this.pages.repoFile.getFileName()).toBe(username);
+    expect(await this.pages.repoFile.getFileName()).toBe(fileName);
     expect(await this.pages.repoFile.getFileContent()).toContain(username);
 
     repository.files ??= [];
-    repository.files.push(username);
+    repository.files.push(fileName);
 
     await this.pages.repoNavBar.clickOrganizationLink();
     await this.pages.orgRepositories.waitForElements();
@@ -319,3 +320,40 @@ When(
     }
   },
 );
+
+When(
+  "I change the repository code access for {string} to {string}",
+  async function (this: GiteaWorld, teamName: string, repoCodeAccess: string) {
+    await this.pages.orgFacade.navigateToTeamsTab();
+    await this.pages.orgTeams.clickTeamName(teamName);
+    await this.pages.orgSpecificTeam.waitForElements();
+    await this.pages.orgSpecificTeam.clickSettingsButton();
+    await this.pages.orgNewTeam.waitForEditElements();
+    await this.pages.orgNewTeam.selectRepoCodeAccess(repoCodeAccess as "none" | "read" | "write");
+    await this.pages.orgNewTeam.clickUpdateTeamButton();
+    await this.pages.orgSpecificTeam.waitForElements();
+
+    const team = this.scenarioState.organization!.teams!.find(
+      (candidate) => candidate.name === teamName,
+    );
+    team!.repoCodeAccess = repoCodeAccess as Team["repoCodeAccess"];
+  },
+);
+
+When("I open the repository", async function (this: GiteaWorld) {
+  const organizationName = this.scenarioState.organization!.name;
+  const [repository] = this.scenarioState.organization!.repositories!;
+
+  await this.pages.orgRepositories.clickRepository(repository.name);
+  await this.pages.repoNavBar.waitForElements();
+  await this.pages.repoCodeTab.waitForElements(organizationName, repository.name);
+});
+
+When("I click the New File button", async function (this: GiteaWorld) {
+  await this.pages.repoCodeTab.clickNewFileButton();
+});
+
+Then("the fork repository prompt is displayed", async function (this: GiteaWorld) {
+  expect(await this.pages.forkPrompt.waitForElements()).toBe(true);
+  expect(await this.pages.forkPrompt.getHeadingText()).toContain("Fork Repository");
+});

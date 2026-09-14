@@ -16,6 +16,8 @@ export class NewTeamFragment extends BaseComponent {
     generalPermissionsRadio: By.css("input[name='permission'][value='read']"),
     // Form submit button.
     createTeamButton: By.css("form[action$='/teams/new'] button.ui.primary.button"),
+    // The edit-team page reuses this same form, scoped to "/edit" instead.
+    updateTeamButton: By.css("form[action$='/edit'] .ui.primary.button"),
   };
 
   private readonly visibilityLocators: Record<TeamVisibility, By> = {
@@ -39,6 +41,10 @@ export class NewTeamFragment extends BaseComponent {
       this.locators.teamNameInput,
       this.locators.createTeamButton,
     ]);
+  }
+
+  async waitForEditElements(): Promise<boolean> {
+    return this.isVisible([this.locators.teamNameInput, this.locators.updateTeamButton]);
   }
 
   async hasDefaultFormState(): Promise<boolean> {
@@ -75,6 +81,10 @@ export class NewTeamFragment extends BaseComponent {
 
   async clickCreateTeamButton(): Promise<void> {
     await this.click(this.locators.createTeamButton);
+  }
+
+  async clickUpdateTeamButton(): Promise<void> {
+    await this.click(this.locators.updateTeamButton);
   }
 
   private async isInputEmpty(locator: By): Promise<boolean> {

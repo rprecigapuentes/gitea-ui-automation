@@ -20,6 +20,7 @@ export class SpecificTeamFragment extends BaseComponent {
     addTeamMemberButton: By.css("form[action$='/action/add'] button"),
     joinButton: By.css("form[action$='/action/join'] button"),
     settingsButton: By.css("a[href$='/edit']"),
+    settingsIcon: By.css(".svg.octicon-gear"),
     // Member and repository counters in the team navigation.
     membersCount: By.css(".org-team-navbar a.active strong"),
     repositoriesCount: By.css(".org-team-navbar a[href$='/repositories'] strong"),
@@ -79,6 +80,10 @@ export class SpecificTeamFragment extends BaseComponent {
 
   async hasPrivateVisibility(): Promise<boolean> {
     return (await this.getText(this.locators.teamVisibilityLabel)) === "Private";
+  }
+
+  async clickSettingsButton(): Promise<void> {
+    await this.click(this.locators.settingsIcon);
   }
 
   async getMembersCount(): Promise<string> {

@@ -50,6 +50,23 @@ Feature: Organization
       | user | team     |
       | 1    | dev-team |
     Then the member count for each created team is correct
+    When I logout
+    And I login with valid credentials as user 1
+    And the seeded organization is open
+    And I add a file to each repository
+    Then the file count for each repository is correct
+    When I logout
+    And I login with valid credentials as "owner"
+    And the seeded organization is open
+    And I change the repository code access for "qa-team" to "read"
+    When I logout
+    And I login with valid credentials as user 2
+    And the seeded organization is open
+    And I open the repository
+    And I click the New File button
+    Then the fork repository prompt is displayed
+    When I logout
+    And I login with valid credentials as "owner"
 
   @smoke
   Scenario: Create a repository for an existing organization

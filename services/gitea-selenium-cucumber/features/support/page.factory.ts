@@ -18,6 +18,7 @@ import { RepoNavBarFragment } from "@gitea-automation/business-logic-selenium/ui
 import { RepoCodeTabFragment } from "@gitea-automation/business-logic-selenium/ui/pages/repositories/fragments/repo-code-tab.fragment";
 import { CreateRepoFileFragment } from "@gitea-automation/business-logic-selenium/ui/pages/repositories/fragments/create-repo-file.fragment";
 import { RepoFileFragment } from "@gitea-automation/business-logic-selenium/ui/pages/repositories/fragments/repo-file.fragment";
+import { ForkPromptFragment } from "@gitea-automation/business-logic-selenium/ui/pages/repositories/fragments/fork-prompt.fragment";
 import { OrganizationFacade } from "@gitea-automation/business-logic-selenium/ui/pages/organizations/facade/organization.facade";
 import type { Organization } from "@gitea-automation/business-logic-selenium/api/entities/organization.entity";
 import type { ScenarioState } from "@gitea-automation/business-logic-selenium/state/scenario.entity";
@@ -42,6 +43,7 @@ export class PageFactory {
   #repoCodeTab?: RepoCodeTabFragment;
   #createRepoFile?: CreateRepoFileFragment;
   #repoFile?: RepoFileFragment;
+  #forkPrompt?: ForkPromptFragment;
   #orgFacade?: OrganizationFacade;
 
   constructor(
@@ -130,6 +132,10 @@ export class PageFactory {
 
   get repoFile(): RepoFileFragment {
     return (this.#repoFile ??= new RepoFileFragment(this.driver));
+  }
+
+  get forkPrompt(): ForkPromptFragment {
+    return (this.#forkPrompt ??= new ForkPromptFragment(this.driver));
   }
 
   get orgFacade(): OrganizationFacade {

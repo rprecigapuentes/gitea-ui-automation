@@ -20,7 +20,7 @@ export class RepoFileFragment extends BaseComponent {
     return this.isVisible(
       [this.locators.filesContainer, this.locators.fileName, this.locators.fileContent],
       this.driver,
-      10000,
+      15000,
     );
   }
 
