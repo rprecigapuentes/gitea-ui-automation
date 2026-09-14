@@ -16,7 +16,7 @@ Feature: Organization
     When I navigate to the organization page
     And I create the following teams:
       | name     | visibility | repoCodeAccess | createRepo |
-      | dev-team | private    | none           | true       |
+      | dev-team | private    | write          | true       |
       | qa-team  | private    | write          | true       |
     Then the created teams are displayed in Teams page
     When I add the following team members:
@@ -32,6 +32,12 @@ Feature: Organization
       | frontend | true       |
       | backend  | true       |
     Then the repositories were created successfully
+    When I add the following repositories to each team:
+      | team     | repository |
+      | dev-team | frontend   |
+      | qa-team  | frontend   |
+      | qa-team  | backend    |
+    Then the repositories assigned to each team are correct
 
   @smoke
   Scenario: Create a repository for an existing organization

@@ -23,6 +23,39 @@ async function addUserToTeam(world: GiteaWorld, user: SeededUser, teamName: stri
   await world.pages.orgFacade.navigateToTeamsTab();
 }
 
+async function addRepositoryToTeam(
+  world: GiteaWorld,
+  teamName: string,
+  repositoryName: string,
+): Promise<void> {
+  await world.pages.orgFacade.navigateToSpecificTeam(teamName);
+  await world.pages.orgSpecificTeam.navigateToRepositoriesTab();
+  await world.pages.orgSpecificTeam.addRepository(repositoryName);
+
+  const team = world.scenarioState.organization!.teams!.find(
+    (candidate) => candidate.name === teamName,
+  );
+  team!.repositories ??= [];
+  team!.repositories.push(repositoryName);
+
+  await world.pages.orgFacade.navigateToTeamsTab();
+}
+
+async function assertTeamRepositories(world: GiteaWorld, team: Team): Promise<void> {
+  await world.pages.orgFacade.navigateToSpecificTeam(team.name);
+  await world.pages.orgSpecificTeam.navigateToRepositoriesTab();
+
+  const assignedNames = await world.pages.orgSpecificTeam.getAssignedRepositoryNames();
+  const expectedRepositories = team.repositories ?? [];
+
+  for (const repository of expectedRepositories) {
+    expect(assignedNames).toContain(repository);
+  }
+  expect(assignedNames.length).toBe(expectedRepositories.length);
+
+  await world.pages.orgFacade.navigateToTeamsTab();
+}
+
 When(
   'I navigate to the "Create Organization" page by "organization dropdown" menu',
   async function (this: GiteaWorld) {
@@ -201,5 +234,22 @@ Then("the repositories were created successfully", async function (this: GiteaWo
   const repositoryNames = await this.pages.orgRepositories.getRepositoryNames();
   for (const repository of repositories) {
     expect(repositoryNames).toContain(repository.name);
+  }
+});
+
+When(
+  "I add the following repositories to each team:",
+  async function (this: GiteaWorld, dataTable: DataTable) {
+    await this.pages.orgFacade.navigateToTeamsTab();
+    for (const row of dataTable.hashes()) {
+      await addRepositoryToTeam(this, row.team, row.repository);
+    }
+  },
+);
+
+Then("the repositories assigned to each team are correct", async function (this: GiteaWorld) {
+  await this.pages.orgFacade.navigateToTeamsTab();
+  for (const team of this.scenarioState.organization!.teams ?? []) {
+    await assertTeamRepositories(this, team);
   }
 });

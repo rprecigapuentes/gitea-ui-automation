@@ -23,6 +23,13 @@ export class SpecificTeamFragment extends BaseComponent {
     // Member and repository counters in the team navigation.
     membersCount: By.css(".org-team-navbar a.active strong"),
     repositoriesCount: By.css(".org-team-navbar a[href$='/repositories'] strong"),
+    repositoriesTabLink: By.css(".org-team-navbar a[href$='/repositories']"),
+    repoSearchInput: By.css("input[name='repo_name']"),
+    addRepoButton: By.css("form[action$='/repo/add'] button"),
+    // Repositories tab's assigned-repos list - distinct from the search form's own segment,
+    // which also carries the "ui attached segment" classes.
+    assignedRepositoriesContainer: By.css(".ui.attached.segment:has(.flex-divided-list)"),
+    assignedRepositoryLink: By.css(".item-main a.item-title"),
     // Empty and populated states of the team members list.
     emptyMembersMessage: By.css(".flex-divided-list .tw-text-text-light.tw-italic"),
     teamMemberUsernames: By.css(".flex-divided-list .item-title a.text.muted"),
@@ -180,6 +187,32 @@ export class SpecificTeamFragment extends BaseComponent {
 
   async hasNoEmptyMembersMessage(): Promise<boolean> {
     return !(await this.isVisible(this.locators.emptyMembersMessage, this.driver, 0));
+  }
+
+  async navigateToRepositoriesTab(): Promise<void> {
+    await this.clickAndWaitFor(this.locators.repositoriesTabLink, [
+      this.locators.repoSearchInput,
+      this.locators.addRepoButton,
+    ]);
+  }
+
+  async addRepository(repositoryName: string): Promise<void> {
+    await this.type(this.locators.repoSearchInput, repositoryName);
+    await this.clickAndWaitUntil(this.locators.addRepoButton, () =>
+      this.hasAssignedRepository(repositoryName),
+    );
+  }
+
+  async hasAssignedRepository(repositoryName: string): Promise<boolean> {
+    const names = await this.getAssignedRepositoryNames().catch((): string[] => []);
+    return names.includes(repositoryName);
+  }
+
+  async getAssignedRepositoryNames(): Promise<string[]> {
+    const container = await this.findElement(this.locators.assignedRepositoriesContainer);
+    const links = await this.findElements(this.locators.assignedRepositoryLink, container);
+    const texts = await Promise.all(links.map((link) => link.getText()));
+    return texts.map((text) => text.split("/").pop()!.trim());
   }
 
   private async findUserSearchResult(username: string) {
