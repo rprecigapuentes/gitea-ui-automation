@@ -4,6 +4,10 @@ import { MainPage } from "@gitea-automation/business-logic-selenium/ui/pages/com
 import { NavBarFragment } from "@gitea-automation/business-logic-selenium/ui/pages/common/fragments/nav-bar.fragment";
 import { OrganizationDashboardPage } from "@gitea-automation/business-logic-selenium/ui/pages/organizations/organization-dashboard.page";
 import { IssuePage } from "@gitea-automation/business-logic-selenium/ui/pages/issues/issue.page";
+import { CreateIssuePage } from "@gitea-automation/business-logic-selenium/ui/pages/issues/create-issue.page";
+import { IssueListPage } from "@gitea-automation/business-logic-selenium/ui/pages/issues/issue-list.page";
+import { LabelListPage } from "@gitea-automation/business-logic-selenium/ui/pages/issues/label-list.page";
+import { MilestoneListPage } from "@gitea-automation/business-logic-selenium/ui/pages/issues/milestone-list.page";
 import { CreateProjectPage } from "@gitea-automation/business-logic-selenium/ui/pages/projects/create-project.page";
 import { ProjectListPage } from "@gitea-automation/business-logic-selenium/ui/pages/projects/project-list.page";
 import { ProjectBoardPage } from "@gitea-automation/business-logic-selenium/ui/pages/projects/project-board.page";
@@ -28,6 +32,10 @@ export class PageFactory {
   #mainPage?: MainPage;
   #navBar?: NavBarFragment;
   #issuePage?: IssuePage;
+  #createIssuePage?: CreateIssuePage;
+  #issueListPage?: IssueListPage;
+  #labelListPage?: LabelListPage;
+  #milestoneListPage?: MilestoneListPage;
   #createProjectPage?: CreateProjectPage;
   #projectListPage?: ProjectListPage;
   #projectBoardPage?: ProjectBoardPage;
@@ -72,6 +80,22 @@ export class PageFactory {
 
   get issuePage(): IssuePage {
     return (this.#issuePage ??= new IssuePage(this.driver));
+  }
+
+  get createIssuePage(): CreateIssuePage {
+    return (this.#createIssuePage ??= new CreateIssuePage(this.driver));
+  }
+
+  get issueListPage(): IssueListPage {
+    return (this.#issueListPage ??= new IssueListPage(this.driver));
+  }
+
+  get labelListPage(): LabelListPage {
+    return (this.#labelListPage ??= new LabelListPage(this.driver));
+  }
+
+  get milestoneListPage(): MilestoneListPage {
+    return (this.#milestoneListPage ??= new MilestoneListPage(this.driver));
   }
 
   get createProjectPage(): CreateProjectPage {
