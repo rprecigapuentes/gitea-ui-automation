@@ -90,11 +90,7 @@ export abstract class BaseComponent implements Verifiable {
     await element.sendKeys(text);
   }
 
-  /**
-   * The gesture a person performs: press on the source, cross the drag threshold with short
-   * offsets, travel to the target and release. Both ends are resolved here, so a caller that has
-   * re-read the screen cannot drag a stale element.
-   */
+  /** Both ends resolve here, so a caller that re-read the screen cannot drag a stale element. */
   async dragAndDrop(
     sourceLocator: By,
     targetLocator: By,
@@ -118,10 +114,7 @@ export abstract class BaseComponent implements Verifiable {
       .perform();
   }
 
-  /**
-   * The same drag as the events a page's own handlers listen for, for a browser driver that moves
-   * the element without ever emitting the drop that finishes it (mozilla/geckodriver#1450).
-   */
+  /** For a browser driver that moves the element and never emits the drop (geckodriver#1450). */
   async dispatchDragEvents(
     sourceLocator: By,
     targetLocator: By,
@@ -251,8 +244,8 @@ export abstract class BaseComponent implements Verifiable {
     );
   }
 
-  // For an interaction the application saves after it has already changed the screen: what that
-  // screen shows is not yet an answer, so the caller re-reads it and asks again.
+  // For an interaction the application saves after it has already changed the screen, which makes
+  // that screen no answer at all.
   protected async reload(
     readyLocators: By[],
     timeoutMs: number = DEFAULT_TIMEOUT_MS,

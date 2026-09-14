@@ -1,10 +1,9 @@
 import { WebDriver, WebElement } from "selenium-webdriver";
 
 /**
- * The events a browser emits for an HTML5 drag, sharing one DataTransfer and aimed at the centre of
- * the target, which is what a drag library reads to decide where the element lands. They are spaced
- * across tasks of the event loop because such a library finishes starting the drag on the next task
- * and discards a `dragover` that arrives before it.
+ * The events a browser emits for an HTML5 drag, sharing one DataTransfer. They are spaced across
+ * tasks of the event loop because a drag library discards a `dragover` that arrives before it has
+ * finished starting the drag.
  */
 const SIMULATE_HTML5_DRAG = `
 const [source, target, done] = arguments;

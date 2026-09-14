@@ -17,10 +17,8 @@ const seleniumRemoteUrl = process.env.SELENIUM_REMOTE_URL;
 // browser windows launched when chrome/firefox/edge run at the same time. A throttled window's
 // CSS animations never finish, so a fading-in modal can stay "not visible" to Selenium forever.
 // These flags tell Chromium to treat every window as if it were on top.
-// A headless browser opens at 800x600, which on the project board leaves the further columns and
-// the card lists themselves outside the viewport. A pointer gesture cannot reach a point that is
-// not in view (the driver answers "move target out of bounds"), so the window is sized to fit the
-// widest screen under test; it also makes a failure screenshot legible.
+// A headless browser opens at 800x600, which leaves the further board columns out of the viewport,
+// and a pointer gesture cannot reach a point that is not in view.
 const WINDOW_SIZE = { width: 1920, height: 1080 };
 
 const CHROMIUM_NO_OCCLUSION_THROTTLING_FLAGS = [

@@ -99,12 +99,9 @@ export class ProjectBoardPage extends BasePage {
   }
 
   /**
-   * The gesture is performed first, because that is what a person does and it is the only path that
-   * goes through the browser input stack. It completes on Chromium but not on Firefox, where the
-   * card ends up under the target column having changed nothing, so the card being there is not the
-   * question: whether Gitea kept it is, and the answer comes from a board read again from the
-   * server. When it was not kept, the same drag is dispatched as its event sequence, which still
-   * runs the board's own drag handlers rather than moving the card by another route.
+   * The gesture goes first, as the only path through the browser input stack. On Firefox it
+   * completes without reaching the server, so what decides is not where the card sits but whether a
+   * reloaded board still holds it.
    */
   async moveCard(issueId: number, toColumnTitle: string): Promise<void> {
     const cards = this.column(toColumnTitle).getCardsLocator();
