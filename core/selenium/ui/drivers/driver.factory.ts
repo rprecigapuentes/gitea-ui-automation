@@ -95,7 +95,11 @@ export class DriverFactory {
 
     DriverFactory.instance = await builder.build();
     await DriverFactory.instance.manage().window().setRect(WINDOW_SIZE);
-    await DriverFactory.instance.manage().setTimeouts({ implicit: 3000 });
+    // BaseComponent already polls every lookup explicitly. An implicit wait on top of that makes a
+    // findElements that legitimately matches nothing block for its full duration before returning
+    // the empty list (SeleniumHQ/selenium#12278), so every absence check and every failed poll
+    // inside an explicit wait pays it again, and no timeout in the framework measures real time.
+    await DriverFactory.instance.manage().setTimeouts({ implicit: 0 });
     console.log(`WebDriver started: ${browser}`);
 
     return DriverFactory.instance;
