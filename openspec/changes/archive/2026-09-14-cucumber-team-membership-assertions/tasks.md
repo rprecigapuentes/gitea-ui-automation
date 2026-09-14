@@ -1,0 +1,3 @@
+## 1. Assert member counts and avatars per team
+
+- [x] 1.1 Added `getTeamAvatarUsernames(teamName)` to `OrgTeamsFragment`; refactored `hasTeamAvatar` to use it. Added `Then("the member count for each created team is correct", ...)` and `Then("the avatars for each created team are correct", ...)` to `organizations.steps.ts`, both looping `scenarioState.organization.teams`. Wired both into the `@e2e` scenario. Verified: `npm run typecheck` (root) and `npx eslint` on both edited files clean; `--tags "@e2e"` passed twice in a row (10 steps each), full `--tags "@organizations"` passed 3/3 (18 steps), Vitest's `organizations.test.ts` passed 1/1 unmodified.

@@ -3,23 +3,6 @@ import { logger } from "@gitea-automation/core-logger/pino.logger";
 import { BasePage } from "@gitea-automation/core-selenium/ui/base-pages/base.page";
 import { baseUrl } from "@gitea-automation/core-config/gitea.config";
 
-const INSTANT = 0;
-// The global implicit wait makes a missed INSTANT read cost ~3s, so one poll can eat most of the
-// default 5s settle budget before the retry even happens; the CI grid hydrates slower than local.
-const SETTLE_TIMEOUT_MS = 20000;
-
-interface TabExpectations {
-  repositoryLabelled: boolean;
-  organizationLabelled: boolean;
-  repositoryActive: boolean;
-}
-
-const NOTHING_READ: TabExpectations = {
-  repositoryLabelled: false,
-  organizationLabelled: false,
-  repositoryActive: false,
-};
-
 export class MainPage extends BasePage {
   private readonly locators = {
     dashboardRepoList: By.css("#dashboard-repo-list"),
@@ -39,40 +22,43 @@ export class MainPage extends BasePage {
     await super.open([this.locators.dashboardRepoList]);
   }
 
-  // Gitea renders the tab strip into #dashboard-repo-list from a Vue component, so the container
-  // is on the page before the labels and the active class are. Reads once per attempt, and lets
-  // the caller's wait decide how long the screen gets to settle.
-  private async readTabs(): Promise<TabExpectations> {
+  async hasExpectedElementsDisplayed(): Promise<boolean> {
+    if (!(await this.isVisible(this.locators.dashboardRepoList))) return false;
+
     try {
-      const root = await this.findElement(this.locators.dashboardRepoList, this.driver, INSTANT);
+      const root = await this.findElement(this.locators.dashboardRepoList);
       const [repositoryLabel, organizationLabel, repositoryClass] = await Promise.all([
-        this.getText(this.locators.repositoryOption, root, INSTANT),
-        this.getText(this.locators.organizationOption, root, INSTANT),
-        this.getAttribute(this.locators.repositoryOption, "class", root, INSTANT),
+        this.getText(this.locators.repositoryOption, root),
+        this.getText(this.locators.organizationOption, root),
+        this.getAttribute(this.locators.repositoryOption, "class", root),
       ]);
 
-      return {
+      const results = {
         repositoryLabelled: repositoryLabel === "Repository",
         organizationLabelled: organizationLabel === "Organization",
         repositoryActive: repositoryClass.split(/\s+/).includes("active"),
       };
-    } catch {
-      return NOTHING_READ;
+
+      if (!Object.values(results).every(Boolean)) {
+        logger.warn(
+          { pageContext: "dashboard", repositoryLabel, organizationLabel, repositoryClass },
+          "Dashboard tabs read something else",
+        );
+      }
+
+      return Object.values(results).every(Boolean);
+    } catch (thrown) {
+      // A bare false here reads as "the tabs said no" when it can also mean "a read threw and the
+      // reason was discarded", which is what made this failure unreadable in CI for three runs.
+      logger.warn(
+        {
+          pageContext: "dashboard",
+          url: await this.driver.getCurrentUrl().catch(() => "unknown"),
+          reason: String(thrown),
+        },
+        "Dashboard tabs could not be read",
+      );
+      return false;
     }
-  }
-
-  async hasExpectedElementsDisplayed(): Promise<boolean> {
-    let lastRead = NOTHING_READ;
-
-    const settled = await this.waitUntil(async () => {
-      lastRead = await this.readTabs();
-      return Object.values(lastRead).every(Boolean);
-    }, SETTLE_TIMEOUT_MS);
-
-    if (!settled) {
-      logger.warn({ pageContext: "dashboard", ...lastRead }, "Dashboard tabs never settled");
-    }
-
-    return settled;
   }
 }

@@ -1,4 +1,4 @@
-import { By } from "selenium-webdriver";
+import { By, error as seleniumError } from "selenium-webdriver";
 import { BaseComponent } from "@gitea-automation/core-selenium/ui/base-pages/base-component";
 
 export class SpecificTeamFragment extends BaseComponent {
@@ -20,13 +20,23 @@ export class SpecificTeamFragment extends BaseComponent {
     addTeamMemberButton: By.css("form[action$='/action/add'] button"),
     joinButton: By.css("form[action$='/action/join'] button"),
     settingsButton: By.css("a[href$='/edit']"),
+    settingsIcon: By.css(".svg.octicon-gear"),
     // Member and repository counters in the team navigation.
     membersCount: By.css(".org-team-navbar a.active strong"),
     repositoriesCount: By.css(".org-team-navbar a[href$='/repositories'] strong"),
+    repositoriesTabLink: By.css(".org-team-navbar a[href$='/repositories']"),
+    repoSearchInput: By.css("input[name='repo_name']"),
+    addRepoButton: By.css("form[action$='/repo/add'] button"),
+    // Repositories tab's assigned-repos list - distinct from the search form's own segment,
+    // which also carries the "ui attached segment" classes.
+    assignedRepositoriesContainer: By.css(".ui.attached.segment:has(.flex-divided-list)"),
+    assignedRepositoryLink: By.css(".item-main a.item-title"),
     // Empty and populated states of the team members list.
     emptyMembersMessage: By.css(".flex-divided-list .tw-text-text-light.tw-italic"),
     teamMemberUsernames: By.css(".flex-divided-list .item-title a.text.muted"),
-    removeTeamMemberButton: By.css("button[data-modal='#remove-team-member']"),
+    // Scoped by data-modal-name - every row's remove button shares the same data-modal id,
+    // so an unscoped selector matches every member once a team has more than one.
+    removeTeamMemberButton: (username: string) => By.css(`[data-modal-name='${username}']`),
     // Confirmation modal shown when removing a team member.
     removeTeamMemberModal: By.css("#remove-team-member"),
     removeTeamMemberModalTitle: By.css("#remove-team-member .header"),
@@ -39,8 +49,10 @@ export class SpecificTeamFragment extends BaseComponent {
   }
 
   async waitUntilTeamDisplayed(teamName: string): Promise<void> {
-    await this.findElement(this.locators.teamDetails);
-    await this.driver.wait(
+    await this.actAndWaitUntil(
+      async () => {
+        await this.findElement(this.locators.teamDetails);
+      },
       async () => (await this.getText(this.locators.teamName)) === teamName,
       5000,
     );
@@ -70,6 +82,10 @@ export class SpecificTeamFragment extends BaseComponent {
     return (await this.getText(this.locators.teamVisibilityLabel)) === "Private";
   }
 
+  async clickSettingsButton(): Promise<void> {
+    await this.click(this.locators.settingsIcon);
+  }
+
   async getMembersCount(): Promise<string> {
     return this.getText(this.locators.membersCount);
   }
@@ -88,19 +104,33 @@ export class SpecificTeamFragment extends BaseComponent {
     return displayedUsernames.includes(username);
   }
 
-  async hasRemoveTeamMemberButton(): Promise<boolean> {
-    return this.isVisible(this.locators.removeTeamMemberButton);
+  async hasRemoveTeamMemberButton(username: string): Promise<boolean> {
+    return this.isVisible(this.locators.removeTeamMemberButton(username));
   }
 
-  async clickRemoveTeamMemberButton(): Promise<void> {
-    // The modal's fade-in animation can outlast the default wait when the machine is busy
-    // running other browsers, so it gets a more generous budget.
-    await this.clickAndWaitFor(
-      this.locators.removeTeamMemberButton,
-      [this.locators.removeTeamMemberModal],
-      this.driver,
-      10000,
-    );
+  async clickRemoveTeamMemberButton(username: string): Promise<void> {
+    const locator = this.locators.removeTeamMemberButton(username);
+
+    try {
+      await this.clickAndWaitFor(
+        locator,
+        [this.locators.removeTeamMemberModal],
+        this.driver,
+        15000,
+      );
+    } catch {
+      try {
+        await this.click(locator, this.driver, 0);
+      } catch (retryClickError) {
+        // A dimmer already covering the button means the first click landed and the modal is
+        // mid-transition under load, not stalled - fall through to just waiting for it instead
+        // of treating a second, blocked click as a real failure.
+        if (!(retryClickError instanceof seleniumError.ElementClickInterceptedError)) {
+          throw retryClickError;
+        }
+      }
+      await this.findElement(this.locators.removeTeamMemberModal, this.driver, 15000);
+    }
   }
 
   async isRemoveTeamMemberModalDisplayed(): Promise<boolean> {
@@ -116,8 +146,12 @@ export class SpecificTeamFragment extends BaseComponent {
   }
 
   async confirmRemoveTeamMember(): Promise<void> {
-    await this.click(this.locators.confirmRemoveTeamMemberButton);
-    await this.driver.wait(() => this.isRemoveTeamMemberModalHidden(), 5000);
+    await this.clickAndWaitUntil(
+      this.locators.confirmRemoveTeamMemberButton,
+      () => this.isRemoveTeamMemberModalHidden(),
+      this.driver,
+      5000,
+    );
   }
 
   async isRemoveTeamMemberModalHidden(): Promise<boolean> {
@@ -180,6 +214,32 @@ export class SpecificTeamFragment extends BaseComponent {
 
   async hasNoEmptyMembersMessage(): Promise<boolean> {
     return !(await this.isVisible(this.locators.emptyMembersMessage, this.driver, 0));
+  }
+
+  async navigateToRepositoriesTab(): Promise<void> {
+    await this.clickAndWaitFor(this.locators.repositoriesTabLink, [
+      this.locators.repoSearchInput,
+      this.locators.addRepoButton,
+    ]);
+  }
+
+  async addRepository(repositoryName: string): Promise<void> {
+    await this.type(this.locators.repoSearchInput, repositoryName);
+    await this.clickAndWaitUntil(this.locators.addRepoButton, () =>
+      this.hasAssignedRepository(repositoryName),
+    );
+  }
+
+  async hasAssignedRepository(repositoryName: string): Promise<boolean> {
+    const names = await this.getAssignedRepositoryNames().catch((): string[] => []);
+    return names.includes(repositoryName);
+  }
+
+  async getAssignedRepositoryNames(): Promise<string[]> {
+    const container = await this.findElement(this.locators.assignedRepositoriesContainer);
+    const links = await this.findElements(this.locators.assignedRepositoryLink, container);
+    const texts = await Promise.all(links.map((link) => link.getText()));
+    return texts.map((text) => text.split("/").pop()!.trim());
   }
 
   private async findUserSearchResult(username: string) {

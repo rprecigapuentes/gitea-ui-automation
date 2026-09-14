@@ -21,6 +21,9 @@ export class OrgRepositoriesFragment extends BaseComponent {
     newTeamButton: By.css("a[href$='/teams/new']"),
     newRepositoryButton: By.css("a[href*='/repo/create?org=']"),
     newMigrationButton: By.css("a[href*='/repo/migrate?org=']"),
+    repositoriesContainer: By.css(".flex-divided-list.items-with-main"),
+    repositoryItem: By.css(".item"),
+    repositoryName: By.css(".item-title a.name"),
   };
 
   async areOwnerElementsVisible(): Promise<boolean> {
@@ -76,6 +79,31 @@ export class OrgRepositoriesFragment extends BaseComponent {
   async hasNewTeamButton(): Promise<boolean> {
     const sidebar = await this.findElement(this.locators.organizationSidebar);
     return this.isVisible(this.locators.newTeamButton, sidebar);
+  }
+
+  async clickNewRepositoryButton(): Promise<void> {
+    await this.click(this.locators.newRepositoryButton);
+  }
+
+  async getRepositoryNames(): Promise<string[]> {
+    const container = await this.findElement(this.locators.repositoriesContainer);
+    const items = await this.findElements(this.locators.repositoryItem, container);
+    return Promise.all(items.map((item) => this.getText(this.locators.repositoryName, item)));
+  }
+
+  async clickRepository(repositoryName: string): Promise<void> {
+    const container = await this.findElement(this.locators.repositoriesContainer);
+    const items = await this.findElements(this.locators.repositoryItem, container);
+    const names = await Promise.all(
+      items.map((item) => this.getText(this.locators.repositoryName, item)),
+    );
+    const index = names.indexOf(repositoryName);
+
+    if (index === -1) {
+      throw new Error(`Repository "${repositoryName}" was not found`);
+    }
+
+    await this.click(this.locators.repositoryName, items[index]);
   }
 
   async searchRepository(repositoryName: string): Promise<void> {

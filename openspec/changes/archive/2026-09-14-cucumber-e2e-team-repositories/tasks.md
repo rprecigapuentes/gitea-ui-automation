@@ -1,0 +1,3 @@
+## 1. Assign repositories to teams and verify
+
+- [x] 1.1 Add `repositories?: string[]` to `Team`. Add `navigateToRepositoriesTab()`, `addRepository()`, `hasAssignedRepository()`, `getAssignedRepositoryNames()` to `SpecificTeamFragment`. Add `"I add the following repositories to each team:"` and `"the repositories assigned to each team are correct"` steps. Update `@e2e`: dev-team repo code access to `write`, assign frontend to dev-team and both repos to qa-team. Verified: root `typecheck` clean, `eslint` clean, `--tags "@e2e"` (15 steps passed), `--tags "@smoke"` (4 scenarios, 20 steps passed, no regressions).

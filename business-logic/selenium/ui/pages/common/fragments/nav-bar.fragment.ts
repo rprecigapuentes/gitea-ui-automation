@@ -3,9 +3,6 @@ import { logger } from "@gitea-automation/core-logger/pino.logger";
 import { BaseComponent } from "@gitea-automation/core-selenium/ui/base-pages/base-component";
 
 const INSTANT = 0;
-// Same budget reason as MainPage: a missed INSTANT read costs the 3s implicit wait, and the CI
-// grid renders the bar later than local, so the settle wait needs room for several attempts.
-const SETTLE_TIMEOUT_MS = 20000;
 
 export class NavBarFragment extends BaseComponent {
   private readonly navigationBarLocators = {
@@ -25,6 +22,9 @@ export class NavBarFragment extends BaseComponent {
     pullRequestsOption: By.css(".ui.secondary.stackable.menu a[href$='/pulls']"),
     milestonesOption: By.css(".ui.secondary.stackable.menu a[href$='/milestones']"),
     viewOrganizationButton: By.css(".basic.button"),
+    accountDropdown: By.css("[data-tooltip-content='Profile and Settings…']"),
+    accountAvatar: By.css("[data-tooltip-content='Profile and Settings…'] img.ui.avatar"),
+    signOutLink: By.css("a[href='/user/logout']"),
   };
 
   private readonly dropdownOrganizationLocators = {
@@ -60,48 +60,40 @@ export class NavBarFragment extends BaseComponent {
     await this.clickAndWaitFor(this.secondaryBarLocators.organizationDropdown, readyLocators);
   }
 
-  // The base pair has to resolve before the username read is safe (it reads a locator that only
-  // renders once the bar itself is up), so it short-circuits rather than joining the rest.
-  private async readMainPageExpectations(username: string): Promise<Record<string, boolean>> {
-    if (!(await this.isVisible(this.baseLocators, this.driver, INSTANT))) {
-      return {
-        navbarReady: false,
-        usernameMatches: false,
-        teamsDropdownAbsent: false,
-        rightOptionsAbsent: false,
-      };
+  // The base pair has to resolve before getCurrentOrganization() is safe to call (it reads a
+  // locator that only renders once the bar itself is up), so it short-circuits rather than
+  // joining the same Promise.all as the rest.
+  async isVisibleOnMainPage(username: string): Promise<boolean> {
+    if (!(await this.isVisible(this.baseLocators))) {
+      logger.info({ pageContext: "main" }, "Navbar not ready");
+      return false;
     }
 
-    const usernameMatches = await this.getCurrentOrganization(INSTANT)
-      .then((text) => text === username)
-      .catch(() => false);
+    try {
+      const [usernameMatches, teamsDropdownAbsent, rightOptionsAbsent] = await Promise.all([
+        this.getCurrentOrganization().then((text) => text === username),
+        this.isVisible(this.secondaryBarLocators.teamsDropdown, this.driver, INSTANT).then(
+          (v) => !v,
+        ),
+        this.isVisible(this.secondaryBarLocators.rightOptionsContainer, this.driver, INSTANT).then(
+          (v) => !v,
+        ),
+      ]);
 
-    return {
-      navbarReady: true,
-      usernameMatches,
-      teamsDropdownAbsent: !(await this.isVisible(
-        this.secondaryBarLocators.teamsDropdown,
-        this.driver,
-        INSTANT,
-      )),
-      rightOptionsAbsent: !(await this.isVisible(
-        this.secondaryBarLocators.rightOptionsContainer,
-        this.driver,
-        INSTANT,
-      )),
-    };
-  }
-
-  async isVisibleOnMainPage(username: string): Promise<boolean> {
-    let results: Record<string, boolean> = {};
-
-    const settled = await this.waitUntil(async () => {
-      results = await this.readMainPageExpectations(username);
+      const results = { usernameMatches, teamsDropdownAbsent, rightOptionsAbsent };
+      logger.info({ pageContext: "main", ...results }, "Navbar expectations");
       return Object.values(results).every(Boolean);
-    }, SETTLE_TIMEOUT_MS);
-
-    logger.info({ pageContext: "main", ...results }, "Navbar expectations");
-    return settled;
+    } catch (thrown) {
+      logger.warn(
+        {
+          pageContext: "main",
+          url: await this.driver.getCurrentUrl().catch(() => "unknown"),
+          reason: String(thrown),
+        },
+        "Navbar expectations could not be read",
+      );
+      return false;
+    }
   }
 
   async areOrgDashboardElementsVisible(): Promise<boolean> {
@@ -115,6 +107,17 @@ export class NavBarFragment extends BaseComponent {
 
   async clickViewOrganizationButton(): Promise<void> {
     await this.click(this.secondaryBarLocators.viewOrganizationButton);
+  }
+
+  async getCurrentUsername(): Promise<string> {
+    return this.getAttribute(this.secondaryBarLocators.accountAvatar, "title");
+  }
+
+  async clickSignOut(): Promise<void> {
+    await this.clickAndWaitFor(this.secondaryBarLocators.accountDropdown, [
+      this.secondaryBarLocators.signOutLink,
+    ]);
+    await this.click(this.secondaryBarLocators.signOutLink);
   }
 
   async waitForElements(): Promise<boolean> {

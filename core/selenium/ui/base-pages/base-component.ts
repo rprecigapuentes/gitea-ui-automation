@@ -196,18 +196,6 @@ export abstract class BaseComponent implements Verifiable {
     return results.every(Boolean);
   }
 
-  // Reports instead of raising, unlike actAndWaitUntil, so a readiness check that compares several
-  // values can keep returning a boolean while retrying the whole comparison.
-  protected async waitUntil(
-    predicate: () => Promise<boolean>,
-    timeoutMs: number = DEFAULT_TIMEOUT_MS,
-  ): Promise<boolean> {
-    return this.driver.wait(predicate, timeoutMs).then(
-      () => true,
-      () => false,
-    );
-  }
-
   // Predicate-based counterpart to actAndWaitFor, for state a locator alone can't express.
   protected async actAndWaitUntil(
     action: () => Promise<void>,
@@ -269,6 +257,10 @@ export abstract class BaseComponent implements Verifiable {
       timeoutMs,
       `The browser never reached a URL matching ${urlPattern.toString()}`,
     );
+  }
+
+  async getCurrentUrl(): Promise<string> {
+    return this.driver.getCurrentUrl();
   }
 
   protected async typeAndWaitFor(
