@@ -210,7 +210,7 @@ Then("the repositories were created successfully", async function (this: GiteaWo
 When(
   "I add a file to each repository",
   // The commit's loader redirect can outlast Cucumber's default step timeout under load.
-  { timeout: 40000 },
+  { timeout: 20000 },
   async function (this: GiteaWorld) {
     const organizationName = this.scenarioState.organization!.name;
     const username = await this.pages.navBar.getCurrentUsername();
