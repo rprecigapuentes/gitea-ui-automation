@@ -41,6 +41,7 @@ function ownerClients(): {
 }
 
 // Clears leftovers before any scenario's Before hooks run.
+// Scoped to this token's own account, so parallel browsers can't collide.
 BeforeAll(async () => {
   const { organizations } = ownerClients();
   await organizations.deleteAllOrganizations();
