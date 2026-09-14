@@ -5,14 +5,14 @@
 
 ## 2. Wait for what the screen is actually doing
 
-- [ ] 2.1 Make `LoginPage.login()` wait for the navigation it triggers, through `clickAndWaitForUrl` with a pattern that matches the dashboard and not `/user/login`. Verify that a deliberately wrong password fails inside `login()` naming the URL it waited for, instead of failing later on a dashboard assertion.
-- [ ] 2.2 Rewrite `MainPage.hasExpectedElementsDisplayed()` to compare its three values inside a `waitUntil` predicate, and to log all three with what they resolved to when the wait expires. Same signature, same three checks, no call site touched. Verify the four call sites still typecheck and that the local suites stay green.
-- [ ] 2.3 Apply the same predicate wait to `NavBarFragment.isVisibleOnMainPage()`, which has the same read-once shape, keeping its existing log line. Verify the local suites stay green.
+- [x] 2.1 Make `LoginPage.login()` wait for the navigation it triggers, through `clickAndWaitForUrl` with a pattern that matches the dashboard and not `/user/login`. Verify that a deliberately wrong password fails inside `login()` naming the URL it waited for, instead of failing later on a dashboard assertion.
+- [x] 2.2 Rewrite `MainPage.hasExpectedElementsDisplayed()` to compare its three values inside a `waitUntil` predicate, and to log all three with what they resolved to when the wait expires. Same signature, same three checks, no call site touched. Verify the four call sites still typecheck and that the local suites stay green.
+- [x] 2.3 Apply the same predicate wait to `NavBarFragment.isVisibleOnMainPage()`, which has the same read-once shape, keeping its existing log line. Verify the local suites stay green.
 
 ## 3. Stop discarding the booleans
 
-- [ ] 3.1 Make `NavBarFragment.waitForElements()` resolve to a boolean instead of `Promise<void>`, and make its callers in `login.steps.ts` and `organizations.steps.ts` assert on it. Verify by reading each call site back: no call to a readiness wait may ignore its result.
-- [ ] 3.2 Assert the result of `hasExpectedElementsDisplayed()` at `login.steps.ts:14`, where the `Given` step currently computes it and throws it away, so the step passes on a dashboard that never rendered. Verify the scenario now fails at the `Given` rather than three steps later.
+- [x] 3.1 Make `NavBarFragment.waitForElements()` resolve to a boolean instead of `Promise<void>`, and make its callers in `login.steps.ts`, `organizations.steps.ts` and `organizations.test.ts` assert on it. The other `waitForElements` results discarded in `organizations.steps.ts` belong to the organization fragments and are left alone; they are the same defect in another owner's code. Verify by reading each call site back: no call to a readiness wait may ignore its result.
+- [x] 3.2 Assert the result of `hasExpectedElementsDisplayed()` at `login.steps.ts:14`, where the `Given` step currently computes it and throws it away, so the step passes on a dashboard that never rendered. Verify the scenario now fails at the `Given` rather than three steps later.
 
 ## 4. Give AT-ISS-02 back the round trips it wastes
 

@@ -2,6 +2,8 @@ import { By, WebDriver } from "selenium-webdriver";
 import { logger } from "@gitea-automation/core-logger/pino.logger";
 import { BaseComponent } from "@gitea-automation/core-selenium/ui/base-pages/base-component";
 
+const INSTANT = 0;
+
 export class NavBarFragment extends BaseComponent {
   private readonly navigationBarLocators = {
     // container for the main navigation bar
@@ -42,8 +44,8 @@ export class NavBarFragment extends BaseComponent {
     super(driver);
   }
 
-  async getCurrentOrganization(): Promise<string> {
-    return this.getText(this.secondaryBarLocators.organizationDropdown);
+  async getCurrentOrganization(timeoutMs?: number): Promise<string> {
+    return this.getText(this.secondaryBarLocators.organizationDropdown, this.driver, timeoutMs);
   }
 
   async clickNewOrganizationDropdownOption(): Promise<void> {
@@ -55,26 +57,48 @@ export class NavBarFragment extends BaseComponent {
     await this.clickAndWaitFor(this.secondaryBarLocators.organizationDropdown, readyLocators);
   }
 
-  // The base pair has to resolve before getCurrentOrganization() is safe to call (it reads a
-  // locator that only renders once the bar itself is up), so it short-circuits rather than
-  // joining the same Promise.all as the rest.
-  async isVisibleOnMainPage(username: string): Promise<boolean> {
-    if (!(await this.isVisible(this.baseLocators))) {
-      logger.info({ pageContext: "main" }, "Navbar not ready");
-      return false;
+  // The base pair has to resolve before the username read is safe (it reads a locator that only
+  // renders once the bar itself is up), so it short-circuits rather than joining the rest.
+  private async readMainPageExpectations(username: string): Promise<Record<string, boolean>> {
+    if (!(await this.isVisible(this.baseLocators, this.driver, INSTANT))) {
+      return {
+        navbarReady: false,
+        usernameMatches: false,
+        teamsDropdownAbsent: false,
+        rightOptionsAbsent: false,
+      };
     }
 
-    const [usernameMatches, teamsDropdownAbsent, rightOptionsAbsent] = await Promise.all([
-      this.getCurrentOrganization().then((text) => text === username),
-      this.isVisible(this.secondaryBarLocators.teamsDropdown, this.driver, 0).then((v) => !v),
-      this.isVisible(this.secondaryBarLocators.rightOptionsContainer, this.driver, 0).then(
-        (v) => !v,
-      ),
-    ]);
+    const usernameMatches = await this.getCurrentOrganization(INSTANT)
+      .then((text) => text === username)
+      .catch(() => false);
 
-    const results = { usernameMatches, teamsDropdownAbsent, rightOptionsAbsent };
+    return {
+      navbarReady: true,
+      usernameMatches,
+      teamsDropdownAbsent: !(await this.isVisible(
+        this.secondaryBarLocators.teamsDropdown,
+        this.driver,
+        INSTANT,
+      )),
+      rightOptionsAbsent: !(await this.isVisible(
+        this.secondaryBarLocators.rightOptionsContainer,
+        this.driver,
+        INSTANT,
+      )),
+    };
+  }
+
+  async isVisibleOnMainPage(username: string): Promise<boolean> {
+    let results: Record<string, boolean> = {};
+
+    const settled = await this.waitUntil(async () => {
+      results = await this.readMainPageExpectations(username);
+      return Object.values(results).every(Boolean);
+    });
+
     logger.info({ pageContext: "main", ...results }, "Navbar expectations");
-    return Object.values(results).every(Boolean);
+    return settled;
   }
 
   async areOrgDashboardElementsVisible(): Promise<boolean> {
@@ -90,9 +114,11 @@ export class NavBarFragment extends BaseComponent {
     await this.click(this.secondaryBarLocators.viewOrganizationButton);
   }
 
-  async waitForElements(): Promise<void> {
-    await this.isVisible(this.navigationBarLocators.navigationBarContainer);
-    await this.isVisible(this.secondaryBarLocators.secondaryBarContainer);
+  async waitForElements(): Promise<boolean> {
+    return this.isVisible([
+      this.navigationBarLocators.navigationBarContainer,
+      this.secondaryBarLocators.secondaryBarContainer,
+    ]);
   }
 
   async getDropdownOrganizationsList(): Promise<string[]> {

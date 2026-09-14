@@ -82,7 +82,7 @@ describe("Organization test", () => {
         await createOrganizationPage.enterOrganizationName(organizationToCreate.name);
         await createOrganizationPage.selectVisibility(organizationToCreate.visibility);
         await createOrganizationPage.clickCreateOrganizationButton();
-        await navBarFragment.waitForElements();
+        expect(await navBarFragment.waitForElements()).toBe(true);
         scenarioState.organization = organizationToCreate;
         expect(await navBarFragment.areOrgDashboardElementsVisible()).toBe(true);
         expect(await navBarFragment.getViewOrganizationButtonText()).toContain(

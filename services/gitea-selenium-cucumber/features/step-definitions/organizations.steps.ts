@@ -46,7 +46,7 @@ When("I create a new organization using:", async function (this: GiteaWorld, dat
   );
   this.scenarioState.organization = organization;
   await this.pages.organizationDashboardPage.waitForElements(this.scenarioState.organization);
-  await this.pages.navBar.waitForElements();
+  expect(await this.pages.navBar.waitForElements()).toBe(true);
   expect(await this.pages.navBar.areOrgDashboardElementsVisible()).toBe(true);
 });
 

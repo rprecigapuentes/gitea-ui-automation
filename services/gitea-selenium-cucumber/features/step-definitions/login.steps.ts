@@ -11,8 +11,8 @@ Given('I login with valid credentials as "owner"', async function (this: GiteaWo
   const { username, password } = resolveOwnerCredentials();
   await this.pages.loginPage.open();
   await this.pages.loginPage.login(username, password);
-  await this.pages.mainPage.hasExpectedElementsDisplayed();
-  await this.pages.navBar.waitForElements();
+  expect(await this.pages.mainPage.hasExpectedElementsDisplayed()).toBe(true);
+  expect(await this.pages.navBar.waitForElements()).toBe(true);
 });
 
 When("I log in with valid credentials", async function (this: GiteaWorld) {

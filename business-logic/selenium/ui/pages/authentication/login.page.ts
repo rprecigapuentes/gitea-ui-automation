@@ -17,9 +17,13 @@ export class LoginPage extends BasePage {
     super(driver);
   }
 
+  // A rejected login re-renders /user/login, so waiting for anything but the destination would
+  // let a failed sign-in pass as a slow one.
+  private readonly signedIn = /^https?:\/\/[^/]+\/(\?.*)?$/;
+
   async login(username: string, password: string): Promise<void> {
     await this.type(this.locators.usernameInput, username);
     await this.type(this.locators.passwordInput, password);
-    await this.click(this.locators.loginButton);
+    await this.clickAndWaitForUrl(this.locators.loginButton, this.signedIn);
   }
 }
