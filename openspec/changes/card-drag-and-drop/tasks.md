@@ -11,9 +11,9 @@
 
 ## 3. S2-ISS-01
 
-- [ ] 3.1 Add the scenario to `services/gitea-selenium-cucumber/features/scenarios/project-board.feature` under the existing `@project-board` tag: both seeded issues in the default column, one card dragged onto another column, and the reloaded board asserted on the card's new column, the issue count of both columns and the card left behind.
-- [ ] 3.2 Write its steps in `features/step-definitions/project-board.steps.ts`, generalising the existing `addFirstSeededIssueToProject` helper to add a seeded issue by index and adding the drag and the per-column assertions. Verify with `npm run test:cucumber -- --tags @project-board` passing on Chrome and on Firefox, and confirm on Firefox that the run took the fallback.
+- [x] 3.1 Add the scenario to `services/gitea-selenium-cucumber/features/scenarios/project-board.feature` under the existing `@project-board` tag: both seeded issues in the default column, one card dragged onto another column, and the reloaded board asserted on the card's new column, the issue count of both columns and the card left behind.
+- [x] 3.2 Write its steps in `features/step-definitions/project-board.steps.ts`, generalising the existing `addFirstSeededIssueToProject` helper to add a seeded issue by index and adding the drag and the per-column assertions. Verify with `npm run test:cucumber -- --tags @project-board` passing on Chrome and on Firefox, and confirm on Firefox that the run took the fallback.
 
 ## 4. Full gate
 
-- [ ] 4.1 Run `npm run format`, `npm run lint`, `npm run typecheck`, `npm run test:cucumber` and `npm test -w @gitea-automation/gitea-selenium-vitest`, and confirm `GET /api/v1/orgs` on the instance holds no organization left by the run.
+- [x] 4.1 Run `npm run format`, `npm run lint`, `npm run typecheck`, `npm run test:cucumber` and `npm test -w @gitea-automation/gitea-selenium-vitest`, and confirm `GET /api/v1/orgs` on the instance holds no organization left by the run.

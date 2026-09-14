@@ -81,6 +81,23 @@ export class ProjectBoardPage extends BasePage {
     return this.column(title).holdsIssue(issueId);
   }
 
+  async addColumn(title: string): Promise<void> {
+    await this.click(this.locators.newColumnButton);
+    // The modal is shared with column editing, so it can arrive holding another title.
+    await this.clearAndType(this.locators.columnModalTitle, title);
+    await this.click(this.locators.columnModalSave);
+  }
+
+  async makeColumnDefault(title: string): Promise<void> {
+    await this.column(title).clickSetAsDefault();
+    await this.click(this.locators.confirmButton);
+  }
+
+  async deleteColumn(title: string): Promise<void> {
+    await this.column(title).clickDelete();
+    await this.click(this.locators.confirmButton);
+  }
+
   /**
    * The gesture is performed first, because that is what a person does and it is the only path that
    * goes through the browser input stack. It completes on Chromium but not on Firefox, where the

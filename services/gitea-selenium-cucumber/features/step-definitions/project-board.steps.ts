@@ -23,23 +23,40 @@ function projectId(world: GiteaWorld): number {
   return project.id;
 }
 
-function firstSeededRepository(world: GiteaWorld): SeededRepository {
-  const [repository] = world.scenarioState.repositories ?? [];
+function seededRepositories(world: GiteaWorld): SeededRepository[] {
+  const repositories = world.scenarioState.repositories ?? [];
 
-  if (!repository) throw new Error("the scenario was not seeded with repositories");
+  if (repositories.length === 0) throw new Error("the scenario was not seeded with repositories");
+
+  return repositories;
+}
+
+function firstSeededRepository(world: GiteaWorld): SeededRepository {
+  return seededRepositories(world)[0];
+}
+
+function secondSeededRepository(world: GiteaWorld): SeededRepository {
+  const [, repository] = seededRepositories(world);
+
+  if (!repository) throw new Error("the scenario was seeded with a single repository");
 
   return repository;
 }
 
-async function addFirstSeededIssueToProject(world: GiteaWorld): Promise<void> {
-  const repository = firstSeededRepository(world);
-
+async function addSeededIssueToProject(
+  world: GiteaWorld,
+  repository: SeededRepository,
+): Promise<void> {
   await world.pages.issuePage.openFor(
     organizationName(world),
     repository.name,
     repository.issue.number,
   );
   await world.pages.issuePage.assignProject(projectId(world));
+}
+
+async function addFirstSeededIssueToProject(world: GiteaWorld): Promise<void> {
+  await addSeededIssueToProject(world, firstSeededRepository(world));
 }
 
 Given(
@@ -77,6 +94,15 @@ Given("the first seeded issue is in the default column", async function (this: G
 });
 
 Given(
+  "the seeded issues of both repositories are in the default column",
+  async function (this: GiteaWorld) {
+    for (const repository of seededRepositories(this)) {
+      await addSeededIssueToProject(this, repository);
+    }
+  },
+);
+
+Given(
   "the column {string} is made the default column",
   async function (this: GiteaWorld, title: string) {
     await this.pages.projectBoardPage.makeColumnDefault(title);
@@ -94,6 +120,15 @@ When("I add the first seeded issue to the project", async function (this: GiteaW
 When("I add the column {string} to the board", async function (this: GiteaWorld, title: string) {
   await this.pages.projectBoardPage.addColumn(title);
 });
+
+When(
+  "I drag the first seeded issue onto the column {string}",
+  async function (this: GiteaWorld, title: string) {
+    const { issue } = firstSeededRepository(this);
+
+    await this.pages.projectBoardPage.moveCard(issue.id, title);
+  },
+);
 
 When("I delete the column {string}", async function (this: GiteaWorld, title: string) {
   await this.pages.projectBoardPage.deleteColumn(title);
@@ -119,6 +154,28 @@ Then("the default column holds the first seeded issue", async function (this: Gi
 Then("the default column counts {int} issue(s)", async function (this: GiteaWorld, count: number) {
   expect(await this.pages.projectBoardPage.getDefaultColumnIssueCount()).toBe(count);
 });
+
+Then("the default column holds only the second seeded issue", async function (this: GiteaWorld) {
+  const { issue } = secondSeededRepository(this);
+
+  expect(await this.pages.projectBoardPage.getDefaultColumnCardIssueIds()).toEqual([issue.id]);
+});
+
+Then(
+  "the column {string} holds only the first seeded issue",
+  async function (this: GiteaWorld, title: string) {
+    const { issue } = firstSeededRepository(this);
+
+    expect(await this.pages.projectBoardPage.getColumnCardIssueIds(title)).toEqual([issue.id]);
+  },
+);
+
+Then(
+  "the column {string} counts {int} issue(s)",
+  async function (this: GiteaWorld, title: string, count: number) {
+    expect(await this.pages.projectBoardPage.getColumnIssueCount(title)).toBe(count);
+  },
+);
 
 Then("the board shows the column {string}", async function (this: GiteaWorld, title: string) {
   expect(await this.pages.projectBoardPage.isColumnVisible(title)).toBe(true);

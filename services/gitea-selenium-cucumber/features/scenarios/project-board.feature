@@ -26,6 +26,15 @@ Feature: Organization project board
     And I open the project board
     Then the board shows the column "Review"
 
+  Scenario: A card dragged onto another column is kept there by the board
+    Given the seeded issues of both repositories are in the default column
+    And I open the project board
+    When I drag the first seeded issue onto the column "In Progress"
+    Then the column "In Progress" holds only the first seeded issue
+    And the column "In Progress" counts 1 issue
+    And the default column holds only the second seeded issue
+    And the default column counts 1 issue
+
   Scenario: The default column cannot be deleted and takes in the cards of a deleted one
     Given the first seeded issue is in the default column
     And I open the project board
