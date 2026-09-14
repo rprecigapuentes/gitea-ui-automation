@@ -10,7 +10,6 @@ import { Organization } from "../../../../api/entities/organization.entity";
 
 export class OrganizationFacade extends BasePage {
   private readonly organization: Organization;
-  private currentUrl: string;
   private readonly navigation: OrgNavigationFragment;
   private readonly reposFragment: OrgRepositoriesFragment;
   private readonly teamsFragment: OrgTeamsFragment;
@@ -33,7 +32,6 @@ export class OrganizationFacade extends BasePage {
   ) {
     super(driver);
     this.organization = organization;
-    this.currentUrl = `${baseUrl}/${organization.name}`;
     this.navigation = navigation;
     this.reposFragment = reposFragment;
     this.teamsFragment = teamsFragment;
@@ -42,7 +40,7 @@ export class OrganizationFacade extends BasePage {
   }
 
   getUrl(): string {
-    return this.currentUrl;
+    return `${baseUrl}/${this.organization.name}`;
   }
 
   async waitForElements(): Promise<void> {
@@ -52,14 +50,12 @@ export class OrganizationFacade extends BasePage {
   async navigateToRepositoriesTab(): Promise<OrgRepositoriesFragment> {
     await this.navigation.navigateToTab(OrgTab.Repos);
     await this.reposFragment.waitForElements();
-    this.currentUrl = `${baseUrl}/${this.organization.name}`;
     return this.reposFragment;
   }
 
   async navigateToTeamsTab(): Promise<OrgTeamsFragment> {
     await this.navigation.navigateToTab(OrgTab.Teams);
     await this.teamsFragment.waitForElements();
-    this.currentUrl = `${baseUrl}/org/${this.organization.name}/teams`;
     return this.teamsFragment;
   }
 

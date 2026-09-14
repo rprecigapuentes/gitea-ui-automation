@@ -6,7 +6,7 @@ import { uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.u
 import { Team } from "@gitea-automation/business-logic-selenium/api/entities/team.entity";
 import { Repository } from "@gitea-automation/business-logic-selenium/api/entities/repository.entity";
 import { OrganizationClient } from "@gitea-automation/business-logic-selenium/api/clients/organizations.client";
-import { resolveOwnerCredentials, resolveOwnerToken } from "../support/credentials";
+import { resolveOwnerToken } from "../support/credentials";
 import { getSeededUser } from "../support/seeded-users";
 
 When(
@@ -213,7 +213,7 @@ When(
   { timeout: 40000 },
   async function (this: GiteaWorld) {
     const organizationName = this.scenarioState.organization!.name;
-    const { username } = resolveOwnerCredentials();
+    const username = await this.pages.navBar.getCurrentUsername();
     const [repository] = this.scenarioState.organization!.repositories!;
 
     await this.pages.orgRepositories.clickRepository(repository.name);
@@ -230,6 +230,9 @@ When(
     expect(await this.pages.repoFile.getFileName()).toBe(username);
     expect(await this.pages.repoFile.getFileContent()).toContain(username);
 
+    repository.files ??= [];
+    repository.files.push(username);
+
     await this.pages.repoNavBar.clickOrganizationLink();
     await this.pages.orgRepositories.waitForElements();
   },
@@ -243,7 +246,7 @@ Then("the file count for each repository is correct", async function (this: Gite
   await this.pages.repoNavBar.waitForElements();
   await this.pages.repoCodeTab.waitForElements(organizationName, repository.name);
 
-  expect(await this.pages.repoCodeTab.getFilesCount()).toBe(1);
+  expect(await this.pages.repoCodeTab.getFilesCount()).toBe(repository.files?.length ?? 0);
 
   await this.pages.repoNavBar.clickOrganizationLink();
   await this.pages.orgRepositories.waitForElements();
@@ -294,6 +297,8 @@ When(
   // The remove-modal fetch can outlast Cucumber's default step timeout under load.
   { timeout: 25000 },
   async function (this: GiteaWorld, dataTable: DataTable) {
+    await this.pages.orgFacade.navigateToTeamsTab();
+
     for (const row of dataTable.hashes()) {
       const user = getSeededUser(Number(row.user));
 

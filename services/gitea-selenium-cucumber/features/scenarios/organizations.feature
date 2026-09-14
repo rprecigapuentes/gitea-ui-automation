@@ -38,6 +38,14 @@ Feature: Organization
       | dev-team | monorepo   |
       | qa-team  | monorepo   |
     Then the repositories assigned to each team are correct
+    When I logout
+    And I login with valid credentials as user 1
+    And the seeded organization is open
+    And I add a file to each repository
+    Then the file count for each repository is correct
+    When I logout
+    And I login with valid credentials as "owner"
+    And the seeded organization is open
     When I remove the following team members:
       | user | team     |
       | 1    | dev-team |

@@ -11,6 +11,8 @@ export class RepoCodeTabFragment extends BaseComponent {
     codeTabContainer: By.css(".sixteen.wide.column.content"),
     filesContainer: By.css("#repo-files-table"),
     fileRow: By.css(".repo-file-item"),
+    // Once the repo has a file, "New File" moves from a direct link into this dropdown.
+    addFileDropdownButton: By.css(".repo-add-file"),
   };
 
   // The button's only real identifier is its href (/{org}/{repo}/_new/{branch}/) - its class
@@ -22,10 +24,29 @@ export class RepoCodeTabFragment extends BaseComponent {
   async waitForElements(organizationName: string, repositoryName: string): Promise<boolean> {
     this.organizationName = organizationName;
     this.repositoryName = repositoryName;
-    return this.isVisible([this.locators.codeTabContainer, this.newFileButtonLocator()]);
+
+    if (!(await this.isVisible(this.locators.codeTabContainer))) return false;
+
+    const directLinkVisible = await this.isVisible(this.newFileButtonLocator(), this.driver, 0);
+    const dropdownVisible = await this.isVisible(
+      this.locators.addFileDropdownButton,
+      this.driver,
+      0,
+    );
+    return directLinkVisible || dropdownVisible;
   }
 
   async clickNewFileButton(): Promise<void> {
+    const dropdownVisible = await this.isVisible(
+      this.locators.addFileDropdownButton,
+      this.driver,
+      0,
+    );
+    if (dropdownVisible) {
+      await this.clickAndWaitFor(this.locators.addFileDropdownButton, [
+        this.newFileButtonLocator(),
+      ]);
+    }
     await this.click(this.newFileButtonLocator());
   }
 

@@ -20,6 +20,9 @@ export class NavBarFragment extends BaseComponent {
     pullRequestsOption: By.css(".ui.secondary.stackable.menu a[href$='/pulls']"),
     milestonesOption: By.css(".ui.secondary.stackable.menu a[href$='/milestones']"),
     viewOrganizationButton: By.css(".basic.button"),
+    accountDropdown: By.css("[data-tooltip-content='Profile and Settings…']"),
+    accountAvatar: By.css("[data-tooltip-content='Profile and Settings…'] img.ui.avatar"),
+    signOutLink: By.css("a[href='/user/logout']"),
   };
 
   private readonly dropdownOrganizationLocators = {
@@ -88,6 +91,17 @@ export class NavBarFragment extends BaseComponent {
 
   async clickViewOrganizationButton(): Promise<void> {
     await this.click(this.secondaryBarLocators.viewOrganizationButton);
+  }
+
+  async getCurrentUsername(): Promise<string> {
+    return this.getAttribute(this.secondaryBarLocators.accountAvatar, "title");
+  }
+
+  async clickSignOut(): Promise<void> {
+    await this.clickAndWaitFor(this.secondaryBarLocators.accountDropdown, [
+      this.secondaryBarLocators.signOutLink,
+    ]);
+    await this.click(this.secondaryBarLocators.signOutLink);
   }
 
   async waitForElements(): Promise<void> {
