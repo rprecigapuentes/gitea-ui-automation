@@ -49,8 +49,7 @@ When("I navigate to the organization page", async function (this: GiteaWorld) {
 });
 
 When("I create the following teams:", async function (this: GiteaWorld, dataTable: DataTable) {
-  const organization = this.scenarioState.organization!;
-  organization.teams ??= [];
+  this.scenarioState.organization!.teams ??= [];
 
   for (const row of dataTable.hashes()) {
     const team: Team = {
@@ -73,6 +72,6 @@ When("I create the following teams:", async function (this: GiteaWorld, dataTabl
     await this.pages.orgSpecificTeam.waitForElements();
     await this.pages.orgNavigation.waitForElements();
 
-    organization.teams.push(team);
+    this.scenarioState.organization!.teams.push(team);
   }
 });
