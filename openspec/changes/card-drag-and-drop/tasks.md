@@ -6,8 +6,8 @@
 
 ## 2. Cards on the board
 
-- [ ] 2.1 Give `business-logic/selenium/ui/pages/projects/fragments/project-column.fragment.ts` the cards container of its column and the cards inside it, keeping the existing title-based and default-based roots untouched: a `getCardsLocator()` for the drop target, `getCardIssueIds()` reading `data-issue` off every card, and an instant `holdsIssueNow()`. Verify with `npm run lint` and by reading each locator once off a board created by hand.
-- [ ] 2.2 Add `moveCard(issueId, toColumnTitle)` to `business-logic/selenium/ui/pages/projects/project-board.page.ts`: the pointer gesture, then the board re-read and the card looked for under the target column, then the event sequence and a wait on the re-read board when the first answer is no. Add `getColumnIssueCount(title)` and `getColumnCardIssueIds(title)` delegating to the fragment. No call to the driver anywhere in the file. Verify with `npm run typecheck` and `npm run lint`.
+- [x] 2.1 Give `business-logic/selenium/ui/pages/projects/fragments/project-column.fragment.ts` the cards container of its column and the cards inside it, keeping the existing title-based and default-based roots untouched: a `getCardsLocator()` for the drop target, `getCardIssueIds()` reading `data-issue` off every card, and an instant `holdsIssueNow()`. Verify with `npm run lint` and by reading each locator once off a board created by hand.
+- [x] 2.2 Add `moveCard(issueId, toColumnTitle)` to `business-logic/selenium/ui/pages/projects/project-board.page.ts`: the pointer gesture, then the board re-read and the card looked for under the target column, then the event sequence and a wait on the re-read board when the first answer is no. Add `getColumnIssueCount(title)` and `getColumnCardIssueIds(title)` delegating to the fragment. No call to the driver anywhere in the file. Verify with `npm run typecheck` and `npm run lint`.
 
 ## 3. S2-ISS-01
 
