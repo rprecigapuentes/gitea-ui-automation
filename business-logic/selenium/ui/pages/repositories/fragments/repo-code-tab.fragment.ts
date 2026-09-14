@@ -9,6 +9,8 @@ export class RepoCodeTabFragment extends BaseComponent {
   private readonly locators = {
     // code tab container
     codeTabContainer: By.css(".sixteen.wide.column.content"),
+    filesContainer: By.css("#repo-files-table"),
+    fileRow: By.css(".repo-file-item"),
   };
 
   // The button's only real identifier is its href (/{org}/{repo}/_new/{branch}/) - its class
@@ -21,5 +23,15 @@ export class RepoCodeTabFragment extends BaseComponent {
     this.organizationName = organizationName;
     this.repositoryName = repositoryName;
     return this.isVisible([this.locators.codeTabContainer, this.newFileButtonLocator()]);
+  }
+
+  async clickNewFileButton(): Promise<void> {
+    await this.click(this.newFileButtonLocator());
+  }
+
+  async getFilesCount(): Promise<number> {
+    const container = await this.findElement(this.locators.filesContainer);
+    const rows = await this.findElements(this.locators.fileRow, container);
+    return rows.length;
   }
 }

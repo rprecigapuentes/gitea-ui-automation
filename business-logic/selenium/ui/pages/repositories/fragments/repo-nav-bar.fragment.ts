@@ -46,4 +46,9 @@ export class RepoNavBarFragment extends BaseComponent {
   async clickOrganizationLink(): Promise<void> {
     await this.click(this.locators.organizationLink);
   }
+
+  async navigateToTab(tab: RepoTab): Promise<void> {
+    await this.click(this.tabLocators[tab]);
+    this.currentTab = tab;
+  }
 }

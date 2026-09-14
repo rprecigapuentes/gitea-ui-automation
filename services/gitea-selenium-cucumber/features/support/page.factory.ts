@@ -16,6 +16,8 @@ import { NewTeamFragment } from "@gitea-automation/business-logic-selenium/ui/pa
 import { SpecificTeamFragment } from "@gitea-automation/business-logic-selenium/ui/pages/organizations/fragments/specific-team.fragment";
 import { RepoNavBarFragment } from "@gitea-automation/business-logic-selenium/ui/pages/repositories/fragments/repo-nav-bar.fragment";
 import { RepoCodeTabFragment } from "@gitea-automation/business-logic-selenium/ui/pages/repositories/fragments/repo-code-tab.fragment";
+import { CreateRepoFileFragment } from "@gitea-automation/business-logic-selenium/ui/pages/repositories/fragments/create-repo-file.fragment";
+import { RepoFileFragment } from "@gitea-automation/business-logic-selenium/ui/pages/repositories/fragments/repo-file.fragment";
 import { OrganizationFacade } from "@gitea-automation/business-logic-selenium/ui/pages/organizations/facade/organization.facade";
 import type { Organization } from "@gitea-automation/business-logic-selenium/api/entities/organization.entity";
 import type { ScenarioState } from "@gitea-automation/business-logic-selenium/state/scenario.entity";
@@ -38,6 +40,8 @@ export class PageFactory {
   #orgSpecificTeam?: SpecificTeamFragment;
   #repoNavBar?: RepoNavBarFragment;
   #repoCodeTab?: RepoCodeTabFragment;
+  #createRepoFile?: CreateRepoFileFragment;
+  #repoFile?: RepoFileFragment;
   #orgFacade?: OrganizationFacade;
 
   constructor(
@@ -118,6 +122,14 @@ export class PageFactory {
 
   get repoCodeTab(): RepoCodeTabFragment {
     return (this.#repoCodeTab ??= new RepoCodeTabFragment(this.driver));
+  }
+
+  get createRepoFile(): CreateRepoFileFragment {
+    return (this.#createRepoFile ??= new CreateRepoFileFragment(this.driver));
+  }
+
+  get repoFile(): RepoFileFragment {
+    return (this.#repoFile ??= new RepoFileFragment(this.driver));
   }
 
   get orgFacade(): OrganizationFacade {
