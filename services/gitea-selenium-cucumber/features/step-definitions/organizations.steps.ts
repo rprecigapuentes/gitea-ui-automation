@@ -7,54 +7,7 @@ import { Team } from "@gitea-automation/business-logic-selenium/api/entities/tea
 import { Repository } from "@gitea-automation/business-logic-selenium/api/entities/repository.entity";
 import { OrganizationClient } from "@gitea-automation/business-logic-selenium/api/clients/organizations.client";
 import { resolveOwnerToken } from "../support/credentials";
-import { getSeededUser, SeededUser } from "../support/seeded-users";
-
-async function addUserToTeam(world: GiteaWorld, user: SeededUser, teamName: string): Promise<void> {
-  await world.pages.orgFacade.navigateToSpecificTeam(teamName);
-  await world.pages.orgSpecificTeam.addMemberByUsername(user.username);
-  expect(await world.pages.orgSpecificTeam.hasMember(user.username)).toBe(true);
-
-  const team = world.scenarioState.organization!.teams!.find(
-    (candidate) => candidate.name === teamName,
-  );
-  team!.users ??= [];
-  team!.users.push(user.username);
-
-  await world.pages.orgFacade.navigateToTeamsTab();
-}
-
-async function addRepositoryToTeam(
-  world: GiteaWorld,
-  teamName: string,
-  repositoryName: string,
-): Promise<void> {
-  await world.pages.orgFacade.navigateToSpecificTeam(teamName);
-  await world.pages.orgSpecificTeam.navigateToRepositoriesTab();
-  await world.pages.orgSpecificTeam.addRepository(repositoryName);
-
-  const team = world.scenarioState.organization!.teams!.find(
-    (candidate) => candidate.name === teamName,
-  );
-  team!.repositories ??= [];
-  team!.repositories.push(repositoryName);
-
-  await world.pages.orgFacade.navigateToTeamsTab();
-}
-
-async function assertTeamRepositories(world: GiteaWorld, team: Team): Promise<void> {
-  await world.pages.orgFacade.navigateToSpecificTeam(team.name);
-  await world.pages.orgSpecificTeam.navigateToRepositoriesTab();
-
-  const assignedNames = await world.pages.orgSpecificTeam.getAssignedRepositoryNames();
-  const expectedRepositories = team.repositories ?? [];
-
-  for (const repository of expectedRepositories) {
-    expect(assignedNames).toContain(repository);
-  }
-  expect(assignedNames.length).toBe(expectedRepositories.length);
-
-  await world.pages.orgFacade.navigateToTeamsTab();
-}
+import { getSeededUser } from "../support/seeded-users";
 
 When(
   'I navigate to the "Create Organization" page by "organization dropdown" menu',
@@ -160,7 +113,19 @@ Then("the created teams are displayed in Teams page", async function (this: Gite
 
 When("I add the following team members:", async function (this: GiteaWorld, dataTable: DataTable) {
   for (const row of dataTable.hashes()) {
-    await addUserToTeam(this, getSeededUser(Number(row.user)), row.team);
+    const user = getSeededUser(Number(row.user));
+
+    await this.pages.orgFacade.navigateToSpecificTeam(row.team);
+    await this.pages.orgSpecificTeam.addMemberByUsername(user.username);
+    expect(await this.pages.orgSpecificTeam.hasMember(user.username)).toBe(true);
+
+    const team = this.scenarioState.organization!.teams!.find(
+      (candidate) => candidate.name === row.team,
+    );
+    team!.users ??= [];
+    team!.users.push(user.username);
+
+    await this.pages.orgFacade.navigateToTeamsTab();
   }
 });
 
@@ -241,15 +206,38 @@ When(
   "I add the following repositories to each team:",
   async function (this: GiteaWorld, dataTable: DataTable) {
     await this.pages.orgFacade.navigateToTeamsTab();
+
     for (const row of dataTable.hashes()) {
-      await addRepositoryToTeam(this, row.team, row.repository);
+      await this.pages.orgFacade.navigateToSpecificTeam(row.team);
+      await this.pages.orgSpecificTeam.navigateToRepositoriesTab();
+      await this.pages.orgSpecificTeam.addRepository(row.repository);
+
+      const team = this.scenarioState.organization!.teams!.find(
+        (candidate) => candidate.name === row.team,
+      );
+      team!.repositories ??= [];
+      team!.repositories.push(row.repository);
+
+      await this.pages.orgFacade.navigateToTeamsTab();
     }
   },
 );
 
 Then("the repositories assigned to each team are correct", async function (this: GiteaWorld) {
   await this.pages.orgFacade.navigateToTeamsTab();
+
   for (const team of this.scenarioState.organization!.teams ?? []) {
-    await assertTeamRepositories(this, team);
+    await this.pages.orgFacade.navigateToSpecificTeam(team.name);
+    await this.pages.orgSpecificTeam.navigateToRepositoriesTab();
+
+    const assignedNames = await this.pages.orgSpecificTeam.getAssignedRepositoryNames();
+    const expectedRepositories = team.repositories ?? [];
+
+    for (const repository of expectedRepositories) {
+      expect(assignedNames).toContain(repository);
+    }
+    expect(assignedNames.length).toBe(expectedRepositories.length);
+
+    await this.pages.orgFacade.navigateToTeamsTab();
   }
 });
