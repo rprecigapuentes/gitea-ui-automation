@@ -15,9 +15,9 @@ Feature: Organization
     Then I should see the organization created successfully
     When I navigate to the organization page
     And I create the following teams:
-      | name   | visibility | repoCodeAccess | createRepo |
-      | team-1 | private    | none           | true       |
-      | team-2 | private    | write          | true       |
+      | name     | visibility | repoCodeAccess | createRepo |
+      | dev-team | private    | none           | true       |
+      | qa-team  | private    | write          | true       |
 
   @smoke
   Scenario: Create Organization
