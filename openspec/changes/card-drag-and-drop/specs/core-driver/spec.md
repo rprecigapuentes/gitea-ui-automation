@@ -38,7 +38,7 @@ The framework SHALL offer a second way to perform the same drag, by dispatching 
 
 ### Requirement: A component verifies an interaction against the state the application kept
 
-A component whose interaction is saved by a request the application sends after it has already changed the screen SHALL verify that interaction against a re-read of the screen, and SHALL NOT report success from the state the interaction left behind. The base component SHALL offer re-reading the current screen and waiting for a condition, so that no page object calls the driver to do either.
+A component whose interaction is saved by a request the application sends after it has already changed the screen SHALL verify that interaction against a re-read of the screen, and SHALL NOT report success from the state the interaction left behind. The base component SHALL offer re-reading the current screen, so that no page object calls the driver to navigate. Waiting for that verification to become true is the base component's existing act-and-wait-for-a-predicate, which this change reuses rather than duplicates.
 
 #### Scenario: The screen changed before the application was asked
 
@@ -52,8 +52,8 @@ A component whose interaction is saved by a request the application sends after 
 - **THEN** it names the locators that prove the screen is back
 - **AND** the re-read completes only once every one of them is displayed
 
-#### Scenario: A component waits for a condition of its own
+#### Scenario: A component waits for the application to catch up
 
-- **WHEN** a component waits for a condition that no single locator expresses
-- **THEN** it supplies the condition and the message that names what never happened
-- **AND** the wait fails with that message rather than with a locator timeout
+- **WHEN** a component needs the verification to become true rather than to be true at once
+- **THEN** it expresses the retry as the act-and-wait-for-a-predicate the base component already offers
+- **AND** it does not add a second way of waiting for a predicate

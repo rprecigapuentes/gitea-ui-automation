@@ -34,7 +34,7 @@ See proposal.md - Why. What follows was verified against the instance under test
 
 **`reload` waits for locators the caller names.** It mirrors `open`: the caller says what proves the screen is back. A reload that returned as soon as the navigation settled would hand the next read a half-rendered board.
 
-**`waitUntil` takes a predicate and a message.** The persistence check is a poll over a condition, not over a locator, so no existing method fits. It is `protected`, because a scenario waiting on an arbitrary condition is a step doing page work.
+**The fallback is expressed as an action plus a predicate, on the method that already exists.** `BaseComponent.actAndWaitUntil` takes an action and a predicate, which is exactly the shape of the fallback: dispatch the drag, then wait until the re-read board holds the card. An earlier draft of this change added a second predicate wait of its own, carrying a failure message; it was removed, because two ways of waiting for a predicate in one class is the duplication the framework keeps closing. The cost is that the timeout now reads as a generic wait timeout rather than naming the card and the column, which the warning logged immediately before the fallback covers.
 
 **The scenario asserts both columns.** A card that appears in the target column proves half of a move. The issue count of the source column, the issue count of the target, and the id left behind in the default column are the other half, and they are the business-level assertions the trainer's review asked for over reading a single node off the DOM.
 

@@ -262,12 +262,4 @@ export abstract class BaseComponent implements Verifiable {
       readyLocators.map((locator) => this.findElement(locator, this.driver, timeoutMs)),
     );
   }
-
-  protected async waitUntil(
-    condition: () => Promise<boolean>,
-    message: string,
-    timeoutMs: number = DEFAULT_TIMEOUT_MS,
-  ): Promise<void> {
-    await this.driver.wait(condition, timeoutMs, message);
-  }
 }

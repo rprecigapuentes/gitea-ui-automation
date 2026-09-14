@@ -7,11 +7,11 @@ The board's result also cannot be read where the interaction happened. Its drag 
 ## What Changes
 
 - `BaseComponent` gains `dragAndDrop`, the pointer gesture, and `dispatchDragEvents`, the same drag as the events the page listens for, for an engine whose gesture never completes the drop.
-- `BaseComponent` gains `reload` and `waitUntil`, so a component re-reads a screen and waits without calling the driver.
+- `BaseComponent` gains `reload`, so a component re-reads a screen without calling the driver. Waiting for it to say yes reuses the predicate wait already there.
 - The event sequence lives in one file in the core, the only place that dispatches them.
 - The driver sizes its window, because a gesture cannot reach a point outside the viewport and a headless browser opens at 800x600.
 - `ProjectColumnFragment` exposes its cards: the container a card is dropped into, and the issue ids it holds.
-- `ProjectBoardPage` gains `moveCard(issueId, toColumnTitle)`: the gesture, the reloaded board, and the fallback when that board says the move was not kept.
+- `ProjectBoardPage` gains `moveCard(issueId, toColumnTitle)`: the gesture, the reloaded board, and the fallback when that board says it was not kept.
 - `project-board.feature` gains S2-ISS-01 and its steps, on the seeding the `@project-board` tag already provides.
 
 ### Out of scope
@@ -19,7 +19,7 @@ The board's result also cannot be read where the interaction happened. Its drag 
 - S2-SMK-ISS-06, the card moved from the issue sidebar: a different control and page object.
 - S2-SMK-ISS-07, the collaborator's own session: it needs a team client the API layer does not have.
 - Reordering cards, and moving columns: neither is an acceptance criterion.
-- Retrying a drag: a gesture that neither persisted nor fell back is a failure, not a flake.
+- Retrying a drag: one that neither persisted nor fell back is a failure, not a flake.
 
 ## Capabilities
 

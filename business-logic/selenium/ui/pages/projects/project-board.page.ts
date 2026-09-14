@@ -117,10 +117,9 @@ export class ProjectBoardPage extends BasePage {
       { issueId, column: toColumnTitle },
       "The drag gesture did not reach the server; dispatching the drag as its events",
     );
-    await this.dispatchDragEvents(this.locators.card(issueId), cards);
-    await this.waitUntil(
+    await this.actAndWaitUntil(
+      () => this.dispatchDragEvents(this.locators.card(issueId), cards),
       () => this.keptCardIn(toColumnTitle, issueId),
-      `The card of issue ${issueId} never reached the column "${toColumnTitle}"`,
       PERSISTED_TIMEOUT_MS,
     );
   }
