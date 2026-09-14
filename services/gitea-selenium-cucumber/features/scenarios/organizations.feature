@@ -29,14 +29,12 @@ Feature: Organization
     When I navigate to the repositories tab
     And I create the following repositories:
       | name     | visibility |
-      | frontend | true       |
-      | backend  | true       |
+      | monorepo | true       |
     Then the repositories were created successfully
     When I add the following repositories to each team:
       | team     | repository |
-      | dev-team | frontend   |
-      | qa-team  | frontend   |
-      | qa-team  | backend    |
+      | dev-team | monorepo   |
+      | qa-team  | monorepo   |
     Then the repositories assigned to each team are correct
 
   @smoke
