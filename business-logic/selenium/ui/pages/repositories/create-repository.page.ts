@@ -38,4 +38,8 @@ export class CreateRepositoryPage extends BasePage {
       await checkbox.click();
     }
   }
+
+  async clickCreateRepositoryButton(): Promise<void> {
+    await this.click(this.locators.createRepositoryButton);
+  }
 }

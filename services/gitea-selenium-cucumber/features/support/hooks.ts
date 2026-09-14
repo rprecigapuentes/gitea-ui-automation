@@ -98,6 +98,9 @@ After({ tags: CLEANUP_TAG }, async function (this: GiteaWorld) {
     for (const repository of this.scenarioState.repositories ?? []) {
       await repositories.deleteRepository(organization.name, repository.name);
     }
+    for (const repository of organization.repositories ?? []) {
+      await repositories.deleteRepository(organization.name, repository.name);
+    }
 
     await organizations.deleteOrganization(organization.name);
   } catch (error) {

@@ -30,6 +30,7 @@ Feature: Organization
     And I create the following repository:
       | name      | visibility |
       | test-repo | true       |
+    Then the created repository's title is correct
 
   @smoke
   Scenario: Create Organization
