@@ -6,7 +6,21 @@ import { uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.u
 import { Team } from "@gitea-automation/business-logic-selenium/api/entities/team.entity";
 import { OrganizationClient } from "@gitea-automation/business-logic-selenium/api/clients/organizations.client";
 import { resolveOwnerToken } from "../support/credentials";
-import { getSeededUser } from "../support/seeded-users";
+import { getSeededUser, SeededUser } from "../support/seeded-users";
+
+async function addUserToTeam(world: GiteaWorld, user: SeededUser, teamName: string): Promise<void> {
+  await world.pages.orgFacade.navigateToSpecificTeam(teamName);
+  await world.pages.orgSpecificTeam.addMemberByUsername(user.username);
+  expect(await world.pages.orgSpecificTeam.hasMember(user.username)).toBe(true);
+
+  const team = world.scenarioState.organization!.teams!.find(
+    (candidate) => candidate.name === teamName,
+  );
+  team!.users ??= [];
+  team!.users.push(user.username);
+
+  await world.pages.orgFacade.navigateToTeamsTab();
+}
 
 When(
   'I navigate to the "Create Organization" page by "organization dropdown" menu',
@@ -114,13 +128,13 @@ When("I add the first seeded user to every created team", async function (this: 
   const user = getSeededUser(1);
 
   for (const team of this.scenarioState.organization!.teams ?? []) {
-    await this.pages.orgFacade.navigateToSpecificTeam(team.name);
-    await this.pages.orgSpecificTeam.addMemberByUsername(user.username);
-    expect(await this.pages.orgSpecificTeam.hasMember(user.username)).toBe(true);
-
-    team.users ??= [];
-    team.users.push(user.username);
-
-    await this.pages.orgFacade.navigateToTeamsTab();
+    await addUserToTeam(this, user, team.name);
   }
 });
+
+When(
+  "I add the second seeded user to the {string} team",
+  async function (this: GiteaWorld, teamName: string) {
+    await addUserToTeam(this, getSeededUser(2), teamName);
+  },
+);

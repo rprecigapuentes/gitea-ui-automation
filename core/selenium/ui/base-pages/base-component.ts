@@ -125,6 +125,16 @@ export abstract class BaseComponent implements Verifiable {
     return results.every(Boolean);
   }
 
+  // For state a locator alone can't express (e.g. "this specific item is now in a list that
+  // already had others), letting the caller supply its own condition to poll.
+  protected async waitUntilTrue(
+    predicate: () => Promise<boolean>,
+    timeoutMs: number = DEFAULT_TIMEOUT_MS,
+    message?: string,
+  ): Promise<void> {
+    await this.driver.wait(predicate, timeoutMs, message);
+  }
+
   protected async actAndWaitFor(
     action: () => Promise<void>,
     readyLocators: By[],
