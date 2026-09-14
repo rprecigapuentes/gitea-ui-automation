@@ -49,7 +49,7 @@ export class SpecificTeamFragment extends BaseComponent {
 
   async waitUntilTeamDisplayed(teamName: string): Promise<void> {
     await this.findElement(this.locators.teamDetails);
-    await this.driver.wait(
+    await this.waitUntil(
       async () => (await this.getText(this.locators.teamName)) === teamName,
       5000,
     );
@@ -128,7 +128,7 @@ export class SpecificTeamFragment extends BaseComponent {
 
   async confirmRemoveTeamMember(): Promise<void> {
     await this.click(this.locators.confirmRemoveTeamMemberButton);
-    await this.driver.wait(() => this.isRemoveTeamMemberModalHidden(), 5000);
+    await this.waitUntil(() => this.isRemoveTeamMemberModalHidden(), 5000);
   }
 
   async isRemoveTeamMemberModalHidden(): Promise<boolean> {

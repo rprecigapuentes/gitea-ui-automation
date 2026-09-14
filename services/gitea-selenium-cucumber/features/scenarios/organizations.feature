@@ -31,6 +31,8 @@ Feature: Organization
       | name     | visibility |
       | monorepo | true       |
     Then the repositories were created successfully
+    When I add a file to each repository
+    Then the file count for each repository is correct
     When I add the following repositories to each team:
       | team     | repository |
       | dev-team | monorepo   |

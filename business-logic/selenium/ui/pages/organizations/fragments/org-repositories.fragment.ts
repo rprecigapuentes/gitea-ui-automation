@@ -91,6 +91,21 @@ export class OrgRepositoriesFragment extends BaseComponent {
     return Promise.all(items.map((item) => this.getText(this.locators.repositoryName, item)));
   }
 
+  async clickRepository(repositoryName: string): Promise<void> {
+    const container = await this.findElement(this.locators.repositoriesContainer);
+    const items = await this.findElements(this.locators.repositoryItem, container);
+    const names = await Promise.all(
+      items.map((item) => this.getText(this.locators.repositoryName, item)),
+    );
+    const index = names.indexOf(repositoryName);
+
+    if (index === -1) {
+      throw new Error(`Repository "${repositoryName}" was not found`);
+    }
+
+    await this.click(this.locators.repositoryName, items[index]);
+  }
+
   async searchRepository(repositoryName: string): Promise<void> {
     await this.type(this.locators.searchBar, repositoryName);
   }

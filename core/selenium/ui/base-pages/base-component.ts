@@ -125,6 +125,14 @@ export abstract class BaseComponent implements Verifiable {
     return results.every(Boolean);
   }
 
+  // For state a locator alone can't express (e.g. a button's disabled attribute).
+  protected async waitUntil(
+    predicate: () => Promise<boolean>,
+    timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  ): Promise<void> {
+    await this.driver.wait(predicate, timeoutMs);
+  }
+
   // Predicate-based counterpart to actAndWaitFor, for state a locator alone can't express.
   protected async actAndWaitUntil(
     action: () => Promise<void>,
@@ -132,7 +140,7 @@ export abstract class BaseComponent implements Verifiable {
     timeoutMs: number = DEFAULT_TIMEOUT_MS,
   ): Promise<void> {
     await action();
-    await this.driver.wait(predicate, timeoutMs);
+    await this.waitUntil(predicate, timeoutMs);
   }
 
   protected async clickAndWaitUntil(

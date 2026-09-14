@@ -11,9 +11,9 @@
 
 - `CreateRepoFileFragment` gains `fillFileName()` (waits for the commit button to enable), `fillFileContent()`, `clickCommitChangesButton()`.
 - `RepoFileFragment` gains `getFileName()`/`getFileContent()`; its `waitForElements()` gets a 15s budget for the post-commit loader.
-- `RepoCodeTabFragment` gains `clickNewFileButton()` and `getFilesCount()`. `RepoNavBarFragment` gains `navigateToTab()`.
-- `"I create the following repositories:"` now adds one file (named and filled with the owner's own username) to each repo right after creating it, asserts the file's name and content, then asserts the Code tab's file count - reusing the same per-repo loop, no new Gherkin step.
+- `RepoCodeTabFragment` gains `clickNewFileButton()` and `getFilesCount()`. `RepoNavBarFragment` gains `navigateToTab()`. `OrgRepositoriesFragment` gains `clickRepository()`, so a step can get back into an already-created repo from the org's repo list.
+- New `"I add a file to each repository"` (When) and `"the file count for each repository is correct"` (Then) steps, kept separate from `"I create the following repositories:"` rather than folded into it. `BaseComponent` gains `waitUntil()` so a fragment never has to call `this.driver.wait()` directly - also used to fix that same pattern in `specific-team.fragment.ts`, where it already existed.
 
 ## Impact
 
-`business-logic/selenium/ui/pages/repositories/fragments/create-repo-file.fragment.ts`, `repo-file.fragment.ts`, `repo-code-tab.fragment.ts`, `repo-nav-bar.fragment.ts`; `services/gitea-selenium-cucumber/features/support/page.factory.ts`, `features/step-definitions/organizations.steps.ts`.
+`core/selenium/ui/base-pages/base-component.ts`; `business-logic/selenium/ui/pages/repositories/fragments/create-repo-file.fragment.ts`, `repo-file.fragment.ts`, `repo-code-tab.fragment.ts`, `repo-nav-bar.fragment.ts`; `business-logic/selenium/ui/pages/organizations/fragments/org-repositories.fragment.ts`, `specific-team.fragment.ts`; `services/gitea-selenium-cucumber/features/support/page.factory.ts`, `features/step-definitions/organizations.steps.ts`, `features/scenarios/organizations.feature`.

@@ -6,7 +6,6 @@ import { uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.u
 import { Team } from "@gitea-automation/business-logic-selenium/api/entities/team.entity";
 import { Repository } from "@gitea-automation/business-logic-selenium/api/entities/repository.entity";
 import { OrganizationClient } from "@gitea-automation/business-logic-selenium/api/clients/organizations.client";
-import { RepoTab } from "@gitea-automation/business-logic-selenium/ui/pages/repositories/fragments/repo-nav-bar.fragment";
 import { resolveOwnerCredentials, resolveOwnerToken } from "../support/credentials";
 import { getSeededUser } from "../support/seeded-users";
 
@@ -164,12 +163,8 @@ When("I navigate to the repositories tab", async function (this: GiteaWorld) {
 
 When(
   "I create the following repositories:",
-  // Creating the repo, adding a file to it (its commit redirect has its own loader) and
-  // returning to the org can outlast Cucumber's default step timeout under load.
-  { timeout: 40000 },
   async function (this: GiteaWorld, dataTable: DataTable) {
     const organizationName = this.scenarioState.organization!.name;
-    const { username } = resolveOwnerCredentials();
     this.scenarioState.organization!.repositories ??= [];
 
     for (const row of dataTable.hashes()) {
@@ -192,20 +187,6 @@ When(
       expect(title).toContain(organizationName);
       expect(title).toContain(repository.name);
 
-      await this.pages.repoCodeTab.clickNewFileButton();
-      await this.pages.createRepoFile.waitForElements(organizationName, repository.name);
-      await this.pages.createRepoFile.fillFileName(username);
-      await this.pages.createRepoFile.fillFileContent(username);
-      await this.pages.createRepoFile.clickCommitChangesButton();
-
-      await this.pages.repoFile.waitForElements(organizationName, repository.name);
-      expect(await this.pages.repoFile.getFileName()).toBe(username);
-      expect(await this.pages.repoFile.getFileContent()).toContain(username);
-
-      await this.pages.repoNavBar.navigateToTab(RepoTab.Code);
-      await this.pages.repoCodeTab.waitForElements(organizationName, repository.name);
-      expect(await this.pages.repoCodeTab.getFilesCount()).toBe(1);
-
       await this.pages.repoNavBar.clickOrganizationLink();
       await this.pages.orgRepositories.waitForElements();
 
@@ -223,6 +204,50 @@ Then("the repositories were created successfully", async function (this: GiteaWo
   const repositoryNames = await this.pages.orgRepositories.getRepositoryNames();
   for (const repository of repositories) {
     expect(repositoryNames).toContain(repository.name);
+  }
+});
+
+When(
+  "I add a file to each repository",
+  // The commit's loader redirect can outlast Cucumber's default step timeout under load.
+  { timeout: 40000 },
+  async function (this: GiteaWorld) {
+    const organizationName = this.scenarioState.organization!.name;
+    const { username } = resolveOwnerCredentials();
+
+    for (const repository of this.scenarioState.organization!.repositories ?? []) {
+      await this.pages.orgRepositories.clickRepository(repository.name);
+      await this.pages.repoNavBar.waitForElements();
+      await this.pages.repoCodeTab.waitForElements(organizationName, repository.name);
+
+      await this.pages.repoCodeTab.clickNewFileButton();
+      await this.pages.createRepoFile.waitForElements(organizationName, repository.name);
+      await this.pages.createRepoFile.fillFileName(username);
+      await this.pages.createRepoFile.fillFileContent(username);
+      await this.pages.createRepoFile.clickCommitChangesButton();
+
+      await this.pages.repoFile.waitForElements(organizationName, repository.name);
+      expect(await this.pages.repoFile.getFileName()).toBe(username);
+      expect(await this.pages.repoFile.getFileContent()).toContain(username);
+
+      await this.pages.repoNavBar.clickOrganizationLink();
+      await this.pages.orgRepositories.waitForElements();
+    }
+  },
+);
+
+Then("the file count for each repository is correct", async function (this: GiteaWorld) {
+  const organizationName = this.scenarioState.organization!.name;
+
+  for (const repository of this.scenarioState.organization!.repositories ?? []) {
+    await this.pages.orgRepositories.clickRepository(repository.name);
+    await this.pages.repoNavBar.waitForElements();
+    await this.pages.repoCodeTab.waitForElements(organizationName, repository.name);
+
+    expect(await this.pages.repoCodeTab.getFilesCount()).toBe(1);
+
+    await this.pages.repoNavBar.clickOrganizationLink();
+    await this.pages.orgRepositories.waitForElements();
   }
 });
 

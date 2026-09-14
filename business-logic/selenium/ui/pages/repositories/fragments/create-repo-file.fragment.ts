@@ -27,7 +27,7 @@ export class CreateRepoFileFragment extends BaseComponent {
   // Disabled while the filename is empty; typing a name alone is enough to enable it.
   async fillFileName(name: string): Promise<void> {
     await this.type(this.locators.fileName, name);
-    await this.driver.wait(async () => !(await this.isCommitChangesDisabled()), 5000);
+    await this.waitUntil(async () => !(await this.isCommitChangesDisabled()));
   }
 
   async fillFileContent(content: string): Promise<void> {
