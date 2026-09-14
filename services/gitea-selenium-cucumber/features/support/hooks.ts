@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { Before, BeforeAll, After, setDefaultTimeout } from "@cucumber/cucumber";
+import { Before, BeforeAll, After, AfterAll, setDefaultTimeout } from "@cucumber/cucumber";
 import { DriverFactory } from "@gitea-automation/core-selenium/ui/drivers/driver.factory";
 import { OrganizationClient } from "@gitea-automation/business-logic-selenium/api/clients/organizations.client";
 import { RepositoryClient } from "@gitea-automation/business-logic-selenium/api/clients/repository.client";
@@ -11,6 +11,7 @@ import type {
 import { testDataName, uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.util";
 import { PageFactory } from "./page.factory";
 import { resolveOwnerToken } from "./credentials";
+import { createSeededUsers, deleteSeededUsers } from "./seeded-users";
 import type { GiteaWorld } from "./world";
 
 setDefaultTimeout(20000);
@@ -43,6 +44,11 @@ function ownerClients(): {
 BeforeAll(async () => {
   const { organizations } = ownerClients();
   await organizations.deleteAllOrganizations();
+  await createSeededUsers();
+});
+
+AfterAll(async () => {
+  await deleteSeededUsers();
 });
 
 Before(async function (this: GiteaWorld) {
