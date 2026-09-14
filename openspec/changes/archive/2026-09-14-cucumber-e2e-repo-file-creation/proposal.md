@@ -12,7 +12,7 @@
 - `CreateRepoFileFragment` gains `fillFileName()` (waits for the commit button to enable), `fillFileContent()`, `clickCommitChangesButton()`.
 - `RepoFileFragment` gains `getFileName()`/`getFileContent()`; its `waitForElements()` gets a 15s budget for the post-commit loader.
 - `RepoCodeTabFragment` gains `clickNewFileButton()` and `getFilesCount()`. `RepoNavBarFragment` gains `navigateToTab()`. `OrgRepositoriesFragment` gains `clickRepository()`, so a step can get back into an already-created repo from the org's repo list.
-- New `"I add a file to each repository"` (When) and `"the file count for each repository is correct"` (Then) steps, kept separate from `"I create the following repositories:"` rather than folded into it. `BaseComponent` gains `waitUntil()` so a fragment never has to call `this.driver.wait()` directly - also used to fix that same pattern in `specific-team.fragment.ts`, where it already existed.
+- New `"I add a file to each repository"` (When) and `"the file count for each repository is correct"` (Then) steps, kept separate from `"I create the following repositories:"` rather than folded into it - each acts on `organization.repositories`' one entry directly, no loop. Fragments never call `this.driver.wait()` directly: `CreateRepoFileFragment.fillFileName()` and `specific-team.fragment.ts`'s `waitUntilTeamDisplayed()`/`confirmRemoveTeamMember()` use the existing `actAndWaitUntil()`/`clickAndWaitUntil()` instead - no new `BaseComponent` primitive needed once the preceding action was expressed properly.
 
 ## Impact
 
