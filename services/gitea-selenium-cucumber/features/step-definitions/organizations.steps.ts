@@ -197,4 +197,9 @@ Then("the repositories were created successfully", async function (this: GiteaWo
   expect(await this.pages.orgRepositories.getOwnersRepositoriesCount()).toBe(
     String(repositories.length),
   );
+
+  const repositoryNames = await this.pages.orgRepositories.getRepositoryNames();
+  for (const repository of repositories) {
+    expect(repositoryNames).toContain(repository.name);
+  }
 });

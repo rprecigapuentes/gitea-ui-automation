@@ -21,6 +21,9 @@ export class OrgRepositoriesFragment extends BaseComponent {
     newTeamButton: By.css("a[href$='/teams/new']"),
     newRepositoryButton: By.css("a[href*='/repo/create?org=']"),
     newMigrationButton: By.css("a[href*='/repo/migrate?org=']"),
+    repositoriesContainer: By.css(".flex-divided-list.items-with-main"),
+    repositoryItem: By.css(".item"),
+    repositoryName: By.css(".item-title a.name"),
   };
 
   async areOwnerElementsVisible(): Promise<boolean> {
@@ -80,6 +83,12 @@ export class OrgRepositoriesFragment extends BaseComponent {
 
   async clickNewRepositoryButton(): Promise<void> {
     await this.click(this.locators.newRepositoryButton);
+  }
+
+  async getRepositoryNames(): Promise<string[]> {
+    const container = await this.findElement(this.locators.repositoriesContainer);
+    const items = await this.findElements(this.locators.repositoryItem, container);
+    return Promise.all(items.map((item) => this.getText(this.locators.repositoryName, item)));
   }
 
   async searchRepository(repositoryName: string): Promise<void> {

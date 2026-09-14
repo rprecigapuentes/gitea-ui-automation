@@ -34,6 +34,16 @@ Feature: Organization
     Then the repositories were created successfully
 
   @smoke
+  Scenario: Create a repository for an existing organization
+    Given I login with valid credentials as "owner"
+    And an organization already exists
+    When I navigate to the repositories tab
+    And I create the following repositories:
+      | name     | visibility |
+      | frontend | true       |
+    Then the repositories were created successfully
+
+  @smoke
   Scenario: Create Organization
     Given I login with valid credentials as "owner"
     When I navigate to the "Create Organization" page by "organization dropdown" menu
