@@ -85,8 +85,6 @@ Feature: Organization
     When I logout
     And I login with valid credentials as user 2
     Then the organization is no longer accessible
-    When I logout
-    And I login with valid credentials as "owner"
 
   @smoke
   Scenario: Create a repository for an existing organization
