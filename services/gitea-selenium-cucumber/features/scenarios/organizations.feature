@@ -50,6 +50,17 @@ Feature: Organization
     Then the repositories were created successfully
 
   @smoke
+  Scenario: Add a repository to a team
+    Given I login with valid credentials as "owner"
+    And an organization already exists
+    And a team named "team-1" already exists
+    And a repository named "frontend" already exists
+    When I add the following repositories to each team:
+      | team   | repository |
+      | team-1 | frontend   |
+    Then the repositories assigned to each team are correct
+
+  @smoke
   Scenario: Create Organization
     Given I login with valid credentials as "owner"
     When I navigate to the "Create Organization" page by "organization dropdown" menu
