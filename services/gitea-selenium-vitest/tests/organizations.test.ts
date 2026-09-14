@@ -269,7 +269,9 @@ describe("Organization test", () => {
         expect(await organizationPages.specificTeam().getMembersCount()).toBe("1");
         expect(await organizationPages.specificTeam().hasNoEmptyMembersMessage()).toBe(true);
         expect(await organizationPages.specificTeam().hasMember(invited.username)).toBe(true);
-        expect(await organizationPages.specificTeam().hasRemoveTeamMemberButton()).toBe(true);
+        expect(
+          await organizationPages.specificTeam().hasRemoveTeamMemberButton(invited.username),
+        ).toBe(true);
         expect(await organizationPages.navigation().getTabCount(OrgTab.Members)).toBe("2");
       });
 
@@ -309,8 +311,10 @@ describe("Organization test", () => {
         await organizationPages.orgFacade().navigateToSpecificTeam(scenarioState.team1!.name);
         expect(await organizationPages.specificTeam().getMembersCount()).toBe("1");
         expect(await organizationPages.specificTeam().hasMember(invited.username)).toBe(true);
-        expect(await organizationPages.specificTeam().hasRemoveTeamMemberButton()).toBe(true);
-        await organizationPages.specificTeam().clickRemoveTeamMemberButton();
+        expect(
+          await organizationPages.specificTeam().hasRemoveTeamMemberButton(invited.username),
+        ).toBe(true);
+        await organizationPages.specificTeam().clickRemoveTeamMemberButton(invited.username);
         expect(await organizationPages.specificTeam().isRemoveTeamMemberModalDisplayed()).toBe(
           true,
         );

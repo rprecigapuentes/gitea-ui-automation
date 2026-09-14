@@ -134,6 +134,31 @@ When("I add the following team members:", async function (this: GiteaWorld, data
   }
 });
 
+When(
+  "I remove the following team members:",
+  // The remove-modal fetch can outlast Cucumber's default step timeout under load.
+  { timeout: 25000 },
+  async function (this: GiteaWorld, dataTable: DataTable) {
+    for (const row of dataTable.hashes()) {
+      const user = getSeededUser(Number(row.user));
+
+      await this.pages.orgFacade.navigateToSpecificTeam(row.team);
+      expect(await this.pages.orgSpecificTeam.hasRemoveTeamMemberButton(user.username)).toBe(true);
+      await this.pages.orgSpecificTeam.clickRemoveTeamMemberButton(user.username);
+      expect(await this.pages.orgSpecificTeam.isRemoveTeamMemberModalDisplayed()).toBe(true);
+      await this.pages.orgSpecificTeam.confirmRemoveTeamMember();
+      expect(await this.pages.orgSpecificTeam.isRemoveTeamMemberModalHidden()).toBe(true);
+
+      const team = this.scenarioState.organization!.teams!.find(
+        (candidate) => candidate.name === row.team,
+      );
+      team!.users = team!.users?.filter((username) => username !== user.username) ?? [];
+
+      await this.pages.orgFacade.navigateToTeamsTab();
+    }
+  },
+);
+
 Then("the member count for each created team is correct", async function (this: GiteaWorld) {
   await this.pages.orgFacade.navigateToTeamsTab();
 

@@ -33,7 +33,10 @@ export class SpecificTeamFragment extends BaseComponent {
     // Empty and populated states of the team members list.
     emptyMembersMessage: By.css(".flex-divided-list .tw-text-text-light.tw-italic"),
     teamMemberUsernames: By.css(".flex-divided-list .item-title a.text.muted"),
-    removeTeamMemberButton: By.css("button[data-modal='#remove-team-member']"),
+    // Scoped by data-modal-name - every row's remove button shares the same data-modal id,
+    // so an unscoped selector matches every member once a team has more than one.
+    removeTeamMemberButton: (username: string) =>
+      By.css(`button[data-modal='#remove-team-member'][data-modal-name='${username}']`),
     // Confirmation modal shown when removing a team member.
     removeTeamMemberModal: By.css("#remove-team-member"),
     removeTeamMemberModalTitle: By.css("#remove-team-member .header"),
@@ -95,18 +98,20 @@ export class SpecificTeamFragment extends BaseComponent {
     return displayedUsernames.includes(username);
   }
 
-  async hasRemoveTeamMemberButton(): Promise<boolean> {
-    return this.isVisible(this.locators.removeTeamMemberButton);
+  async hasRemoveTeamMemberButton(username: string): Promise<boolean> {
+    return this.isVisible(this.locators.removeTeamMemberButton(username));
   }
 
-  async clickRemoveTeamMemberButton(): Promise<void> {
-    // The modal's fade-in animation can outlast the default wait when the machine is busy
-    // running other browsers, so it gets a more generous budget.
+  async clickRemoveTeamMemberButton(username: string): Promise<void> {
+    // The button fetches the modal's content over AJAX before showing it, so its reveal can
+    // outlast the default wait when the server or the machine is busy - confirmed live: the
+    // modal was already visible moments after a 10s wait had timed out. Edge specifically can
+    // still miss this locator regardless of the budget - see the flaky-locators diagnosis.
     await this.clickAndWaitFor(
-      this.locators.removeTeamMemberButton,
+      this.locators.removeTeamMemberButton(username),
       [this.locators.removeTeamMemberModal],
       this.driver,
-      10000,
+      15000,
     );
   }
 
