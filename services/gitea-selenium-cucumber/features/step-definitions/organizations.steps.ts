@@ -3,6 +3,7 @@ import { expect } from "vitest";
 import type { GiteaWorld } from "../support/world";
 import { Organization } from "@gitea-automation/business-logic-selenium/api/entities/organization.entity";
 import { uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.util";
+import { Team } from "@gitea-automation/business-logic-selenium/api/entities/team.entity";
 
 When(
   'I navigate to the "Create Organization" page by "organization dropdown" menu',
@@ -45,4 +46,33 @@ When("I navigate to the organization page", async function (this: GiteaWorld) {
   await this.pages.navBar.clickViewOrganizationButton();
   expect(await this.pages.orgRepositories.areOwnerElementsVisible()).toBe(true);
   expect(await this.pages.orgNavigation.areOwnerElementsVisible()).toBe(true);
+});
+
+When("I create the following teams:", async function (this: GiteaWorld, dataTable: DataTable) {
+  const organization = this.scenarioState.organization!;
+  organization.teams ??= [];
+
+  for (const row of dataTable.hashes()) {
+    const team: Team = {
+      name: row.name,
+      visibility: row.visibility as Team["visibility"],
+      repoCodeAccess: row.repoCodeAccess as Team["repoCodeAccess"],
+      createRepositories: row.createRepo === "true",
+      permissions: "general",
+    };
+
+    await this.pages.orgFacade.navigateToTeamsTab();
+    await this.pages.orgTeams.clickNewTeamButton();
+    await this.pages.orgNewTeam.waitForElements();
+    await this.pages.orgNewTeam.createTeam(
+      team.name,
+      team.visibility,
+      team.repoCodeAccess ?? "none",
+      team.createRepositories,
+    );
+    await this.pages.orgSpecificTeam.waitForElements();
+    await this.pages.orgNavigation.waitForElements();
+
+    organization.teams.push(team);
+  }
 });
