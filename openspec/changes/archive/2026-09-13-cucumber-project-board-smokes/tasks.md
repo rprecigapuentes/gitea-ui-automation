@@ -16,13 +16,13 @@
 ## 3. S2-SMK-ISS-01 and S2-SMK-ISS-02
 
 - [x] 3.1 Create `services/gitea-selenium-cucumber/features/scenarios/project-board.feature` tagged `@project-board`, with a Background that states the seeded organization, repositories and issues and a `Given` that creates the project from the Basic Kanban template, plus the two scenarios: the board shows the template's four columns with the default one marked, and an issue added to the project lands in the default column.
-- [ ] 3.2 Write the matching steps in `services/gitea-selenium-cucumber/features/step-definitions/project-board.steps.ts`, assigning the issue to the project through `SidebarComboFragment.byField(driver, "project_ids")` on the issue page, and re-opening the board before every assertion. Verify with `npm run test:cucumber -- --tags @project-board` passing on Chrome.
+- [x] 3.2 Write the matching steps in `services/gitea-selenium-cucumber/features/step-definitions/project-board.steps.ts`, assigning the issue to the project through `SidebarComboFragment.byField(driver, "project_ids")` on the issue page, and re-opening the board before every assertion. Verify with `npm run test:cucumber -- --tags @project-board` passing on Chrome.
 
 ## 4. S2-SMK-ISS-03 and S2-SMK-ISS-04
 
 - [x] 4.1 Add the two scenarios to the feature: a column created through the modal appears on the reloaded board, and the default column offers no deletion while deleting another column returns its cards to the default one. The card reaches a non-default column by making To Do the default after the issue has landed in Backlog, since moving a card is out of scope (see design.md).
-- [ ] 4.2 Write their steps. The absence of the delete item is `isVisible(locator, root, 0)` negated and is evaluated only after the column's menu is confirmed open, never inside the same `Promise.all` as the presence checks. Verify with `npm run test:cucumber -- --tags @project-board` passing on Chrome.
+- [x] 4.2 Write their steps. The absence of the delete item is `isVisible(locator, root, 0)` negated and is evaluated only after the column's menu is confirmed open, never inside the same `Promise.all` as the presence checks. Verify with `npm run test:cucumber -- --tags @project-board` passing on Chrome.
 
 ## 5. Full gate
 
-- [ ] 5.1 Run `npm run format`, `npm run lint`, `npm run typecheck` and both suites (`npm test -w @gitea-automation/gitea-selenium-vitest`, `npm run test:cucumber`), and confirm `GET /api/v1/orgs` on the instance holds no organization left by the run.
+- [x] 5.1 Run `npm run format`, `npm run lint`, `npm run typecheck` and both suites (`npm test -w @gitea-automation/gitea-selenium-vitest`, `npm run test:cucumber`), and confirm `GET /api/v1/orgs` on the instance holds no organization left by the run.

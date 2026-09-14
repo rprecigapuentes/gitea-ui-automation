@@ -12,7 +12,9 @@ export class ProjectColumnFragment extends BaseComponent {
     editItem: By;
     setDefaultItem: By;
     deleteItem: By;
+    cards: By;
     card: (issueId: number) => By;
+    anyCard: By;
   };
 
   private constructor(driver: WebDriver, root: string) {
@@ -26,7 +28,10 @@ export class ProjectColumnFragment extends BaseComponent {
       setDefaultItem: By.css(`${root} .menu a.link-action[data-url$="/default"]`),
       // The set-default item beside it is a link-action too; the method is what tells them apart.
       deleteItem: By.css(`${root} .menu a.link-action[data-fetch-method="DELETE"]`),
+      // A card is dropped into the list, not onto the column: the column root is outside it.
+      cards: By.css(`${root} .cards`),
       card: (issueId: number) => By.css(`${root} .issue-card[data-issue="${issueId}"]`),
+      anyCard: By.css(`${root} .cards .issue-card`),
     };
   }
 
@@ -65,6 +70,25 @@ export class ProjectColumnFragment extends BaseComponent {
 
   async holdsIssue(issueId: number): Promise<boolean> {
     return this.isVisible(this.locators.card(issueId));
+  }
+
+  /** Instant check, for a caller reading a board it has just re-read. */
+  async holdsIssueNow(issueId: number): Promise<boolean> {
+    return this.isVisible(this.locators.card(issueId), this.driver, INSTANT);
+  }
+
+  /** The drop target of a drag, handed out as a locator so the drag resolves it when it runs. */
+  getCardsLocator(): By {
+    return this.locators.cards;
+  }
+
+  async getCardIssueIds(): Promise<number[]> {
+    // An empty column has no card to find, which is an answer rather than a failure.
+    const cards = await this.findElements(this.locators.anyCard, this.driver, INSTANT).catch(
+      () => [],
+    );
+
+    return Promise.all(cards.map(async (card) => Number(await card.getAttribute("data-issue"))));
   }
 
   async offersDelete(): Promise<boolean> {

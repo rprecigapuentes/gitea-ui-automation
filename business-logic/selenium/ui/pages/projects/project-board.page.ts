@@ -1,9 +1,11 @@
 import { By } from "selenium-webdriver";
 import { BasePage } from "@gitea-automation/core-selenium/ui/base-pages/base.page";
 import { baseUrl } from "@gitea-automation/core-config/gitea.config";
+import { logger } from "@gitea-automation/core-logger/pino.logger";
 import { ProjectColumnFragment } from "./fragments/project-column.fragment";
 
 const board = "#project-board";
+const PERSISTED_TIMEOUT_MS = 10000;
 
 export class ProjectBoardPage extends BasePage {
   private readonly locators = {
@@ -15,6 +17,7 @@ export class ProjectBoardPage extends BasePage {
     columnModalSave: By.css("#project-column-modal-edit .project-column-button-save"),
     // Gitea builds this modal on demand for a link-action.
     confirmButton: By.css(".g-modal-confirm.modal .ui.primary.ok.button"),
+    card: (issueId: number) => By.css(`${board} .issue-card[data-issue="${issueId}"]`),
   };
 
   override getUrl(owner: string, projectId: number): string {
@@ -51,6 +54,18 @@ export class ProjectBoardPage extends BasePage {
     return ProjectColumnFragment.default(this.driver).getIssueCount();
   }
 
+  async getColumnIssueCount(title: string): Promise<number> {
+    return this.column(title).getIssueCount();
+  }
+
+  async getDefaultColumnCardIssueIds(): Promise<number[]> {
+    return ProjectColumnFragment.default(this.driver).getCardIssueIds();
+  }
+
+  async getColumnCardIssueIds(title: string): Promise<number[]> {
+    return this.column(title).getCardIssueIds();
+  }
+
   // A column that has not rendered looks exactly like one that is gone, so the board comes first.
   async boardHidesColumn(title: string): Promise<boolean> {
     if (!(await this.isBoardVisible())) return false;
@@ -81,6 +96,36 @@ export class ProjectBoardPage extends BasePage {
   async deleteColumn(title: string): Promise<void> {
     await this.column(title).clickDelete();
     await this.click(this.locators.confirmButton);
+  }
+
+  /**
+   * The gesture goes first, as the only path through the browser input stack. On Firefox it
+   * completes without reaching the server, so what decides is not where the card sits but whether a
+   * reloaded board still holds it.
+   */
+  async moveCard(issueId: number, toColumnTitle: string): Promise<void> {
+    const cards = this.column(toColumnTitle).getCardsLocator();
+
+    await this.dragAndDrop(this.locators.card(issueId), cards);
+
+    if (await this.keptCardIn(toColumnTitle, issueId)) return;
+
+    logger.warn(
+      { issueId, column: toColumnTitle },
+      "The drag gesture did not reach the server; dispatching the drag as its events",
+    );
+    await this.actAndWaitUntil(
+      () => this.dispatchDragEvents(this.locators.card(issueId), cards),
+      () => this.keptCardIn(toColumnTitle, issueId),
+      PERSISTED_TIMEOUT_MS,
+    );
+  }
+
+  /** Reads the board again, so the answer is the state Gitea kept and not the one the drop left. */
+  private async keptCardIn(title: string, issueId: number): Promise<boolean> {
+    await this.reload([this.locators.board]);
+
+    return this.column(title).holdsIssueNow(issueId);
   }
 
   private column(title: string): ProjectColumnFragment {
