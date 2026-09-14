@@ -4,7 +4,7 @@
 
 ## 2. `Organization` gains an optional `teams` list
 
-- [ ] 2.1 In `business-logic/selenium/api/entities/organization.entity.ts`, add `teams?: Team[]` (import `Team` from `./team.entity`). Verify with `npm run typecheck` (root).
+- [x] 2.1 In `business-logic/selenium/api/entities/organization.entity.ts`, added `teams?: Team[]` (imported `Team` from `./team.entity`). Verified with `npm run typecheck` (root) and `npx eslint` on the file, both clean.
 
 ## 3. Loop the team-creation step, folding in the Teams-tab click
 
