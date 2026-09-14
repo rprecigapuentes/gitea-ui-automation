@@ -12,7 +12,7 @@
 
 ## 4. A `@smoke` scenario for team creation alone
 
-- [ ] 4.1 Add a `Given` step (wording TBD at implementation) that seeds an organization through `OrganizationClient.createOrganization`, sets `scenarioState.organization`, then opens it with `this.pages.orgFacade.open()` + `this.pages.orgFacade.waitForElements()`. Add a `Then` step asserting `this.pages.orgSpecificTeam.waitForElements()` is `true`. Add the `@smoke`-tagged scenario itself to `organizations.feature`: login, the new `Given`, `When I create the following teams:` with a small table, `Then` the new assertion. Verify with `npm run typecheck -w @gitea-automation/gitea-selenium-cucumber`, `npx cucumber-js --dry-run --tags "@smoke"`, and a real run confirming it passes and the org is cleaned up afterward (`@cleanup` tag already on the feature).
+- [x] 4.1 Added `Given("an organization already exists", ...)` in `organizations.steps.ts`, seeding through `OrganizationClient.createOrganization` (token via `resolveOwnerToken()`), setting `scenarioState.organization`, then `this.pages.orgFacade.open()` + `waitForElements()`. Added `Then("the created team's page is displayed", ...)` asserting `orgSpecificTeam.waitForElements()` is `true`. Added the `@smoke`-tagged "Create teams for an existing organization" scenario to `organizations.feature`: login, the new `Given`, one-row `When I create the following teams:`, the new `Then`. Verified: `npm run typecheck -w @gitea-automation/gitea-selenium-cucumber` and `npx eslint` on the edited file both clean; `--dry-run --tags "@smoke"` matched 2 scenarios / 8 steps, none undefined; a real run of `--tags "@smoke"` passed 2/2, and `--tags "@organizations"` (all three scenarios) passed 3 scenarios / 14 steps.
 
 ## 5. Full verification
 

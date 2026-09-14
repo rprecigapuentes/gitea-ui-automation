@@ -1,9 +1,11 @@
-import { When, Then, DataTable } from "@cucumber/cucumber";
+import { Given, When, Then, DataTable } from "@cucumber/cucumber";
 import { expect } from "vitest";
 import type { GiteaWorld } from "../support/world";
 import { Organization } from "@gitea-automation/business-logic-selenium/api/entities/organization.entity";
 import { uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.util";
 import { Team } from "@gitea-automation/business-logic-selenium/api/entities/team.entity";
+import { OrganizationClient } from "@gitea-automation/business-logic-selenium/api/clients/organizations.client";
+import { resolveOwnerToken } from "../support/credentials";
 
 When(
   'I navigate to the "Create Organization" page by "organization dropdown" menu',
@@ -42,6 +44,22 @@ Then("I should see the organization created successfully", async function (this:
   expect(currentOrganizationDashboard).toBe(this.scenarioState.organization!.name);
 });
 
+Given("an organization already exists", async function (this: GiteaWorld) {
+  const organizationClient = new OrganizationClient(
+    process.env.GITEA_BASE_URL!,
+    resolveOwnerToken(),
+  );
+  const organization: Organization = {
+    name: `test-org-${process.env.BROWSER ?? "local"}-${uniqueSuffix()}`,
+    visibility: "public",
+  };
+
+  await organizationClient.createOrganization(organization.name, organization.visibility);
+  this.scenarioState.organization = organization;
+  await this.pages.orgFacade.open();
+  await this.pages.orgFacade.waitForElements();
+});
+
 When("I navigate to the organization page", async function (this: GiteaWorld) {
   await this.pages.navBar.clickViewOrganizationButton();
   expect(await this.pages.orgRepositories.areOwnerElementsVisible()).toBe(true);
@@ -74,4 +92,8 @@ When("I create the following teams:", async function (this: GiteaWorld, dataTabl
 
     this.scenarioState.organization!.teams.push(team);
   }
+});
+
+Then("the created team's page is displayed", async function (this: GiteaWorld) {
+  expect(await this.pages.orgSpecificTeam.waitForElements()).toBe(true);
 });

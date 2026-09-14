@@ -28,3 +28,12 @@ Feature: Organization
       | visibility  | public   |
       | permissions | true     |
     Then I should see the organization created successfully
+
+  @smoke
+  Scenario: Create teams for an existing organization
+    Given I login with valid credentials as "owner"
+    And an organization already exists
+    When I create the following teams:
+      | name   | visibility | repoCodeAccess | createRepo |
+      | team-1 | private    | none           | true       |
+    Then the created team's page is displayed
