@@ -1,4 +1,4 @@
-import { WebDriver, By, WebElement, until } from "selenium-webdriver";
+import { WebDriver, By, WebElement, until, error as seleniumError } from "selenium-webdriver";
 import { logger } from "../../../logger/pino.logger";
 import { simulateHtml5Drag } from "../utils/html5-drag.util";
 
@@ -21,11 +21,27 @@ export abstract class BaseComponent implements Verifiable {
     root: SearchRoot = this.driver,
     timeoutMs: number = DEFAULT_TIMEOUT_MS,
   ): Promise<WebElement[]> {
+    // Chrome can drop the CDP node of an element the session still holds while the screen mutates
+    // under the poll (unhandled inspector error). The read is transient, so it retries.
     const checkOnce = async (): Promise<WebElement[] | null> => {
-      const found = await root.findElements(locator);
-      if (found.length === 0) return null;
-      const visible = await Promise.all(found.map((element) => element.isDisplayed()));
-      return visible.every(Boolean) ? found : null;
+      try {
+        const found = await root.findElements(locator);
+        if (found.length === 0) return null;
+        const visible = await Promise.all(found.map((element) => element.isDisplayed()));
+        return visible.every(Boolean) ? found : null;
+      } catch (error) {
+        // Drivers with real element references report the stale read; Chrome drops the CDP node
+        // and answers an unhandled inspector error. Both are transient: the wait retries them.
+        if (
+          error instanceof seleniumError.StaleElementReferenceError ||
+          (error instanceof seleniumError.WebDriverError &&
+            error.message.includes("unhandled inspector error"))
+        ) {
+          logger.debug({ locator: locator.toString() }, "Retrying a transient element error");
+          return null;
+        }
+        throw error;
+      }
     };
 
     // selenium-webdriver's driver.wait() treats a falsy timeout as unbounded, so 0 is

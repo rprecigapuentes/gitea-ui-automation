@@ -16,11 +16,11 @@
 
 ## 4. Give AT-ISS-02 back the round trips it wastes
 
-- [ ] 4.1 Return the row from the predicate in `LabelListPage.waitForLabel` instead of re-scanning the list for it. Verify AT-ISS-02 still passes locally and that its `junit.xml` duration drops from the committed 12.8s baseline.
-- [ ] 4.2 Do the same in `MilestoneListPage.waitForRow`. Verify AT-ISS-01 still passes locally and its duration drops from the committed 7.6s baseline.
-- [ ] 4.3 Make `getChip` reuse the row `waitForLabel` just returned rather than re-enumerating every row and re-reading its six attributes. Verify AT-ISS-02 still passes locally.
+- [x] 4.1 Return the row from the predicate in `LabelListPage.waitForLabel` instead of re-scanning the list for it. Verify AT-ISS-02 still passes locally and that its `junit.xml` duration drops from the committed 12.8s baseline.
+- [x] 4.2 Do the same in `MilestoneListPage.waitForRow`. Verify AT-ISS-01 still passes locally and its duration drops from the committed 7.6s baseline.
+- [x] 4.3 Adjusted, and the adjustment costs the saving: `getChip` cannot consume the row `waitForLabel` returned without `waitForLabel` handing back the element too, which changes its public return type and the test that reads it. Instead `getChip` and `findRow` now share one `locateRow`, removing the duplicated scan loop but not a scan. The round-trip win in this change is `waitForLabel` and `waitForRow` only.
 
 ## 5. Confirm it in the environment that actually fails
 
-- [ ] 5.1 Run `npm run format`, `npm run lint`, `npm run typecheck`, then both suites locally. Verify all green, knowing local green proves nothing about the race: the dashboard renders in 273ms here.
+- [x] 5.1 Run `npm run format`, `npm run lint`, `npm run typecheck`, then both suites locally. All green: Cucumber 9/9 twice in a row and Vitest 12/12 on chrome. A stale/inspector transient that broke `Change team members permissions` surfaced inside `checkOnce` and is now retried (see commit). Local green still proves nothing about the CI race.
 - [ ] 5.2 Push to `91-ct-admin-token` and read the CT run. Verify `login.feature` passes, the five project-board scenarios execute their steps instead of reporting `0s`, and AT-ISS-02 lands under 30s in all three browsers. If anything is still red, the new log lines name the failing locator and the three compared values, so the next step is reading them rather than guessing.
