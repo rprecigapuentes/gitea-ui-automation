@@ -14,7 +14,9 @@ const singleBrowser = process.env.BROWSER;
 export default defineConfig({
   test: {
     globals: true,
-    testTimeout: 30000,
+    // Local runs settle in seconds; the CT grid (selenium behind the healing proxy, three
+    // browsers on one VPS node) runs the same tests at ~2.6x, which put AT-ISS-02 past this cap.
+    testTimeout: 60000,
     hookTimeout: 60000,
     setupFiles: ["allure-vitest/setup", "./config/allure.config.ts"],
     reporters: ["default", "junit", ["allure-vitest/reporter", { resultsDir: "allure-results" }]],
