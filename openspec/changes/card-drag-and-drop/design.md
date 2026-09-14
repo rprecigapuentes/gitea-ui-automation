@@ -5,7 +5,7 @@ See proposal.md - Why. What follows was verified against the instance under test
 - The board is a SortableJS list initialised without `forceFallback`, so it runs on the browser's own HTML5 drag events rather than on synthesised mouse moves.
 - A card is `#project-board .issue-card[data-issue="<issue id>"]`, addressed by the issue's internal id. The drop target is the column's `.cards` container, not the column root: dropping on the root lands outside the sortable list.
 - A card's move is saved by a request the library sends after it has already moved the node, so the DOM says the move succeeded before the server has been asked.
-- geckodriver moves the element during `dragover` and never emits the `drop` (mozilla/geckodriver#1450, open since 2019). SortableJS never fires `onAdd`, no request leaves the browser, and the card sits under the target column having changed nothing. Chromium completes the same gesture.
+- geckodriver moves the element during `dragover` and never emits the `drop` (mozilla/geckodriver#1450, open since 2019). SortableJS never fires `onAdd`, no request leaves the browser, and the card sits under the target column having changed nothing. Chromium completes the same gesture. Measured against the instance on 2026-09-13: the same move takes 1.1 s on Chrome, where the gesture is kept, and 4.6 s on Firefox, where it is not and the event sequence runs after it.
 - `BaseComponent.findElement` throws when a locator matches more than one element, and `findElements` requires every match to be displayed.
 
 ## Goals / Non-Goals
@@ -25,6 +25,8 @@ See proposal.md - Why. What follows was verified against the instance under test
 ## Decisions
 
 **The gesture is attempted first, the event sequence second.** The pointer gesture is what a person does, so it is what the test should do: it goes through the real input stack, and on Chromium it exercises the page exactly as a user would. Dispatching events skips the input stack, and a test that only ever dispatched them could pass against a page no human can drag. Considered dispatching events always, for one code path across browsers, rejected on that ground. Considered branching on `process.env.BROWSER`, rejected because the browser matrix would then be encoded in a page object, and because the question the fallback answers is not "which browser is this" but "did the server keep it".
+
+**The window is sized by the driver, not worked around in the gesture.** A headless browser opens at 800x600, which on this instance renders a 780x437 viewport, and the board puts the card lists at y=427 and the third column at x=699: neither end of the drag is in view, and the driver answers `move target out of bounds` before any of this is exercised. Considered scrolling each end into view inside `dragAndDrop`, rejected because at that viewport the two ends cannot both be in view, so the scroll that reaches the target takes the source out. Considered maximising the window inside the gesture, rejected because the size of the screen a suite runs against is the driver's business and every other test benefits, failure screenshots included.
 
 **The fallback is chosen by the reloaded board, not by a caught error.** The failing gesture raises nothing: on Firefox it completes, and the card is visibly in the target column. The only thing that distinguishes it from a real move is that the server was never asked. So `moveCard` reloads and asks whether the card is under the target column; the fallback runs when the answer is no. This is also why the check cannot be an instant DOM read.
 
