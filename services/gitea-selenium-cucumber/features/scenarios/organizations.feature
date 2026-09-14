@@ -18,6 +18,7 @@ Feature: Organization
       | name     | visibility | repoCodeAccess | createRepo |
       | dev-team | private    | none           | true       |
       | qa-team  | private    | write          | true       |
+    Then the created teams are displayed in Teams page
 
   @smoke
   Scenario: Create Organization

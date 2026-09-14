@@ -97,3 +97,15 @@ When("I create the following teams:", async function (this: GiteaWorld, dataTabl
 Then("the created team's page is displayed", async function (this: GiteaWorld) {
   expect(await this.pages.orgSpecificTeam.waitForElements()).toBe(true);
 });
+
+Then("the created teams are displayed in Teams page", async function (this: GiteaWorld) {
+  await this.pages.orgFacade.navigateToTeamsTab();
+  const teamNames = await this.pages.orgTeams.getTeamNames();
+  const createdTeams = this.scenarioState.organization!.teams ?? [];
+
+  for (const team of createdTeams) {
+    expect(teamNames).toContain(team.name);
+  }
+  // +1 for the organization's own default "Owners" team.
+  expect(teamNames.length).toBe(createdTeams.length + 1);
+});

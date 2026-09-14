@@ -7,6 +7,8 @@ export class OrgTeamsFragment extends BaseComponent {
     teamsPage: By.css("[role='main'].organization.teams"),
     // Owner-only action to create a team.
     newTeamButton: By.css("a[href$='/teams/new']"),
+    // Grid holding every team card rendered in the Teams tab.
+    teamsContainer: By.css(".ui.two.column.stackable.grid"),
     // Team cards rendered in the Teams tab.
     ownerTeamContainer: By.css(".team-item-box"),
     teamName: By.css(".team-item-header a strong"),
@@ -39,6 +41,18 @@ export class OrgTeamsFragment extends BaseComponent {
 
   async getTeamContainersCount(): Promise<number> {
     return (await this.findElements(this.locators.ownerTeamContainer)).length;
+  }
+
+  async getTeamNames(): Promise<string[]> {
+    const teamsContainer = await this.findElement(this.locators.teamsContainer);
+    const teamContainers = await this.findElements(
+      this.locators.ownerTeamContainer,
+      teamsContainer,
+    );
+
+    return Promise.all(
+      teamContainers.map((teamContainer) => this.getText(this.locators.teamName, teamContainer)),
+    );
   }
 
   async hasTeamContainer(teamName: string): Promise<boolean> {
