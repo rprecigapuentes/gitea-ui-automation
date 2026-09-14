@@ -16,4 +16,4 @@
 
 ## 5. Full verification
 
-- [ ] 5.1 `npm run typecheck` and `npm run lint` clean across every workspace. Real run of `--tags "@organizations"` (covers both `@e2e` and the new `@smoke` scenario) passing, with no leftover organizations afterward. `services/gitea-selenium-vitest`'s `organizations.test.ts` still passes unmodified.
+- [x] 5.1 `npm run typecheck` and `npm run lint` (root) clean across every workspace. `--tags "@organizations"` (`@e2e` + both `@smoke` scenarios) passed 3 scenarios / 14 steps; `OrganizationClient.getUserOrganizations()` confirmed empty afterward - no leftovers. `services/gitea-selenium-vitest`'s `organizations.test.ts` (`vitest run --project=chrome`) passed 1/1, confirming the shared `SpecificTeamFragment`/`Organization` changes didn't regress Vitest.
