@@ -18,7 +18,7 @@ export class OrgNavigationFragment extends BaseComponent {
     // Main content region of an organization profile.
     organizationPage: By.css("[role='main'].organization.profile"),
     // Visible organization name in the profile header.
-    organizationName: By.css("[role='main'].organization.profile .tw-text-2xl"),
+    organizationName: By.css(".tw-text-2xl"),
     // Tab container for the organization's navigation tabs.
     tabsContainer: By.css(".overflow-menu-items"),
     // Tab navigation specific to the organization profile.

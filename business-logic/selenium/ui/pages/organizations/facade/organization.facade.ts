@@ -57,7 +57,7 @@ export class OrganizationFacade extends BasePage {
 
   async navigateToTeamsTab(): Promise<OrgTeamsFragment> {
     await this.navigation.navigateToTab(OrgTab.Teams);
-    await this.teamsFragment.waitUntilDisplayed();
+    await this.teamsFragment.waitForElements();
     this.currentUrl = `${baseUrl}/org/${this.organization.name}/teams`;
     return this.teamsFragment;
   }
