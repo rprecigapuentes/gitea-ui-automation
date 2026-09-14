@@ -8,7 +8,6 @@ export class NewTeamFragment extends BaseComponent {
     newTeamForm: By.css("form[action$='/teams/new']"),
     // Team name and description inputs.
     teamNameInput: By.css("input[name='team_name']"),
-    descriptionInput: By.css("input[name='description']"),
     // Visibility and repository access options use stable form names and values.
     publicVisibilityRadio: By.css("input[name='visibility'][value='public']"),
     privateVisibilityRadio: By.css("input[name='visibility'][value='private']"),
@@ -24,20 +23,20 @@ export class NewTeamFragment extends BaseComponent {
     private: this.locators.privateVisibilityRadio,
   };
 
+  private readonly repoCodeAccessLocators: Record<"none" | "read" | "write", By> = {
+    none: By.css("[name='unit_1'][value='0']"),
+    read: By.css("[name='unit_1'][value='1']"),
+    write: By.css("[name='unit_1'][value='2']"),
+  };
+
   async waitUntilDisplayed(): Promise<void> {
     await this.findElement(this.locators.newTeamForm);
   }
 
-  async hasExpectedFormElements(): Promise<boolean> {
+  async waitForElements(): Promise<boolean> {
     return this.isVisible([
       this.locators.newTeamForm,
       this.locators.teamNameInput,
-      this.locators.descriptionInput,
-      this.locators.publicVisibilityRadio,
-      this.locators.privateVisibilityRadio,
-      this.locators.specificRepositoryAccessRadio,
-      this.locators.createRepositoriesCheckbox,
-      this.locators.generalPermissionsRadio,
       this.locators.createTeamButton,
     ]);
   }
@@ -45,7 +44,6 @@ export class NewTeamFragment extends BaseComponent {
   async hasDefaultFormState(): Promise<boolean> {
     const conditions = await Promise.all([
       this.isInputEmpty(this.locators.teamNameInput),
-      this.isInputEmpty(this.locators.descriptionInput),
       this.isRadioSelected(this.locators.publicVisibilityRadio),
       this.isRadioSelected(this.locators.specificRepositoryAccessRadio),
       this.isCheckboxChecked(this.locators.createRepositoriesCheckbox).then(
@@ -62,6 +60,10 @@ export class NewTeamFragment extends BaseComponent {
 
   async selectVisibility(visibility: TeamVisibility): Promise<void> {
     await this.click(this.visibilityLocators[visibility]);
+  }
+
+  async selectRepoCodeAccess(repoCodeAccess: "none" | "read" | "write"): Promise<void> {
+    await this.click(this.repoCodeAccessLocators[repoCodeAccess]);
   }
 
   async enableCreateRepositories(): Promise<void> {
@@ -86,5 +88,20 @@ export class NewTeamFragment extends BaseComponent {
 
   private async isCheckboxChecked(locator: By): Promise<boolean> {
     return (await this.findElement(locator)).isSelected();
+  }
+
+  async createTeam(
+    teamName: string,
+    visibility: TeamVisibility,
+    repoCodeAccess: "none" | "read" | "write",
+    createRepositories: boolean,
+  ): Promise<void> {
+    await this.enterTeamName(teamName);
+    await this.selectVisibility(visibility);
+    await this.selectRepoCodeAccess(repoCodeAccess);
+    if (createRepositories) {
+      await this.enableCreateRepositories();
+    }
+    await this.clickCreateTeamButton();
   }
 }

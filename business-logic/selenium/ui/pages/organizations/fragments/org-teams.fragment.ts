@@ -3,13 +3,14 @@ import { By } from "selenium-webdriver";
 
 export class OrgTeamsFragment extends BaseComponent {
   private readonly locators = {
-    searchBar: By.css("[data-text='Search']"),
     // Main content of the organization Teams tab.
     teamsPage: By.css("[role='main'].organization.teams"),
     // Owner-only action to create a team.
     newTeamButton: By.css("a[href$='/teams/new']"),
-    // Team cards rendered in the Teams tab.
-    teamContainers: By.css(".team-item-box"),
+    // Grid holding every team card rendered in the Teams tab.
+    teamsContainer: By.css(".ui.two.column.stackable.grid"),
+    // Team cards rendered in the Teams tab - every team, not just Owners.
+    teamContainer: By.css(".team-item-box"),
     teamName: By.css(".team-item-header a strong"),
     teamNameLink: By.css(".team-item-header .flex-text-inline a"),
     teamMembersCount: By.css(
@@ -18,26 +19,41 @@ export class OrgTeamsFragment extends BaseComponent {
     teamAvatars: By.css("a.avatar-with-link img.ui.avatar"),
     // Entry point to the detail page for a team with no members.
     addTeamMemberLink: By.css(".ui.attached.segment a.flex-text-inline"),
+    searchBar: By.css(".ui.form.ignore-dirty.tw-my-4"),
   };
 
-  async waitUntilDisplayed(): Promise<void> {
-    await this.findElement(this.locators.teamsPage);
+  async waitForElements(): Promise<boolean> {
+    const isVisible = await this.isVisible(this.locators.searchBar);
+    return isVisible;
   }
 
-  async isVisibleForOwner(): Promise<boolean> {
-    return this.isVisible([this.locators.teamContainers, this.locators.newTeamButton]);
+  async areOwnerElementsVisible(): Promise<boolean> {
+    const ready = await this.waitForElements();
+    if (!ready) return false;
+    return this.isVisible([this.locators.newTeamButton]);
   }
 
-  async isVisibleForMember(): Promise<boolean> {
-    return this.isVisible(this.locators.teamContainers);
+  async areMemberElementsVisible(): Promise<boolean> {
+    const ready = await this.waitForElements();
+    const ownerElementsVisible = await this.areOwnerElementsVisible();
+    return ready && !ownerElementsVisible;
   }
 
   async getTeamContainersCount(): Promise<number> {
-    return (await this.findElements(this.locators.teamContainers)).length;
+    return (await this.findElements(this.locators.teamContainer)).length;
+  }
+
+  async getTeamNames(): Promise<string[]> {
+    const teamsContainer = await this.findElement(this.locators.teamsContainer);
+    const teamContainers = await this.findElements(this.locators.teamContainer, teamsContainer);
+
+    return Promise.all(
+      teamContainers.map((teamContainer) => this.getText(this.locators.teamName, teamContainer)),
+    );
   }
 
   async hasTeamContainer(teamName: string): Promise<boolean> {
-    const teamContainers = await this.findElements(this.locators.teamContainers);
+    const teamContainers = await this.findElements(this.locators.teamContainer);
     const teamNames = await Promise.all(
       teamContainers.map((teamContainer) => this.getText(this.locators.teamName, teamContainer)),
     );
@@ -86,7 +102,7 @@ export class OrgTeamsFragment extends BaseComponent {
   }
 
   private async findTeamContainer(teamName: string) {
-    const teamContainers = await this.findElements(this.locators.teamContainers);
+    const teamContainers = await this.findElements(this.locators.teamContainer);
     const teamContainer = await Promise.all(
       teamContainers.map(async (container) =>
         (await this.getText(this.locators.teamName, container)) === teamName

@@ -6,6 +6,9 @@ type Visibility = "public" | "limited" | "private";
 
 export class CreateOrganizationPage extends BasePage {
   private readonly locators = {
+    // form container
+    formContainer: By.css(".ui.container.medium-width"),
+    // title
     formTitle: By.css('[role="main"] h3'),
     // Organization Name
     orgNameLabel: By.css('[for="org_name"]'),
@@ -139,5 +142,27 @@ export class CreateOrganizationPage extends BasePage {
       this.isAdminPermissionsChecked(),
     ]);
     return conditions.every(Boolean);
+  }
+
+  async waitForElements(): Promise<void> {
+    await this.isVisible(this.locators.formContainer);
+  }
+
+  async setPermissions(permissions: boolean): Promise<void> {
+    const isChecked = await this.isAdminPermissionsChecked();
+    if (permissions !== isChecked) {
+      await this.click(this.locators.adminPermissionsCheckInput);
+    }
+  }
+
+  async createOrganization(
+    name: string,
+    visibility: Visibility,
+    permissions: boolean,
+  ): Promise<void> {
+    await this.enterOrganizationName(name);
+    await this.selectVisibility(visibility);
+    await this.setPermissions(permissions);
+    await this.clickCreateOrganizationButton();
   }
 }

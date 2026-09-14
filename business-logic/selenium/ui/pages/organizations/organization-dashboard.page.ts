@@ -4,19 +4,22 @@ import { baseUrl } from "@gitea-automation/core-config/gitea.config";
 import { Organization } from "../../../api/entities/organization.entity";
 
 export class OrganizationDashboardPage extends BasePage {
-  private readonly organization: Organization;
+  protected organization: Organization | undefined;
 
   private readonly locators = {
-    organizationName: By.css(".organization.profile h1"),
-    viewRepositoryButton: By.css("a[title^='View test-orgs-']"),
+    repositoriesContainer: By.css(".dashboard-repos"),
   };
 
   override getUrl(): string {
-    return `${baseUrl}/org/${this.organization.name}/dashboard`;
+    return `${baseUrl}/org/${this.organization?.name}/dashboard`;
   }
 
-  constructor(driver: WebDriver, organization: Organization) {
+  constructor(driver: WebDriver) {
     super(driver);
+  }
+
+  async waitForElements(organization: Organization): Promise<void> {
     this.organization = organization;
+    await this.isVisible(this.locators.repositoriesContainer);
   }
 }

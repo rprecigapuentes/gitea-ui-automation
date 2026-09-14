@@ -34,12 +34,12 @@ export class SpecificTeamFragment extends BaseComponent {
     confirmRemoveTeamMemberButton: By.css("#remove-team-member button.ui.primary.ok"),
   };
 
-  async waitUntilDisplayed(): Promise<void> {
-    await this.findElement(this.locators.teamDetails);
+  async waitForElements(): Promise<boolean> {
+    return this.isVisible(this.locators.teamDetails);
   }
 
   async waitUntilTeamDisplayed(teamName: string): Promise<void> {
-    await this.waitUntilDisplayed();
+    await this.findElement(this.locators.teamDetails);
     await this.driver.wait(
       async () => (await this.getText(this.locators.teamName)) === teamName,
       5000,
@@ -135,6 +135,12 @@ export class SpecificTeamFragment extends BaseComponent {
   async searchUsers(query: string): Promise<void> {
     await this.type(this.locators.searchUserInput, query);
     await this.findElements(this.locators.userSearchResults);
+  }
+
+  // uname is a plain form field, so an exact username needs no suggestion click to submit.
+  async addMemberByUsername(username: string): Promise<void> {
+    await this.type(this.locators.searchUserInput, username);
+    await this.clickAndWaitUntil(this.locators.addTeamMemberButton, () => this.hasMember(username));
   }
 
   async hasOnlyMatchingUserSearchResults(query: string): Promise<boolean> {

@@ -7,6 +7,14 @@ Given("I am on the Gitea login page", async function (this: GiteaWorld) {
   await this.pages.loginPage.open();
 });
 
+Given('I login with valid credentials as "owner"', async function (this: GiteaWorld) {
+  const { username, password } = resolveOwnerCredentials();
+  await this.pages.loginPage.open();
+  await this.pages.loginPage.login(username, password);
+  await this.pages.mainPage.hasExpectedElementsDisplayed();
+  await this.pages.navBar.waitForElements();
+});
+
 When("I log in with valid credentials", async function (this: GiteaWorld) {
   const { username, password } = resolveOwnerCredentials();
   await this.pages.loginPage.login(username, password);

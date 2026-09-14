@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { Before, After, setDefaultTimeout } from "@cucumber/cucumber";
+import { Before, BeforeAll, After, AfterAll, setDefaultTimeout } from "@cucumber/cucumber";
 import { DriverFactory } from "@gitea-automation/core-selenium/ui/drivers/driver.factory";
 import { OrganizationClient } from "@gitea-automation/business-logic-selenium/api/clients/organizations.client";
 import { RepositoryClient } from "@gitea-automation/business-logic-selenium/api/clients/repository.client";
@@ -11,11 +11,13 @@ import type {
 import { testDataName, uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.util";
 import { PageFactory } from "./page.factory";
 import { resolveOwnerToken } from "./credentials";
+import { createSeededUsers, deleteSeededUsers } from "./seeded-users";
 import type { GiteaWorld } from "./world";
 
 setDefaultTimeout(20000);
 
 const PROJECT_BOARD_TAG = "@project-board";
+const CLEANUP_TAG = "@cleanup";
 const SEEDED_REPOSITORY_COUNT = 2;
 
 // Gitea caps an organization name at 40 characters.
@@ -38,11 +40,23 @@ function ownerClients(): {
   };
 }
 
+// Clears leftovers before any scenario's Before hooks run.
+// Scoped to this token's own account, so parallel browsers can't collide.
+BeforeAll(async () => {
+  const { organizations } = ownerClients();
+  await organizations.deleteAllOrganizations();
+  await createSeededUsers();
+});
+
+AfterAll(async () => {
+  await deleteSeededUsers();
+});
+
 Before(async function (this: GiteaWorld) {
   this.driver = await DriverFactory.getDriver();
   const scenarioState: ScenarioState = {};
   this.scenarioState = scenarioState;
-  this.pages = new PageFactory(this.driver);
+  this.pages = new PageFactory(this.driver, scenarioState);
 });
 
 Before({ tags: PROJECT_BOARD_TAG }, async function (this: GiteaWorld) {
@@ -70,7 +84,8 @@ Before({ tags: PROJECT_BOARD_TAG }, async function (this: GiteaWorld) {
   this.scenarioState.repositories = repositories;
 });
 
-After({ tags: PROJECT_BOARD_TAG }, async function (this: GiteaWorld) {
+// Deletes the org for any feature tagged @cleanup.
+After({ tags: CLEANUP_TAG }, async function (this: GiteaWorld) {
   const organization = this.scenarioState.organization;
 
   if (!organization) return;

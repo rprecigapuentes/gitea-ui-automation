@@ -1,4 +1,4 @@
-@project-board
+@project-board @cleanup
 Feature: Organization project board
   As an organization owner
   I want a Kanban board over the organization's issues

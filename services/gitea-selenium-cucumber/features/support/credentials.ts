@@ -29,3 +29,14 @@ export function resolveOwnerToken(): string {
 
   return token;
 }
+
+// Shared across all browser processes - only the users it creates need to be browser-unique.
+export function resolveAdminToken(): string {
+  const token = process.env.GITEA_ADMIN_TOKEN;
+
+  if (!token) {
+    throw new Error("Missing admin API token (GITEA_ADMIN_TOKEN)");
+  }
+
+  return token;
+}

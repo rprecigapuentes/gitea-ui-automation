@@ -125,6 +125,29 @@ export abstract class BaseComponent implements Verifiable {
     return results.every(Boolean);
   }
 
+  // Predicate-based counterpart to actAndWaitFor, for state a locator alone can't express.
+  protected async actAndWaitUntil(
+    action: () => Promise<void>,
+    predicate: () => Promise<boolean>,
+    timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  ): Promise<void> {
+    await action();
+    await this.driver.wait(predicate, timeoutMs);
+  }
+
+  protected async clickAndWaitUntil(
+    clickLocator: By,
+    predicate: () => Promise<boolean>,
+    root: SearchRoot = this.driver,
+    timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  ): Promise<void> {
+    await this.actAndWaitUntil(
+      () => this.click(clickLocator, root, timeoutMs),
+      predicate,
+      timeoutMs,
+    );
+  }
+
   protected async actAndWaitFor(
     action: () => Promise<void>,
     readyLocators: By[],

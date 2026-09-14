@@ -19,21 +19,28 @@ export class OrgRepositoriesFragment extends BaseComponent {
     ownersRepositoriesCount: By.css("a[href$='/teams/owners/repositories'] strong"),
     // Owner-only action in the Teams section.
     newTeamButton: By.css("a[href$='/teams/new']"),
+    newRepositoryButton: By.css("a[href*='/repo/create?org=']"),
+    newMigrationButton: By.css("a[href*='/repo/migrate?org=']"),
   };
 
-  async isVisibleForOwner(): Promise<boolean> {
-    if (!(await this.isVisible(this.locators.organizationSidebar))) return false;
-    const sidebar = await this.findElement(this.locators.organizationSidebar);
-    return this.isVisible(
-      [this.locators.membersCount, this.locators.teamsCount, this.locators.newTeamButton],
-      sidebar,
-    );
+  async areOwnerElementsVisible(): Promise<boolean> {
+    const ready = await this.waitForElements();
+    if (!ready) return false;
+    return this.isVisible([
+      this.locators.newTeamButton,
+      this.locators.newRepositoryButton,
+      this.locators.newMigrationButton,
+    ]);
   }
 
-  async isVisibleForMember(): Promise<boolean> {
-    if (!(await this.isVisible(this.locators.organizationSidebar))) return false;
-    const sidebar = await this.findElement(this.locators.organizationSidebar);
-    return this.isVisible([this.locators.membersCount, this.locators.teamsCount], sidebar);
+  async areMemberElementsVisible(): Promise<boolean> {
+    const ready = await this.waitForElements();
+    const ownerElementsVisible = await this.areOwnerElementsVisible();
+    console.log(
+      { pageContext: "main", ready, ownerElementsVisible },
+      `Ready: ${ready}, Owner elements visible: ${ownerElementsVisible}`,
+    );
+    return ready && !ownerElementsVisible;
   }
 
   async getMembersCount(): Promise<string> {
@@ -73,5 +80,11 @@ export class OrgRepositoriesFragment extends BaseComponent {
 
   async searchRepository(repositoryName: string): Promise<void> {
     await this.type(this.locators.searchBar, repositoryName);
+  }
+
+  async waitForElements(): Promise<boolean> {
+    // searchBar only renders once the organization has at least one repository, so it can't
+    // gate readiness here - organizationSidebar is present regardless of repository count.
+    return this.isVisible(this.locators.organizationSidebar);
   }
 }

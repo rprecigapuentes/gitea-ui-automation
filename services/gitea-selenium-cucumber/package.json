@@ -10,6 +10,8 @@
     "test:firefox": "cross-env BROWSER=firefox NODE_OPTIONS=--import=tsx cucumber-js",
     "test:edge": "cross-env BROWSER=edge NODE_OPTIONS=--import=tsx cucumber-js",
     "test:parallel": "concurrently -n chrome,firefox,edge -c blue,yellow,cyan \"npm:test:chrome\" \"npm:test:firefox\" \"npm:test:edge\"",
+    "test:tag:parallel": "(npm run test:parallel) & (npm run report && npm run report:open)",
+    "test:all:parallel": "(cross-env CUCUMBER_TAGS= npm run test:parallel) & (npm run report && npm run report:open)",
     "report": "allure generate ./allure-results",
     "report:open": "allure open ./allure-report/",
     "typecheck": "tsc --noEmit"
