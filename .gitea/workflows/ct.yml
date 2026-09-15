@@ -190,11 +190,11 @@ jobs:
           echo "GITEA_ADMIN_TOKEN=$admin_token" >> "$GITHUB_ENV"
           echo "admin token minted for $GITEA_ADMIN_USERNAME"
 
-      # The store stamps its reports in its own zone, and the window opens a minute early so a
-      # clock behind the runner's still catches the first session.
+      # The store stamps its reports in its own zone. Runner and store share the host's clock, so
+      # the window carries no slack: with one, this suite would list the previous suite's tail.
       - name: Record when the suite starts, on the healing store's clock
         run: |
-          started=$(TZ=America/Bogota date -d '1 minute ago' +%Y-%m-%dT%H:%M:%S)
+          started=$(TZ=America/Bogota date +%Y-%m-%dT%H:%M:%S)
           echo "SUITE_STARTED_AT=$started" >> "$GITHUB_ENV"
           echo "the suite starts at $started, America/Bogota"
 
@@ -209,7 +209,7 @@ jobs:
         run: |
           out=services/${{ matrix.suite }}/reports/healenium
           mkdir -p "$out"
-          ended=$(TZ=America/Bogota date -d '1 minute' +%Y-%m-%dT%H:%M:%S)
+          ended=$(TZ=America/Bogota date +%Y-%m-%dT%H:%M:%S)
 
           if ! curl -fsS "$SELENIUM_REMOTE_URL/healenium/report/all?startDate=$SUITE_STARTED_AT&endDate=$ended" > "$out/sessions.json"; then
             echo "the store did not list the sessions of this run"
