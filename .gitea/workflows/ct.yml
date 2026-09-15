@@ -71,13 +71,15 @@ jobs:
           HEALENIUM_SERVER_URL: https://healenium.estiberz.online
           HEALENIUM_SERVICE: https://healenium.estiberz.online
           IMITATE_SERVICE: https://imitator.estiberz.online
-          HEAL_ENABLED: "true"
+          # Off until the backend/proxy pair is upgraded and re-tested. Measured over three runs
+          # of this suite, changing nothing else: healing on, cap .6, populated store -> 4 failures
+          # in 178s; healing off -> 2 failures in 134s; healing on, cap .8, store emptied first ->
+          # 10 failures in 157s. It substituted one dashboard tab anchor for the other, and also
+          # broke a.list-item-large-title, which has no ambiguous sibling, so the score cap is not
+          # the lever. The store stays deployed and keeps its baselines; this suite stops asking.
+          HEAL_ENABLED: "false"
           RECOVERY_TRIES: "1"
-          # Raised from .6 after healing was caught substituting one dashboard tab anchor for the
-          # other. It does not make identical siblings distinguishable, and it is not meant to:
-          # with an ambiguous baseline a higher bar makes Healenium refuse rather than guess, so a
-          # locator that has genuinely drifted still heals and an ambiguous one fails honestly.
-          SCORE_CAP: ".8"
+          SCORE_CAP: ".6"
           HLM_LOG_LEVEL: info
 
     env:
