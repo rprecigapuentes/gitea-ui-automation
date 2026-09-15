@@ -1,5 +1,9 @@
 import "dotenv/config";
 import { Before, BeforeAll, After, AfterAll, setDefaultTimeout } from "@cucumber/cucumber";
+// Loads allure-cucumberjs as support code: its own BeforeAll installs the runtime that makes the
+// Allure API below reach the report instead of a no-op.
+import "allure-cucumberjs";
+import { parameter } from "allure-js-commons";
 import { DriverFactory } from "@gitea-automation/core-selenium/ui/drivers/driver.factory";
 import { OrganizationClient } from "@gitea-automation/business-logic-selenium/api/clients/organizations.client";
 import { RepositoryClient } from "@gitea-automation/business-logic-selenium/api/clients/repository.client";
@@ -91,6 +95,7 @@ AfterAll(async () => {
 });
 
 Before(async function (this: GiteaWorld) {
+  await parameter("browser", process.env.BROWSER ?? "chrome");
   this.driver = await DriverFactory.getDriver();
   const scenarioState: ScenarioState = {};
   this.scenarioState = scenarioState;
