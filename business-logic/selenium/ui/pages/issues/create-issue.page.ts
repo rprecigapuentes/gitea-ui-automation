@@ -33,6 +33,14 @@ export class CreateIssuePage extends BasePage {
     return `${baseUrl}/${owner}/${repository}/issues/new`;
   }
 
+  async openFor(owner: string, repository: string): Promise<void> {
+    await super.open([this.locators.title, this.locators.submitButton], owner, repository);
+  }
+
+  async offersAssignee(userId: number): Promise<boolean> {
+    return this.assigneeCombo.offers(userId);
+  }
+
   async fillTitle(title: string): Promise<void> {
     await this.type(this.locators.title, title);
   }

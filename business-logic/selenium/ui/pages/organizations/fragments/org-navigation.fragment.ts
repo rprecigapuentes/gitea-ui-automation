@@ -1,6 +1,10 @@
 // organization-base.page.ts
 import { By } from "selenium-webdriver";
 import { BaseComponent } from "@gitea-automation/core-selenium/ui/base-pages/base-component";
+import { logger } from "@gitea-automation/core-logger/pino.logger";
+
+const TAB_CLICK_ATTEMPTS = 2;
+const TAB_NAVIGATION_TIMEOUT_MS = 5000;
 
 export enum OrgTab {
   Repos = "Repos",
@@ -92,8 +96,32 @@ export class OrgNavigationFragment extends BaseComponent {
     return this.getText(this.locators.tabCounter, tabElement);
   }
 
+  /**
+   * The tab bar is a custom element that rebuilds its items as it upgrades, so a click that lands
+   * while it is still doing that hits a node the rebuild then replaces and no navigation follows.
+   * What decides is the address the browser ends up on, and a lost click is clicked again.
+   */
   async navigateToTab(tab: OrgTab): Promise<void> {
-    await this.click(await this.tabLocator(tab));
-    this.currentTab = tab;
+    const organizationName = await this.currentOrganizationName();
+    const locator = this.tabLocatorFor(tab, organizationName);
+    const href = this.tabHref[tab](organizationName);
+    const reachedTab = async (): Promise<boolean> =>
+      new URL(await this.getCurrentUrl()).pathname === href;
+
+    for (let attempt = 1; attempt <= TAB_CLICK_ATTEMPTS; attempt += 1) {
+      try {
+        await this.actAndWaitUntil(
+          () => this.click(locator),
+          reachedTab,
+          TAB_NAVIGATION_TIMEOUT_MS,
+        );
+        this.currentTab = tab;
+        return;
+      } catch (error) {
+        if (attempt === TAB_CLICK_ATTEMPTS) throw error;
+
+        logger.warn({ tab, href }, "The organization tab click did not navigate; clicking again");
+      }
+    }
   }
 }

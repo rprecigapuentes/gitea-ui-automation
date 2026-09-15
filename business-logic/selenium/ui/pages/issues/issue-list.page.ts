@@ -32,6 +32,10 @@ export class IssueListPage extends BasePage {
     return `${baseUrl}/${owner}/${repository}/issues`;
   }
 
+  async openFor(owner: string, repository: string): Promise<void> {
+    await super.open([this.locators.filterDropdown], owner, repository);
+  }
+
   async filterByLabel(labelId: number): Promise<void> {
     await this.click(this.locators.filterDropdown);
     await this.click(this.locators.filterItem(labelId));
