@@ -103,15 +103,10 @@ export class OrgTeamsFragment extends BaseComponent {
 
   // Naming the card in the locator is what makes the wait mean something: reading every card and
   // then picking one samples the grid once, so a page that has rendered some other team's card
-  // satisfies the wait and the one being looked for is reported missing.
+  // satisfies the wait and the one being looked for is reported missing. The team's own link is
+  // what identifies it - Gitea lowercases the name into the URL - so no text matching is needed.
   private teamContainerNamed(teamName: string): By {
-    const hasClass = (name: string) =>
-      `contains(concat(' ', normalize-space(@class), ' '), ' ${name} ')`;
-
-    return By.xpath(
-      `.//*[${hasClass("team-item-box")}]` +
-        `[.//*[${hasClass("team-item-header")}]//a/strong[normalize-space(text())=${JSON.stringify(teamName)}]]`,
-    );
+    return By.css(`.team-item-box:has(a[href$="/teams/${teamName.toLowerCase()}"])`);
   }
 
   private async findTeamContainer(teamName: string) {
