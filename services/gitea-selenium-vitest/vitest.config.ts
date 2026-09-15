@@ -14,9 +14,8 @@ const singleBrowser = process.env.BROWSER;
 export default defineConfig({
   test: {
     globals: true,
-    // Provisional. AT-ISS-02 hit 36s on the CT grid while a 3s implicit wait was still in force,
-    // which is now 0: the next CT run measures what these tests actually cost, and this comes
-    // back down to what that says rather than staying at a number picked to clear a symptom.
+    // Measured on the CT grid with the implicit wait gone: organizations.test.ts takes 27.8s on
+    // chrome, so 30000 leaves two seconds of margin and 60000 leaves the room that grid needs.
     testTimeout: 60000,
     hookTimeout: 60000,
     setupFiles: ["allure-vitest/setup", "./config/allure.config.ts"],

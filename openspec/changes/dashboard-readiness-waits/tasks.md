@@ -14,7 +14,7 @@
 - [x] 3.1 Revert `hasExpectedElementsDisplayed()` to the single read that passed in #280 (chrome 4045ms, firefox 5957ms), dropping the retry loop and the 20s budget that made all three fail at ~23s in #289. Verified: the four call sites are untouched and the local suites pass.
 - [x] 3.2 Revert `isVisibleOnMainPage()` the same way, keeping its existing log line.
 - [x] 3.3 Drop `BaseComponent.waitUntil`. Reverting the loops leaves it with no callers, and main removed it in `7f07f99`; reintroducing it under the same name with a different signature would undo that refactor without discussing it. Verified: no references remain outside the unrelated `waitUntilDisplayed`/`waitUntilTeamDisplayed`.
-- [ ] 3.4 Bring `testTimeout` back down from 60000 once the CT run says what these tests cost without the implicit wait. Marked provisional in the config comment so it is not mistaken for a measured value.
+- [x] 3.4 Measured, and the answer is that it stays at 60000. `organizations.test.ts` took 27786ms on chrome in CI with the implicit wait already gone, so 30000 leaves two seconds of margin. The config comment stops calling itself provisional and records that number instead.
 
 ## 4. Keep the fixes that were never in question
 
@@ -23,6 +23,6 @@
 
 ## 5. Read the environment that actually fails
 
-- [ ] 5.1 Push to `91-ct-admin-token` and read the CT run. The criterion is not that it passes: it is that the log names the error the dashboard read is throwing. If it still fails, the next step is reading that line, not proposing a fourth theory.
-- [ ] 5.2 Compare all twelve durations against #289. They should fall in a block. One that becomes unstable instead of faster was living on the implicit wait and needs its own explicit one.
+- [x] 5.1 The log named it, and it was not what any of the three theories said. `Dashboard tabs read something else` reported `organizationLabel: "Repository"` - a value that cannot come from the element that locator names, so the read was resolving to the wrong element rather than timing out. Healing was the only thing in the path that substitutes one element for another, and turning it off took the failures from 4 to 0 with no code change.
+- [x] 5.2 They fell in a block. The suite went from 333s (#289) to 178s with the implicit wait gone, and to 134s with healing off as well. AT-ISS-02 went 36s -> 25.6s -> 12.5s. Nothing became unstable: the tests that changed behaviour all got faster.
 - [ ] 5.3 Before the PR, remove the temporary push trigger (task 3.3 of `ct-admin-token`).
