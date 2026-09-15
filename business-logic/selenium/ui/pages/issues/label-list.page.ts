@@ -8,6 +8,7 @@ const modal = "#issue-label-edit-modal";
 // The modal's fade-in animation can outlast 10s when the machine is busy running the other
 // browsers in parallel, so it gets the same generous budget as the other Fomantic UI modals.
 const WAIT_TIMEOUT_MS = 15000;
+const EDIT_BUTTON_CLASS = "edit-label-button";
 
 export class LabelListPage extends BasePage {
   private readonly locators = {
@@ -20,7 +21,7 @@ export class LabelListPage extends BasePage {
     exclusiveCheckbox: By.css(`${modal} .label-exclusive-input-field .ui.checkbox label`),
     submitButton: By.css(`${modal} .ui.primary.approve.button`),
     rows: By.css("ul.issue-label-list > li.item"),
-    editButton: By.css(".edit-label-button"),
+    editButton: By.css(`.${EDIT_BUTTON_CLASS}`),
     chip: By.css(".label-title .ui.label"),
   };
 
@@ -97,6 +98,11 @@ export class LabelListPage extends BasePage {
     await this.submitLabelForm();
 
     return this.waitForLabel(label.name);
+  }
+
+  /** Simulates the application renaming the class the edit buttons are located by. */
+  async driftEditButtons(): Promise<void> {
+    await this.renameClass(this.locators.editButton, EDIT_BUTTON_CLASS, "edit-label-btn");
   }
 
   private async readRow(row: WebElement): Promise<LabelRow> {
