@@ -53,11 +53,7 @@ export class OrgTeamsFragment extends BaseComponent {
   }
 
   async hasTeamContainer(teamName: string): Promise<boolean> {
-    const teamContainers = await this.findElements(this.locators.teamContainer);
-    const teamNames = await Promise.all(
-      teamContainers.map((teamContainer) => this.getText(this.locators.teamName, teamContainer)),
-    );
-    return teamNames.includes(teamName);
+    return this.isVisible(this.teamContainerNamed(teamName));
   }
 
   async getTeamMembersCount(teamName: string): Promise<string> {
@@ -105,21 +101,21 @@ export class OrgTeamsFragment extends BaseComponent {
     await this.click(this.locators.teamNameLink, teamContainer);
   }
 
+  // Naming the card in the locator is what makes the wait mean something: reading every card and
+  // then picking one samples the grid once, so a page that has rendered some other team's card
+  // satisfies the wait and the one being looked for is reported missing.
+  private teamContainerNamed(teamName: string): By {
+    const hasClass = (name: string) =>
+      `contains(concat(' ', normalize-space(@class), ' '), ' ${name} ')`;
+
+    return By.xpath(
+      `.//*[${hasClass("team-item-box")}]` +
+        `[.//*[${hasClass("team-item-header")}]//a/strong[normalize-space(text())=${JSON.stringify(teamName)}]]`,
+    );
+  }
+
   private async findTeamContainer(teamName: string) {
-    const teamContainers = await this.findElements(this.locators.teamContainer);
-    const teamContainer = await Promise.all(
-      teamContainers.map(async (container) =>
-        (await this.getText(this.locators.teamName, container)) === teamName
-          ? container
-          : undefined,
-      ),
-    ).then((containers) => containers.find(Boolean));
-
-    if (!teamContainer) {
-      throw new Error(`Team container for "${teamName}" was not found`);
-    }
-
-    return teamContainer;
+    return this.findElement(this.teamContainerNamed(teamName));
   }
 
   async searchTeam(teamName: string): Promise<void> {
