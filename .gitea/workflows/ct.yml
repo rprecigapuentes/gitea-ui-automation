@@ -190,8 +190,57 @@ jobs:
           echo "GITEA_ADMIN_TOKEN=$admin_token" >> "$GITHUB_ENV"
           echo "admin token minted for $GITEA_ADMIN_USERNAME"
 
+      # The store stamps its reports in its own zone, and the window opens a minute early so a
+      # clock behind the runner's still catches the first session.
+      - name: Record when the suite starts, on the healing store's clock
+        run: |
+          started=$(TZ=America/Bogota date -d '1 minute ago' +%Y-%m-%dT%H:%M:%S)
+          echo "SUITE_STARTED_AT=$started" >> "$GITHUB_ENV"
+          echo "the suite starts at $started, America/Bogota"
+
       - name: Run the suite
         run: npm test -w @gitea-automation/${{ matrix.suite }}
+
+      # One report per browser session, opened by the proxy under the session id. Both endpoints
+      # answer through the proxy, so nothing here needs the store's public hostname.
+      - name: Collect the healing evidence of every session
+        if: always()
+        continue-on-error: true
+        run: |
+          out=services/${{ matrix.suite }}/reports/healenium
+          mkdir -p "$out"
+          ended=$(TZ=America/Bogota date -d '1 minute' +%Y-%m-%dT%H:%M:%S)
+
+          if ! curl -fsS "$SELENIUM_REMOTE_URL/healenium/report/all?startDate=$SUITE_STARTED_AT&endDate=$ended" > "$out/sessions.json"; then
+            echo "the store did not list the sessions of this run"
+            exit 1
+          fi
+
+          ids=$(node -pe 'JSON.parse(require("fs").readFileSync(0, "utf8")).map((r) => r.id).join("\n")' < "$out/sessions.json")
+          if [ -z "$ids" ]; then
+            echo "no session was opened through the proxy between $SUITE_STARTED_AT and $ended"
+            exit 0
+          fi
+
+          for id in $ids; do
+            echo "::group::session $id"
+            if ! curl -fsS "$SELENIUM_REMOTE_URL/hlm-proxy/logs/session/$id" > "$out/$id.logs.json"; then
+              echo "the proxy did not answer for the log of session $id"
+            fi
+            if ! curl -fsS "$SELENIUM_REMOTE_URL/healenium/report/data/$id" > "$out/$id.heals.json"; then
+              echo "the store did not answer for the heals of session $id"
+            else
+              node -e '
+                const report = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
+                const heals = report.data ?? [];
+                console.log(heals.length === 0 ? "no heal recorded" : `${heals.length} heal(s) recorded`);
+                for (const h of heals) {
+                  console.log(`${h.failedLocatorType} ${h.failedLocatorValue} -> ${h.healedLocatorType} ${h.healedLocatorValue} (${h.score})`);
+                }
+              ' "$out/$id.heals.json"
+            fi
+            echo "::endgroup::"
+          done
 
       # No results to report on when an earlier step stopped the run.
       - name: Generate the Allure report
@@ -208,4 +257,5 @@ jobs:
           path: |
             services/${{ matrix.suite }}/allure-report/
             services/${{ matrix.suite }}/reports/junit.xml
+            services/${{ matrix.suite }}/reports/healenium/
           retention-days: 14
