@@ -53,11 +53,7 @@ export class OrgTeamsFragment extends BaseComponent {
   }
 
   async hasTeamContainer(teamName: string): Promise<boolean> {
-    const teamContainers = await this.findElements(this.locators.teamContainer);
-    const teamNames = await Promise.all(
-      teamContainers.map((teamContainer) => this.getText(this.locators.teamName, teamContainer)),
-    );
-    return teamNames.includes(teamName);
+    return this.isVisible(this.teamContainerNamed(teamName));
   }
 
   async getTeamMembersCount(teamName: string): Promise<string> {
@@ -105,21 +101,16 @@ export class OrgTeamsFragment extends BaseComponent {
     await this.click(this.locators.teamNameLink, teamContainer);
   }
 
+  // Naming the card in the locator is what makes the wait mean something: reading every card and
+  // then picking one samples the grid once, so a page that has rendered some other team's card
+  // satisfies the wait and the one being looked for is reported missing. The team's own link is
+  // what identifies it - Gitea lowercases the name into the URL - so no text matching is needed.
+  private teamContainerNamed(teamName: string): By {
+    return By.css(`.team-item-box:has(a[href$="/teams/${teamName.toLowerCase()}"])`);
+  }
+
   private async findTeamContainer(teamName: string) {
-    const teamContainers = await this.findElements(this.locators.teamContainer);
-    const teamContainer = await Promise.all(
-      teamContainers.map(async (container) =>
-        (await this.getText(this.locators.teamName, container)) === teamName
-          ? container
-          : undefined,
-      ),
-    ).then((containers) => containers.find(Boolean));
-
-    if (!teamContainer) {
-      throw new Error(`Team container for "${teamName}" was not found`);
-    }
-
-    return teamContainer;
+    return this.findElement(this.teamContainerNamed(teamName));
   }
 
   async searchTeam(teamName: string): Promise<void> {

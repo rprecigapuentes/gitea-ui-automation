@@ -14,7 +14,9 @@ const singleBrowser = process.env.BROWSER;
 export default defineConfig({
   test: {
     globals: true,
-    testTimeout: 30000,
+    // Measured on the CT grid with the implicit wait gone: organizations.test.ts takes 27.8s on
+    // chrome, so 30000 leaves two seconds of margin and 60000 leaves the room that grid needs.
+    testTimeout: 60000,
     hookTimeout: 60000,
     setupFiles: ["allure-vitest/setup", "./config/allure.config.ts"],
     reporters: ["default", "junit", ["allure-vitest/reporter", { resultsDir: "allure-results" }]],

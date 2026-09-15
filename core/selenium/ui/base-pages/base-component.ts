@@ -1,4 +1,5 @@
-import { WebDriver, By, WebElement, until } from "selenium-webdriver";
+import { WebDriver, By, WebElement, until, error as seleniumError } from "selenium-webdriver";
+import { logger } from "../../../logger/pino.logger";
 import { simulateHtml5Drag } from "../utils/html5-drag.util";
 
 export type SearchRoot = WebDriver | WebElement;
@@ -20,11 +21,27 @@ export abstract class BaseComponent implements Verifiable {
     root: SearchRoot = this.driver,
     timeoutMs: number = DEFAULT_TIMEOUT_MS,
   ): Promise<WebElement[]> {
+    // Chrome can drop the CDP node of an element the session still holds while the screen mutates
+    // under the poll (unhandled inspector error). The read is transient, so it retries.
     const checkOnce = async (): Promise<WebElement[] | null> => {
-      const found = await root.findElements(locator);
-      if (found.length === 0) return null;
-      const visible = await Promise.all(found.map((element) => element.isDisplayed()));
-      return visible.every(Boolean) ? found : null;
+      try {
+        const found = await root.findElements(locator);
+        if (found.length === 0) return null;
+        const visible = await Promise.all(found.map((element) => element.isDisplayed()));
+        return visible.every(Boolean) ? found : null;
+      } catch (error) {
+        // Drivers with real element references report the stale read; Chrome drops the CDP node
+        // and answers an unhandled inspector error. Both are transient: the wait retries them.
+        if (
+          error instanceof seleniumError.StaleElementReferenceError ||
+          (error instanceof seleniumError.WebDriverError &&
+            error.message.includes("unhandled inspector error"))
+        ) {
+          logger.debug({ locator: locator.toString() }, "Retrying a transient element error");
+          return null;
+        }
+        throw error;
+      }
     };
 
     // selenium-webdriver's driver.wait() treats a falsy timeout as unbounded, so 0 is
@@ -146,6 +163,16 @@ export abstract class BaseComponent implements Verifiable {
     return (await element.getAttribute(attributeName)) ?? "";
   }
 
+  // A miss at timeoutMs 0 is an absence check doing its job, so it is logged at debug; anything
+  // else is a locator that was expected to resolve and did not.
+  private async reportMiss(locator: By, timeoutMs: number, error: unknown): Promise<void> {
+    const url = await this.driver.getCurrentUrl().catch(() => "unknown");
+    const details = { locator: locator.toString(), url, reason: String(error) };
+
+    if (timeoutMs === 0) logger.debug(details, "Locator absent");
+    else logger.warn(details, "Locator never became visible");
+  }
+
   async isVisible(
     locators: By | By[],
     root: SearchRoot = this.driver,
@@ -159,11 +186,28 @@ export abstract class BaseComponent implements Verifiable {
       list.map((locator) =>
         this.findElement(locator, root, timeoutMs)
           .then(() => true)
-          .catch(() => false),
+          .catch(async (error: unknown) => {
+            await this.reportMiss(locator, timeoutMs, error);
+            return false;
+          }),
       ),
     );
 
     return results.every(Boolean);
+  }
+
+  // actAndWaitUntil covers a condition that follows an action. This is for one that does not: a
+  // suggestion list settles from a query typed in an earlier step, so there is no action here to
+  // pair the wait with, and the entries carry their identity as text, which no locator can name.
+  // Reports rather than raises, so a check built on it stays a boolean for its caller.
+  protected async waitUntil(
+    predicate: () => Promise<boolean>,
+    timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  ): Promise<boolean> {
+    return this.driver.wait(predicate, timeoutMs).then(
+      () => true,
+      () => false,
+    );
   }
 
   // Predicate-based counterpart to actAndWaitFor, for state a locator alone can't express.

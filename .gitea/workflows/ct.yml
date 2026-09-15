@@ -67,7 +67,13 @@ jobs:
           HEALENIUM_SERVER_URL: https://healenium.estiberz.online
           HEALENIUM_SERVICE: https://healenium.estiberz.online
           IMITATE_SERVICE: https://imitator.estiberz.online
-          HEAL_ENABLED: "true"
+          # Off until the backend/proxy pair is upgraded and re-tested. Measured over three runs
+          # of this suite, changing nothing else: healing on, cap .6, populated store -> 4 failures
+          # in 178s; healing off -> 2 failures in 134s; healing on, cap .8, store emptied first ->
+          # 10 failures in 157s. It substituted one dashboard tab anchor for the other, and also
+          # broke a.list-item-large-title, which has no ambiguous sibling, so the score cap is not
+          # the lever. The store stays deployed and keeps its baselines; this suite stops asking.
+          HEAL_ENABLED: "false"
           RECOVERY_TRIES: "1"
           SCORE_CAP: ".6"
           HLM_LOG_LEVEL: info
@@ -76,6 +82,8 @@ jobs:
       MAX_WORKERS: "3"
       GITEA_BASE_URL: http://gitea-test:3000
       SELENIUM_REMOTE_URL: http://hlm-proxy:8085
+      GITEA_ADMIN_USERNAME: ct-admin
+      GITEA_ADMIN_PASSWORD: Qa-admin-not-a-secret-1
       GITEA_OWNER_CHROME: chrome-owner
       GITEA_OWNER_CHROME_PASSWORD: Qa-bot-not-a-secret-1
       GITEA_OWNER_FIREFOX: firefox-owner
@@ -127,7 +135,7 @@ jobs:
           fi
           echo "the healing store is up"
 
-      - name: Register the owner and invited accounts, and mint an API token per browser
+      - name: Register the administrator and the browser accounts, and mint their API tokens
         run: |
           register() {
             local jar="$1" user="$2" pass="$3"
@@ -143,6 +151,10 @@ jobs:
             curl -fsS -u "$user:$pass" "$GITEA_BASE_URL/api/v1/user" > /dev/null
             echo "account $user is usable"
           }
+
+          # Gitea makes the first user of a fresh instance an administrator, so this one
+          # registers before the browser accounts and none of them inherits the privilege.
+          register "/tmp/gitea-admin.jar" "$GITEA_ADMIN_USERNAME" "$GITEA_ADMIN_PASSWORD"
 
           for b in CHROME FIREFOX EDGE; do
             owner_user="GITEA_OWNER_$b"; owner_pass="GITEA_OWNER_${b}_PASSWORD"
@@ -160,6 +172,27 @@ jobs:
             echo "GITEA_TOKEN_$b=$token" >> "$GITHUB_ENV"
             echo "token minted for ${!owner_user}"
           done
+
+          # One admin token for all three browser processes: only the users it creates
+          # have to be browser-unique, and they already are.
+          admin_token=$(curl -fsS -u "$GITEA_ADMIN_USERNAME:$GITEA_ADMIN_PASSWORD" \
+            -H "Content-Type: application/json" \
+            -X POST "$GITEA_BASE_URL/api/v1/users/$GITEA_ADMIN_USERNAME/tokens" \
+            -d '{"name":"continuous-testing-admin","scopes":["write:admin"]}' \
+            | node -pe 'JSON.parse(require("fs").readFileSync(0, "utf8")).sha1')
+          echo "::add-mask::$admin_token"
+
+          # Gitea grants the scope to any account but honours it only for an administrator,
+          # so the token is proven here rather than four minutes later in BeforeAll.
+          if ! curl -fsS -o /dev/null \
+            -H "Authorization: token $admin_token" \
+            "$GITEA_BASE_URL/api/v1/admin/users?limit=1"; then
+            echo "$GITEA_ADMIN_USERNAME holds no write:admin privilege, so no suite could seed its users"
+            exit 1
+          fi
+
+          echo "GITEA_ADMIN_TOKEN=$admin_token" >> "$GITHUB_ENV"
+          echo "admin token minted for $GITEA_ADMIN_USERNAME"
 
       - name: Run the suite
         run: npm test -w @gitea-automation/${{ matrix.suite }}

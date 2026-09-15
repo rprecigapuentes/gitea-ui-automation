@@ -2,6 +2,8 @@ import { By, WebDriver } from "selenium-webdriver";
 import { logger } from "@gitea-automation/core-logger/pino.logger";
 import { BaseComponent } from "@gitea-automation/core-selenium/ui/base-pages/base-component";
 
+const INSTANT = 0;
+
 export class NavBarFragment extends BaseComponent {
   private readonly navigationBarLocators = {
     // container for the main navigation bar
@@ -45,8 +47,8 @@ export class NavBarFragment extends BaseComponent {
     super(driver);
   }
 
-  async getCurrentOrganization(): Promise<string> {
-    return this.getText(this.secondaryBarLocators.organizationDropdown);
+  async getCurrentOrganization(timeoutMs?: number): Promise<string> {
+    return this.getText(this.secondaryBarLocators.organizationDropdown, this.driver, timeoutMs);
   }
 
   async clickNewOrganizationDropdownOption(): Promise<void> {
@@ -67,17 +69,31 @@ export class NavBarFragment extends BaseComponent {
       return false;
     }
 
-    const [usernameMatches, teamsDropdownAbsent, rightOptionsAbsent] = await Promise.all([
-      this.getCurrentOrganization().then((text) => text === username),
-      this.isVisible(this.secondaryBarLocators.teamsDropdown, this.driver, 0).then((v) => !v),
-      this.isVisible(this.secondaryBarLocators.rightOptionsContainer, this.driver, 0).then(
-        (v) => !v,
-      ),
-    ]);
+    try {
+      const [usernameMatches, teamsDropdownAbsent, rightOptionsAbsent] = await Promise.all([
+        this.getCurrentOrganization().then((text) => text === username),
+        this.isVisible(this.secondaryBarLocators.teamsDropdown, this.driver, INSTANT).then(
+          (v) => !v,
+        ),
+        this.isVisible(this.secondaryBarLocators.rightOptionsContainer, this.driver, INSTANT).then(
+          (v) => !v,
+        ),
+      ]);
 
-    const results = { usernameMatches, teamsDropdownAbsent, rightOptionsAbsent };
-    logger.info({ pageContext: "main", ...results }, "Navbar expectations");
-    return Object.values(results).every(Boolean);
+      const results = { usernameMatches, teamsDropdownAbsent, rightOptionsAbsent };
+      logger.info({ pageContext: "main", ...results }, "Navbar expectations");
+      return Object.values(results).every(Boolean);
+    } catch (thrown) {
+      logger.warn(
+        {
+          pageContext: "main",
+          url: await this.driver.getCurrentUrl().catch(() => "unknown"),
+          reason: String(thrown),
+        },
+        "Navbar expectations could not be read",
+      );
+      return false;
+    }
   }
 
   async areOrgDashboardElementsVisible(): Promise<boolean> {
@@ -104,9 +120,11 @@ export class NavBarFragment extends BaseComponent {
     await this.click(this.secondaryBarLocators.signOutLink);
   }
 
-  async waitForElements(): Promise<void> {
-    await this.isVisible(this.navigationBarLocators.navigationBarContainer);
-    await this.isVisible(this.secondaryBarLocators.secondaryBarContainer);
+  async waitForElements(): Promise<boolean> {
+    return this.isVisible([
+      this.navigationBarLocators.navigationBarContainer,
+      this.secondaryBarLocators.secondaryBarContainer,
+    ]);
   }
 
   async getDropdownOrganizationsList(): Promise<string[]> {

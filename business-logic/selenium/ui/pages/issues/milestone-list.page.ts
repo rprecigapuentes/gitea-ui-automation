@@ -23,6 +23,11 @@ export class MilestoneListPage extends BasePage {
     return `${baseUrl}/${owner}/${repository}/milestones`;
   }
 
+  /** The rows are what a caller waits for, and waitForRow already does that per milestone. */
+  async openFor(owner: string, repository: string): Promise<void> {
+    await super.open([], owner, repository);
+  }
+
   private async readRow(row: WebElement): Promise<MilestoneRow> {
     const progress = await row.findElement(this.locators.rowProgress);
     const counters = await row.findElements(this.locators.rowCounters);

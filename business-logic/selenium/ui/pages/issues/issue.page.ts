@@ -5,6 +5,7 @@ import { SidebarComboFragment } from "./fragments/sidebar-combo.fragment";
 import { labelIdFromHref } from "./fragments/label-chip.fragment";
 
 const WAIT_TIMEOUT_MS = 10000;
+const INSTANT = 0;
 
 export class IssuePage extends BasePage {
   private readonly labelCombo: SidebarComboFragment;
@@ -24,6 +25,9 @@ export class IssuePage extends BasePage {
     dueDateSubmit: By.css("form.issue-due-form button"),
     statusButton: By.css("#status-button"),
     statusButtonReopen: By.css("#status-button[value='reopen']"),
+    // An open issue's button carries no reopen value, which a page mid-reload has no button at all
+    // to answer, so this is the presence check the reopen wait needs.
+    statusButtonClose: By.css("#status-button:not([value='reopen'])"),
   };
 
   constructor(driver: WebDriver) {
@@ -43,7 +47,7 @@ export class IssuePage extends BasePage {
   }
 
   async assignProject(projectId: number): Promise<void> {
-    await this.projectCombo.toggle(projectId);
+    await this.projectCombo.toggleAndWaitForSelection(projectId);
   }
 
   async applyLabel(labelId: number): Promise<void> {
@@ -165,15 +169,24 @@ export class IssuePage extends BasePage {
   }
 
   /**
-   * The close button posts the comment form and the page comes back rendered for a closed issue,
-   * so the condition is the button having flipped to reopen rather than the click returning.
+   * The status button posts the comment form and the page comes back rendered for the other state,
+   * so each direction waits for the button the new page renders rather than for its own click.
    */
   async close(): Promise<void> {
-    await this.click(this.locators.statusButton);
-    await this.driver.wait(
-      async () => (await this.driver.findElements(this.locators.statusButtonReopen)).length > 0,
+    await this.clickAndWaitUntil(
+      this.locators.statusButton,
+      () => this.isVisible(this.locators.statusButtonReopen, this.driver, INSTANT),
+      this.driver,
       WAIT_TIMEOUT_MS,
-      "the issue never reached the closed state",
+    );
+  }
+
+  async reopen(): Promise<void> {
+    await this.clickAndWaitUntil(
+      this.locators.statusButtonReopen,
+      () => this.isVisible(this.locators.statusButtonClose, this.driver, INSTANT),
+      this.driver,
+      WAIT_TIMEOUT_MS,
     );
   }
 }

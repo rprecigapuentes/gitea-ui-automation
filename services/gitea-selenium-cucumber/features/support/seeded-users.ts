@@ -3,6 +3,8 @@ import { uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.u
 import { resolveAdminToken } from "./credentials";
 
 export interface SeededUser {
+  // The assignee menu addresses a user by this id, which the interface never displays.
+  id: number;
   username: string;
   password: string;
 }
@@ -26,8 +28,12 @@ export async function createSeededUsers(): Promise<void> {
 
   for (let index = 1; index <= SEEDED_USER_COUNT; index += 1) {
     const username = seededUsername(index);
-    await client.createUser(username, `${username}@example.com`, SEEDED_USER_PASSWORD);
-    created.push({ username, password: SEEDED_USER_PASSWORD });
+    const { body: user } = await client.createUser(
+      username,
+      `${username}@example.com`,
+      SEEDED_USER_PASSWORD,
+    );
+    created.push({ id: user.id, username, password: SEEDED_USER_PASSWORD });
   }
 
   seededUsers = created;
