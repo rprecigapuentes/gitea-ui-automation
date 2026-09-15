@@ -295,8 +295,8 @@ Then("the repositories assigned to each team are correct", async function (this:
 
 When(
   "I remove the following team members:",
-  // The remove-modal fetch can outlast Cucumber's default step timeout under load.
-  { timeout: 25000 },
+  // clickRemoveTeamMemberButton's own retry can take up to 30s under load on its own.
+  { timeout: 35000 },
   async function (this: GiteaWorld, dataTable: DataTable) {
     await this.pages.orgFacade.navigateToTeamsTab();
 

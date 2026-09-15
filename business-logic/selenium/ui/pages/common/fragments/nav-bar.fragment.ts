@@ -13,7 +13,7 @@ export class NavBarFragment extends BaseComponent {
     secondaryBarContainer: By.css(".ui.secondary.stackable.menu"),
     rightOptionsContainer: By.css(".right.menu.tw-flex-wrap.tw-justify-end"),
     // elements within the secondary navigation bar
-    organizationDropdown: By.css(".text [class=gt-ellipsis]"),
+    organizationDropdown: By.css(".secondary-nav .text [class=gt-ellipsis]"),
     teamsDropdown: By.css("div.ui.floating.dropdown.jump:nth-of-type(2)"),
     activitiesOption: By.css(".item.tw-ml-auto"),
     issuesOption: By.css(".ui.secondary.stackable.menu a[href$='/issues']"),

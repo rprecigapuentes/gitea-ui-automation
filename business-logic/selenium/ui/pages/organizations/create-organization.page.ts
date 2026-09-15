@@ -136,6 +136,23 @@ export class CreateOrganizationPage extends BasePage {
   }
 
   async hasDefaultFormState(): Promise<boolean> {
+    try {
+      await this.actAndWaitUntil(
+        async () => {
+          await this.findElement(this.locators.formContainer);
+        },
+        () => this.formStateIsDefault(),
+      );
+    } catch {
+      return false;
+    }
+
+    return true;
+  }
+
+  // The visibility radios and admin-permissions checkbox belong to a Vue-rendered form whose
+  // checked state can still be mid-hydration right after the form container becomes visible.
+  private async formStateIsDefault(): Promise<boolean> {
     const conditions = await Promise.all([
       this.isOrganizationNameEmpty(),
       this.isRadioSelected("public"),
