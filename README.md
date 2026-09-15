@@ -39,8 +39,8 @@ Installs the dependencies of every workspace (5 under `core/`, 2 under `business
 | `npm run test:parallel`                              | `gitea-selenium-vitest`, the 3 browsers as 3 genuinely concurrent processes, one JUnit report per browser |
 | `npm run test:serial`                                | Same suite, one file at a time                                                                            |
 | `npm run test:browserstack`                          | `gitea-selenium-vitest` suite against BrowserStack                                                        |
-| `npm run test:cucumber`                              | `gitea-selenium-cucumber` suite, default browser (chrome)                                                 |
-| `npm run test:cucumber:parallel`                     | `gitea-selenium-cucumber`, the 3 browsers as 3 concurrent processes                                       |
+| `npm run test:cucumber`                              | `gitea-selenium-cucumber` suite, the 3 browsers as 3 concurrent processes (what CT runs)                  |
+| `npm run test:cucumber:parallel`                     | The same three, under the explicit name                                                                   |
 | `npm run report` / `report:open`                     | Allure report for `gitea-selenium-vitest`                                                                 |
 | `npm run lint` / `lint:fix`                          | ESLint across the whole monorepo                                                                          |
 | `npm run typecheck`                                  | `tsc --noEmit` in every workspace that defines it                                                         |

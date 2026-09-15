@@ -13,6 +13,21 @@ export interface Verifiable {
   isVisible(locators: By | By[], root?: SearchRoot, timeoutMs?: number): Promise<boolean>;
 }
 
+// The healing proxy answers concurrent lookups on one session from a single shared context, so
+// two sent together can come back swapped or empty. One lookup at a time per driver; only the
+// lookup itself, never the wait around it.
+const lookupTails = new WeakMap<WebDriver, Promise<unknown>>();
+
+async function lookUp(driver: WebDriver, root: SearchRoot, locator: By): Promise<WebElement[]> {
+  const previous = lookupTails.get(driver) ?? Promise.resolve();
+  const current = previous.then(() => root.findElements(locator));
+  lookupTails.set(
+    driver,
+    current.catch(() => undefined),
+  );
+  return current;
+}
+
 export abstract class BaseComponent implements Verifiable {
   constructor(protected driver: WebDriver) {}
 
@@ -25,7 +40,7 @@ export abstract class BaseComponent implements Verifiable {
     // under the poll (unhandled inspector error). The read is transient, so it retries.
     const checkOnce = async (): Promise<WebElement[] | null> => {
       try {
-        const found = await root.findElements(locator);
+        const found = await lookUp(this.driver, root, locator);
         if (found.length === 0) return null;
         const visible = await Promise.all(found.map((element) => element.isDisplayed()));
         return visible.every(Boolean) ? found : null;
