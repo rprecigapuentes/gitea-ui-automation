@@ -71,11 +71,13 @@ jobs:
           HEALENIUM_SERVER_URL: https://healenium.estiberz.online
           HEALENIUM_SERVICE: https://healenium.estiberz.online
           IMITATE_SERVICE: https://imitator.estiberz.online
-          # Temporary, for #91: one run with healing off, to prove or disprove that it is what
-          # substitutes the dashboard tab anchors for each other. Back to "true" either way.
-          HEAL_ENABLED: "false"
+          HEAL_ENABLED: "true"
           RECOVERY_TRIES: "1"
-          SCORE_CAP: ".6"
+          # Raised from .6 after healing was caught substituting one dashboard tab anchor for the
+          # other. It does not make identical siblings distinguishable, and it is not meant to:
+          # with an ambiguous baseline a higher bar makes Healenium refuse rather than guess, so a
+          # locator that has genuinely drifted still heals and an ambiguous one fails honestly.
+          SCORE_CAP: ".8"
           HLM_LOG_LEVEL: info
 
     env:
