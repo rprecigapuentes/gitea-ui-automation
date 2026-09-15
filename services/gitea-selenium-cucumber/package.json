@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "pretest": "node -e \"require('fs').rmSync('allure-results', { recursive: true, force: true })\"",
-    "test": "cross-env NODE_OPTIONS=--import=tsx cucumber-js",
+    "test": "npm run test:parallel",
     "test:chrome": "cross-env BROWSER=chrome NODE_OPTIONS=--import=tsx cucumber-js",
     "test:firefox": "cross-env BROWSER=firefox NODE_OPTIONS=--import=tsx cucumber-js",
     "test:edge": "cross-env BROWSER=edge NODE_OPTIONS=--import=tsx cucumber-js",

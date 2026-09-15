@@ -52,10 +52,10 @@ Step definitions assert with `expect` imported directly from the `vitest` packag
 
 ```bash
 npm install                                    # from the repo root
-npm run test:cucumber                          # from the repo root — default browser (chrome)
-npm run test:cucumber:parallel                 # from the repo root — chrome+firefox+edge as 3 concurrent processes
+npm run test:cucumber                          # from the repo root — chrome+firefox+edge as 3 concurrent processes
+npm run test:cucumber:parallel                 # from the repo root — the same three, under its explicit name
 # or, from this folder:
-npm test                                       # default browser (chrome)
+npm test                                       # the three browsers; what CT runs
 npm run test:chrome / test:firefox / test:edge # one browser only
 npm run test:parallel                          # the three browsers, three concurrent `cucumber-js` processes via concurrently
 ```
