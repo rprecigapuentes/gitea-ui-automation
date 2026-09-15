@@ -12,4 +12,4 @@
 
 - [x] 3.1 Verified from run #280 onward: the step logs `account ct-admin is usable` before the browser accounts and `admin token minted for ct-admin`, the token is masked, and Cucumber reaches its scenarios instead of dying in `BeforeAll`. The privilege probe has never fired, so Gitea's first-registered-user rule holds on 1.27.3.
 - [x] 3.2 Verified on #306: both suites ran, both published their own Allure report, and the run succeeded. `npm run format`, `npm run lint` and `npm run typecheck` are clean.
-- [ ] 3.3 Remove the temporary `push` trigger on `91-ct-admin-token` from `ct.yml`, added only so the branch could be exercised without a dispatch. Verify the `on:` block is back to `schedule` plus `workflow_dispatch` before the pull request is opened.
+- [x] 3.3 Removed. The block is back to plus .

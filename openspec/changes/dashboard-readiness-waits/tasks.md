@@ -25,4 +25,4 @@
 
 - [x] 5.1 The log named it, and it was not what any of the three theories said. `Dashboard tabs read something else` reported `organizationLabel: "Repository"` - a value that cannot come from the element that locator names, so the read was resolving to the wrong element rather than timing out. Healing was the only thing in the path that substitutes one element for another, and turning it off took the failures from 4 to 0 with no code change.
 - [x] 5.2 They fell in a block. The suite went from 333s (#289) to 178s with the implicit wait gone, and to 134s with healing off as well. AT-ISS-02 went 36s -> 25.6s -> 12.5s. Nothing became unstable: the tests that changed behaviour all got faster.
-- [ ] 5.3 Before the PR, remove the temporary push trigger (task 3.3 of `ct-admin-token`).
+- [x] 5.3 Removed, together with task 3.3 of .
