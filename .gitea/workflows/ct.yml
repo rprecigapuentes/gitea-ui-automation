@@ -67,16 +67,12 @@ jobs:
           HEALENIUM_SERVER_URL: https://healenium.estiberz.online
           HEALENIUM_SERVICE: https://healenium.estiberz.online
           IMITATE_SERVICE: https://imitator.estiberz.online
-          # Off until the backend/proxy pair is upgraded and re-tested. Measured over three runs
-          # of this suite, changing nothing else: healing on, cap .6, populated store -> 4 failures
-          # in 178s; healing off -> 2 failures in 134s; healing on, cap .8, store emptied first ->
-          # 10 failures in 157s. It substituted one dashboard tab anchor for the other, and also
-          # broke a.list-item-large-title, which has no ambiguous sibling, so the score cap is not
-          # the lever. The store stays deployed and keeps its baselines; this suite stops asking.
-          HEAL_ENABLED: "false"
+          # The store used to heal findElements on every call, which turned the base component's
+          # own empty polls into substitutions. Off there since automindai-infra f3849d2.
+          HEAL_ENABLED: "true"
           RECOVERY_TRIES: "1"
           SCORE_CAP: ".6"
-          HLM_LOG_LEVEL: info
+          HLM_LOG_LEVEL: debug
 
     env:
       MAX_WORKERS: "3"
