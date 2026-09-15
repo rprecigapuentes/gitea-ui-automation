@@ -161,6 +161,20 @@ jobs:
             echo "token minted for ${!owner_user}"
           done
 
+      # chrome-owner is registered first above, so on this job's fresh gitea-test instance it is
+      # Gitea's first-ever user - automatically an admin. gitea-selenium-cucumber's seeded-users
+      # setup needs write:admin (the per-browser tokens above only carry user/repo/issue/org scopes).
+      - name: Mint a shared admin API token from chrome-owner
+        run: |
+          admin_token=$(curl -fsS -u "$GITEA_OWNER_CHROME:$GITEA_OWNER_CHROME_PASSWORD" \
+            -H "Content-Type: application/json" \
+            -X POST "$GITEA_BASE_URL/api/v1/users/$GITEA_OWNER_CHROME/tokens" \
+            -d '{"name":"continuous-testing-admin","scopes":["write:admin"]}' \
+            | node -pe 'JSON.parse(require("fs").readFileSync(0, "utf8")).sha1')
+          echo "::add-mask::$admin_token"
+          echo "GITEA_ADMIN_TOKEN=$admin_token" >> "$GITHUB_ENV"
+          echo "admin token minted for $GITEA_OWNER_CHROME"
+
       - name: Run the suite
         run: npm test -w @gitea-automation/${{ matrix.suite }}
 
