@@ -1,6 +1,7 @@
 import { WebDriver, By, WebElement, until, error as seleniumError } from "selenium-webdriver";
 import { logger } from "../../../logger/pino.logger";
 import { simulateHtml5Drag } from "../utils/html5-drag.util";
+import { renameClass } from "../utils/markup-drift.util";
 
 export type SearchRoot = WebDriver | WebElement;
 
@@ -157,6 +158,18 @@ export abstract class BaseComponent implements Verifiable {
     const target = await this.findElement(targetLocator, root, timeoutMs);
 
     await simulateHtml5Drag(this.driver, source, target);
+  }
+
+  /** Makes the screen drift under a locator: the elements stay, the class they were found by does not. */
+  async renameClass(
+    locator: By,
+    from: string,
+    to: string,
+    root: SearchRoot = this.driver,
+    timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  ): Promise<void> {
+    const elements = await this.findElements(locator, root, timeoutMs);
+    await renameClass(this.driver, elements, from, to);
   }
 
   async getText(
