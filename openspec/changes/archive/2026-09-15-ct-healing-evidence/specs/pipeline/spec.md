@@ -2,13 +2,13 @@
 
 ### Requirement: A run publishes what the healing proxy did in each of its sessions
 
-For every browser session a suite opens through the healing proxy, the workflow SHALL publish the proxy's log for that session and the heals recorded against it, as part of the same artifact that carries the suite's report. It SHALL do so whether the suite passed or failed, and SHALL summarize the heals in the run's log so that a reader does not need the artifact to know whether anything was healed.
+For every browser session a suite opens through the healing proxy, the workflow SHALL publish the proxy's log for that session and the store's report for it, as part of the same artifact that carries the suite's report. It SHALL do so whether the suite passed or failed, and SHALL summarize the heals in the run's log so that a reader does not need the artifact to know whether anything was healed. The summary SHALL be derived from the proxy's log, which records every heal, rather than from the store's report, which the proxy leaves empty when it saves a heal without a session key.
 
 #### Scenario: A session healed a locator
 
 - **WHEN** a suite's session resolved at least one locator through a stored baseline
-- **THEN** the run's log names, for that session, the locator that failed, the locator it was healed to, and the score of the substitution
-- **AND** the artifact holds the proxy's log lines for that session and the record of every heal in it
+- **THEN** the run's log names, for that session, the locator that failed, the locator it was healed to, and the score of the substitution, read from the proxy's log
+- **AND** the artifact holds the proxy's log lines for that session and the store's report for it
 
 #### Scenario: A session healed nothing
 
