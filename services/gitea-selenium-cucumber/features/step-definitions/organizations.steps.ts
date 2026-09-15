@@ -106,14 +106,15 @@ Then("the created team's page is displayed", async function (this: GiteaWorld) {
 
 Then("the created teams are displayed in Teams page", async function (this: GiteaWorld) {
   await this.pages.orgFacade.navigateToTeamsTab();
-  const teamNames = await this.pages.orgTeams.getTeamNames();
   const createdTeams = this.scenarioState.organization!.teams ?? [];
 
+  // Asked for one card at a time rather than read off one snapshot of the grid: a snapshot taken
+  // while the grid is still rendering answered ["Owners", "Owners"] on the CT grid.
   for (const team of createdTeams) {
-    expect(teamNames).toContain(team.name);
+    expect(await this.pages.orgTeams.hasTeamContainer(team.name)).toBe(true);
   }
   // +1 for the organization's own default "Owners" team.
-  expect(teamNames.length).toBe(createdTeams.length + 1);
+  expect(await this.pages.orgTeams.getTeamContainersCount()).toBe(createdTeams.length + 1);
 });
 
 When("I add the following team members:", async function (this: GiteaWorld, dataTable: DataTable) {
