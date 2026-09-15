@@ -228,21 +228,29 @@ jobs:
 
           for id in $ids; do
             echo "::group::session $id"
+            # The proxy log is the source of truth for a heal: on this proxy version the store saves
+            # the replacement but never links it into a report, so /report/data stays empty. The log
+            # is kept too, and /report/data alongside it for the day the report is fixed.
             if ! curl -fsS "$SELENIUM_REMOTE_URL/hlm-proxy/logs/session/$id" > "$out/$id.logs.json"; then
               echo "the proxy did not answer for the log of session $id"
-            fi
-            if ! curl -fsS "$SELENIUM_REMOTE_URL/healenium/report/data/$id" > "$out/$id.heals.json"; then
-              echo "the store did not answer for the heals of session $id"
             else
               node -e '
-                const report = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
-                const heals = report.data ?? [];
-                console.log(heals.length === 0 ? "no heal recorded" : `${heals.length} heal(s) recorded`);
-                for (const h of heals) {
-                  console.log(`${h.failedLocatorType} ${h.failedLocatorValue} -> ${h.healedLocatorType} ${h.healedLocatorValue} (${h.score})`);
+                const log = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
+                const lines = Array.isArray(log.proxyLogs) ? log.proxyLogs : String(log.proxyLogs ?? "").split("\n");
+                const heals = [];
+                let failed = null;
+                for (const line of lines) {
+                  const miss = line.match(/Failed to find an elements? using locator (.+?)\s*$/);
+                  if (miss) { failed = miss[1]; continue; }
+                  const healed = line.match(/Using healed locator: Scored\(score=([0-9.]+), value=(.+?)\)\s*$/);
+                  if (healed) heals.push(`${failed ?? "?"} -> ${healed[2]} (${healed[1]})`);
                 }
-              ' "$out/$id.heals.json"
+                console.log(heals.length === 0 ? "no heal recorded" : `${heals.length} heal(s) recorded`);
+                for (const h of heals) console.log(h);
+              ' "$out/$id.logs.json"
             fi
+            curl -fsS "$SELENIUM_REMOTE_URL/healenium/report/data/$id" > "$out/$id.heals.json" \
+              || echo "the store did not answer for the report of session $id"
             echo "::endgroup::"
           done
 
