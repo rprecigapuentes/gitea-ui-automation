@@ -196,6 +196,20 @@ export abstract class BaseComponent implements Verifiable {
     return results.every(Boolean);
   }
 
+  // actAndWaitUntil covers a condition that follows an action. This is for one that does not: a
+  // suggestion list settles from a query typed in an earlier step, so there is no action here to
+  // pair the wait with, and the entries carry their identity as text, which no locator can name.
+  // Reports rather than raises, so a check built on it stays a boolean for its caller.
+  protected async waitUntil(
+    predicate: () => Promise<boolean>,
+    timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  ): Promise<boolean> {
+    return this.driver.wait(predicate, timeoutMs).then(
+      () => true,
+      () => false,
+    );
+  }
+
   // Predicate-based counterpart to actAndWaitFor, for state a locator alone can't express.
   protected async actAndWaitUntil(
     action: () => Promise<void>,

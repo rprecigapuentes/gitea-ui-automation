@@ -1,5 +1,7 @@
-import { By, error as seleniumError } from "selenium-webdriver";
+import { By, WebElement, error as seleniumError } from "selenium-webdriver";
 import { BaseComponent } from "@gitea-automation/core-selenium/ui/base-pages/base-component";
+
+const INSTANT = 0;
 
 export class SpecificTeamFragment extends BaseComponent {
   private readonly locators = {
@@ -192,12 +194,25 @@ export class SpecificTeamFragment extends BaseComponent {
     return (await this.findElements(this.locators.userSearchResults)).length > 0;
   }
 
+  // Keeps looking while the list settles. One read of it answers for whatever the search had
+  // returned at that instant, which on the CT grid was a filtered list the user had not reached
+  // yet, and no locator can name an entry that carries its username only as text.
   async hasUserSearchResult(username: string): Promise<boolean> {
-    const results = await this.findElements(this.locators.userSearchResults);
-    const usernames = await Promise.all(
-      results.map((result) => this.getText(this.locators.userSearchResultName, result)),
+    return this.waitUntil(async () => (await this.getUserSearchResultNames()).includes(username));
+  }
+
+  private async getUserSearchResultNames(): Promise<string[]> {
+    const results = await this.findElements(
+      this.locators.userSearchResults,
+      this.driver,
+      INSTANT,
+    ).catch((): WebElement[] => []);
+
+    return Promise.all(
+      results.map((result) =>
+        this.getText(this.locators.userSearchResultName, result, INSTANT).catch(() => ""),
+      ),
     );
-    return usernames.includes(username);
   }
 
   // A suggestion entry carries the username as text and nothing else - no href, no id, no data
