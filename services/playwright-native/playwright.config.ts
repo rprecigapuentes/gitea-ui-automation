@@ -30,6 +30,9 @@ export default defineConfig({
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",
+
+    /* Show the browser window when HEADED is set, so a run launched from any script (including test:parallel) can be watched. */
+    headless: process.env.HEADED ? false : undefined,
   },
 
   /* Browser matrix matches the Selenium services: chrome, firefox, edge */

@@ -13,6 +13,8 @@
     "test:firefox": "cross-env BROWSER=firefox playwright test --project=firefox --workers=1",
     "test:edge": "cross-env BROWSER=edge playwright test --project=edge --workers=1",
     "test:parallel": "concurrently -n chrome,firefox,edge -c blue,yellow,cyan \"npm:test:chrome\" \"npm:test:firefox\" \"npm:test:edge\"",
+    "test:headed": "cross-env HEADED=1 playwright test",
+    "test:parallel:headed": "cross-env HEADED=1 concurrently -n chrome,firefox,edge -c blue,yellow,cyan \"npm:test:chrome\" \"npm:test:firefox\" \"npm:test:edge\"",
     "typecheck": "tsc --noEmit"
   }
 }
