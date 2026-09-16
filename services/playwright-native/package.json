@@ -2,5 +2,17 @@
   "name": "@gitea-automation/playwright-native",
   "version": "0.0.0",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^22.20.3"
+  },
+  "scripts": {
+    "test": "playwright test",
+    "test:chrome": "cross-env BROWSER=chrome playwright test --project=chrome --workers=1",
+    "test:firefox": "cross-env BROWSER=firefox playwright test --project=firefox --workers=1",
+    "test:edge": "cross-env BROWSER=edge playwright test --project=edge --workers=1",
+    "test:parallel": "concurrently -n chrome,firefox,edge -c blue,yellow,cyan \"npm:test:chrome\" \"npm:test:firefox\" \"npm:test:edge\"",
+    "typecheck": "tsc --noEmit"
+  }
 }
