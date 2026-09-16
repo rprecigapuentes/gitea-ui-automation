@@ -5,7 +5,7 @@ Scaffolded, runnable workspace for a future UI automation project using Playwrig
 ## What's here
 
 - `playwright.config.ts` and `tests/example.spec.ts` — the default files `npm init playwright@latest` scaffolds. The example test exercises `playwright.dev` itself, not Gitea.
-- `chrome`, `firefox` and `edge` project configs, matching the browser matrix the Selenium services already cover. `chrome` and `edge` use `channel` to drive the real installed browsers; `firefox` has no such option in Playwright — it always runs Playwright's own patched Firefox build (downloaded by `playwright install` into `~/AppData/Local/ms-playwright/firefox-*`), never the system's Firefox. Same Gecko engine, different binary — that's why its window shows a different icon than your everyday Firefox when run `:headed`.
+- `chrome`, `firefox` and `edge` project configs, matching the browser matrix the Selenium services already cover — naming and env-var convention only. None of the three sets a `channel`, so all run on Playwright's own managed binaries (whatever `playwright install` downloads into `~/AppData/Local/ms-playwright/`), never a real installed Chrome/Edge/Firefox. That's on purpose: a `channel` (`'chrome'`/`'msedge'`) would need the real browser present on whatever machine runs the tests, which a CI runner isn't guaranteed to have, and would need its own install step beyond plain `playwright install`. It's also why a browser's window shows a different icon than your everyday one when run `:headed` — it's the Playwright-managed copy, not your system's.
 
 ## Running it
 

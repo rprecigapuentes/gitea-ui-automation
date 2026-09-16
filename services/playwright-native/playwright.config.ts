@@ -35,11 +35,13 @@ export default defineConfig({
     headless: process.env.HEADED ? false : undefined,
   },
 
-  /* Browser matrix matches the Selenium services: chrome, firefox, edge */
+  /* Browser matrix matches the Selenium services: chrome, firefox, edge. No `channel` on any
+     of them, so all three run on Playwright's own managed binaries (`playwright install`) —
+     nothing here depends on a real Chrome/Edge being present on whatever machine runs this. */
   projects: [
     {
       name: "chrome",
-      use: { ...devices["Desktop Chrome"], channel: "chrome" },
+      use: { ...devices["Desktop Chrome"] },
     },
 
     {
@@ -49,7 +51,7 @@ export default defineConfig({
 
     {
       name: "edge",
-      use: { ...devices["Desktop Edge"], channel: "msedge" },
+      use: { ...devices["Desktop Edge"] },
     },
   ],
 
