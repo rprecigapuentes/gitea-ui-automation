@@ -2,75 +2,59 @@ import { Page, Locator } from "@playwright/test";
 import { IElementHandle } from "../element-handle.interface";
 import { IInteractionStrategy } from "../interaction-strategy.interface";
 
-function locate(base: Page | Locator, locator: string): Locator {
-  return base.locator(locator);
-}
-
-export class PlaywrightElementHandle implements IElementHandle {
-  constructor(readonly locator: Locator) {}
-
-  async click(): Promise<void> {
-    await this.locator.click();
-  }
-
-  getText(): Promise<string> {
-    console.log("[playwright] IElementHandle.getText");
-    return Promise.resolve("");
-  }
-
-  getAttribute(name: string): Promise<string> {
-    console.log("[playwright] IElementHandle.getAttribute", name);
-    return Promise.resolve("");
-  }
-
-  isSelected(): Promise<boolean> {
-    console.log("[playwright] IElementHandle.isSelected");
-    return Promise.resolve(false);
-  }
-
-  isDisplayed(): Promise<boolean> {
-    console.log("[playwright] IElementHandle.isDisplayed");
-    return Promise.resolve(false);
-  }
-
-  clear(): Promise<void> {
-    console.log("[playwright] IElementHandle.clear");
-    return Promise.resolve();
-  }
-
-  sendKeys(text: string): Promise<void> {
-    console.log("[playwright] IElementHandle.sendKeys", text);
-    return Promise.resolve();
-  }
-
-  findElement(locator: string): Promise<IElementHandle> {
-    return Promise.resolve(new PlaywrightElementHandle(locate(this.locator, locator)));
-  }
-
-  async findElements(locator: string): Promise<IElementHandle[]> {
-    const found = await locate(this.locator, locator).all();
-    return found.map((element) => new PlaywrightElementHandle(element));
-  }
+function toElementHandle(locator: Locator): IElementHandle {
+  return {
+    click: () => locator.click(),
+    getText: () => {
+      console.log("[playwright] IElementHandle.getText");
+      return Promise.resolve("");
+    },
+    getAttribute: (name: string) => {
+      console.log("[playwright] IElementHandle.getAttribute", name);
+      return Promise.resolve("");
+    },
+    isSelected: () => {
+      console.log("[playwright] IElementHandle.isSelected");
+      return Promise.resolve(false);
+    },
+    isDisplayed: () => {
+      console.log("[playwright] IElementHandle.isDisplayed");
+      return Promise.resolve(false);
+    },
+    clear: () => {
+      console.log("[playwright] IElementHandle.clear");
+      return Promise.resolve();
+    },
+    sendKeys: (text: string) => {
+      console.log("[playwright] IElementHandle.sendKeys", text);
+      return Promise.resolve();
+    },
+    findElement: (childLocator: string) =>
+      Promise.resolve(toElementHandle(locator.locator(childLocator))),
+    findElements: async (childLocator: string) =>
+      (await locator.locator(childLocator).all()).map(toElementHandle),
+  };
 }
 
 export class PlaywrightInteractionStrategy implements IInteractionStrategy {
   constructor(private readonly page: Page) {}
 
-  private base(root?: IElementHandle): Page | Locator {
-    return root instanceof PlaywrightElementHandle ? root.locator : this.page;
-  }
-
   findElement(locator: string, root?: IElementHandle): Promise<IElementHandle> {
-    return Promise.resolve(new PlaywrightElementHandle(locate(this.base(root), locator)));
+    if (root) return root.findElement(locator);
+    return Promise.resolve(toElementHandle(this.page.locator(locator)));
   }
 
   async findElements(locator: string, root?: IElementHandle): Promise<IElementHandle[]> {
-    const found = await locate(this.base(root), locator).all();
-    return found.map((element) => new PlaywrightElementHandle(element));
+    if (root) return root.findElements(locator);
+    return (await this.page.locator(locator).all()).map(toElementHandle);
   }
 
   async click(locator: string, root?: IElementHandle, timeoutMs?: number): Promise<void> {
-    await locate(this.base(root), locator).click({ timeout: timeoutMs });
+    if (root) {
+      await (await root.findElement(locator)).click();
+      return;
+    }
+    await this.page.locator(locator).click({ timeout: timeoutMs });
   }
 
   async type(
@@ -79,7 +63,7 @@ export class PlaywrightInteractionStrategy implements IInteractionStrategy {
     root?: IElementHandle,
     timeoutMs?: number,
   ): Promise<void> {
-    await locate(this.base(root), locator).fill(text, { timeout: timeoutMs });
+    await this.page.locator(locator).fill(text, { timeout: timeoutMs });
   }
 
   clearAndType(
