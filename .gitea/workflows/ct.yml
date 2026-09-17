@@ -25,7 +25,7 @@ jobs:
 
     strategy:
       fail-fast: false
-      # Each job starts its own gitea-test, browser and proxy on one VPS.
+      # Each job starts its own gitea-test and browser on one VPS.
       max-parallel: 1
       # act_runner plans the matrix before any job output exists.
       matrix:
@@ -58,26 +58,10 @@ jobs:
           SE_NODE_MAX_SESSIONS: "3"
           SE_NODE_OVERRIDE_MAX_SESSIONS: "true"
 
-      # Permanent store on the gitea-lab VPS.
-      hlm-proxy:
-        image: healenium/hlm-proxy:2.2.1
-        env:
-          SELENIUM_SERVER_URL: http://selenium:4444/wd/hub
-          # External and internal address of the same backend.
-          HEALENIUM_SERVER_URL: https://healenium.estiberz.online
-          HEALENIUM_SERVICE: https://healenium.estiberz.online
-          IMITATE_SERVICE: https://imitator.estiberz.online
-          # The store used to heal findElements on every call, which turned the base component's
-          # own empty polls into substitutions. Off there since automindai-infra f3849d2.
-          HEAL_ENABLED: "true"
-          RECOVERY_TRIES: "1"
-          SCORE_CAP: ".6"
-          HLM_LOG_LEVEL: debug
-
     env:
       MAX_WORKERS: "3"
       GITEA_BASE_URL: http://gitea-test:3000
-      SELENIUM_REMOTE_URL: http://hlm-proxy:8085
+      SELENIUM_REMOTE_URL: http://selenium:4444
       GITEA_ADMIN_USERNAME: ct-admin
       GITEA_ADMIN_PASSWORD: Qa-admin-not-a-secret-1
       GITEA_OWNER_CHROME: chrome-owner
@@ -111,13 +95,13 @@ jobs:
           echo "gitea-test never became healthy"
           exit 1
 
-      - name: Wait for the browser, through the healing proxy
+      - name: Wait for the browser
         run: |
           for _ in $(seq 1 60); do
             curl -fsS "$SELENIUM_REMOTE_URL/status" | grep -q '"ready": *true' && exit 0
             sleep 2
           done
-          echo "hlm-proxy at $SELENIUM_REMOTE_URL never reported the browser ready"
+          echo "the Selenium server at $SELENIUM_REMOTE_URL never reported the browser ready"
           exit 1
 
       # The proxy answers /status even when the store behind it is down.
