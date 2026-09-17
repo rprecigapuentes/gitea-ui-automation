@@ -5,8 +5,8 @@ test.describe("Login via API", () => {
   test("logs in and out via session cookies issued by AuthClient", async ({
     sessionManager,
     page,
-  }) => {
-    const { username } = resolveOwnerCredentials();
+  }, testInfo) => {
+    const { username } = resolveOwnerCredentials(testInfo.project.name);
 
     await sessionManager.loginAsOwner();
 

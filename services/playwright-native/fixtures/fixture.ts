@@ -44,9 +44,12 @@ export const test = base.extend<CustomFixtures>({
   strategy: async ({ page }, use) => {
     await use(InteractionStrategyFactory.playwright(page));
   },
-  clients: async ({}, use) => {
+  clients: async ({}, use, testInfo) => {
     const baseUrl = process.env.GITEA_BASE_URL!;
-    const strategy = RequestStrategyFactory.playwright(baseUrl, resolveOwnerToken());
+    const strategy = RequestStrategyFactory.playwright(
+      baseUrl,
+      resolveOwnerToken(testInfo.project.name),
+    );
 
     await use({
       auth: new AuthClient(baseUrl),
@@ -66,12 +69,12 @@ export const test = base.extend<CustomFixtures>({
   pageObjects: async ({ strategy, scenarioState }, use) => {
     await use(new PageFactory(strategy, scenarioState));
   },
-  sessionManager: async ({ clients, context, page }, use) => {
+  sessionManager: async ({ clients, context, page }, use, testInfo) => {
     await use({
       loginAs: (username: string, password: string) =>
         applySession(context, page, clients.auth, username, password),
       loginAsOwner: () => {
-        const { username, password } = resolveOwnerCredentials();
+        const { username, password } = resolveOwnerCredentials(testInfo.project.name);
         return applySession(context, page, clients.auth, username, password);
       },
       logout: () => clearSession(context),

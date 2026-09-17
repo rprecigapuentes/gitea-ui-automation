@@ -3,28 +3,24 @@ export interface Credentials {
   password: string;
 }
 
-function currentBrowserSuffix(): string {
-  return (process.env.BROWSER ?? "chrome").toUpperCase();
-}
-
-export function resolveOwnerCredentials(): Credentials {
-  const browser = currentBrowserSuffix();
-  const username = process.env[`GITEA_OWNER_${browser}`];
-  const password = process.env[`GITEA_OWNER_${browser}_PASSWORD`];
+export function resolveOwnerCredentials(project: string): Credentials {
+  const suffix = project.toUpperCase();
+  const username = process.env[`GITEA_OWNER_${suffix}`];
+  const password = process.env[`GITEA_OWNER_${suffix}_PASSWORD`];
 
   if (!username || !password) {
-    throw new Error(`Missing owner credentials for browser "${browser}" (GITEA_OWNER_${browser})`);
+    throw new Error(`Missing owner credentials for browser "${suffix}" (GITEA_OWNER_${suffix})`);
   }
 
   return { username, password };
 }
 
-export function resolveOwnerToken(): string {
-  const browser = currentBrowserSuffix();
-  const token = process.env[`GITEA_TOKEN_${browser}`];
+export function resolveOwnerToken(project: string): string {
+  const suffix = project.toUpperCase();
+  const token = process.env[`GITEA_TOKEN_${suffix}`];
 
   if (!token) {
-    throw new Error(`Missing API token for browser "${browser}" (GITEA_TOKEN_${browser})`);
+    throw new Error(`Missing API token for browser "${suffix}" (GITEA_TOKEN_${suffix})`);
   }
 
   return token;
