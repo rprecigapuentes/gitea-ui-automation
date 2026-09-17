@@ -13,7 +13,7 @@ UI automation against Gitea with Playwright's native test runner (`@playwright/t
 `fixtures/fixture.ts` extends `@playwright/test`'s own `test` with five fixtures:
 
 - `strategy: IInteractionStrategy` — Playwright's own `page` fixture wrapped with `InteractionStrategyFactory.playwright` from [`@gitea-automation/core-page-objects`](../../core/page-objects/README.md).
-- `clients` — the 7 Gitea API clients (`organizations`, `repositories`, `issues`, `labels`, `teams`, `milestones`, `users`), each built via `RequestStrategyFactory.playwright` from [`@gitea-automation/core-api-client`](../../core/api-client/README.md), sharing one `PlaywrightRequestStrategy` instance — plus `auth: AuthClient`, which stays `got`-based (see that ppackage's README for why it's out of the Strategy pattern).
+- `clients` — the 7 Gitea API clients (`organizations`, `repositories`, `issues`, `labels`, `teams`, `milestones`, `users`), each built via `RequestStrategyFactory.playwright` from [`@gitea-automation/core-api-client`](../../core/api-client/README.md), sharing one `PlaywrightRequestStrategy` instance — plus `auth: AuthClient`, which stays `got`-based (see that package's README for why it's out of the Strategy pattern).
 - `pageObjects: PageFactory` — [`@gitea-automation/business-logic/pages/page.factory.ts`](../../business-logic/README.md), built from `strategy` and `scenarioState`.
 - `scenarioState: ScenarioState` — starts as `{}` per test, same type the other two suites use.
 - `sessionManager` — `loginAs(username, password)`, `loginAsOwner()`, `logout()`. A test says who to log in as, not how — the same shape as `gitea-selenium-vitest`'s `sessionManager` fixture. Underneath, `fixtures/session.util.ts`'s `applySession`/`clearSession` do the same cookie dance `gitea-selenium-vitest`'s `session.util.ts` does for a `WebDriver` (`AuthClient.loginViaApi` → clear cookies → set the returned ones → reload), just through `BrowserContext.addCookies`/`clearCookies` instead of `driver.manage()`.
@@ -32,11 +32,7 @@ test("...", async ({ sessionManager, pageObjects, scenarioState }) => {
 npm test -w @gitea-automation/playwright-native
 ```
 
-<<<<<<< HEAD
-runs every spec (`example.spec.ts` and `login-api.spec.ts`) on all three browsers in one process. Browser binaries are installed separately (`npx playwright install`), not as part of `npm install`.
-=======
-
-runs the smoke on all three browsers in one process. Browser binaries are installed separately, not as part of `npm install`:
+runs every spec (`gitea-smoke.spec.ts`, `login-api.spec.ts`, `login-ui.spec.ts`) on all three browsers in one process. Browser binaries are installed separately, not as part of `npm install`:
 
 ```bash
 npx playwright install firefox        # the bundled build
@@ -44,8 +40,6 @@ npx playwright install chrome msedge  # the real products the branded projects d
 ```
 
 Point the suite somewhere with `GITEA_BASE_URL`, for example `GITEA_BASE_URL=http://localhost:3000 npm test -w @gitea-automation/playwright-native`.
-
-> > > > > > > main
 
 For one OS process per browser — the same isolation `gitea-selenium-vitest`/`gitea-selenium-cucumber` use so that two browsers never contend for the same Gitea account:
 
@@ -56,7 +50,7 @@ npm run test:edge -w @gitea-automation/playwright-native
 npm run test:parallel -w @gitea-automation/playwright-native   # the three above, concurrently
 ```
 
-Each of `test:chrome`/`test:firefox`/`test:edge` sets `BROWSER=<name>` in its process, the same convention `gitea-selenium-cucumber`'s `credentials.ts` reads to pick a browser-specific Gitea account — `fixtures/credentials.ts` here does exactly the same thing.
+`fixtures/credentials.ts`'s `resolveOwnerCredentials`/`resolveOwnerToken` pick a browser-specific Gitea account, but not from an env var: `npm test` runs all three projects in one worker process, where an env var can't vary per project. They take the project name as a parameter instead, sourced from Playwright's own `testInfo.project.name` — the same convention whether a test runs standalone (`test:chrome`), as part of `test:parallel`, or all three together via plain `npm test`.
 
 To watch the browsers instead of running headless, add `:headed` (sets `HEADED=1`, which `playwright.config.ts` reads to turn `headless` off):
 
@@ -67,15 +61,7 @@ npm run test:parallel:headed -w @gitea-automation/playwright-native   # all thre
 
 or pass `--headed` directly to any single-browser script, e.g. `npm run test:chrome -w @gitea-automation/playwright-native -- --headed`.
 
-<<<<<<< HEAD
-
 ## Current limitation: UI tests
-
-=======
-
-## When page objects start here
-
-> > > > > > > main
 
 `login-api.spec.ts` proves the `clients` fixture end to end (`PlaywrightRequestStrategy`, real HTTP against the local Gitea instance) and drives real browser state via `context.addCookies` — but it asserts through Playwright's own `page`/`expect`, not through `pageObjects`.
 
