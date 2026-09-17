@@ -60,7 +60,7 @@ It never picks a strategy itself — whoever constructs it already has. `gitea-s
 
 ## Current limitation
 
-`PlaywrightInteractionStrategy` (in `core-page-objects`) is a stub — every method logs and returns a placeholder, so a page constructed with it typechecks and runs without throwing, but doesn't drive a real browser yet. That's deliberate: this package's pages have no remaining Selenium dependency; making the Playwright side actually work is separate, not-yet-started work.
+`PlaywrightInteractionStrategy` (in `core-page-objects`) is partially real: `findElement`/`findElements`/`click`/`type` drive a live browser; everything else still logs and returns a placeholder. A page's simpler flows (filling a field, clicking a button) work when driven directly through the `strategy` fixture; a composed method like `LoginPage.login()` isn't fully usable yet since it calls `clickAndWaitForUrl`, still a stub.
 
 ## Dependencies
 

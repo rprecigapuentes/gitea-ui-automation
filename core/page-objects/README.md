@@ -47,7 +47,7 @@ const loginPage = new LoginPage(strategy); // same LoginPage class either way
 
 ## Current limitation
 
-`PlaywrightInteractionStrategy` is not a working implementation. Every method logs its call and returns a type-satisfying placeholder (`""`, `false`, `[]`, `undefined`, …), so any page object typechecks and runs without throwing when constructed with it — which is what proves a page has no remaining Selenium dependency — but nothing here drives a real Playwright browser yet. That's separate, not-yet-started work.
+`PlaywrightInteractionStrategy` is partially real: `findElement`, `findElements`, `click`, and `type` (`Locator.fill`) work against a live browser, built directly from Playwright's own documented API — `findElement`/`findElements` build a `Locator` lazily (no eager wait, matching how Playwright locators work), `click`/`type` rely on Playwright's built-in actionability auto-waiting, `findElements` uses `Locator.all()`. Every other method (`clearAndType`, drag-and-drop, `isVisible`, `getText`, `getAttribute`, the `*AndWait*` compositions, `open`, `waitFor`/`waitForUrl`, `executeScript`) still logs its call and returns a type-satisfying placeholder. `LoginPage.login()` isn't fully usable yet because of this — it composes `clickAndWaitForUrl`, which is still a stub — but `services/playwright-native/tests/login-ui.spec.ts` drives the four working methods directly and logs in for real.
 
 ## Dependencies
 

@@ -14,7 +14,8 @@ services/playwright-native/
 │   └── fixture.ts                # custom test fixtures: strategy, clients, pages, scenarioState, sessionManager
 └── tests/
     ├── example.spec.ts           # the default file npm init playwright@latest scaffolds, exercises playwright.dev itself
-    └── login-api.spec.ts         # Gitea-specific: logs in and out via sessionManager, cookie-based, no UI
+    ├── login-api.spec.ts         # Gitea-specific: logs in and out via sessionManager, cookie-based, no UI
+    └── login-ui.spec.ts          # Gitea-specific: fills the login form and submits it, through the strategy fixture
 ```
 
 - `chrome`, `firefox` and `edge` project configs, matching the browser matrix the Selenium services already cover — naming and env-var convention only. None of the three sets a `channel`, so all run on Playwright's own managed binaries (whatever `playwright install` downloads into `~/AppData/Local/ms-playwright/`), never a real installed Chrome/Edge/Firefox. That's on purpose: a `channel` (`'chrome'`/`'msedge'`) would need the real browser present on whatever machine runs the tests, which a CI runner isn't guaranteed to have, and would need its own install step beyond plain `playwright install`. It's also why a browser's window shows a different icon than your everyday one when run `:headed` — it's the Playwright-managed copy, not your system's.
@@ -69,4 +70,4 @@ or pass `--headed` directly to any single-browser script, e.g. `npm run test:chr
 
 `login-api.spec.ts` proves the `clients` fixture end to end (`PlaywrightRequestStrategy`, real HTTP against the local Gitea instance) and drives real browser state via `context.addCookies` — but it asserts through Playwright's own `page`/`expect`, not through `pages`.
 
-That's because `PlaywrightInteractionStrategy` (in `core-page-objects`) is still a stub — every method logs and returns a placeholder, so `pages.loginPage`/`pages.mainPage`/any page typechecks and constructs fine, but nothing actually drives the browser yet. `strategy` and `pages` are wired and ready; a UI-driven test (filling the login form through `pages.loginPage.login(...)`, asserting through `pages.mainPage.hasExpectedElementsDisplayed()`) needs that strategy implemented for real first — translating each method to Playwright's `Page`/`Locator` API.
+`login-ui.spec.ts` drives a real login through the browser: `strategy.type`/`strategy.click` (`PlaywrightInteractionStrategy`'s `findElement`/`findElements`/`click`/`type` are real now, built from Playwright's own documented API) fill the form and submit it, and the result is confirmed through `page.waitForURL`/`expect`. It doesn't go through `pages.loginPage.login(...)` yet, though — that method composes `clickAndWaitForUrl`, which (like `isVisible`, `getText`, `getAttribute`, and everything else beyond the four basics) is still a stub. `pages.mainPage.hasExpectedElementsDisplayed()` needs those to work before a test can assert through `pages` the way the Selenium suites do.
