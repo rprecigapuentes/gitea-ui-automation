@@ -28,11 +28,7 @@ export async function createSeededUsers(): Promise<void> {
 
   for (let index = 1; index <= SEEDED_USER_COUNT; index += 1) {
     const username = seededUsername(index);
-    const { body: user } = await client.createUser(
-      username,
-      `${username}@example.com`,
-      SEEDED_USER_PASSWORD,
-    );
+    const user = await client.createUser(username, `${username}@example.com`, SEEDED_USER_PASSWORD);
     created.push({ id: user.id, username, password: SEEDED_USER_PASSWORD });
   }
 

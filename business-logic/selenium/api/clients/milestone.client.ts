@@ -1,5 +1,4 @@
-import { GiteaApiClient } from "@gitea-automation/core-selenium/api/gitea-client.client";
-import type { Response } from "got";
+import { GiteaApiClient } from "@gitea-automation/core-api-client/gitea-api-client";
 import type { Milestone, NewMilestone } from "../entities/milestone.entity";
 
 export class MilestoneClient extends GiteaApiClient {
@@ -7,9 +6,7 @@ export class MilestoneClient extends GiteaApiClient {
     owner: string,
     repository: string,
     milestone: NewMilestone,
-  ): Promise<Response<Milestone>> {
-    return this.client.post<Milestone>(`repos/${owner}/${repository}/milestones`, {
-      json: milestone,
-    });
+  ): Promise<Milestone> {
+    return this.post<Milestone>(`repos/${owner}/${repository}/milestones`, milestone);
   }
 }

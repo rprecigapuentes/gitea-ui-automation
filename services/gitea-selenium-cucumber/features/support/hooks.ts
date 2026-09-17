@@ -71,7 +71,7 @@ async function seedOrganizationWithIssues(world: GiteaWorld, prefix: string): Pr
     await repositoryClient.createOrganizationRepository(organizationName, repositoryName);
 
     const title = testDataName("S2-SMK-ISS", `Issue-${index}`);
-    const { body: issue } = await issues.createIssue(organizationName, repositoryName, title);
+    const issue = await issues.createIssue(organizationName, repositoryName, title);
 
     repositories.push({
       name: repositoryName,
@@ -116,11 +116,11 @@ Before({ tags: DEMO_E2E_TAG }, async function (this: GiteaWorld) {
   const dueDate = new Date(Date.now() + SEEDED_MILESTONE_DUE_DAYS * MS_PER_DAY);
   const title = testDataName("S2-DEMO-MS", "Release");
 
-  const { body: milestone } = await milestones.createMilestone(
-    organization.name,
-    firstRepository.name,
-    { title, description: "Demo end to end", due_on: dueDate.toISOString() },
-  );
+  const milestone = await milestones.createMilestone(organization.name, firstRepository.name, {
+    title,
+    description: "Demo end to end",
+    due_on: dueDate.toISOString(),
+  });
 
   this.scenarioState.milestone = {
     id: milestone.id,

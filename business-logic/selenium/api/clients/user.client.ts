@@ -1,20 +1,21 @@
-import { GiteaApiClient } from "@gitea-automation/core-selenium/api/gitea-client.client";
-import type { Response } from "got";
+import { GiteaApiClient } from "@gitea-automation/core-api-client/gitea-api-client";
 import type { User } from "../entities/user.entity";
 
 export class UserClient extends GiteaApiClient {
-  async getUser(): Promise<Response<User>> {
-    return this.client.get<User>("user");
+  async getUser(): Promise<User> {
+    return this.get<User>("user");
   }
 
-  // Requires a token with the write:admin scope, unlike every other call this client makes.
-  async createUser(username: string, email: string, password: string): Promise<Response<User>> {
-    return this.client.post<User>("admin/users", {
-      json: { username, email, password, must_change_password: false },
+  async createUser(username: string, email: string, password: string): Promise<User> {
+    return this.post<User>("admin/users", {
+      username,
+      email,
+      password,
+      must_change_password: false,
     });
   }
 
-  async deleteUser(username: string): Promise<Response> {
-    return this.client.delete(`admin/users/${username}`);
+  async deleteUser(username: string): Promise<void> {
+    return this.delete(`admin/users/${username}`);
   }
 }

@@ -1,38 +1,33 @@
-import { GiteaApiClient } from "@gitea-automation/core-selenium/api/gitea-client.client";
-import type { Response } from "got";
+import { GiteaApiClient } from "@gitea-automation/core-api-client/gitea-api-client";
 import type { OrganizationVisibility } from "../entities/organization.entity";
 
-export interface Organization {
+export interface OrganizationSummary {
   id: number;
   name: string;
 }
 
 export class OrganizationClient extends GiteaApiClient {
-  // Gitea takes the organization name in 'username'.
   async createOrganization(
     name: string,
     visibility: OrganizationVisibility = "private",
-  ): Promise<Response<Organization>> {
-    return this.client.post<Organization>("orgs", { json: { username: name, visibility } });
+  ): Promise<OrganizationSummary> {
+    return this.post<OrganizationSummary>("orgs", { username: name, visibility });
   }
 
-  async getAllOrganizations(): Promise<Response<Organization[]>> {
-    return this.client.get<Organization[]>("orgs");
+  async getAllOrganizations(): Promise<OrganizationSummary[]> {
+    return this.get<OrganizationSummary[]>("orgs");
   }
 
-  // Organizations the authenticated (owner) token belongs to, used to find leftovers from
-  // previous runs that failed before their own cleanup could delete them.
-  async getUserOrganizations(): Promise<Response<Organization[]>> {
-    return this.client.get<Organization[]>("user/orgs");
+  async getUserOrganizations(): Promise<OrganizationSummary[]> {
+    return this.get<OrganizationSummary[]>("user/orgs");
   }
 
-  async deleteOrganization(organizationName: string): Promise<Response> {
-    return this.client.delete(`orgs/${organizationName}`);
+  async deleteOrganization(organizationName: string): Promise<void> {
+    return this.delete(`orgs/${organizationName}`);
   }
 
-  // Clears every organization so a suite starts with a clean slate.
   async deleteAllOrganizations(): Promise<void> {
-    const { body: organizations } = await this.getUserOrganizations();
+    const organizations = await this.getUserOrganizations();
 
     for (const organization of organizations) {
       try {

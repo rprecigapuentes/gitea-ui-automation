@@ -11,9 +11,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@gitea-automation/core-config": "*",
+    "@gitea-automation/core-api-client": "*",
     "@gitea-automation/core-logger": "*",
-    "@gitea-automation/core-selenium": "*",
     "got": "^16.0.0",
     "tough-cookie": "^6.0.2"
   },

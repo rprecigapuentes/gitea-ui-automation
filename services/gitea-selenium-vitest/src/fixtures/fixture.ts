@@ -323,7 +323,7 @@ export const test = base.extend<CustomFixtures>({
         color,
         exclusive: true,
       });
-      return response.body.id;
+      return response.id;
     };
 
     await use({
@@ -337,7 +337,7 @@ export const test = base.extend<CustomFixtures>({
     const title = "Scoped labels acceptance";
     const response = await issueClient.createIssue(owner, repository, title);
 
-    await use({ id: response.body.id, number: response.body.number, title });
+    await use({ id: response.id, number: response.number, title });
   },
   milestoneClient: async ({}, use) => {
     await use(new MilestoneClient(process.env.GITEA_BASE_URL!, resolveOwnerToken()));
@@ -349,7 +349,7 @@ export const test = base.extend<CustomFixtures>({
     await use(new MilestoneListPage(strategy));
   },
   maintainer: async ({ userClient }, use) => {
-    await use((await userClient.getUser()).body);
+    await use(await userClient.getUser());
   },
   classificationLabel: async ({ labelClient, repository }, use) => {
     const { username: owner } = resolveOwnerCredentials();
@@ -360,7 +360,7 @@ export const test = base.extend<CustomFixtures>({
       exclusive: false,
     });
 
-    await use({ id: response.body.id, name });
+    await use({ id: response.id, name });
   },
   milestone: async ({ milestoneClient, repository }, use) => {
     const { username: owner } = resolveOwnerCredentials();
@@ -373,7 +373,7 @@ export const test = base.extend<CustomFixtures>({
       due_on: dueDate.toISOString(),
     });
 
-    await use({ id: response.body.id, title, description, dueDate });
+    await use({ id: response.id, title, description, dueDate });
   },
   navBarFragment: async ({ strategy }, use) => {
     const navBarFragment = new NavBarFragment(strategy);
