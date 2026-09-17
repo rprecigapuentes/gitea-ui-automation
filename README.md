@@ -18,7 +18,7 @@ An `npm workspaces` monorepo grouping Gitea UI/API automation into several indep
 ├── services/
 │   ├── gitea-selenium-vitest/     # Selenium + Vitest — active project, full suite
 │   ├── gitea-selenium-cucumber/   # Selenium + Cucumber (BDD) — under construction
-│   ├── playwright-native/         # Playwright's native test runner — scaffolded and runnable, no Gitea test yet
+│   ├── playwright-native/         # Playwright's native test runner — clients/strategy/pages/scenarioState fixtures, a login-via-API test
 │   └── playwright-bdd/            # reserved — no code yet
 ```
 
@@ -56,7 +56,7 @@ Installs the dependencies of every workspace (7 under `core/`, 2 under `business
 - **[business-logic](business-logic/README.md)** — organizational root for 2 packages: [`business-logic-selenium`](business-logic/selenium/README.md) (Gitea API clients/entities + cross-step scenario state) and [`business-logic-common`](business-logic/common/README.md) (concrete Gitea page objects, technology-agnostic via `core-page-objects`'s Strategy pattern — one `LoginPage`/`IssuePage`/etc. class runs against either Selenium or Playwright depending on which strategy it's constructed with). Neither `gitea-selenium-vitest` nor `gitea-selenium-cucumber` keeps its own copy of either.
 - **[services/gitea-selenium-vitest](services/gitea-selenium-vitest/README.md)** — the original suite: Selenium WebDriver + Vitest, BrowserStack, Allure, multi-account/multi-browser credentials. Full documentation in its own README.
 - **[services/gitea-selenium-cucumber](services/gitea-selenium-cucumber/README.md)** — Selenium + Cucumber (BDD/Gherkin). Login, organizations (teams, repositories, and assigning one to the other) and project-board features, tagged `@smoke`/`@e2e`, run across all 3 browsers; still growing.
-- **[services/playwright-native](services/playwright-native/README.md)** — Playwright's native test runner, scaffolded and runnable (chrome/firefox/edge, `npm test`), still running only the stock example spec — no Gitea test yet, since that needs `core-page-objects`'s Playwright strategy to be more than a stub.
+- **[services/playwright-native](services/playwright-native/README.md)** — Playwright's native test runner (chrome/firefox/edge, `npm test`), now wired to the shared abstractions: `clients`/`strategy`/`pages`/`scenarioState` fixtures and a real login-via-API test (`AuthClient` + `context.addCookies`). A UI-driven test still needs `core-page-objects`'s Playwright strategy to be more than a stub.
 - **services/playwright-bdd** — reserved for a future Playwright-based BDD suite. Today it's an empty workspace (just a `package.json`), no code or dependencies.
 
 ## CI/CD
@@ -69,7 +69,7 @@ Installs the dependencies of every workspace (7 under `core/`, 2 under `business
 
 ### Which suites `ct.yml` runs
 
-`ct.yml`'s matrix is hardcoded to `gitea-selenium-vitest` and `gitea-selenium-cucumber` — it does not discover suites by scanning for a `test` script. `playwright-native` has one now (it runs the stock Playwright example against playwright.dev, not Gitea) but isn't wired into this workflow; doing so needs both adding it to the matrix/`workflow_dispatch` choices here and installing real browsers on the runner rather than relying on the Selenium grid service this workflow already spins up (Playwright doesn't speak WebDriver, so it can't reuse that container the way the two Selenium suites do). `playwright-bdd` still exposes no `test` script at all.
+`ct.yml`'s matrix is hardcoded to `gitea-selenium-vitest` and `gitea-selenium-cucumber` — it does not discover suites by scanning for a `test` script. `playwright-native` has one now (`example.spec.ts` against playwright.dev, `login-api.spec.ts` against a real Gitea instance) but isn't wired into this workflow; doing so needs both adding it to the matrix/`workflow_dispatch` choices here and installing real browsers on the runner rather than relying on the Selenium grid service this workflow already spins up (Playwright doesn't speak WebDriver, so it can't reuse that container the way the two Selenium suites do). `playwright-bdd` still exposes no `test` script at all.
 
 The cron run covers all of them. A manual dispatch takes a `suite` input to run exactly one; leaving it at `all` runs the lot. Suites run one at a time and a failing suite does not cancel the others, so a red Cucumber run still leaves you the vitest report. Each publishes its own artifact, named `allure-report-<suite>`.
 

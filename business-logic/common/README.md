@@ -45,7 +45,20 @@ const strategy = createSeleniumStrategy(driver); // or createPlaywrightStrategy(
 const loginPage = new LoginPage(strategy);
 ```
 
-`services/gitea-selenium-cucumber/features/support/page.factory.ts` and `services/gitea-selenium-vitest/src/fixtures/fixture.ts` do exactly this today, wrapping a real Selenium `WebDriver`.
+`services/gitea-selenium-vitest/src/fixtures/fixture.ts` does exactly this today, wrapping a real Selenium `WebDriver`. `services/playwright-native/fixtures/fixture.ts` does the same with `createPlaywrightStrategy(page)`.
+
+## PageFactory
+
+`ui/page.factory.ts` is a lazy, memoized getter for every page/fragment (`this.pages.loginPage`, `this.pages.orgFacade`, ...), built once from an already-constructed `IInteractionStrategy` and a `ScenarioState`:
+
+```ts
+import { PageFactory } from "@gitea-automation/business-logic-common/ui/page.factory";
+
+const pages = new PageFactory(strategy, scenarioState);
+pages.loginPage.login(username, password);
+```
+
+It never picks a strategy itself — whoever constructs it already has, exactly like every page it wires together. `gitea-selenium-cucumber`'s `GiteaWorld.pages` and `playwright-native`'s `pages` fixture are both a `PageFactory` built this way, one with `createSeleniumStrategy(driver)`, the other with `createPlaywrightStrategy(page)`.
 
 ## Current limitation
 
