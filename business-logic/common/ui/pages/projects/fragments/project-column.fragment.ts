@@ -1,52 +1,52 @@
-import { By, WebDriver } from "selenium-webdriver";
-import { BaseComponent } from "@gitea-automation/core-selenium/ui/base-pages/base-component";
+import { BaseComponent } from "@gitea-automation/core-page-objects/base-component";
+import { IInteractionStrategy } from "@gitea-automation/core-page-objects/interaction-strategy.interface";
 
 const INSTANT = 0;
 
 export class ProjectColumnFragment extends BaseComponent {
   private readonly locators: {
-    column: By;
-    title: By;
-    issueCount: By;
-    menuTrigger: By;
-    editItem: By;
-    setDefaultItem: By;
-    deleteItem: By;
-    cards: By;
-    card: (issueId: number) => By;
-    anyCard: By;
+    column: string;
+    title: string;
+    issueCount: string;
+    menuTrigger: string;
+    editItem: string;
+    setDefaultItem: string;
+    deleteItem: string;
+    cards: string;
+    card: (issueId: number) => string;
+    anyCard: string;
   };
 
-  private constructor(driver: WebDriver, root: string) {
-    super(driver);
+  private constructor(strategy: IInteractionStrategy, root: string) {
+    super(strategy);
     this.locators = {
-      column: By.css(root),
-      title: By.css(`${root} .project-column-title-text`),
-      issueCount: By.css(`${root} .project-column-issue-count`),
-      menuTrigger: By.css(`${root} .project-column-header .ui.dropdown`),
-      editItem: By.css(`${root} .menu a.item.show-project-column-modal-edit`),
-      setDefaultItem: By.css(`${root} .menu a.link-action[data-url$="/default"]`),
+      column: root,
+      title: `${root} .project-column-title-text`,
+      issueCount: `${root} .project-column-issue-count`,
+      menuTrigger: `${root} .project-column-header .ui.dropdown`,
+      editItem: `${root} .menu a.item.show-project-column-modal-edit`,
+      setDefaultItem: `${root} .menu a.link-action[data-url$="/default"]`,
       // The set-default item beside it is a link-action too; the method is what tells them apart.
-      deleteItem: By.css(`${root} .menu a.link-action[data-fetch-method="DELETE"]`),
+      deleteItem: `${root} .menu a.link-action[data-fetch-method="DELETE"]`,
       // A card is dropped into the list, not onto the column: the column root is outside it.
-      cards: By.css(`${root} .cards`),
-      card: (issueId: number) => By.css(`${root} .issue-card[data-issue="${issueId}"]`),
-      anyCard: By.css(`${root} .cards .issue-card`),
+      cards: `${root} .cards`,
+      card: (issueId: number) => `${root} .issue-card[data-issue="${issueId}"]`,
+      anyCard: `${root} .cards .issue-card`,
     };
   }
 
   /** A column title is only readable as an attribute of that column's edit item. */
-  static byTitle(driver: WebDriver, title: string): ProjectColumnFragment {
+  static byTitle(strategy: IInteractionStrategy, title: string): ProjectColumnFragment {
     return new ProjectColumnFragment(
-      driver,
+      strategy,
       `.project-column:has([data-modal-project-column-title-input="${title}"])`,
     );
   }
 
   /** Only the default column's title carries the tooltip attribute. */
-  static default(driver: WebDriver): ProjectColumnFragment {
+  static default(strategy: IInteractionStrategy): ProjectColumnFragment {
     return new ProjectColumnFragment(
-      driver,
+      strategy,
       ".project-column:has(.project-column-title-text[data-tooltip-content])",
     );
   }
@@ -57,7 +57,7 @@ export class ProjectColumnFragment extends BaseComponent {
 
   /** Instant check, for a caller that has already confirmed the board. */
   async isVisibleOnBoardNow(): Promise<boolean> {
-    return this.isVisible(this.locators.column, this.driver, INSTANT);
+    return this.isVisible(this.locators.column, undefined, INSTANT);
   }
 
   async getTitle(): Promise<string> {
@@ -74,17 +74,17 @@ export class ProjectColumnFragment extends BaseComponent {
 
   /** Instant check, for a caller reading a board it has just re-read. */
   async holdsIssueNow(issueId: number): Promise<boolean> {
-    return this.isVisible(this.locators.card(issueId), this.driver, INSTANT);
+    return this.isVisible(this.locators.card(issueId), undefined, INSTANT);
   }
 
   /** The drop target of a drag, handed out as a locator so the drag resolves it when it runs. */
-  getCardsLocator(): By {
+  getCardsLocator(): string {
     return this.locators.cards;
   }
 
   async getCardIssueIds(): Promise<number[]> {
     // An empty column has no card to find, which is an answer rather than a failure.
-    const cards = await this.findElements(this.locators.anyCard, this.driver, INSTANT).catch(
+    const cards = await this.findElements(this.locators.anyCard, undefined, INSTANT).catch(
       () => [],
     );
 
@@ -94,7 +94,7 @@ export class ProjectColumnFragment extends BaseComponent {
   async offersDelete(): Promise<boolean> {
     await this.openMenu();
 
-    return this.isVisible(this.locators.deleteItem, this.driver, INSTANT);
+    return this.isVisible(this.locators.deleteItem, undefined, INSTANT);
   }
 
   async clickDelete(): Promise<void> {
@@ -109,7 +109,7 @@ export class ProjectColumnFragment extends BaseComponent {
 
   private async openMenu(): Promise<void> {
     // Clicking the trigger of an open menu would close it.
-    if (await this.isVisible(this.locators.editItem, this.driver, INSTANT)) return;
+    if (await this.isVisible(this.locators.editItem, undefined, INSTANT)) return;
 
     await this.click(this.locators.menuTrigger);
     await this.findElement(this.locators.editItem);

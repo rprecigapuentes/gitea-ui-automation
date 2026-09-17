@@ -1,5 +1,4 @@
-import { By } from "selenium-webdriver";
-import { BasePage } from "@gitea-automation/core-selenium/ui/base-pages/base.page";
+import { BasePage } from "@gitea-automation/core-page-objects/base.page";
 import { baseUrl } from "@gitea-automation/core-config/gitea.config";
 
 const WAIT_TIMEOUT_MS = 10000;
@@ -10,11 +9,11 @@ const templateDropdown = `${form} .ui.selection.dropdown:has(input[name="templat
 
 export class CreateProjectPage extends BasePage {
   private readonly locators = {
-    title: By.css(`${form} input[name="title"]`),
-    templateDropdown: By.css(templateDropdown),
+    title: `${form} input[name="title"]`,
+    templateDropdown: templateDropdown,
     // Gitea numbers its project templates: 1 is Basic Kanban.
-    basicKanbanOption: By.css(`${templateDropdown} .menu .item[data-id="1"]`),
-    createButton: By.css(`${form} button.ui.primary.button`),
+    basicKanbanOption: `${templateDropdown} .menu .item[data-id="1"]`,
+    createButton: `${form} button.ui.primary.button`,
   };
 
   override getUrl(owner: string): string {
@@ -32,7 +31,7 @@ export class CreateProjectPage extends BasePage {
     await this.clickAndWaitForUrl(
       this.locators.createButton,
       PROJECT_LIST_URL,
-      this.driver,
+      undefined,
       WAIT_TIMEOUT_MS,
     );
   }

@@ -105,15 +105,15 @@ export class PageFactory {
   }
 
   get createProjectPage(): CreateProjectPage {
-    return (this.#createProjectPage ??= new CreateProjectPage(this.driver));
+    return (this.#createProjectPage ??= new CreateProjectPage(this.strategy));
   }
 
   get projectListPage(): ProjectListPage {
-    return (this.#projectListPage ??= new ProjectListPage(this.driver));
+    return (this.#projectListPage ??= new ProjectListPage(this.strategy));
   }
 
   get projectBoardPage(): ProjectBoardPage {
-    return (this.#projectBoardPage ??= new ProjectBoardPage(this.driver));
+    return (this.#projectBoardPage ??= new ProjectBoardPage(this.strategy));
   }
 
   get createOrganizationPage(): CreateOrganizationPage {

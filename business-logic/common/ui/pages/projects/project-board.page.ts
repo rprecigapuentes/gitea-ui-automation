@@ -1,5 +1,4 @@
-import { By } from "selenium-webdriver";
-import { BasePage } from "@gitea-automation/core-selenium/ui/base-pages/base.page";
+import { BasePage } from "@gitea-automation/core-page-objects/base.page";
 import { baseUrl } from "@gitea-automation/core-config/gitea.config";
 import { logger } from "@gitea-automation/core-logger/pino.logger";
 import { ProjectColumnFragment } from "./fragments/project-column.fragment";
@@ -9,15 +8,15 @@ const PERSISTED_TIMEOUT_MS = 10000;
 
 export class ProjectBoardPage extends BasePage {
   private readonly locators = {
-    board: By.css(board),
-    columnTitles: By.css(`${board} .project-column-title-text`),
+    board: board,
+    columnTitles: `${board} .project-column-title-text`,
     // Every column edit item carries the same class, so the header is what narrows it.
-    newColumnButton: By.css(".project-header button.show-project-column-modal-edit"),
-    columnModalTitle: By.css("#project-column-title-input"),
-    columnModalSave: By.css("#project-column-modal-edit .project-column-button-save"),
+    newColumnButton: ".project-header button.show-project-column-modal-edit",
+    columnModalTitle: "#project-column-title-input",
+    columnModalSave: "#project-column-modal-edit .project-column-button-save",
     // Gitea builds this modal on demand for a link-action.
-    confirmButton: By.css(".g-modal-confirm.modal .ui.primary.ok.button"),
-    card: (issueId: number) => By.css(`${board} .issue-card[data-issue="${issueId}"]`),
+    confirmButton: ".g-modal-confirm.modal .ui.primary.ok.button",
+    card: (issueId: number) => `${board} .issue-card[data-issue="${issueId}"]`,
   };
 
   override getUrl(owner: string, projectId: number): string {
@@ -47,11 +46,11 @@ export class ProjectBoardPage extends BasePage {
   }
 
   async getDefaultColumnTitle(): Promise<string> {
-    return ProjectColumnFragment.default(this.driver).getTitle();
+    return ProjectColumnFragment.default(this.strategy).getTitle();
   }
 
   async getDefaultColumnIssueCount(): Promise<number> {
-    return ProjectColumnFragment.default(this.driver).getIssueCount();
+    return ProjectColumnFragment.default(this.strategy).getIssueCount();
   }
 
   async getColumnIssueCount(title: string): Promise<number> {
@@ -59,7 +58,7 @@ export class ProjectBoardPage extends BasePage {
   }
 
   async getDefaultColumnCardIssueIds(): Promise<number[]> {
-    return ProjectColumnFragment.default(this.driver).getCardIssueIds();
+    return ProjectColumnFragment.default(this.strategy).getCardIssueIds();
   }
 
   async getColumnCardIssueIds(title: string): Promise<number[]> {
@@ -74,7 +73,7 @@ export class ProjectBoardPage extends BasePage {
   }
 
   async defaultColumnHoldsIssue(issueId: number): Promise<boolean> {
-    return ProjectColumnFragment.default(this.driver).holdsIssue(issueId);
+    return ProjectColumnFragment.default(this.strategy).holdsIssue(issueId);
   }
 
   async columnHoldsIssue(title: string, issueId: number): Promise<boolean> {
@@ -129,6 +128,6 @@ export class ProjectBoardPage extends BasePage {
   }
 
   private column(title: string): ProjectColumnFragment {
-    return ProjectColumnFragment.byTitle(this.driver, title);
+    return ProjectColumnFragment.byTitle(this.strategy, title);
   }
 }

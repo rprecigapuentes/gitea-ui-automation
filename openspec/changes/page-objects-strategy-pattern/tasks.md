@@ -27,9 +27,9 @@
 
 ## 5. Migrate projects/
 
-- [ ] 5.1 Migrate `create-project.page.ts`, `project-list.page.ts`, `project-board.page.ts`, `fragments/project-column.fragment.ts` — fix every mid-method `this.driver` → `this.strategy` in `project-board.page.ts`'s 5 `ProjectColumnFragment.byTitle`/`.default` call sites, and change `getCardsLocator(): By` to `(): string`
-- [ ] 5.2 Update `page.factory.ts`/`fixture.ts` construction for these 4 classes
-- [ ] 5.3 Verify typecheck green; run the project-board suite, especially the drag-and-drop (`moveCard`) scenarios
+- [x] 5.1 Migrate `create-project.page.ts`, `project-list.page.ts`, `project-board.page.ts`, `fragments/project-column.fragment.ts` — fix every mid-method `this.driver` → `this.strategy` in `project-board.page.ts`'s 5 `ProjectColumnFragment.byTitle`/`.default` call sites, and change `getCardsLocator(): By` to `(): string`
+- [x] 5.2 Update `page.factory.ts` construction for these 4 classes (confirmed `gitea-selenium-vitest`'s `fixture.ts`/tests never reference any projects/ class, so nothing to change there)
+- [x] 5.3 Verify typecheck and lint green (confirmed) and zero Selenium references left (confirmed); a smoke script exercising `moveCard` (including the Firefox-style drag-fallback path) against `createPlaywrightStrategy` ran clean; running the real project-board suite against a live Gitea instance was not done from this environment — do that before trusting this stage fully
 
 ## 6. Migrate repositories/
 

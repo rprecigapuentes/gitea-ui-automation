@@ -1,5 +1,4 @@
-import { By } from "selenium-webdriver";
-import { BasePage } from "@gitea-automation/core-selenium/ui/base-pages/base.page";
+import { BasePage } from "@gitea-automation/core-page-objects/base.page";
 import { baseUrl } from "@gitea-automation/core-config/gitea.config";
 
 export function projectIdFromHref(href: string | null): number | null {
@@ -10,7 +9,7 @@ export function projectIdFromHref(href: string | null): number | null {
 
 export class ProjectListPage extends BasePage {
   private readonly locators = {
-    projectLink: By.css(".milestone-list .list-item-large-title a.muted"),
+    projectLink: ".milestone-list .list-item-large-title a.muted",
   };
 
   override getUrl(owner: string): string {
