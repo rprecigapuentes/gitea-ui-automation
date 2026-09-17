@@ -61,19 +61,13 @@ Installs the dependencies of every workspace (6 under `core/`, `business-logic` 
 `.gitea/workflows/` runs on the project's own Gitea instance (self-hosted, GitHub Actions-compatible syntax):
 
 - `ci.yml` — on every push/PR: `npm ci` + `format:check` + `lint` + `typecheck` across the whole monorepo. Never runs real tests, never blocked by external infra.
-- `ct.yml` — "Continuous Testing": one job per suite, each deploying its own disposable Gitea, its own Selenium and Healenium's proxy, then running that suite's `npm test`. Manual dispatch + daily weekday cron.
+- `ct.yml` — "Continuous Testing": two jobs, one per framework, each deploying its own disposable Gitea, then running that framework's suites. Manual dispatch + daily cron.
 - `bs.yml` — same as `ct.yml` but against BrowserStack (`gitea-selenium-vitest` only). Manual dispatch + weekly cron.
 
 ### Which suites `ct.yml` runs
 
 `ct.yml`'s matrix is hardcoded to `gitea-selenium-vitest` and `gitea-selenium-cucumber` — it does not discover suites by scanning for a `test` script. `playwright-native` has one now (`example.spec.ts` against playwright.dev, `login-api.spec.ts` against a real Gitea instance) but isn't wired into this workflow; doing so needs both adding it to the matrix/`workflow_dispatch` choices here and installing real browsers on the runner rather than relying on the Selenium grid service this workflow already spins up (Playwright doesn't speak WebDriver, so it can't reuse that container the way the two Selenium suites do). `playwright-bdd` still exposes no `test` script at all.
 
-The cron run covers all of them. A manual dispatch takes a `suite` input to run exactly one; leaving it at `all` runs the lot. Suites run one at a time and a failing suite does not cancel the others, so a red Cucumber run still leaves you the vitest report. Each publishes its own artifact, named `allure-report-<suite>`.
+The cron run covers all of them. A manual dispatch takes a `suite` input to run exactly one; leaving it at `all` runs the lot. Suites run one at a time, and the `playwright` job waits on the `selenium` job so a single VPS never hosts two applications under test at once — but it runs whatever that job's outcome was. A failing suite does not cancel the others, so a red Cucumber run still leaves you the vitest report. Each publishes its own artifact, named `allure-report-<suite>`.
 
-### Healenium
-
-`ct.yml` drives the browser through Healenium's proxy rather than Selenium directly, so a locator whose target has drifted is resolved against the node path recorded for it on an earlier run instead of failing the test.
-
-The proxy and the browser are created per job. The store they consult is not: it runs permanently on the `gitea-lab` VPS, deployed from the `automindai-infra` repository, because a store created per run has no earlier run to compare against and can never heal. The workflow checks that store before any test executes and fails the job if it is unreachable, rather than running green having healed nothing.
-
-Healed locators are debt, not a pass. `ct.yml` is scheduled, never a merge gate; `ci.yml` stays lint, format and typecheck.
+`ct.yml` is scheduled, never a merge gate; `ci.yml` stays lint, format and typecheck.

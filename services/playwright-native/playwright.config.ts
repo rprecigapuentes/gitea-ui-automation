@@ -3,34 +3,23 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./tests",
-  /* Run tests in files in parallel */
   fullyParallel: true,
-  /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
-  /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
-  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: "html",
-  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
+  reporter: [["list"], ["allure-playwright", { resultsDir: "allure-results" }]],
   use: {
-    baseURL: process.env.GITEA_BASE_URL,
-
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
+    baseURL: process.env.GITEA_BASE_URL ?? "http://localhost:3000",
     trace: "on-first-retry",
-
-    /* Show the browser window when HEADED is set, so a run launched from any script (including test:parallel) can be watched. */
+    /* HEADED=1 shows the browser windows, including under test:parallel. */
     headless: process.env.HEADED ? false : undefined,
   },
 
-  /* Browser matrix matches the Selenium services: chrome, firefox, edge. No `channel` on any
-     of them, so all three run on Playwright's own managed binaries (`playwright install`) —
-     nothing here depends on a real Chrome/Edge being present on whatever machine runs this. */
+  /* Without a channel, Desktop Chrome and Desktop Edge both run the bundled Chromium. */
   projects: [
     {
       name: "chrome",
-      use: { ...devices["Desktop Chrome"] },
+      use: { ...devices["Desktop Chrome"], channel: "chrome" },
     },
 
     {
@@ -40,14 +29,7 @@ export default defineConfig({
 
     {
       name: "edge",
-      use: { ...devices["Desktop Edge"] },
+      use: { ...devices["Desktop Edge"], channel: "msedge" },
     },
   ],
-
-  /* Run your local dev server before starting the tests */
-  // webServer: {
-  //   command: 'npm run start',
-  //   url: 'http://localhost:3000',
-  //   reuseExistingServer: !process.env.CI,
-  // },
 });
