@@ -1,34 +1,33 @@
-import { By } from "selenium-webdriver";
-import { BaseComponent } from "@gitea-automation/core-selenium/ui/base-pages/base-component";
+import { BaseComponent } from "@gitea-automation/core-page-objects/base-component";
 import { TeamVisibility } from "@gitea-automation/business-logic-selenium/api/entities/team.entity";
 
 export class NewTeamFragment extends BaseComponent {
   private readonly locators = {
     // Main form displayed when creating an organization team.
-    newTeamForm: By.css("form[action$='/teams/new']"),
+    newTeamForm: "form[action$='/teams/new']",
     // Team name and description inputs.
-    teamNameInput: By.css("input[name='team_name']"),
+    teamNameInput: "input[name='team_name']",
     // Visibility and repository access options use stable form names and values.
-    publicVisibilityRadio: By.css("input[name='visibility'][value='public']"),
-    privateVisibilityRadio: By.css("input[name='visibility'][value='private']"),
-    specificRepositoryAccessRadio: By.css("input[name='repo_access'][value='specific']"),
-    createRepositoriesCheckbox: By.css("input[name='can_create_org_repo']"),
-    generalPermissionsRadio: By.css("input[name='permission'][value='read']"),
+    publicVisibilityRadio: "input[name='visibility'][value='public']",
+    privateVisibilityRadio: "input[name='visibility'][value='private']",
+    specificRepositoryAccessRadio: "input[name='repo_access'][value='specific']",
+    createRepositoriesCheckbox: "input[name='can_create_org_repo']",
+    generalPermissionsRadio: "input[name='permission'][value='read']",
     // Form submit button.
-    createTeamButton: By.css("form[action$='/teams/new'] button.ui.primary.button"),
+    createTeamButton: "form[action$='/teams/new'] button.ui.primary.button",
     // The edit-team page reuses this same form, scoped to "/edit" instead.
-    updateTeamButton: By.css("form[action$='/edit'] .ui.primary.button"),
+    updateTeamButton: "form[action$='/edit'] .ui.primary.button",
   };
 
-  private readonly visibilityLocators: Record<TeamVisibility, By> = {
+  private readonly visibilityLocators: Record<TeamVisibility, string> = {
     public: this.locators.publicVisibilityRadio,
     private: this.locators.privateVisibilityRadio,
   };
 
-  private readonly repoCodeAccessLocators: Record<"none" | "read" | "write", By> = {
-    none: By.css("[name='unit_1'][value='0']"),
-    read: By.css("[name='unit_1'][value='1']"),
-    write: By.css("[name='unit_1'][value='2']"),
+  private readonly repoCodeAccessLocators: Record<"none" | "read" | "write", string> = {
+    none: "[name='unit_1'][value='0']",
+    read: "[name='unit_1'][value='1']",
+    write: "[name='unit_1'][value='2']",
   };
 
   async waitUntilDisplayed(): Promise<void> {
@@ -87,16 +86,16 @@ export class NewTeamFragment extends BaseComponent {
     await this.click(this.locators.updateTeamButton);
   }
 
-  private async isInputEmpty(locator: By): Promise<boolean> {
+  private async isInputEmpty(locator: string): Promise<boolean> {
     const input = await this.findElement(locator);
     return (await input.getAttribute("value")) === "";
   }
 
-  private async isRadioSelected(locator: By): Promise<boolean> {
+  private async isRadioSelected(locator: string): Promise<boolean> {
     return (await this.findElement(locator)).isSelected();
   }
 
-  private async isCheckboxChecked(locator: By): Promise<boolean> {
+  private async isCheckboxChecked(locator: string): Promise<boolean> {
     return (await this.findElement(locator)).isSelected();
   }
 

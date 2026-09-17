@@ -21,9 +21,9 @@
 
 ## 4. Migrate organizations/
 
-- [ ] 4.1 Migrate `create-organization.page.ts` (normalize its 4 `By.id`/inconsistent-`By.css` locators to plain `#id` strings), `organization-dashboard.page.ts`, `facade/organization.facade.ts`, and the 5 `organizations/fragments/*.fragment.ts` files
-- [ ] 4.2 Update `page.factory.ts`/`fixture.ts` construction for these 7 classes, including `OrganizationFacade`'s multi-fragment constructor forwarding `strategy` to each injected fragment
-- [ ] 4.3 Verify typecheck green; run organization/team suites, including `services/gitea-selenium-vitest/tests/organizations.test.ts`'s direct fragment import
+- [x] 4.1 Migrate `create-organization.page.ts` (normalize its 4 `By.id`/inconsistent-`By.css` locators to plain `#id` strings), `organization-dashboard.page.ts`, `facade/organization.facade.ts`, and the 5 `organizations/fragments/*.fragment.ts` files — also found and closed an escape hatch the plan didn't anticipate: `specific-team.fragment.ts` checked Selenium's `seleniumError.ElementClickInterceptedError` directly, so a new shared `InteractionInterceptedError` was added to `core-page-objects` (thrown by `SeleniumInteractionStrategy.click`), and the fragment now checks that instead
+- [x] 4.2 Update `page.factory.ts`/`fixture.ts` construction for these 7 classes, including `OrganizationFacade`'s multi-fragment constructor forwarding `strategy` to each injected fragment
+- [x] 4.3 Verify typecheck and lint green (confirmed) and zero Selenium references left (confirmed); a smoke script exercising all 8 classes (including the facade and the new `InteractionInterceptedError` path) against `createPlaywrightStrategy` ran clean; running organization/team suites against a live Gitea instance, including `services/gitea-selenium-vitest/tests/organizations.test.ts`'s direct fragment import, was not done from this environment — do that before trusting this stage fully
 
 ## 5. Migrate projects/
 

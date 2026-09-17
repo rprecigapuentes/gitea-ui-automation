@@ -1,29 +1,28 @@
-import { BaseComponent } from "@gitea-automation/core-selenium/ui/base-pages/base-component";
-import { By } from "selenium-webdriver";
+import { BaseComponent } from "@gitea-automation/core-page-objects/base-component";
 
 export class OrgRepositoriesFragment extends BaseComponent {
   private readonly locators = {
-    searchBar: By.css("[data-text='Search']"),
+    searchBar: "[data-text='Search']",
     // Right sidebar that contains the Members and Teams sections.
-    organizationSidebar: By.css(".ui.five.wide.column"),
+    organizationSidebar: ".ui.five.wide.column",
     // Counter link in the Members section.
-    membersCount: By.css("a[href$='/members'] span"),
+    membersCount: "a[href$='/members'] span",
     // User avatars displayed in the Members section.
-    memberAvatars: By.css("a.avatar-with-link img.ui.avatar"),
+    memberAvatars: "a.avatar-with-link img.ui.avatar",
     // Links wrapping user avatars in the Members section.
-    memberAvatarLinks: By.css("a.avatar-with-link[aria-label]"),
+    memberAvatarLinks: "a.avatar-with-link[aria-label]",
     // Counter link in the Teams section.
-    teamsCount: By.css("a[href$='/teams'] span"),
+    teamsCount: "a[href$='/teams'] span",
     // Counters for the default Owners team.
-    ownersMembersCount: By.css("a.muted[href$='/teams/owners'] strong"),
-    ownersRepositoriesCount: By.css("a[href$='/teams/owners/repositories'] strong"),
+    ownersMembersCount: "a.muted[href$='/teams/owners'] strong",
+    ownersRepositoriesCount: "a[href$='/teams/owners/repositories'] strong",
     // Owner-only action in the Teams section.
-    newTeamButton: By.css("a[href$='/teams/new']"),
-    newRepositoryButton: By.css("a[href*='/repo/create?org=']"),
-    newMigrationButton: By.css("a[href*='/repo/migrate?org=']"),
-    repositoriesContainer: By.css(".flex-divided-list.items-with-main"),
-    repositoryItem: By.css(".item"),
-    repositoryName: By.css(".item-title a.name"),
+    newTeamButton: "a[href$='/teams/new']",
+    newRepositoryButton: "a[href*='/repo/create?org=']",
+    newMigrationButton: "a[href*='/repo/migrate?org=']",
+    repositoriesContainer: ".flex-divided-list.items-with-main",
+    repositoryItem: ".item",
+    repositoryName: ".item-title a.name",
   };
 
   async areOwnerElementsVisible(): Promise<boolean> {

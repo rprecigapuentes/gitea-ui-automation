@@ -1,52 +1,51 @@
-import { By, WebElement, error as seleniumError } from "selenium-webdriver";
-import { BaseComponent } from "@gitea-automation/core-selenium/ui/base-pages/base-component";
+import { BaseComponent } from "@gitea-automation/core-page-objects/base-component";
+import { IElementHandle } from "@gitea-automation/core-page-objects/element-handle.interface";
+import { InteractionInterceptedError } from "@gitea-automation/core-page-objects/errors";
 
 const INSTANT = 0;
 
 export class SpecificTeamFragment extends BaseComponent {
   private readonly locators = {
     // Created team details card.
-    teamDetails: By.css("[role='main'].organization.teams .ui.six.wide.column"),
+    teamDetails: "[role='main'].organization.teams .ui.six.wide.column",
     // Team name in the details card header.
-    teamName: By.css("[role='main'].organization.teams .ui.six.wide.column h4 strong"),
+    teamName: "[role='main'].organization.teams .ui.six.wide.column h4 strong",
     // Team visibility label in the details card header.
-    teamVisibilityLabel: By.css(
-      "[role='main'].organization.teams .ui.six.wide.column h4 .ui.mini.label",
-    ),
+    teamVisibilityLabel: "[role='main'].organization.teams .ui.six.wide.column h4 .ui.mini.label",
     // Owner-only member management form and controls.
-    addTeamMemberForm: By.css("form[action$='/action/add']"),
-    searchUserInput: By.css("input[name='uname']"),
+    addTeamMemberForm: "form[action$='/action/add']",
+    searchUserInput: "input[name='uname']",
     // Gitea user search widget and dynamically rendered result entries.
-    userSearchResults: By.css("#search-user-box .results .result"),
+    userSearchResults: "#search-user-box .results .result",
     // The list narrows as the query grows, so "the only entry left" is a waitable condition and
     // the one entry it resolves to is the searched user, without matching on its text.
-    onlyUserSearchResult: By.css("#search-user-box .results .result:only-child"),
-    userSearchResultName: By.css(".title"),
-    addTeamMemberButton: By.css("form[action$='/action/add'] button"),
-    joinButton: By.css("form[action$='/action/join'] button"),
-    settingsButton: By.css("a[href$='/edit']"),
-    settingsIcon: By.css(".svg.octicon-gear"),
+    onlyUserSearchResult: "#search-user-box .results .result:only-child",
+    userSearchResultName: ".title",
+    addTeamMemberButton: "form[action$='/action/add'] button",
+    joinButton: "form[action$='/action/join'] button",
+    settingsButton: "a[href$='/edit']",
+    settingsIcon: ".svg.octicon-gear",
     // Member and repository counters in the team navigation.
-    membersCount: By.css(".org-team-navbar a.active strong"),
-    repositoriesCount: By.css(".org-team-navbar a[href$='/repositories'] strong"),
-    repositoriesTabLink: By.css(".org-team-navbar a[href$='/repositories']"),
-    repoSearchInput: By.css("input[name='repo_name']"),
-    addRepoButton: By.css("form[action$='/repo/add'] button"),
+    membersCount: ".org-team-navbar a.active strong",
+    repositoriesCount: ".org-team-navbar a[href$='/repositories'] strong",
+    repositoriesTabLink: ".org-team-navbar a[href$='/repositories']",
+    repoSearchInput: "input[name='repo_name']",
+    addRepoButton: "form[action$='/repo/add'] button",
     // Repositories tab's assigned-repos list - distinct from the search form's own segment,
     // which also carries the "ui attached segment" classes.
-    assignedRepositoriesContainer: By.css(".ui.attached.segment:has(.flex-divided-list)"),
-    assignedRepositoryLink: By.css(".item-main a.item-title"),
+    assignedRepositoriesContainer: ".ui.attached.segment:has(.flex-divided-list)",
+    assignedRepositoryLink: ".item-main a.item-title",
     // Empty and populated states of the team members list.
-    emptyMembersMessage: By.css(".flex-divided-list .tw-text-text-light.tw-italic"),
-    teamMemberUsernames: By.css(".flex-divided-list .item-title a.text.muted"),
+    emptyMembersMessage: ".flex-divided-list .tw-text-text-light.tw-italic",
+    teamMemberUsernames: ".flex-divided-list .item-title a.text.muted",
     // Scoped by data-modal-name - every row's remove button shares the same data-modal id,
     // so an unscoped selector matches every member once a team has more than one.
-    removeTeamMemberButton: (username: string) => By.css(`[data-modal-name='${username}']`),
+    removeTeamMemberButton: (username: string) => `[data-modal-name='${username}']`,
     // Confirmation modal shown when removing a team member.
-    removeTeamMemberModal: By.css("#remove-team-member"),
-    removeTeamMemberModalTitle: By.css("#remove-team-member .header"),
-    removeTeamMemberModalContent: By.css("#remove-team-member .content"),
-    confirmRemoveTeamMemberButton: By.css("#remove-team-member button.ui.primary.ok"),
+    removeTeamMemberModal: "#remove-team-member",
+    removeTeamMemberModalTitle: "#remove-team-member .header",
+    removeTeamMemberModalContent: "#remove-team-member .content",
+    confirmRemoveTeamMemberButton: "#remove-team-member button.ui.primary.ok",
   };
 
   async waitForElements(): Promise<boolean> {
@@ -117,24 +116,19 @@ export class SpecificTeamFragment extends BaseComponent {
     const locator = this.locators.removeTeamMemberButton(username);
 
     try {
-      await this.clickAndWaitFor(
-        locator,
-        [this.locators.removeTeamMemberModal],
-        this.driver,
-        15000,
-      );
+      await this.clickAndWaitFor(locator, [this.locators.removeTeamMemberModal], undefined, 15000);
     } catch {
       try {
-        await this.click(locator, this.driver, 0);
+        await this.click(locator, undefined, 0);
       } catch (retryClickError) {
         // A dimmer already covering the button means the first click landed and the modal is
         // mid-transition under load, not stalled - fall through to just waiting for it instead
         // of treating a second, blocked click as a real failure.
-        if (!(retryClickError instanceof seleniumError.ElementClickInterceptedError)) {
+        if (!(retryClickError instanceof InteractionInterceptedError)) {
           throw retryClickError;
         }
       }
-      await this.findElement(this.locators.removeTeamMemberModal, this.driver, 15000);
+      await this.findElement(this.locators.removeTeamMemberModal, undefined, 15000);
     }
   }
 
@@ -154,13 +148,13 @@ export class SpecificTeamFragment extends BaseComponent {
     await this.clickAndWaitUntil(
       this.locators.confirmRemoveTeamMemberButton,
       () => this.isRemoveTeamMemberModalHidden(),
-      this.driver,
+      undefined,
       5000,
     );
   }
 
   async isRemoveTeamMemberModalHidden(): Promise<boolean> {
-    const modal = await this.driver.findElements(this.locators.removeTeamMemberModal);
+    const modal = await this.queryAll(this.locators.removeTeamMemberModal);
     // The modal is removed from the DOM (not just hidden) once its close transition finishes,
     // so an element reference fetched a moment ago can go stale before isDisplayed() runs.
     // A stale reference means the element is gone, which means it is, by definition, not
@@ -204,9 +198,9 @@ export class SpecificTeamFragment extends BaseComponent {
   private async getUserSearchResultNames(): Promise<string[]> {
     const results = await this.findElements(
       this.locators.userSearchResults,
-      this.driver,
+      undefined,
       INSTANT,
-    ).catch((): WebElement[] => []);
+    ).catch((): IElementHandle[] => []);
 
     return Promise.all(
       results.map((result) =>
@@ -241,7 +235,7 @@ export class SpecificTeamFragment extends BaseComponent {
   }
 
   async hasNoEmptyMembersMessage(): Promise<boolean> {
-    return !(await this.isVisible(this.locators.emptyMembersMessage, this.driver, 0));
+    return !(await this.isVisible(this.locators.emptyMembersMessage, undefined, 0));
   }
 
   async navigateToRepositoriesTab(): Promise<void> {

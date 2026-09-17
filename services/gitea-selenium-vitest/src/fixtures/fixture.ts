@@ -248,11 +248,11 @@ export const test = base.extend<CustomFixtures>({
     const mainPage = new MainPage(strategy);
     await use(mainPage);
   },
-  createOrganizationPage: async ({ driver }, use) => {
-    const createOrganizationPage = new CreateOrganizationPage(driver);
+  createOrganizationPage: async ({ strategy }, use) => {
+    const createOrganizationPage = new CreateOrganizationPage(strategy);
     await use(createOrganizationPage);
   },
-  organizationPages: async ({ driver, scenarioState }, use) => {
+  organizationPages: async ({ strategy, scenarioState }, use) => {
     const requireOrganization = (): Organization => {
       if (!scenarioState.organization) {
         throw new Error("organization is not set in scenarioState");
@@ -269,21 +269,21 @@ export const test = base.extend<CustomFixtures>({
     let facade: OrganizationFacade | undefined;
 
     await use({
-      dashboard: () => (dashboard ??= new OrganizationDashboardPage(driver)),
-      navigation: () => (navigation ??= new OrgNavigationFragment(driver)),
-      repositories: () => (repositories ??= new OrgRepositoriesFragment(driver)),
-      teams: () => (teams ??= new OrgTeamsFragment(driver)),
-      newTeam: () => (newTeam ??= new NewTeamFragment(driver)),
-      specificTeam: () => (specificTeam ??= new SpecificTeamFragment(driver)),
+      dashboard: () => (dashboard ??= new OrganizationDashboardPage(strategy)),
+      navigation: () => (navigation ??= new OrgNavigationFragment(strategy)),
+      repositories: () => (repositories ??= new OrgRepositoriesFragment(strategy)),
+      teams: () => (teams ??= new OrgTeamsFragment(strategy)),
+      newTeam: () => (newTeam ??= new NewTeamFragment(strategy)),
+      specificTeam: () => (specificTeam ??= new SpecificTeamFragment(strategy)),
       orgFacade: () => {
-        navigation ??= new OrgNavigationFragment(driver);
-        repositories ??= new OrgRepositoriesFragment(driver);
-        teams ??= new OrgTeamsFragment(driver);
-        newTeam ??= new NewTeamFragment(driver);
-        specificTeam ??= new SpecificTeamFragment(driver);
+        navigation ??= new OrgNavigationFragment(strategy);
+        repositories ??= new OrgRepositoriesFragment(strategy);
+        teams ??= new OrgTeamsFragment(strategy);
+        newTeam ??= new NewTeamFragment(strategy);
+        specificTeam ??= new SpecificTeamFragment(strategy);
 
         facade ??= new OrganizationFacade(
-          driver,
+          strategy,
           requireOrganization(),
           navigation,
           repositories,

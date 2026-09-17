@@ -3,6 +3,7 @@ import { logger } from "@gitea-automation/core-logger/pino.logger";
 import { simulateHtml5Drag } from "@gitea-automation/core-selenium/ui/utils/html5-drag.util";
 import { IElementHandle } from "./element-handle.interface";
 import { IInteractionStrategy } from "./interaction-strategy.interface";
+import { InteractionInterceptedError } from "./errors";
 
 const DEFAULT_TIMEOUT_MS = 5000;
 const DRAG_THRESHOLD_PX = 5;
@@ -168,7 +169,15 @@ export class SeleniumInteractionStrategy implements IInteractionStrategy {
     timeoutMs: number = DEFAULT_TIMEOUT_MS,
   ): Promise<void> {
     const element = await this.findRawElement(locator, this.resolveRoot(root), timeoutMs);
-    await element.click();
+
+    try {
+      await element.click();
+    } catch (error) {
+      if (error instanceof seleniumError.ElementClickInterceptedError) {
+        throw new InteractionInterceptedError(locator, error);
+      }
+      throw error;
+    }
   }
 
   async type(

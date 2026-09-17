@@ -1,5 +1,5 @@
-import { By, WebDriver } from "selenium-webdriver";
-import { BasePage } from "@gitea-automation/core-selenium/ui/base-pages/base.page";
+import { BasePage } from "@gitea-automation/core-page-objects/base.page";
+import { IInteractionStrategy } from "@gitea-automation/core-page-objects/interaction-strategy.interface";
 import { baseUrl } from "@gitea-automation/core-config/gitea.config";
 import { Organization } from "@gitea-automation/business-logic-selenium/api/entities/organization.entity";
 
@@ -7,15 +7,15 @@ export class OrganizationDashboardPage extends BasePage {
   protected organization: Organization | undefined;
 
   private readonly locators = {
-    repositoriesContainer: By.css(".dashboard-repos"),
+    repositoriesContainer: ".dashboard-repos",
   };
 
   override getUrl(): string {
     return `${baseUrl}/org/${this.organization?.name}/dashboard`;
   }
 
-  constructor(driver: WebDriver) {
-    super(driver);
+  constructor(strategy: IInteractionStrategy) {
+    super(strategy);
   }
 
   async waitForElements(organization: Organization): Promise<void> {

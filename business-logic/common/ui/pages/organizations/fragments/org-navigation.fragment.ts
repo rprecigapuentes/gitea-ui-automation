@@ -1,6 +1,4 @@
-// organization-base.page.ts
-import { By } from "selenium-webdriver";
-import { BaseComponent } from "@gitea-automation/core-selenium/ui/base-pages/base-component";
+import { BaseComponent } from "@gitea-automation/core-page-objects/base-component";
 import { logger } from "@gitea-automation/core-logger/pino.logger";
 
 const TAB_CLICK_ATTEMPTS = 2;
@@ -20,13 +18,13 @@ export class OrgNavigationFragment extends BaseComponent {
 
   private readonly locators = {
     // Main content region of an organization profile.
-    organizationPage: By.css("[role='main'].organization.profile"),
+    organizationPage: "[role='main'].organization.profile",
     // Visible organization name in the profile header.
-    organizationName: By.css(".tw-text-2xl"),
+    organizationName: ".tw-text-2xl",
     // Tab container for the organization's navigation tabs.
-    tabsContainer: By.css(".overflow-menu-items"),
+    tabsContainer: ".overflow-menu-items",
     // Counter displayed inside the Members and Teams tabs.
-    tabCounter: By.css(".ui.small.label"),
+    tabCounter: ".ui.small.label",
   };
 
   // Each tab's own href, relative to the current organization - Repositories lives at the
@@ -45,15 +43,13 @@ export class OrgNavigationFragment extends BaseComponent {
     return segments[0] === "org" ? segments[1] : segments[0];
   }
 
-  private async tabLocator(tab: OrgTab): Promise<By> {
+  private async tabLocator(tab: OrgTab): Promise<string> {
     const organizationName = await this.currentOrganizationName();
     return this.tabLocatorFor(tab, organizationName);
   }
 
-  private tabLocatorFor(tab: OrgTab, organizationName: string): By {
-    return By.css(
-      `overflow-menu[role='navigation'] [href="${this.tabHref[tab](organizationName)}"]`,
-    );
+  private tabLocatorFor(tab: OrgTab, organizationName: string): string {
+    return `overflow-menu[role='navigation'] [href="${this.tabHref[tab](organizationName)}"]`;
   }
 
   async waitForElements(): Promise<boolean> {

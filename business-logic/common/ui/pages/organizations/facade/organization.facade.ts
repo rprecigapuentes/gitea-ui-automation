@@ -1,10 +1,10 @@
-import { By, WebDriver } from "selenium-webdriver";
 import { OrgNavigationFragment, OrgTab } from "../fragments/org-navigation.fragment";
 import { OrgRepositoriesFragment } from "../fragments/org-repositories.fragment";
 import { OrgTeamsFragment } from "../fragments/org-teams.fragment";
 import { NewTeamFragment } from "../fragments/new-team.fragment";
 import { SpecificTeamFragment } from "../fragments/specific-team.fragment";
-import { BasePage } from "@gitea-automation/core-selenium/ui/base-pages/base.page";
+import { BasePage } from "@gitea-automation/core-page-objects/base.page";
+import { IInteractionStrategy } from "@gitea-automation/core-page-objects/interaction-strategy.interface";
 import { baseUrl } from "@gitea-automation/core-config/gitea.config";
 import { Organization } from "@gitea-automation/business-logic-selenium/api/entities/organization.entity";
 
@@ -18,11 +18,11 @@ export class OrganizationFacade extends BasePage {
 
   private readonly locators = {
     // Main content region of an organization profile - present once the facade's view has loaded.
-    organizationPage: By.css("[role='main'].organization.profile"),
+    organizationPage: "[role='main'].organization.profile",
   };
 
   constructor(
-    driver: WebDriver,
+    strategy: IInteractionStrategy,
     organization: Organization,
     navigation: OrgNavigationFragment,
     reposFragment: OrgRepositoriesFragment,
@@ -30,7 +30,7 @@ export class OrganizationFacade extends BasePage {
     newTeamFragment: NewTeamFragment,
     specificTeamFragment: SpecificTeamFragment,
   ) {
-    super(driver);
+    super(strategy);
     this.organization = organization;
     this.navigation = navigation;
     this.reposFragment = reposFragment;

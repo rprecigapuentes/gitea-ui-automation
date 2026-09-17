@@ -1,25 +1,23 @@
-import { BaseComponent } from "@gitea-automation/core-selenium/ui/base-pages/base-component";
-import { By } from "selenium-webdriver";
+import { BaseComponent } from "@gitea-automation/core-page-objects/base-component";
 
 export class OrgTeamsFragment extends BaseComponent {
   private readonly locators = {
     // Main content of the organization Teams tab.
-    teamsPage: By.css("[role='main'].organization.teams"),
+    teamsPage: "[role='main'].organization.teams",
     // Owner-only action to create a team.
-    newTeamButton: By.css("a[href$='/teams/new']"),
+    newTeamButton: "a[href$='/teams/new']",
     // Grid holding every team card rendered in the Teams tab.
-    teamsContainer: By.css(".ui.two.column.stackable.grid"),
+    teamsContainer: ".ui.two.column.stackable.grid",
     // Team cards rendered in the Teams tab - every team, not just Owners.
-    teamContainer: By.css(".team-item-box"),
-    teamName: By.css(".team-item-header a strong"),
-    teamNameLink: By.css(".team-item-header .flex-text-inline a"),
-    teamMembersCount: By.css(
+    teamContainer: ".team-item-box",
+    teamName: ".team-item-header a strong",
+    teamNameLink: ".team-item-header .flex-text-inline a",
+    teamMembersCount:
       ".team-item-header .flex-text-block a:not(:has(strong)):not([href$='/repositories'])",
-    ),
-    teamAvatars: By.css("a.avatar-with-link img.ui.avatar"),
+    teamAvatars: "a.avatar-with-link img.ui.avatar",
     // Entry point to the detail page for a team with no members.
-    addTeamMemberLink: By.css(".ui.attached.segment a.flex-text-inline"),
-    searchBar: By.css(".ui.form.ignore-dirty.tw-my-4"),
+    addTeamMemberLink: ".ui.attached.segment a.flex-text-inline",
+    searchBar: ".ui.form.ignore-dirty.tw-my-4",
   };
 
   async waitForElements(): Promise<boolean> {
@@ -105,8 +103,8 @@ export class OrgTeamsFragment extends BaseComponent {
   // then picking one samples the grid once, so a page that has rendered some other team's card
   // satisfies the wait and the one being looked for is reported missing. The team's own link is
   // what identifies it - Gitea lowercases the name into the URL - so no text matching is needed.
-  private teamContainerNamed(teamName: string): By {
-    return By.css(`.team-item-box:has(a[href$="/teams/${teamName.toLowerCase()}"])`);
+  private teamContainerNamed(teamName: string): string {
+    return `.team-item-box:has(a[href$="/teams/${teamName.toLowerCase()}"])`;
   }
 
   private async findTeamContainer(teamName: string) {

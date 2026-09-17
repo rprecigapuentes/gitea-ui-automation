@@ -1,5 +1,5 @@
-import { By, WebDriver } from "selenium-webdriver";
-import { BasePage } from "@gitea-automation/core-selenium/ui/base-pages/base.page";
+import { BasePage } from "@gitea-automation/core-page-objects/base.page";
+import { IInteractionStrategy } from "@gitea-automation/core-page-objects/interaction-strategy.interface";
 import { baseUrl } from "@gitea-automation/core-config/gitea.config";
 
 type Visibility = "public" | "limited" | "private";
@@ -7,37 +7,37 @@ type Visibility = "public" | "limited" | "private";
 export class CreateOrganizationPage extends BasePage {
   private readonly locators = {
     // form container
-    formContainer: By.css(".ui.container.medium-width"),
+    formContainer: ".ui.container.medium-width",
     // title
-    formTitle: By.css('[role="main"] h3'),
+    formTitle: '[role="main"] h3',
     // Organization Name
-    orgNameLabel: By.css('[for="org_name"]'),
-    orgNameInput: By.id("org_name"),
-    orgNameHelpText: By.css(".help"),
+    orgNameLabel: '[for="org_name"]',
+    orgNameInput: "#org_name",
+    orgNameHelpText: ".help",
     // Visibility
-    visibilityLabel: By.css('[for="visibility"]'),
-    publicVisibilityRadio: By.id("_aria_label_input_1"),
-    publicVisibilityRadioLabel: By.css('[for="_aria_label_input_1"]'),
-    limitedVisibilityRadio: By.id("_aria_label_input_2"),
-    limitedVisibilityRadioLabel: By.css('[for="_aria_label_input_2"]'),
-    privateVisibilityRadio: By.id("_aria_label_input_3"),
-    privateVisibilityRadioLabel: By.css('[for="_aria_label_input_3"]'),
+    visibilityLabel: '[for="visibility"]',
+    publicVisibilityRadio: "#_aria_label_input_1",
+    publicVisibilityRadioLabel: '[for="_aria_label_input_1"]',
+    limitedVisibilityRadio: "#_aria_label_input_2",
+    limitedVisibilityRadioLabel: '[for="_aria_label_input_2"]',
+    privateVisibilityRadio: "#_aria_label_input_3",
+    privateVisibilityRadioLabel: '[for="_aria_label_input_3"]',
     //Permissions
-    permissionsLabel: By.css("#permission_box > label"),
-    adminPermissionsCheckInput: By.css('[id="_aria_label_input_4"]'),
-    adminPermissionsCheckLabel: By.css('[for="_aria_label_input_4"]'),
+    permissionsLabel: "#permission_box > label",
+    adminPermissionsCheckInput: "#_aria_label_input_4",
+    adminPermissionsCheckLabel: '[for="_aria_label_input_4"]',
     // Create Organization Button
-    createOrganizationButton: By.css("[role='main'] button"),
+    createOrganizationButton: "[role='main'] button",
   };
 
-  private readonly visibilityRadioLocators: Record<Visibility, By> = {
+  private readonly visibilityRadioLocators: Record<Visibility, string> = {
     public: this.locators.publicVisibilityRadio,
     limited: this.locators.limitedVisibilityRadio,
     private: this.locators.privateVisibilityRadio,
   };
 
-  constructor(driver: WebDriver) {
-    super(driver);
+  constructor(strategy: IInteractionStrategy) {
+    super(strategy);
   }
 
   getUrl(): string {

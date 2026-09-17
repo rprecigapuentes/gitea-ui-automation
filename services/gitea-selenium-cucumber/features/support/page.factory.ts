@@ -117,7 +117,7 @@ export class PageFactory {
   }
 
   get createOrganizationPage(): CreateOrganizationPage {
-    return (this.#createOrganizationPage ??= new CreateOrganizationPage(this.driver));
+    return (this.#createOrganizationPage ??= new CreateOrganizationPage(this.strategy));
   }
 
   get createRepositoryPage(): CreateRepositoryPage {
@@ -125,27 +125,27 @@ export class PageFactory {
   }
 
   get organizationDashboardPage(): OrganizationDashboardPage {
-    return (this.#organizationDashboardPage ??= new OrganizationDashboardPage(this.driver));
+    return (this.#organizationDashboardPage ??= new OrganizationDashboardPage(this.strategy));
   }
 
   get orgNavigation(): OrgNavigationFragment {
-    return (this.#orgNavigation ??= new OrgNavigationFragment(this.driver));
+    return (this.#orgNavigation ??= new OrgNavigationFragment(this.strategy));
   }
 
   get orgRepositories(): OrgRepositoriesFragment {
-    return (this.#orgRepositories ??= new OrgRepositoriesFragment(this.driver));
+    return (this.#orgRepositories ??= new OrgRepositoriesFragment(this.strategy));
   }
 
   get orgTeams(): OrgTeamsFragment {
-    return (this.#orgTeams ??= new OrgTeamsFragment(this.driver));
+    return (this.#orgTeams ??= new OrgTeamsFragment(this.strategy));
   }
 
   get orgNewTeam(): NewTeamFragment {
-    return (this.#orgNewTeam ??= new NewTeamFragment(this.driver));
+    return (this.#orgNewTeam ??= new NewTeamFragment(this.strategy));
   }
 
   get orgSpecificTeam(): SpecificTeamFragment {
-    return (this.#orgSpecificTeam ??= new SpecificTeamFragment(this.driver));
+    return (this.#orgSpecificTeam ??= new SpecificTeamFragment(this.strategy));
   }
 
   get repoNavBar(): RepoNavBarFragment {
@@ -170,7 +170,7 @@ export class PageFactory {
 
   get orgFacade(): OrganizationFacade {
     return (this.#orgFacade ??= new OrganizationFacade(
-      this.driver,
+      this.strategy,
       this.requireOrganization(),
       this.orgNavigation,
       this.orgRepositories,
