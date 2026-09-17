@@ -5,30 +5,12 @@ import { IInteractionStrategy } from "../interaction-strategy.interface";
 function toElementHandle(locator: Locator): IElementHandle {
   return {
     click: () => locator.click(),
-    getText: () => {
-      console.log("[playwright] IElementHandle.getText");
-      return Promise.resolve("");
-    },
-    getAttribute: (name: string) => {
-      console.log("[playwright] IElementHandle.getAttribute", name);
-      return Promise.resolve("");
-    },
-    isSelected: () => {
-      console.log("[playwright] IElementHandle.isSelected");
-      return Promise.resolve(false);
-    },
-    isDisplayed: () => {
-      console.log("[playwright] IElementHandle.isDisplayed");
-      return Promise.resolve(false);
-    },
-    clear: () => {
-      console.log("[playwright] IElementHandle.clear");
-      return Promise.resolve();
-    },
-    sendKeys: (text: string) => {
-      console.log("[playwright] IElementHandle.sendKeys", text);
-      return Promise.resolve();
-    },
+    getText: () => Promise.resolve(""),
+    getAttribute: () => Promise.resolve(""),
+    isSelected: () => Promise.resolve(false),
+    isDisplayed: () => Promise.resolve(false),
+    clear: () => Promise.resolve(),
+    sendKeys: () => Promise.resolve(),
     findElement: (childLocator: string) =>
       Promise.resolve(toElementHandle(locator.locator(childLocator))),
     findElements: async (childLocator: string) =>
