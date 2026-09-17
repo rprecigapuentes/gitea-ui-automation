@@ -1,10 +1,10 @@
 # @gitea-automation/core-page-objects
 
-The Strategy pattern that lets one page-object class run against either Selenium or Playwright: the shared interfaces, the two Context classes every page object extends, and both tools' concrete strategies (one real, one a stub).
+The Strategy pattern that lets one page-object class run against either Selenium or Playwright: the shared interfaces, the two Context classes every page object extends, both tools' concrete strategies (one real, one a stub), and the Factory that picks between them.
 
 ## Why this package, and why it isn't split by tool
 
-Every other package under `core/` is split by tool (`core/selenium/` vs. `core/playwright/`) so a file with a real dependency on one tool's types never sits in a folder that's supposed to be tool-agnostic. This package is the deliberate exception: its whole purpose is to hold code that talks to _both_ tools behind one interface, so a page object never has to import either tool directly. Splitting it by tool would defeat the point — a page needs `BaseComponent`/`IInteractionStrategy` from one shared place, not from "the Selenium one" or "the Playwright one."
+Every other package under `core/` is split by tool (`core/selenium/` vs. a Playwright equivalent) so a file with a real dependency on one tool's types never sits in a folder that's supposed to be tool-agnostic. This package is the deliberate exception: its whole purpose is to hold code that talks to _both_ tools behind one interface, so a page object never has to import either tool directly. Splitting it by tool would defeat the point — a page needs `BaseComponent`/`IInteractionStrategy` from one shared place, not from "the Selenium one" or "the Playwright one." The two concrete strategies still live apart from the shared abstraction, in their own `strategies/` subfolder, since they _are_ tool-specific — only the interface, the Context classes, and the Factory that constructs a strategy stay at the top level.
 
 ## Structure
 
@@ -15,23 +15,26 @@ core/page-objects/
 ├── errors.ts                           # InteractionInterceptedError — e.g. a click blocked by a transitioning overlay, tool-agnostic
 ├── base-component.ts                   # BaseComponent — the Context: holds an injected IInteractionStrategy, delegates every method to it
 ├── base.page.ts                        # BasePage extends BaseComponent — adds getUrl()/open(), the Navigable contract
-├── selenium-interaction.strategy.ts    # SeleniumInteractionStrategy — real implementation, ported from core-selenium's former base-component.ts
-└── playwright-interaction.strategy.ts  # PlaywrightInteractionStrategy — stub: every method logs and returns a placeholder, never throws
+├── interaction-strategy.factory.ts     # InteractionStrategyFactory — the one place that picks a concrete strategy
+└── strategies/
+    ├── selenium-interaction.strategy.ts    # SeleniumInteractionStrategy — real implementation, ported from core-selenium's former base-component.ts
+    └── playwright-interaction.strategy.ts  # PlaywrightInteractionStrategy — stub: every method logs and returns a placeholder, never throws
 ```
 
 ## The pattern
 
-A page object (in `@gitea-automation/business-logic-common`) extends `BaseComponent`/`BasePage` and only ever calls its inherited methods (`click`, `findElement`, `isVisible`, …) with plain CSS-selector-string locators. It never imports `selenium-webdriver` or `@playwright/test`, and never decides which one backs it — that choice is made by whoever constructs the page:
+A page object (in `@gitea-automation/business-logic`) extends `BaseComponent`/`BasePage` and only ever calls its inherited methods (`click`, `findElement`, `isVisible`, …) with plain CSS-selector-string locators. It never imports `selenium-webdriver` or `@playwright/test`, and never decides which one backs it — that choice is made by whoever constructs the page, through the Factory:
 
 ```ts
-import { createSeleniumStrategy } from "@gitea-automation/core-page-objects/selenium-interaction.strategy";
-import { createPlaywrightStrategy } from "@gitea-automation/core-page-objects/playwright-interaction.strategy";
+import { InteractionStrategyFactory } from "@gitea-automation/core-page-objects/interaction-strategy.factory";
 
-const strategy = usePlaywright ? createPlaywrightStrategy(page) : createSeleniumStrategy(driver);
+const strategy = usePlaywright
+  ? InteractionStrategyFactory.playwright(page)
+  : InteractionStrategyFactory.selenium(driver);
 const loginPage = new LoginPage(strategy); // same LoginPage class either way
 ```
 
-`BaseComponent` is the Context in the classic Strategy-pattern sense: it holds whatever `IInteractionStrategy` it was constructed with and only delegates to it, never branches on which one it has.
+`BaseComponent` is the Context in the classic Strategy-pattern sense: it holds whatever `IInteractionStrategy` it was constructed with and only delegates to it, never branches on which one it has. `InteractionStrategyFactory` is the only public way to construct either concrete strategy — each of its two static methods is a one-line delegate to `new SeleniumInteractionStrategy(driver)`/`new PlaywrightInteractionStrategy(page)`.
 
 ## What closes the gap beyond the obvious `find`/`click`/`type`
 
@@ -48,4 +51,4 @@ const loginPage = new LoginPage(strategy); // same LoginPage class either way
 
 ## Dependencies
 
-`@gitea-automation/core-logger`, `@gitea-automation/core-selenium` (only for `ui/utils/html5-drag.util.ts`, used by the Selenium strategy's drag fallback), `selenium-webdriver`, `@playwright/test` (for the `Page`/`Locator` types the Playwright strategy's constructor and `IElementHandle` implementation reference, even though its bodies are stubs).
+`@gitea-automation/core-logger`, `@gitea-automation/core-selenium` (only for `utils/html5-drag.util.ts`, used by the Selenium strategy's drag fallback), `selenium-webdriver`, `@playwright/test` (for the `Page`/`Locator` types the Playwright strategy's constructor and `IElementHandle` implementation reference, even though its bodies are stubs).

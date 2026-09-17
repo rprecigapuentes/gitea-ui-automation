@@ -12,8 +12,8 @@ export interface Verifiable {
 /**
  * The Context in this Strategy pattern: holds whichever `IInteractionStrategy` it was constructed
  * with and only delegates to it. It never decides which strategy to use — that choice is made by
- * whoever constructs the page (see `createSeleniumStrategy`/`createPlaywrightStrategy`), so a page
- * extending this class never imports or references a specific tool's types.
+ * whoever constructs the page (see `InteractionStrategyFactory`), so a page extending this class
+ * never imports or references a specific tool's types.
  */
 export abstract class BaseComponent implements Verifiable {
   constructor(protected readonly strategy: IInteractionStrategy) {}

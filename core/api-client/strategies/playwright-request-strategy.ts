@@ -1,5 +1,5 @@
 import { request, APIRequestContext, APIResponse } from "@playwright/test";
-import { IRequestStrategy } from "./request-strategy.interface";
+import { IRequestStrategy } from "../request-strategy.interface";
 
 async function parseBody<T>(response: APIResponse): Promise<T> {
   const text = await response.text();
@@ -50,8 +50,4 @@ export class PlaywrightRequestStrategy implements IRequestStrategy {
     const response = await context.delete(endpoint);
     return parseBody<T>(response);
   }
-}
-
-export function createPlaywrightStrategy(baseUrl: string, token: string): IRequestStrategy {
-  return new PlaywrightRequestStrategy(baseUrl, token);
 }

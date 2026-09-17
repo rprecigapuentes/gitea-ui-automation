@@ -1,5 +1,5 @@
 import got, { Got } from "got";
-import { IRequestStrategy } from "./request-strategy.interface";
+import { IRequestStrategy } from "../request-strategy.interface";
 
 export class GotRequestStrategy implements IRequestStrategy {
   private readonly client: Got;
@@ -34,8 +34,4 @@ export class GotRequestStrategy implements IRequestStrategy {
     const response = await this.client.delete<T>(endpoint);
     return response.body;
   }
-}
-
-export function createGotStrategy(baseUrl: string, token: string): IRequestStrategy {
-  return new GotRequestStrategy(baseUrl, token);
 }

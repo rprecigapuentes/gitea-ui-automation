@@ -1,6 +1,6 @@
 import { Page, Locator } from "@playwright/test";
-import { IElementHandle } from "./element-handle.interface";
-import { IInteractionStrategy } from "./interaction-strategy.interface";
+import { IElementHandle } from "../element-handle.interface";
+import { IInteractionStrategy } from "../interaction-strategy.interface";
 
 /**
  * Stub implementation — every method logs and returns a type-satisfying placeholder, never
@@ -240,8 +240,4 @@ export class PlaywrightInteractionStrategy implements IInteractionStrategy {
     console.log("[playwright] executeScript", { args });
     return Promise.resolve(undefined as T);
   }
-}
-
-export function createPlaywrightStrategy(page: Page): IInteractionStrategy {
-  return new PlaywrightInteractionStrategy(page);
 }

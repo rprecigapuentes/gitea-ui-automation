@@ -4,8 +4,9 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./ui/*": "./ui/*.ts",
-    "./config/*": "./config/*.ts"
+    "./drivers/*": "./drivers/*.ts",
+    "./utils/*": "./utils/*.ts",
+    "./browserstack-config/*": "./browserstack-config/*.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
