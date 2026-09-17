@@ -1,10 +1,9 @@
-import { By } from "selenium-webdriver";
-import { BaseComponent } from "@gitea-automation/core-selenium/ui/base-pages/base-component";
+import { BaseComponent } from "@gitea-automation/core-page-objects/base-component";
 
 export class ForkPromptFragment extends BaseComponent {
   private readonly locators = {
-    heading: By.css("h3"),
-    forkButton: By.css(".ui.primary.button"),
+    heading: "h3",
+    forkButton: ".ui.primary.button",
   };
 
   async waitForElements(): Promise<boolean> {

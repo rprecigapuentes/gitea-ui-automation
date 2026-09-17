@@ -1,16 +1,15 @@
-import { By } from "selenium-webdriver";
-import { BasePage } from "@gitea-automation/core-selenium/ui/base-pages/base.page";
+import { BasePage } from "@gitea-automation/core-page-objects/base.page";
 
 export class CreateRepositoryPage extends BasePage {
   private readonly locators = {
     //form container
-    formContainer: By.css(".ui.container.medium-width"),
+    formContainer: ".ui.container.medium-width",
     //form Inputs
-    repoOwnerDropdown: By.css("#repo_owner_dropdown"),
-    repositoryNameInput: By.css("#repo_name"),
-    repositoryVisibilityCheckbox: By.css("[name=private]"),
+    repoOwnerDropdown: "#repo_owner_dropdown",
+    repositoryNameInput: "#repo_name",
+    repositoryVisibilityCheckbox: "[name=private]",
     //form buttons
-    createRepositoryButton: By.css(".ui.primary.button"),
+    createRepositoryButton: ".ui.primary.button",
   };
 
   getUrl(): string {

@@ -1,17 +1,15 @@
-// organization-base.page.ts
-import { By } from "selenium-webdriver";
-import { BaseComponent } from "@gitea-automation/core-selenium/ui/base-pages/base-component";
+import { BaseComponent } from "@gitea-automation/core-page-objects/base-component";
 
 export class CreateRepoFileFragment extends BaseComponent {
   private organizationName?: string;
   private repositoryName?: string;
 
   private readonly locators = {
-    fileName: By.css("#file-name"),
-    fileContentInput: By.css(".ui.bottom.attached.segment.tw-p-0"),
+    fileName: "#file-name",
+    fileContentInput: ".ui.bottom.attached.segment.tw-p-0",
     // CodeMirror's own editable region - the segment above only wraps it.
-    fileContentEditor: By.css(".ui.bottom.attached.segment.tw-p-0 .cm-content"),
-    commitChangesButton: By.css("#commit-button"),
+    fileContentEditor: ".ui.bottom.attached.segment.tw-p-0 .cm-content",
+    commitChangesButton: "#commit-button",
   };
 
   async waitForElements(organizationName: string, repositoryName: string): Promise<boolean> {

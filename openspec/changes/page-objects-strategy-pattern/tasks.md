@@ -33,9 +33,9 @@
 
 ## 6. Migrate repositories/
 
-- [ ] 6.1 Migrate `create-repository.page.ts` and the 5 `repositories/fragments/*.fragment.ts` files; leave `create-repository.page.ts`'s `getUrl()` throwing `"Method not implemented."` as-is
-- [ ] 6.2 Update `page.factory.ts`/`fixture.ts` construction for these 6 classes
-- [ ] 6.3 Verify typecheck green; run repository-related suites
+- [x] 6.1 Migrate `create-repository.page.ts` and the 5 `repositories/fragments/*.fragment.ts` files; leave `create-repository.page.ts`'s `getUrl()` throwing `"Method not implemented."` as-is
+- [x] 6.2 Update `page.factory.ts` construction for these 6 classes (confirmed `gitea-selenium-vitest`'s `fixture.ts`/tests never reference any repositories/ class, so nothing to change there)
+- [x] 6.3 Verify typecheck and lint green (confirmed) and zero Selenium references left (confirmed); a smoke script exercising all 6 classes against `createPlaywrightStrategy` ran clean; running the real repository suites against a live Gitea instance was not done from this environment — do that before trusting this stage fully
 
 ## 7. Retire the old Selenium-only base classes
 

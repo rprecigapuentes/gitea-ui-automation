@@ -1,15 +1,13 @@
-// organization-base.page.ts
-import { By } from "selenium-webdriver";
-import { BaseComponent } from "@gitea-automation/core-selenium/ui/base-pages/base-component";
+import { BaseComponent } from "@gitea-automation/core-page-objects/base-component";
 
 export class RepoFileFragment extends BaseComponent {
   private organizationName?: string;
   private repositoryName?: string;
 
   private readonly locators = {
-    filesContainer: By.css("#view-file-tree"),
-    fileName: By.css(".active.section"),
-    fileContent: By.css(".code-inner"),
+    filesContainer: "#view-file-tree",
+    fileName: ".active.section",
+    fileContent: ".code-inner",
   };
 
   // Committing redirects through a loader before this page's own elements exist - confirmed
@@ -19,7 +17,7 @@ export class RepoFileFragment extends BaseComponent {
     this.repositoryName = repositoryName;
     return this.isVisible(
       [this.locators.filesContainer, this.locators.fileName, this.locators.fileContent],
-      this.driver,
+      undefined,
       15000,
     );
   }

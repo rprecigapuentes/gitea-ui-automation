@@ -1,6 +1,4 @@
-// organization-base.page.ts
-import { By } from "selenium-webdriver";
-import { BaseComponent } from "@gitea-automation/core-selenium/ui/base-pages/base-component";
+import { BaseComponent } from "@gitea-automation/core-page-objects/base-component";
 
 export class RepoCodeTabFragment extends BaseComponent {
   private organizationName?: string;
@@ -8,17 +6,17 @@ export class RepoCodeTabFragment extends BaseComponent {
 
   private readonly locators = {
     // code tab container
-    codeTabContainer: By.css(".sixteen.wide.column.content"),
-    filesContainer: By.css("#repo-files-table"),
-    fileRow: By.css(".repo-file-item"),
+    codeTabContainer: ".sixteen.wide.column.content",
+    filesContainer: "#repo-files-table",
+    fileRow: ".repo-file-item",
     // Once the repo has a file, "New File" moves from a direct link into this dropdown.
-    addFileDropdownButton: By.css(".repo-add-file"),
+    addFileDropdownButton: ".repo-add-file",
   };
 
   // The button's only real identifier is its href (/{org}/{repo}/_new/{branch}/) - its class
   // is too generic to select on its own.
-  private newFileButtonLocator(): By {
-    return By.css(`a[href^="/${this.organizationName}/${this.repositoryName}/_new/"]`);
+  private newFileButtonLocator(): string {
+    return `a[href^="/${this.organizationName}/${this.repositoryName}/_new/"]`;
   }
 
   async waitForElements(organizationName: string, repositoryName: string): Promise<boolean> {
@@ -27,21 +25,13 @@ export class RepoCodeTabFragment extends BaseComponent {
 
     if (!(await this.isVisible(this.locators.codeTabContainer))) return false;
 
-    const directLinkVisible = await this.isVisible(this.newFileButtonLocator(), this.driver, 0);
-    const dropdownVisible = await this.isVisible(
-      this.locators.addFileDropdownButton,
-      this.driver,
-      0,
-    );
+    const directLinkVisible = await this.isVisible(this.newFileButtonLocator(), undefined, 0);
+    const dropdownVisible = await this.isVisible(this.locators.addFileDropdownButton, undefined, 0);
     return directLinkVisible || dropdownVisible;
   }
 
   async clickNewFileButton(): Promise<void> {
-    const dropdownVisible = await this.isVisible(
-      this.locators.addFileDropdownButton,
-      this.driver,
-      0,
-    );
+    const dropdownVisible = await this.isVisible(this.locators.addFileDropdownButton, undefined, 0);
     if (dropdownVisible) {
       await this.clickAndWaitFor(this.locators.addFileDropdownButton, [
         this.newFileButtonLocator(),

@@ -121,7 +121,7 @@ export class PageFactory {
   }
 
   get createRepositoryPage(): CreateRepositoryPage {
-    return (this.#createRepositoryPage ??= new CreateRepositoryPage(this.driver));
+    return (this.#createRepositoryPage ??= new CreateRepositoryPage(this.strategy));
   }
 
   get organizationDashboardPage(): OrganizationDashboardPage {
@@ -149,23 +149,23 @@ export class PageFactory {
   }
 
   get repoNavBar(): RepoNavBarFragment {
-    return (this.#repoNavBar ??= new RepoNavBarFragment(this.driver));
+    return (this.#repoNavBar ??= new RepoNavBarFragment(this.strategy));
   }
 
   get repoCodeTab(): RepoCodeTabFragment {
-    return (this.#repoCodeTab ??= new RepoCodeTabFragment(this.driver));
+    return (this.#repoCodeTab ??= new RepoCodeTabFragment(this.strategy));
   }
 
   get createRepoFile(): CreateRepoFileFragment {
-    return (this.#createRepoFile ??= new CreateRepoFileFragment(this.driver));
+    return (this.#createRepoFile ??= new CreateRepoFileFragment(this.strategy));
   }
 
   get repoFile(): RepoFileFragment {
-    return (this.#repoFile ??= new RepoFileFragment(this.driver));
+    return (this.#repoFile ??= new RepoFileFragment(this.strategy));
   }
 
   get forkPrompt(): ForkPromptFragment {
-    return (this.#forkPrompt ??= new ForkPromptFragment(this.driver));
+    return (this.#forkPrompt ??= new ForkPromptFragment(this.strategy));
   }
 
   get orgFacade(): OrganizationFacade {
