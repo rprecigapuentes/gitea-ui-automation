@@ -1,6 +1,7 @@
 node_modules/
 coverage/
 test-results/
+playwright-report/
 package-lock.json
 reports/
 allure-results/

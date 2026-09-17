@@ -13,19 +13,26 @@ on:
           - all
           - gitea-selenium-vitest
           - gitea-selenium-cucumber
+          - playwright-native
 
 concurrency:
   group: ct
   cancel-in-progress: true
 
 jobs:
-  regression:
+  selenium:
+    # A dispatch naming a Playwright suite must not fall through to the matrix default below.
+    if: >-
+      github.event_name != 'workflow_dispatch'
+      || github.event.inputs.suite == 'all'
+      || github.event.inputs.suite == 'gitea-selenium-vitest'
+      || github.event.inputs.suite == 'gitea-selenium-cucumber'
     runs-on: ubuntu-24.04
     timeout-minutes: 25
 
     strategy:
       fail-fast: false
-      # Each job starts its own gitea-test, browser and proxy on one VPS.
+      # Each job starts its own gitea-test and browser on one VPS.
       max-parallel: 1
       # act_runner plans the matrix before any job output exists.
       matrix:
@@ -58,26 +65,10 @@ jobs:
           SE_NODE_MAX_SESSIONS: "3"
           SE_NODE_OVERRIDE_MAX_SESSIONS: "true"
 
-      # Permanent store on the gitea-lab VPS.
-      hlm-proxy:
-        image: healenium/hlm-proxy:2.2.1
-        env:
-          SELENIUM_SERVER_URL: http://selenium:4444/wd/hub
-          # External and internal address of the same backend.
-          HEALENIUM_SERVER_URL: https://healenium.estiberz.online
-          HEALENIUM_SERVICE: https://healenium.estiberz.online
-          IMITATE_SERVICE: https://imitator.estiberz.online
-          # The store used to heal findElements on every call, which turned the base component's
-          # own empty polls into substitutions. Off there since automindai-infra f3849d2.
-          HEAL_ENABLED: "true"
-          RECOVERY_TRIES: "1"
-          SCORE_CAP: ".6"
-          HLM_LOG_LEVEL: debug
-
     env:
       MAX_WORKERS: "3"
       GITEA_BASE_URL: http://gitea-test:3000
-      SELENIUM_REMOTE_URL: http://hlm-proxy:8085
+      SELENIUM_REMOTE_URL: http://selenium:4444
       GITEA_ADMIN_USERNAME: ct-admin
       GITEA_ADMIN_PASSWORD: Qa-admin-not-a-secret-1
       GITEA_OWNER_CHROME: chrome-owner
@@ -111,25 +102,14 @@ jobs:
           echo "gitea-test never became healthy"
           exit 1
 
-      - name: Wait for the browser, through the healing proxy
+      - name: Wait for the browser
         run: |
           for _ in $(seq 1 60); do
             curl -fsS "$SELENIUM_REMOTE_URL/status" | grep -q '"ready": *true' && exit 0
             sleep 2
           done
-          echo "hlm-proxy at $SELENIUM_REMOTE_URL never reported the browser ready"
+          echo "the Selenium server at $SELENIUM_REMOTE_URL never reported the browser ready"
           exit 1
-
-      # The proxy answers /status even when the store behind it is down.
-      - name: Check the healing store is answering
-        run: |
-          store=https://healenium.estiberz.online
-          if ! curl -fsS "$store/actuator/health" | grep -q '"status":"UP"'; then
-            echo "the healing store at $store is not answering"
-            echo "the suite would run unhealed and record no baselines, so this run stops here"
-            exit 1
-          fi
-          echo "the healing store is up"
 
       - name: Register the administrator and the browser accounts, and mint their API tokens
         run: |
@@ -190,65 +170,8 @@ jobs:
           echo "GITEA_ADMIN_TOKEN=$admin_token" >> "$GITHUB_ENV"
           echo "admin token minted for $GITEA_ADMIN_USERNAME"
 
-      # The store stamps its reports in its own zone. Runner and store share the host's clock, so
-      # the window carries no slack: with one, this suite would list the previous suite's tail.
-      - name: Record when the suite starts, on the healing store's clock
-        run: |
-          started=$(TZ=America/Bogota date +%Y-%m-%dT%H:%M:%S)
-          echo "SUITE_STARTED_AT=$started" >> "$GITHUB_ENV"
-          echo "the suite starts at $started, America/Bogota"
-
       - name: Run the suite
         run: npm test -w @gitea-automation/${{ matrix.suite }}
-
-      # One report per browser session, opened by the proxy under the session id. Both endpoints
-      # answer through the proxy, so nothing here needs the store's public hostname.
-      - name: Collect the healing evidence of every session
-        if: always()
-        continue-on-error: true
-        run: |
-          out=services/${{ matrix.suite }}/reports/healenium
-          mkdir -p "$out"
-          ended=$(TZ=America/Bogota date +%Y-%m-%dT%H:%M:%S)
-
-          if ! curl -fsS "$SELENIUM_REMOTE_URL/healenium/report/all?startDate=$SUITE_STARTED_AT&endDate=$ended" > "$out/sessions.json"; then
-            echo "the store did not list the sessions of this run"
-            exit 1
-          fi
-
-          ids=$(node -pe 'JSON.parse(require("fs").readFileSync(0, "utf8")).map((r) => r.id).join("\n")' < "$out/sessions.json")
-          if [ -z "$ids" ]; then
-            echo "no session was opened through the proxy between $SUITE_STARTED_AT and $ended"
-            exit 0
-          fi
-
-          for id in $ids; do
-            echo "::group::session $id"
-            # The proxy log is the source of truth for a heal: on this proxy version the store saves
-            # the replacement but never links it into a report, so /report/data stays empty. The log
-            # is kept too, and /report/data alongside it for the day the report is fixed.
-            if ! curl -fsS "$SELENIUM_REMOTE_URL/hlm-proxy/logs/session/$id" > "$out/$id.logs.json"; then
-              echo "the proxy did not answer for the log of session $id"
-            else
-              node -e '
-                const log = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
-                const lines = Array.isArray(log.proxyLogs) ? log.proxyLogs : String(log.proxyLogs ?? "").split("\n");
-                const heals = [];
-                let failed = null;
-                for (const line of lines) {
-                  const miss = line.match(/Failed to find an elements? using locator (.+?)\s*$/);
-                  if (miss) { failed = miss[1]; continue; }
-                  const healed = line.match(/Using healed locator: Scored\(score=([0-9.]+), value=(.+?)\)\s*$/);
-                  if (healed) heals.push(`${failed ?? "?"} -> ${healed[2]} (${healed[1]})`);
-                }
-                console.log(heals.length === 0 ? "no heal recorded" : `${heals.length} heal(s) recorded`);
-                for (const h of heals) console.log(h);
-              ' "$out/$id.logs.json"
-            fi
-            curl -fsS "$SELENIUM_REMOTE_URL/healenium/report/data/$id" > "$out/$id.heals.json" \
-              || echo "the store did not answer for the report of session $id"
-            echo "::endgroup::"
-          done
 
       # No results to report on when an earlier step stopped the run.
       - name: Generate the Allure report
@@ -265,5 +188,81 @@ jobs:
           path: |
             services/${{ matrix.suite }}/allure-report/
             services/${{ matrix.suite }}/reports/junit.xml
-            services/${{ matrix.suite }}/reports/healenium/
+          retention-days: 14
+
+  # Playwright launches its browsers inside the job, so this one carries them in its image.
+  playwright:
+    needs: selenium
+    # needs serialises the two jobs on one VPS; always() keeps this one's outcome independent.
+    if: >-
+      always() && (github.event_name != 'workflow_dispatch'
+      || github.event.inputs.suite == 'all'
+      || github.event.inputs.suite == 'playwright-native')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    # The tag tracks the @playwright/test version in package-lock.json and is bumped with it.
+    container: mcr.microsoft.com/playwright:v1.63.0-noble
+
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        # playwright-bdd joins this list when it exposes a test script.
+        suite: [playwright-native]
+
+    services:
+      gitea-test:
+        image: docker.gitea.com/gitea:1.27.3
+        env:
+          USER_UID: "1000"
+          USER_GID: "1000"
+          GITEA__server__ROOT_URL: http://gitea-test:3000/
+          GITEA__server__HTTP_PORT: "3000"
+          GITEA__server__START_SSH_SERVER: "false"
+          GITEA__database__DB_TYPE: sqlite3
+          GITEA__security__INSTALL_LOCK: "true"
+          GITEA__security__SECRET_KEY: gitea-test-not-a-secret
+          GITEA__service__DISABLE_REGISTRATION: "false"
+          GITEA__service__REGISTER_EMAIL_CONFIRM: "false"
+
+    env:
+      GITEA_BASE_URL: http://gitea-test:3000
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # The image ships Node 24; the repo declares >=22 <23 and has no .npmrc to enforce it.
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - run: npm ci
+
+      # The image bundles Chromium, Firefox and WebKit, not the branded products.
+      - name: Install the branded browsers
+        run: npx playwright install chrome msedge
+
+      - name: Wait for the application under test
+        run: |
+          for _ in $(seq 1 60); do
+            curl -fsS "$GITEA_BASE_URL/api/healthz" > /dev/null && exit 0
+            sleep 2
+          done
+          echo "gitea-test never became healthy"
+          exit 1
+
+      - name: Run the suite
+        run: npm test -w @gitea-automation/${{ matrix.suite }}
+
+      - name: Generate the Allure report
+        if: always()
+        continue-on-error: true
+        run: npm run report -w @gitea-automation/${{ matrix.suite }}
+
+      - name: Upload the report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: allure-report-${{ matrix.suite }}
+          path: services/${{ matrix.suite }}/allure-report/
           retention-days: 14
