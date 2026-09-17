@@ -44,7 +44,7 @@ Step definitions assert with `expect` imported directly from the `vitest` packag
 ## What it reuses
 
 - [`@gitea-automation/core-selenium/ui/drivers/driver.factory.ts`](../../core/selenium/README.md) — same `DriverFactory` as `gitea-selenium-vitest`, driver lifecycle managed in `features/support/hooks.ts`.
-- [`@gitea-automation/business-logic-selenium/ui/pages/**`](../../business-logic/selenium/README.md) — the same concrete page objects as `gitea-selenium-vitest` (`LoginPage`, `MainPage`, and everything else in there), built through `PageFactory`. This service keeps no page objects of its own.
+- [`@gitea-automation/business-logic-common/ui/pages/**`](../../business-logic/common/README.md) — the same concrete page objects as `gitea-selenium-vitest` (`LoginPage`, `MainPage`, and everything else in there), built through `PageFactory`, which wraps the scenario's `WebDriver` in a Selenium strategy once (`createSeleniumStrategy(driver)`, from [`@gitea-automation/core-page-objects`](../../core/page-objects/README.md)) and constructs every page with it. This service keeps no page objects of its own.
 - [`@gitea-automation/business-logic-selenium/state/scenario.entity.ts`](../../business-logic/selenium/README.md) — `ScenarioState`, the same type `gitea-selenium-vitest` uses to pass Gitea resources created mid-scenario between steps.
 - [`@gitea-automation/business-logic-selenium/api/clients/**`](../../business-logic/selenium/README.md) — `OrganizationClient`, `RepositoryClient`, `TeamClient`, `IssueClient`, used both in tag-scoped `hooks.ts` seeding and directly in `Given` steps (e.g. `"an organization already exists"`), exactly like `gitea-selenium-vitest`'s fixtures do.
 

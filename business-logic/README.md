@@ -1,22 +1,24 @@
 # business-logic/
 
-Purely organizational — **not an npm workspace itself** (no `package.json` here). Each subfolder below is its own independent package, split by tool.
+Purely organizational — **not an npm workspace itself** (no `package.json` here). Each subfolder below is its own independent package.
 
 ```
 business-logic/
-├── selenium/    @gitea-automation/business-logic-selenium   — ui/pages + api/{clients,entities} for Selenium-based services
-└── playwright/  @gitea-automation/business-logic-playwright — reserved, empty
+├── selenium/  @gitea-automation/business-logic-selenium — api/{clients,entities} + state, Selenium-service-specific
+└── common/    @gitea-automation/business-logic-common   — ui/pages, technology-agnostic (Strategy pattern, see core/page-objects)
 ```
 
 ## Why this exists
 
-Both `services/gitea-selenium-vitest` and `services/gitea-selenium-cucumber` test the same Gitea instance with the same tool (Selenium) — they used to each keep their own copy of page objects (and `gitea-selenium-vitest` alone had the API clients/entities), which meant duplicating the same selectors and endpoint knowledge. `business-logic/selenium` is that shared layer now; neither service keeps its own copy.
+Both `services/gitea-selenium-vitest` and `services/gitea-selenium-cucumber` test the same Gitea instance — they used to each keep their own copy of page objects (and `gitea-selenium-vitest` alone had the API clients/entities), which meant duplicating the same selectors and endpoint knowledge. `business-logic/selenium/api/` is that shared layer for Gitea's HTTP surface; neither service keeps its own copy.
 
-## `selenium/` is now split into `ui/`+`api/`, like `core/selenium/` is
+## `ui/pages/` moved out to `business-logic/common/`
 
-**Revision:** this package used to sit flat — `pages/`, `clients/`, `entities/` as direct siblings, deliberately without a `ui/`+`api/` wrapper, on the reasoning that at this level the axis that matters is "which tool" (Selenium vs. Playwright), not "which layer." That reasoning still holds one level up (`selenium/` vs. `playwright/` stays the top-level split), but within `selenium/` itself the same layer distinction `core/selenium/` already draws — browser-facing code (`ui/`) vs. HTTP-facing code (`api/`) — turned out to earn its keep here too, so `business-logic/selenium/` now nests `ui/pages/` and `api/{clients,entities}/` the same way `core/selenium/` nests `ui/` and `api/`. `business-logic/playwright/` will follow the same pattern once it starts.
+This package used to hold both `ui/pages/` and `api/{clients,entities}/`, split the same way `core/` was: one tool-named package per tool, `ui/`+`api/` nested inside each (`business-logic/selenium/` mirroring `core/selenium/`, with a `business-logic/playwright/` reserved as its future sibling). That stopped making sense once a Strategy pattern (`@gitea-automation/core-page-objects`) let one concrete page class run against either Selenium or Playwright, chosen by whichever `IInteractionStrategy` its caller injects — a page object no longer has any tool-specific code to be split by. Pages now live in `business-logic/common/ui/pages/`, extending `core-page-objects`' `BaseComponent`/`BasePage` instead of `core-selenium`'s, with locators as plain CSS-selector strings instead of Selenium's `By`. `business-logic/playwright/` — reserved for a page-objects package of its own — was removed once this made it clear no such package would ever hold anything.
+
+`business-logic/selenium/` keeps `api/{clients,entities}/` and `state/`: Gitea's HTTP surface and cross-step scenario state, both still specific to the Selenium-based services (`gitea-selenium-vitest`, `gitea-selenium-cucumber`) and unaffected by the page-objects move.
 
 ## Read each package's own README
 
 - [`business-logic/selenium/README.md`](selenium/README.md)
-- [`business-logic/playwright/README.md`](playwright/README.md)
+- [`business-logic/common/README.md`](common/README.md)

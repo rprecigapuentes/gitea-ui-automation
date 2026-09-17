@@ -158,11 +158,11 @@ carried between runs, and this runner has nowhere to keep one.
 
 ## Page object architecture
 
-UI code follows a **Page / Fragment / Facade** split, all built on the shared `BaseComponent` from `@gitea-automation/core-selenium`:
+UI code follows a **Page / Fragment / Facade** split, all built on the shared `BaseComponent` from `@gitea-automation/core-page-objects` — the Strategy-pattern Context class every page object extends, so it never imports `selenium-webdriver` directly:
 
-- **`BaseComponent`** (`@gitea-automation/core-selenium/ui/base-pages/base-component`) — the `find`, `click` and `type`
-  helpers shared by everything below. It has no notion of a URL.
-- **`BasePage extends BaseComponent`** (`@gitea-automation/core-selenium/ui/base-pages/base.page`) — a page that owns a URL. Implements the `Navigable`
+- **`BaseComponent`** (`@gitea-automation/core-page-objects/base-component`) — the `find`, `click` and `type`
+  helpers shared by everything below, delegating to whichever `IInteractionStrategy` it was constructed with. It has no notion of a URL.
+- **`BasePage extends BaseComponent`** (`@gitea-automation/core-page-objects/base.page`) — a page that owns a URL. Implements the `Navigable`
   interface (`getUrl()` + `open()`).
 - **`Navigable`** — a standalone interface (`getUrl()` + `open()`), not a base class. Any
   object that represents a navigable URL implements it directly, so a facade that just
@@ -174,7 +174,7 @@ UI code follows a **Page / Fragment / Facade** split, all built on the shared `B
   (`navigateToRepositoriesTab()`, `navigateToTeamsTab()`, …) instead of raw locators, hiding
   which fragment currently owns which piece of the screen.
 
-The concrete page objects themselves (`LoginPage`, `IssuePage`, `OrganizationFacade`, fragments — with real Gitea selectors) live in [`@gitea-automation/business-logic-selenium/ui/pages/**`](../../business-logic/selenium/README.md), shared with `gitea-selenium-cucumber` — this service doesn't keep its own copy.
+The concrete page objects themselves (`LoginPage`, `IssuePage`, `OrganizationFacade`, fragments — with real Gitea selectors, as plain CSS strings) live in [`@gitea-automation/business-logic-common/ui/pages/**`](../../business-logic/common/README.md), shared with `gitea-selenium-cucumber` — this service doesn't keep its own copy. This fixture file wraps the real `WebDriver` in a Selenium strategy once (`createSeleniumStrategy(driver)`, see [`@gitea-automation/core-page-objects`](../../core/page-objects/README.md)) and constructs every page with it — a page never sees the driver itself.
 
 Tab-style navigation fragments expose a single `navigateToTab(tab: SomeTabEnum)` method
 backed by an enum, rather than one method per tab, to avoid duplicating locator objects and
