@@ -5,9 +5,12 @@
   "type": "module",
   "devDependencies": {
     "@playwright/test": "^1.63.0",
-    "@types/node": "^22.20.3"
+    "@types/node": "^22.20.3",
+    "allure": "^3.17.0",
+    "allure-playwright": "^3.12.2"
   },
   "scripts": {
+    "pretest": "node -e \"require('fs').rmSync('allure-results', { recursive: true, force: true })\"",
     "test": "playwright test",
     "test:chrome": "cross-env BROWSER=chrome playwright test --project=chrome --workers=1",
     "test:firefox": "cross-env BROWSER=firefox playwright test --project=firefox --workers=1",
@@ -15,6 +18,8 @@
     "test:parallel": "concurrently -n chrome,firefox,edge -c blue,yellow,cyan \"npm:test:chrome\" \"npm:test:firefox\" \"npm:test:edge\"",
     "test:headed": "cross-env HEADED=1 playwright test",
     "test:parallel:headed": "cross-env HEADED=1 concurrently -n chrome,firefox,edge -c blue,yellow,cyan \"npm:test:chrome\" \"npm:test:firefox\" \"npm:test:edge\"",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "report": "allure generate ./allure-results",
+    "report:open": "allure open ./allure-report/"
   }
 }
