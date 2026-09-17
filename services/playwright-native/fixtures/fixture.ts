@@ -35,7 +35,7 @@ interface SessionManager {
 interface CustomFixtures {
   strategy: IInteractionStrategy;
   clients: Clients;
-  pages: PageFactory;
+  pageObjects: PageFactory;
   scenarioState: ScenarioState;
   sessionManager: SessionManager;
 }
@@ -63,7 +63,7 @@ export const test = base.extend<CustomFixtures>({
     const scenarioState: ScenarioState = {};
     await use(scenarioState);
   },
-  pages: async ({ strategy, scenarioState }, use) => {
+  pageObjects: async ({ strategy, scenarioState }, use) => {
     await use(new PageFactory(strategy, scenarioState));
   },
   sessionManager: async ({ clients, context, page }, use) => {
