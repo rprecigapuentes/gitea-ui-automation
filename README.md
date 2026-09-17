@@ -5,16 +5,13 @@ An `npm workspaces` monorepo grouping Gitea UI/API automation into several indep
 ```
 /
 ├── core/                          # organizational only — each subfolder is its own package
-│   ├── selenium/                   # @gitea-automation/core-selenium — Selenium driver, api/config, BrowserStack
-│   ├── playwright/                 # @gitea-automation/core-playwright — reserved, empty
-│   ├── page-objects/                # @gitea-automation/core-page-objects — Strategy pattern: interfaces, Context classes, both tools' strategies
-│   ├── api-client/                  # @gitea-automation/core-api-client — same pattern, for Gitea API clients
+│   ├── selenium/                   # @gitea-automation/core-selenium — Selenium driver, drivers/utils/browserstack-config
+│   ├── page-objects/                # @gitea-automation/core-page-objects — Strategy pattern: interfaces, Context classes, strategies/, InteractionStrategyFactory
+│   ├── api-client/                  # @gitea-automation/core-api-client — same pattern, for Gitea API clients, strategies/, RequestStrategyFactory
 │   ├── config/                     # @gitea-automation/core-config — Gitea app config, tool-agnostic
 │   ├── data-handler/               # @gitea-automation/core-data-handler — test-data naming, tool-agnostic
 │   └── logger/                     # @gitea-automation/core-logger — logging, tool-agnostic
-├── business-logic/                # organizational only — each subfolder is its own package
-│   ├── api/                        # @gitea-automation/business-logic-api — API clients/entities + scenario state, technology-agnostic
-│   └── common/                     # @gitea-automation/business-logic-common — concrete Gitea pages, technology-agnostic
+├── business-logic/                # @gitea-automation/business-logic — a single package: clients/, pages/, entities/, state/
 ├── services/
 │   ├── gitea-selenium-vitest/     # Selenium + Vitest — active project, full suite
 │   ├── gitea-selenium-cucumber/   # Selenium + Cucumber (BDD) — under construction
@@ -22,7 +19,7 @@ An `npm workspaces` monorepo grouping Gitea UI/API automation into several indep
 │   └── playwright-bdd/            # reserved — no code yet
 ```
 
-`core/` and `business-logic/` are **not workspaces themselves** — no `package.json` at that level, purely folders for organizing their subfolder-packages. Each subfolder underneath them is.
+`core/` is **not a workspace itself** — no `package.json` at that level, purely a folder for organizing its subfolder-packages, each of which is. `business-logic/` **is** a workspace — one package, holding everything technology-agnostic that used to be split across two.
 
 ## Installation
 
@@ -30,7 +27,7 @@ An `npm workspaces` monorepo grouping Gitea UI/API automation into several indep
 npm install
 ```
 
-Installs the dependencies of every workspace (7 under `core/`, 2 under `business-logic/`, and the 4 services) in one shot.
+Installs the dependencies of every workspace (6 under `core/`, `business-logic` itself, and the 4 services) in one shot.
 
 ## Root scripts (delegate to the matching workspace)
 
@@ -52,8 +49,8 @@ Installs the dependencies of every workspace (7 under `core/`, 2 under `business
 
 ## Each project
 
-- **[core](core/README.md)** — organizational root for 7 packages: [`core-selenium`](core/selenium/README.md) (Selenium driver + config), [`core-playwright`](core/playwright/README.md) (reserved), [`core-page-objects`](core/page-objects/README.md) (the Strategy pattern for page objects: interfaces, Context classes, both tools' strategies), [`core-api-client`](core/api-client/README.md) (the same pattern for Gitea API clients), [`core-config`](core/config/README.md), [`core-data-handler`](core/data-handler/README.md), [`core-logger`](core/logger/README.md) — all tool-and-domain-agnostic except `core-selenium` (and `core-page-objects`/`core-api-client`, deliberately, since those bridge the two tools).
-- **[business-logic](business-logic/README.md)** — organizational root for 2 packages: [`business-logic-api`](business-logic/api/README.md) (Gitea API clients/entities + cross-step scenario state, technology-agnostic — despite the name it had until this branch, nothing in it ever depended on `selenium-webdriver`) and [`business-logic-common`](business-logic/common/README.md) (concrete Gitea page objects, technology-agnostic via `core-page-objects`'s Strategy pattern — one `LoginPage`/`IssuePage`/etc. class runs against either Selenium or Playwright depending on which strategy it's constructed with). None of `gitea-selenium-vitest`, `gitea-selenium-cucumber`, or `playwright-native` keeps its own copy of either.
+- **[core](core/README.md)** — organizational root for 6 packages: [`core-selenium`](core/selenium/README.md) (Selenium driver + BrowserStack config), [`core-page-objects`](core/page-objects/README.md) (the Strategy pattern for page objects: interfaces, Context classes, `strategies/` for both tools, `InteractionStrategyFactory`), [`core-api-client`](core/api-client/README.md) (the same pattern for Gitea API clients, `RequestStrategyFactory`), [`core-config`](core/config/README.md), [`core-data-handler`](core/data-handler/README.md), [`core-logger`](core/logger/README.md) — all tool-and-domain-agnostic except `core-selenium` (and `core-page-objects`/`core-api-client`, deliberately, since those bridge the two tools).
+- **[business-logic](business-logic/README.md)** — one package, `@gitea-automation/business-logic`: `clients/` and `entities/` (Gitea API clients, technology-agnostic — every one but `auth.client.ts` runs against either `GotRequestStrategy` or `PlaywrightRequestStrategy`), `state/` (cross-step scenario state), `pages/` (concrete Gitea page objects, technology-agnostic via `core-page-objects`'s Strategy pattern — one `LoginPage`/`IssuePage`/etc. class runs against either Selenium or Playwright depending on which strategy it's constructed with, plus `PageFactory` to assemble them). Used to be two packages split by a technology distinction (`api`/`common`) that no longer applies; none of `gitea-selenium-vitest`, `gitea-selenium-cucumber`, or `playwright-native` keeps its own copy of any of it.
 - **[services/gitea-selenium-vitest](services/gitea-selenium-vitest/README.md)** — the original suite: Selenium WebDriver + Vitest, BrowserStack, Allure, multi-account/multi-browser credentials. Full documentation in its own README.
 - **[services/gitea-selenium-cucumber](services/gitea-selenium-cucumber/README.md)** — Selenium + Cucumber (BDD/Gherkin). Login, organizations (teams, repositories, and assigning one to the other) and project-board features, tagged `@smoke`/`@e2e`, run across all 3 browsers; still growing.
 - **[services/playwright-native](services/playwright-native/README.md)** — Playwright's native test runner (chrome/firefox/edge, `npm test`), now wired to the shared abstractions: `clients`/`strategy`/`pages`/`scenarioState` fixtures and a real login-via-API test (`AuthClient` + `context.addCookies`). A UI-driven test still needs `core-page-objects`'s Playwright strategy to be more than a stub.

@@ -1,6 +1,6 @@
 # gitea-selenium-vitest
 
-UI automation project using **Selenium WebDriver + TypeScript + Vitest**, supporting Chrome, Firefox and Edge. Part of the `gitea-ui-automation` monorepo — the shared Selenium framework lives in [`@gitea-automation/core-selenium`](../../core/selenium/README.md), and the concrete Gitea page objects/API layer live in [`@gitea-automation/business-logic-api`](../../business-logic/api/README.md).
+UI automation project using **Selenium WebDriver + TypeScript + Vitest**, supporting Chrome, Firefox and Edge. Part of the `gitea-ui-automation` monorepo — the shared Selenium framework lives in [`@gitea-automation/core-selenium`](../../core/selenium/README.md), and the concrete Gitea page objects/API layer live in [`@gitea-automation/business-logic`](../../business-logic/README.md).
 
 ## Prerequisites
 
@@ -174,7 +174,7 @@ UI code follows a **Page / Fragment / Facade** split, all built on the shared `B
   (`navigateToRepositoriesTab()`, `navigateToTeamsTab()`, …) instead of raw locators, hiding
   which fragment currently owns which piece of the screen.
 
-The concrete page objects themselves (`LoginPage`, `IssuePage`, `OrganizationFacade`, fragments — with real Gitea selectors, as plain CSS strings) live in [`@gitea-automation/business-logic-common/ui/pages/**`](../../business-logic/common/README.md), shared with `gitea-selenium-cucumber` — this service doesn't keep its own copy. This fixture file wraps the real `WebDriver` in a Selenium strategy once (`createSeleniumStrategy(driver)`, see [`@gitea-automation/core-page-objects`](../../core/page-objects/README.md)) and constructs every page with it — a page never sees the driver itself.
+The concrete page objects themselves (`LoginPage`, `IssuePage`, `OrganizationFacade`, fragments — with real Gitea selectors, as plain CSS strings) live in [`@gitea-automation/business-logic/pages/**`](../../business-logic/README.md), shared with `gitea-selenium-cucumber` — this service doesn't keep its own copy. This fixture file wraps the real `WebDriver` in a Selenium strategy once (`InteractionStrategyFactory.selenium(driver)`, see [`@gitea-automation/core-page-objects`](../../core/page-objects/README.md)) and constructs every page with it — a page never sees the driver itself.
 
 Tab-style navigation fragments expose a single `navigateToTab(tab: SomeTabEnum)` method
 backed by an enum, rather than one method per tab, to avoid duplicating locator objects and
@@ -206,12 +206,12 @@ services/gitea-selenium-vitest/
 │   └── browserstack.global-setup.ts # starts/stops the BrowserStack Local tunnel — Vitest globalSetup
 ├── src/
 │   ├── entities/                   # fixture-orchestration types (BrowserStackSession, SessionManager) — not Gitea API data, stay local
-│   ├── fixtures/fixture.ts         # composition root: driver (core-selenium), pages/clients (business-logic-api), seeded data
+│   ├── fixtures/fixture.ts         # composition root: driver (core-selenium), pages/clients (business-logic), seeded data
 │   └── utils/                      # session.util (applies API-obtained cookies to the WebDriver session), session-credentials.util (per-browser multi-account resolution)
 └── tests/                          # specs: assertions only, import `test` from ../src/fixtures/fixture
 ```
 
-Everything reusable by more than this project lives under `core/` and `business-logic/` at the repo root, each split into its own package per tool/concern: the Selenium driver/base pages in [`core/selenium`](../../core/selenium/README.md), config in [`core/config`](../../core/config/README.md), logging in [`core/logger`](../../core/logger/README.md), test-data naming in [`core/data-handler`](../../core/data-handler/README.md); the concrete Gitea page objects in [`business-logic/common`](../../business-logic/common/README.md), and the API clients/entities (technology-agnostic, shared by `playwright-native` too) in [`business-logic/api`](../../business-logic/api/README.md). `ScenarioState` (cross-step scenario data — which organization/teams a test created) also lives there, at `business-logic/api/state/scenario.entity.ts`, so `gitea-selenium-cucumber` can reuse the same type instead of duplicating it.
+Everything reusable by more than this project lives under `core/` and `business-logic/` at the repo root: the Selenium driver/base pages in [`core/selenium`](../../core/selenium/README.md), config in [`core/config`](../../core/config/README.md), logging in [`core/logger`](../../core/logger/README.md), test-data naming in [`core/data-handler`](../../core/data-handler/README.md); the concrete Gitea page objects and the API clients/entities (technology-agnostic, shared by `playwright-native` too) in [`business-logic`](../../business-logic/README.md). `ScenarioState` (cross-step scenario data — which organization/teams a test created) also lives there, at `business-logic/state/scenario.entity.ts`, so `gitea-selenium-cucumber` can reuse the same type instead of duplicating it.
 
 ## Troubleshooting
 

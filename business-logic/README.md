@@ -1,26 +1,76 @@
-# business-logic/
+# @gitea-automation/business-logic
 
-Purely organizational — **not an npm workspace itself** (no `package.json` here). Each subfolder below is its own independent package.
+Gitea's HTTP surface (API clients/entities), the concrete page objects, and cross-step scenario state — all technology-agnostic, shared by every test runner in this monorepo: `services/gitea-selenium-vitest`, `services/gitea-selenium-cucumber`, `services/playwright-native`. None of them keeps its own copy of any of this.
+
+## Structure
 
 ```
 business-logic/
-├── api/     @gitea-automation/business-logic-api    — api/{clients,entities} + state, technology-agnostic, shared by every test runner
-└── common/  @gitea-automation/business-logic-common — ui/pages, technology-agnostic (Strategy pattern, see core/page-objects)
+├── clients/    # auth/issue/label/milestone/organizations/repository/team/user — all but auth extend GiteaApiClient from @gitea-automation/core-api-client
+├── entities/   # issue/label/milestone/organization/repository/team/user — the shapes those clients return
+├── state/
+│   └── scenario.entity.ts   # ScenarioState — cross-step scenario data (organization/team1/team2), shared by every test runner
+└── pages/      # concrete Gitea page objects, extending core-page-objects' BaseComponent/BasePage
+    ├── page.factory.ts   # PageFactory — lazy, memoized getters for the pages a scenario needs
+    ├── authentication/, common/, issues/, organizations/, projects/, repositories/   # one folder per feature area, fragments/facade nested where a page has them
 ```
 
-## Why this exists
+## Why one package instead of two
 
-`services/gitea-selenium-vitest`, `services/gitea-selenium-cucumber`, and `services/playwright-native` all test the same Gitea instance — they used to each keep their own copy of page objects (and `gitea-selenium-vitest` alone had the API clients/entities), which meant duplicating the same selectors and endpoint knowledge. `business-logic/api/api/` is that shared layer for Gitea's HTTP surface; none of the three keeps its own copy.
+This used to be two packages, `business-logic/api` (clients/entities/state) and `business-logic/common` (pages), split the way `core/` still is: one package per technology. That distinction never actually held here — neither package ever had a real dependency on a specific browser/HTTP technology. Every client but `auth.client.ts` already works against either `GotRequestStrategy` or `PlaywrightRequestStrategy` (`auth.client.ts` itself is plain `got` + a cookie jar, usable from any browser technology), and every page already works against either `SeleniumInteractionStrategy` or `PlaywrightInteractionStrategy`, chosen by whichever `IInteractionStrategy` its caller injects. Splitting by technology only made sense back when `ui/pages/` still imported `selenium-webdriver` directly — once the Strategy pattern (`@gitea-automation/core-page-objects`) closed that gap, two tech-agnostic packages became one, with exactly four folders: `clients/`, `pages/`, `entities/`, `state/`.
 
-## `ui/pages/` moved out to `business-logic/common/`
+`state/` is a sibling of `clients/`/`entities/`, not nested under either — not an API payload (`ScenarioState` never travels over HTTP; it's local bookkeeping a test mutates as a scenario runs, e.g. "which organization did this scenario create", read back later for both page objects and cleanup). Putting it in `entities/` alongside `Organization`/`Team` would mix two different things: a real Gitea API response shape vs. local per-scenario state that merely references those shapes.
 
-This package used to hold both `ui/pages/` and `api/{clients,entities}/`, split the same way `core/` was: one tool-named package per tool, `ui/`+`api/` nested inside each (this package, then named `business-logic/selenium/`, mirroring `core/selenium/`, with a `business-logic/playwright/` reserved as its future sibling). That stopped making sense once a Strategy pattern (`@gitea-automation/core-page-objects`) let one concrete page class run against either Selenium or Playwright, chosen by whichever `IInteractionStrategy` its caller injects — a page object no longer has any tool-specific code to be split by. Pages now live in `business-logic/common/ui/pages/`, extending `core-page-objects`' `BaseComponent`/`BasePage` instead of `core-selenium`'s, with locators as plain CSS-selector strings instead of Selenium's `By`. `business-logic/playwright/` — reserved for a page-objects package of its own — was removed once this made it clear no such package would ever hold anything.
+## Constructing a client
 
-## `business-logic/selenium/` renamed to `business-logic/api/`
+Whoever builds a client picks the strategy, through `RequestStrategyFactory` (`@gitea-automation/core-api-client`), not the client itself:
 
-This package kept `api/{clients,entities}/` and `state/` — Gitea's HTTP surface and cross-step scenario state — and its name still said "selenium" long after it stopped being true: no file here ever imported `selenium-webdriver`, and every client but `auth.client.ts` already works against either `GotRequestStrategy` or `PlaywrightRequestStrategy` (`auth.client.ts` itself is plain `got` + a cookie jar, usable from any browser technology). `services/playwright-native` consuming it made the stale name impossible to ignore, so it's now `business-logic/api/`, matching what it's always actually been.
+```ts
+import { RequestStrategyFactory } from "@gitea-automation/core-api-client/request-strategy.factory";
+import { IssueClient } from "@gitea-automation/business-logic/clients/issue.client";
 
-## Read each package's own README
+const issueClient = new IssueClient(RequestStrategyFactory.got(baseUrl, token));
+// or: new IssueClient(RequestStrategyFactory.playwright(baseUrl, token));
+```
 
-- [`business-logic/api/README.md`](api/README.md)
-- [`business-logic/common/README.md`](common/README.md)
+## Constructing a page
+
+Same idea, through `InteractionStrategyFactory` (`@gitea-automation/core-page-objects`):
+
+```ts
+import { InteractionStrategyFactory } from "@gitea-automation/core-page-objects/interaction-strategy.factory";
+import { LoginPage } from "@gitea-automation/business-logic/pages/authentication/login.page";
+
+const loginPage = new LoginPage(InteractionStrategyFactory.selenium(driver));
+// or: new LoginPage(InteractionStrategyFactory.playwright(page));
+```
+
+## PageFactory
+
+`pages/page.factory.ts` is a lazy, memoized getter for every page/fragment (`this.pages.loginPage`, `this.pages.orgFacade`, ...), built once from an already-constructed `IInteractionStrategy` and a `ScenarioState`:
+
+```ts
+import { PageFactory } from "@gitea-automation/business-logic/pages/page.factory";
+
+const pages = new PageFactory(strategy, scenarioState);
+pages.loginPage.login(username, password);
+```
+
+It never picks a strategy itself — whoever constructs it already has. `gitea-selenium-cucumber`'s `GiteaWorld.pages` and `playwright-native`'s `pages` fixture are both a `PageFactory` built this way, one from `InteractionStrategyFactory.selenium(driver)`, the other from `InteractionStrategyFactory.playwright(page)`.
+
+## Current limitation
+
+`PlaywrightInteractionStrategy` (in `core-page-objects`) is a stub — every method logs and returns a placeholder, so a page constructed with it typechecks and runs without throwing, but doesn't drive a real browser yet. That's deliberate: this package's pages have no remaining Selenium dependency; making the Playwright side actually work is separate, not-yet-started work.
+
+## Dependencies
+
+`@gitea-automation/core-api-client` (`GiteaApiClient` for every `clients/` file except `auth.client.ts`), `@gitea-automation/core-page-objects` (`BaseComponent`/`BasePage`, `IInteractionStrategy`, `IElementHandle`), `@gitea-automation/core-config` (`baseUrl`), `@gitea-automation/core-logger` (for `auth.client.ts`), `got`, `tough-cookie` (`auth.client.ts`'s form-login + cookie jar).
+
+## Imports
+
+```ts
+import { IssueClient } from "@gitea-automation/business-logic/clients/issue.client";
+import type { Organization } from "@gitea-automation/business-logic/entities/organization.entity";
+import type { ScenarioState } from "@gitea-automation/business-logic/state/scenario.entity";
+import { LoginPage } from "@gitea-automation/business-logic/pages/authentication/login.page";
+```
