@@ -5,8 +5,8 @@ import { IInteractionStrategy } from "../interaction-strategy.interface";
 function toElementHandle(locator: Locator): IElementHandle {
   return {
     click: () => locator.click(),
-    getText: () => Promise.resolve(""),
-    getAttribute: () => Promise.resolve(""),
+    getText: async () => (await locator.textContent()) ?? "",
+    getAttribute: async (name: string) => (await locator.getAttribute(name)) ?? "",
     isSelected: () => Promise.resolve(false),
     isDisplayed: () => Promise.resolve(false),
     clear: () => Promise.resolve(),
@@ -81,28 +81,39 @@ export class PlaywrightInteractionStrategy implements IInteractionStrategy {
     return Promise.resolve();
   }
 
-  getText(locator: string, root?: IElementHandle, timeoutMs?: number): Promise<string> {
-    console.log("[playwright] getText", locator, { root, timeoutMs });
-    return Promise.resolve("");
+  async getText(locator: string, root?: IElementHandle, timeoutMs?: number): Promise<string> {
+    if (root) return (await root.findElement(locator)).getText();
+    return (await this.page.locator(locator).textContent({ timeout: timeoutMs })) ?? "";
   }
 
-  getAttribute(
+  async getAttribute(
     locator: string,
     attributeName: string,
     root?: IElementHandle,
     timeoutMs?: number,
   ): Promise<string> {
-    console.log("[playwright] getAttribute", locator, attributeName, { root, timeoutMs });
-    return Promise.resolve("");
+    if (root) return (await root.findElement(locator)).getAttribute(attributeName);
+    return (
+      (await this.page.locator(locator).getAttribute(attributeName, { timeout: timeoutMs })) ?? ""
+    );
   }
 
-  isVisible(
+  async isVisible(
     locators: string | string[],
     root?: IElementHandle,
     timeoutMs?: number,
   ): Promise<boolean> {
-    console.log("[playwright] isVisible", locators, { root, timeoutMs });
-    return Promise.resolve(false);
+    const list = Array.isArray(locators) ? locators : [locators];
+    const results = await Promise.all(
+      list.map((locator) =>
+        this.page
+          .locator(locator)
+          .waitFor({ state: "visible", timeout: timeoutMs })
+          .then(() => true)
+          .catch(() => false),
+      ),
+    );
+    return results.every(Boolean);
   }
 
   waitUntil(predicate: () => Promise<boolean>, timeoutMs?: number): Promise<boolean> {
@@ -160,14 +171,16 @@ export class PlaywrightInteractionStrategy implements IInteractionStrategy {
     return Promise.resolve([]);
   }
 
-  clickAndWaitForUrl(
+  async clickAndWaitForUrl(
     clickLocator: string,
     urlPattern: RegExp,
     root?: IElementHandle,
     timeoutMs?: number,
   ): Promise<void> {
-    console.log("[playwright] clickAndWaitForUrl", clickLocator, urlPattern, { root, timeoutMs });
-    return Promise.resolve();
+    await Promise.all([
+      this.page.waitForURL(urlPattern, { timeout: timeoutMs }),
+      this.click(clickLocator, root, timeoutMs),
+    ]);
   }
 
   getCurrentUrl(): Promise<string> {
@@ -180,9 +193,11 @@ export class PlaywrightInteractionStrategy implements IInteractionStrategy {
     return Promise.resolve();
   }
 
-  open(url: string, readyLocators?: string[], timeoutMs?: number): Promise<void> {
-    console.log("[playwright] open", url, readyLocators, { timeoutMs });
-    return Promise.resolve();
+  async open(url: string, readyLocators: string[] = [], timeoutMs?: number): Promise<void> {
+    await this.page.goto(url);
+    await Promise.all(
+      readyLocators.map((locator) => this.page.locator(locator).waitFor({ timeout: timeoutMs })),
+    );
   }
 
   queryAll(locator: string): Promise<IElementHandle[]> {
