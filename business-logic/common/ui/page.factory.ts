@@ -1,31 +1,29 @@
-import type { WebDriver } from "selenium-webdriver";
-import { createSeleniumStrategy } from "@gitea-automation/core-page-objects/selenium-interaction.strategy";
 import type { IInteractionStrategy } from "@gitea-automation/core-page-objects/interaction-strategy.interface";
-import { LoginPage } from "@gitea-automation/business-logic-common/ui/pages/authentication/login.page";
-import { MainPage } from "@gitea-automation/business-logic-common/ui/pages/common/main.page";
-import { NavBarFragment } from "@gitea-automation/business-logic-common/ui/pages/common/fragments/nav-bar.fragment";
-import { OrganizationDashboardPage } from "@gitea-automation/business-logic-common/ui/pages/organizations/organization-dashboard.page";
-import { IssuePage } from "@gitea-automation/business-logic-common/ui/pages/issues/issue.page";
-import { CreateIssuePage } from "@gitea-automation/business-logic-common/ui/pages/issues/create-issue.page";
-import { IssueListPage } from "@gitea-automation/business-logic-common/ui/pages/issues/issue-list.page";
-import { LabelListPage } from "@gitea-automation/business-logic-common/ui/pages/issues/label-list.page";
-import { MilestoneListPage } from "@gitea-automation/business-logic-common/ui/pages/issues/milestone-list.page";
-import { CreateProjectPage } from "@gitea-automation/business-logic-common/ui/pages/projects/create-project.page";
-import { ProjectListPage } from "@gitea-automation/business-logic-common/ui/pages/projects/project-list.page";
-import { ProjectBoardPage } from "@gitea-automation/business-logic-common/ui/pages/projects/project-board.page";
-import { CreateOrganizationPage } from "@gitea-automation/business-logic-common/ui/pages/organizations/create-organization.page";
-import { CreateRepositoryPage } from "@gitea-automation/business-logic-common/ui/pages/repositories/create-repository.page";
-import { OrgNavigationFragment } from "@gitea-automation/business-logic-common/ui/pages/organizations/fragments/org-navigation.fragment";
-import { OrgRepositoriesFragment } from "@gitea-automation/business-logic-common/ui/pages/organizations/fragments/org-repositories.fragment";
-import { OrgTeamsFragment } from "@gitea-automation/business-logic-common/ui/pages/organizations/fragments/org-teams.fragment";
-import { NewTeamFragment } from "@gitea-automation/business-logic-common/ui/pages/organizations/fragments/new-team.fragment";
-import { SpecificTeamFragment } from "@gitea-automation/business-logic-common/ui/pages/organizations/fragments/specific-team.fragment";
-import { RepoNavBarFragment } from "@gitea-automation/business-logic-common/ui/pages/repositories/fragments/repo-nav-bar.fragment";
-import { RepoCodeTabFragment } from "@gitea-automation/business-logic-common/ui/pages/repositories/fragments/repo-code-tab.fragment";
-import { CreateRepoFileFragment } from "@gitea-automation/business-logic-common/ui/pages/repositories/fragments/create-repo-file.fragment";
-import { RepoFileFragment } from "@gitea-automation/business-logic-common/ui/pages/repositories/fragments/repo-file.fragment";
-import { ForkPromptFragment } from "@gitea-automation/business-logic-common/ui/pages/repositories/fragments/fork-prompt.fragment";
-import { OrganizationFacade } from "@gitea-automation/business-logic-common/ui/pages/organizations/facade/organization.facade";
+import { LoginPage } from "./pages/authentication/login.page";
+import { MainPage } from "./pages/common/main.page";
+import { NavBarFragment } from "./pages/common/fragments/nav-bar.fragment";
+import { OrganizationDashboardPage } from "./pages/organizations/organization-dashboard.page";
+import { IssuePage } from "./pages/issues/issue.page";
+import { CreateIssuePage } from "./pages/issues/create-issue.page";
+import { IssueListPage } from "./pages/issues/issue-list.page";
+import { LabelListPage } from "./pages/issues/label-list.page";
+import { MilestoneListPage } from "./pages/issues/milestone-list.page";
+import { CreateProjectPage } from "./pages/projects/create-project.page";
+import { ProjectListPage } from "./pages/projects/project-list.page";
+import { ProjectBoardPage } from "./pages/projects/project-board.page";
+import { CreateOrganizationPage } from "./pages/organizations/create-organization.page";
+import { CreateRepositoryPage } from "./pages/repositories/create-repository.page";
+import { OrgNavigationFragment } from "./pages/organizations/fragments/org-navigation.fragment";
+import { OrgRepositoriesFragment } from "./pages/organizations/fragments/org-repositories.fragment";
+import { OrgTeamsFragment } from "./pages/organizations/fragments/org-teams.fragment";
+import { NewTeamFragment } from "./pages/organizations/fragments/new-team.fragment";
+import { SpecificTeamFragment } from "./pages/organizations/fragments/specific-team.fragment";
+import { RepoNavBarFragment } from "./pages/repositories/fragments/repo-nav-bar.fragment";
+import { RepoCodeTabFragment } from "./pages/repositories/fragments/repo-code-tab.fragment";
+import { CreateRepoFileFragment } from "./pages/repositories/fragments/create-repo-file.fragment";
+import { RepoFileFragment } from "./pages/repositories/fragments/repo-file.fragment";
+import { ForkPromptFragment } from "./pages/repositories/fragments/fork-prompt.fragment";
+import { OrganizationFacade } from "./pages/organizations/facade/organization.facade";
 import type { Organization } from "@gitea-automation/business-logic-selenium/api/entities/organization.entity";
 import type { ScenarioState } from "@gitea-automation/business-logic-selenium/state/scenario.entity";
 
@@ -56,14 +54,10 @@ export class PageFactory {
   #forkPrompt?: ForkPromptFragment;
   #orgFacade?: OrganizationFacade;
 
-  private readonly strategy: IInteractionStrategy;
-
   constructor(
-    private readonly driver: WebDriver,
+    private readonly strategy: IInteractionStrategy,
     private readonly scenarioState: ScenarioState,
-  ) {
-    this.strategy = createSeleniumStrategy(driver);
-  }
+  ) {}
 
   private requireOrganization(): Organization {
     if (!this.scenarioState.organization) {

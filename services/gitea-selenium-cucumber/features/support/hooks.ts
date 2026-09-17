@@ -11,12 +11,13 @@ import { IssueClient } from "@gitea-automation/business-logic-selenium/api/clien
 import { TeamClient } from "@gitea-automation/business-logic-selenium/api/clients/team.client";
 import { MilestoneClient } from "@gitea-automation/business-logic-selenium/api/clients/milestone.client";
 import { createGotStrategy } from "@gitea-automation/core-api-client/got-request-strategy";
+import { createSeleniumStrategy } from "@gitea-automation/core-page-objects/selenium-interaction.strategy";
 import type {
   ScenarioState,
   SeededRepository,
 } from "@gitea-automation/business-logic-selenium/state/scenario.entity";
 import { testDataName, uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.util";
-import { PageFactory } from "./page.factory";
+import { PageFactory } from "@gitea-automation/business-logic-common/ui/page.factory";
 import { resolveOwnerToken } from "./credentials";
 import { createSeededUsers, deleteSeededUsers } from "./seeded-users";
 import type { GiteaWorld } from "./world";
@@ -99,7 +100,7 @@ Before(async function (this: GiteaWorld) {
   this.driver = await DriverFactory.getDriver();
   const scenarioState: ScenarioState = {};
   this.scenarioState = scenarioState;
-  this.pages = new PageFactory(this.driver, scenarioState);
+  this.pages = new PageFactory(createSeleniumStrategy(this.driver), scenarioState);
   this.organizationClient = ownerClients().organizations;
 });
 
