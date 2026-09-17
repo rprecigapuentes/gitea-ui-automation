@@ -11,11 +11,11 @@ services/playwright-native/
 ├── fixtures/
 │   ├── credentials.ts            # resolveOwnerCredentials()/resolveOwnerToken() — same scheme as gitea-selenium-cucumber
 │   ├── session.util.ts           # applySession()/clearSession() — cookie-based API login, same shape as gitea-selenium-vitest's session.util.ts
-│   └── fixture.ts                # custom test fixtures: strategy, clients, pages, scenarioState, sessionManager
+│   └── fixture.ts                # custom test fixtures: strategy, clients, pageObjects, scenarioState, sessionManager
 └── tests/
     ├── example.spec.ts           # the default file npm init playwright@latest scaffolds, exercises playwright.dev itself
     ├── login-api.spec.ts         # Gitea-specific: logs in and out via sessionManager, cookie-based, no UI
-    └── login-ui.spec.ts          # Gitea-specific: fills the login form and submits it, through the strategy fixture
+    └── login-ui.spec.ts          # Gitea-specific: fills the login form and submits it, through pageObjects.loginPage
 ```
 
 - `chrome`, `firefox` and `edge` project configs, matching the browser matrix the Selenium services already cover — naming and env-var convention only. None of the three sets a `channel`, so all run on Playwright's own managed binaries (whatever `playwright install` downloads into `~/AppData/Local/ms-playwright/`), never a real installed Chrome/Edge/Firefox. That's on purpose: a `channel` (`'chrome'`/`'msedge'`) would need the real browser present on whatever machine runs the tests, which a CI runner isn't guaranteed to have, and would need its own install step beyond plain `playwright install`. It's also why a browser's window shows a different icon than your everyday one when run `:headed` — it's the Playwright-managed copy, not your system's.
@@ -26,14 +26,14 @@ services/playwright-native/
 
 - `strategy: IInteractionStrategy` — Playwright's own `page` fixture wrapped with `InteractionStrategyFactory.playwright` from [`@gitea-automation/core-page-objects`](../../core/page-objects/README.md).
 - `clients` — the 7 Gitea API clients (`organizations`, `repositories`, `issues`, `labels`, `teams`, `milestones`, `users`), each built via `RequestStrategyFactory.playwright` from [`@gitea-automation/core-api-client`](../../core/api-client/README.md), sharing one `PlaywrightRequestStrategy` instance — plus `auth: AuthClient`, which stays `got`-based (see that package's README for why it's out of the Strategy pattern).
-- `pages: PageFactory` — [`@gitea-automation/business-logic/pages/page.factory.ts`](../../business-logic/README.md), built from `strategy` and `scenarioState`.
+- `pageObjects: PageFactory` — [`@gitea-automation/business-logic/pages/page.factory.ts`](../../business-logic/README.md), built from `strategy` and `scenarioState`.
 - `scenarioState: ScenarioState` — starts as `{}` per test, same type the other two suites use.
 - `sessionManager` — `loginAs(username, password)`, `loginAsOwner()`, `logout()`. A test says who to log in as, not how — the same shape as `gitea-selenium-vitest`'s `sessionManager` fixture. Underneath, `fixtures/session.util.ts`'s `applySession`/`clearSession` do the same cookie dance `gitea-selenium-vitest`'s `session.util.ts` does for a `WebDriver` (`AuthClient.loginViaApi` → clear cookies → set the returned ones → reload), just through `BrowserContext.addCookies`/`clearCookies` instead of `driver.manage()`.
 
 ```ts
 import { test, expect } from "../fixtures/fixture";
 
-test("...", async ({ sessionManager, pages, scenarioState }) => {
+test("...", async ({ sessionManager, pageObjects, scenarioState }) => {
   await sessionManager.loginAsOwner();
 });
 ```
@@ -68,6 +68,6 @@ or pass `--headed` directly to any single-browser script, e.g. `npm run test:chr
 
 ## Current limitation: UI tests
 
-`login-api.spec.ts` proves the `clients` fixture end to end (`PlaywrightRequestStrategy`, real HTTP against the local Gitea instance) and drives real browser state via `context.addCookies` — but it asserts through Playwright's own `page`/`expect`, not through `pages`.
+`login-api.spec.ts` proves the `clients` fixture end to end (`PlaywrightRequestStrategy`, real HTTP against the local Gitea instance) and drives real browser state via `context.addCookies` — but it asserts through Playwright's own `page`/`expect`, not through `pageObjects`.
 
-`login-ui.spec.ts` drives a real login through the browser: `strategy.type`/`strategy.click` (`PlaywrightInteractionStrategy`'s `findElement`/`findElements`/`click`/`type` are real now, built from Playwright's own documented API) fill the form and submit it, and the result is confirmed through `page.waitForURL`/`expect`. It doesn't go through `pages.loginPage.login(...)` yet, though — that method composes `clickAndWaitForUrl`, which (like `isVisible`, `getText`, `getAttribute`, and everything else beyond the four basics) is still a stub. `pages.mainPage.hasExpectedElementsDisplayed()` needs those to work before a test can assert through `pages` the way the Selenium suites do.
+`login-ui.spec.ts` drives a real login the same way the Selenium suites do: `pageObjects.loginPage.open()`/`.login(...)`, asserted through `pageObjects.mainPage.hasExpectedElementsDisplayed()`/`navBar.getCurrentOrganization()`. That needed `open`, `clickAndWaitForUrl`, `isVisible`, `getText`, and `getAttribute` real on top of `findElement`/`findElements`/`click`/`type` — every one of `PlaywrightInteractionStrategy`'s methods this login flow touches is real now. Everything else on `IInteractionStrategy` (`clearAndType`, drag-and-drop, the remaining `*AndWait*` compositions, `waitFor`/`waitForUrl` as standalone calls, `executeScript`) is still a stub.

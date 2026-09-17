@@ -60,7 +60,7 @@ It never picks a strategy itself — whoever constructs it already has. `gitea-s
 
 ## Current limitation
 
-`PlaywrightInteractionStrategy` (in `core-page-objects`) is partially real: `findElement`/`findElements`/`click`/`type` drive a live browser; everything else still logs and returns a placeholder. A page's simpler flows (filling a field, clicking a button) work when driven directly through the `strategy` fixture; a composed method like `LoginPage.login()` isn't fully usable yet since it calls `clickAndWaitForUrl`, still a stub.
+`PlaywrightInteractionStrategy` (in `core-page-objects`) is partially real: `findElement`/`findElements`/`click`/`type`/`open`/`clickAndWaitForUrl`/`isVisible`/`getText`/`getAttribute` drive a live browser, enough for `LoginPage.login()` and `MainPage.hasExpectedElementsDisplayed()` to work end to end. Everything else still logs and returns a placeholder.
 
 ## Dependencies
 
