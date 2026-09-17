@@ -1,7 +1,40 @@
 # playwright-native
 
-**Not started.** Reserved workspace for a future UI automation project using Playwright's native test runner (`@playwright/test`), as part of the `gitea-ui-automation` monorepo.
+Scaffolded, runnable workspace for a future UI automation project using Playwright's native test runner (`@playwright/test`), as part of the `gitea-ui-automation` monorepo. No Gitea-specific code yet — just the standard Playwright example.
 
-Today this folder only holds a `package.json` so `npm install`/`npm run typecheck --workspaces --if-present` at the repo root can traverse it without doing anything.
+## What's here
 
-When work starts here: this project can reuse `@gitea-automation/business-logic-selenium/api/entities/**` (Gitea entities — tool-agnostic; the clients extend `GiteaApiClient` from `core-selenium`, so a Playwright client layer would need its own base, likely in `@gitea-automation/core-playwright`) as a reference. It cannot reuse `@gitea-automation/core-selenium/**` or `@gitea-automation/business-logic-selenium/ui/pages/**` (built on `selenium-webdriver`'s `WebDriver`/`By`, incompatible with Playwright's `Page`/`Locator`). The reserved packages for this are already scaffolded: [`core/playwright`](../../core/playwright/README.md) (empty, sibling of `core/selenium`) and [`business-logic/playwright`](../../business-logic/playwright/README.md) (empty, sibling of `business-logic/selenium`) — that's where this project's driver/base-pages and page objects/clients go when work starts.
+- `playwright.config.ts` and `tests/example.spec.ts` — the default files `npm init playwright@latest` scaffolds. The example test exercises `playwright.dev` itself, not Gitea.
+- `chrome`, `firefox` and `edge` project configs, matching the browser matrix the Selenium services already cover — naming and env-var convention only. None of the three sets a `channel`, so all run on Playwright's own managed binaries (whatever `playwright install` downloads into `~/AppData/Local/ms-playwright/`), never a real installed Chrome/Edge/Firefox. That's on purpose: a `channel` (`'chrome'`/`'msedge'`) would need the real browser present on whatever machine runs the tests, which a CI runner isn't guaranteed to have, and would need its own install step beyond plain `playwright install`. It's also why a browser's window shows a different icon than your everyday one when run `:headed` — it's the Playwright-managed copy, not your system's.
+
+## Running it
+
+```bash
+npm test -w @gitea-automation/playwright-native
+```
+
+runs the example spec on all three browsers in one process. Browser binaries are installed separately (`npx playwright install`), not as part of `npm install`.
+
+For one OS process per browser — the same isolation `gitea-selenium-vitest`/`gitea-selenium-cucumber` use so that two browsers never contend for the same Gitea account:
+
+```bash
+npm run test:chrome -w @gitea-automation/playwright-native
+npm run test:firefox -w @gitea-automation/playwright-native
+npm run test:edge -w @gitea-automation/playwright-native
+npm run test:parallel -w @gitea-automation/playwright-native   # the three above, concurrently
+```
+
+Each of `test:chrome`/`test:firefox`/`test:edge` sets `BROWSER=<name>` in its process, the same convention `gitea-selenium-vitest`'s `session-credentials.util.ts` reads to pick a browser-specific Gitea account. Nothing here resolves that yet — there is no Gitea test or Playwright client to consume it — but a future one can read `process.env.BROWSER` the same way.
+
+To watch the browsers instead of running headless, add `:headed` (sets `HEADED=1`, which `playwright.config.ts` reads to turn `headless` off):
+
+```bash
+npm run test:headed -w @gitea-automation/playwright-native            # all three, one process
+npm run test:parallel:headed -w @gitea-automation/playwright-native   # all three, one window each, in parallel
+```
+
+or pass `--headed` directly to any single-browser script, e.g. `npm run test:chrome -w @gitea-automation/playwright-native -- --headed`.
+
+## When Gitea-specific work starts here
+
+This project can reuse `@gitea-automation/business-logic-selenium/api/entities/**` (Gitea entities — tool-agnostic; the clients extend `GiteaApiClient` from `core-selenium`, so a Playwright client layer would need its own base, likely in `@gitea-automation/core-playwright`) as a reference. It cannot reuse `@gitea-automation/core-selenium/**` or `@gitea-automation/business-logic-selenium/ui/pages/**` (built on `selenium-webdriver`'s `WebDriver`/`By`, incompatible with Playwright's `Page`/`Locator`). The reserved packages for this are already scaffolded: [`core/playwright`](../../core/playwright/README.md) (empty, sibling of `core/selenium`) and [`business-logic/playwright`](../../business-logic/playwright/README.md) (empty, sibling of `business-logic/selenium`) — that's where this project's driver/base-pages and page objects/clients go when work starts.
