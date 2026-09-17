@@ -100,6 +100,7 @@ Before(async function (this: GiteaWorld) {
   const scenarioState: ScenarioState = {};
   this.scenarioState = scenarioState;
   this.pages = new PageFactory(this.driver, scenarioState);
+  this.organizationClient = ownerClients().organizations;
 });
 
 Before({ tags: PROJECT_BOARD_TAG }, async function (this: GiteaWorld) {

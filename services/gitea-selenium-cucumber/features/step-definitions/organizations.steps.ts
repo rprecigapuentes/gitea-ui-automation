@@ -5,9 +5,6 @@ import { Organization } from "@gitea-automation/business-logic-selenium/api/enti
 import { uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.util";
 import { Team } from "@gitea-automation/business-logic-selenium/api/entities/team.entity";
 import { Repository } from "@gitea-automation/business-logic-selenium/api/entities/repository.entity";
-import { OrganizationClient } from "@gitea-automation/business-logic-selenium/api/clients/organizations.client";
-import { createGotStrategy } from "@gitea-automation/core-api-client/got-request-strategy";
-import { resolveOwnerToken } from "../support/credentials";
 import { getSeededUser } from "../support/seeded-users";
 
 When(
@@ -47,15 +44,12 @@ Then("I should see the organization created successfully", async function (this:
 });
 
 Given("an organization already exists", async function (this: GiteaWorld) {
-  const organizationClient = new OrganizationClient(
-    createGotStrategy(process.env.GITEA_BASE_URL!, resolveOwnerToken()),
-  );
   const organization: Organization = {
     name: `test-org-${process.env.BROWSER ?? "local"}-${uniqueSuffix()}`,
     visibility: "public",
   };
 
-  await organizationClient.createOrganization(organization.name, organization.visibility);
+  await this.organizationClient.createOrganization(organization.name, organization.visibility);
   this.scenarioState.organization = organization;
   await this.pages.orgFacade.open();
   await this.pages.orgFacade.waitForElements();
