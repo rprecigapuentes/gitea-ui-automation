@@ -11,3 +11,8 @@
 - [x] 2.2 Ran it against the local Gitea instance on all three browsers: `npm run test:chrome/firefox/edge -w @gitea-automation/playwright-native -- login-ui` — 1/1 passed on each; full `test:chrome` (4 specs) also green
 - [x] 2.3 Verified `npm run typecheck --workspaces --if-present` and `npm run lint` green across the whole repo
 - [x] 2.4 Archive this change and commit
+
+## 3. Code review fix
+
+- [x] 3.1 `PlaywrightElementHandle` and `PlaywrightInteractionStrategy` each reimplemented "scope to a base and build a Locator" separately — flagged as needless duplication between the two classes. Replaced with a shared `locate(base, locator)` function both classes call; the strategy's `base(root)` picks `Page` vs. the root handle's `Locator`, replacing the old private `locatorFor` that duplicated the scoping logic inline
+- [x] 3.2 Verified `npm run typecheck -w @gitea-automation/core-page-objects` and `npm run lint` green; re-ran `playwright-native` chrome (4 specs) — all still passing
