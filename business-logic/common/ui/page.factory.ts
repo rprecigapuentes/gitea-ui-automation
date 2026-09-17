@@ -24,8 +24,8 @@ import { CreateRepoFileFragment } from "./pages/repositories/fragments/create-re
 import { RepoFileFragment } from "./pages/repositories/fragments/repo-file.fragment";
 import { ForkPromptFragment } from "./pages/repositories/fragments/fork-prompt.fragment";
 import { OrganizationFacade } from "./pages/organizations/facade/organization.facade";
-import type { Organization } from "@gitea-automation/business-logic-selenium/api/entities/organization.entity";
-import type { ScenarioState } from "@gitea-automation/business-logic-selenium/state/scenario.entity";
+import type { Organization } from "@gitea-automation/business-logic-api/api/entities/organization.entity";
+import type { ScenarioState } from "@gitea-automation/business-logic-api/state/scenario.entity";
 
 export class PageFactory {
   #loginPage?: LoginPage;

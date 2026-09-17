@@ -1,18 +1,18 @@
-# @gitea-automation/business-logic-selenium
+# @gitea-automation/business-logic-api
 
-Gitea's HTTP surface (API clients/entities) and cross-step scenario state, shared by every Selenium-based service in this monorepo. Neither `services/gitea-selenium-vitest` nor `services/gitea-selenium-cucumber` keeps its own copy of any of this.
+Gitea's HTTP surface (API clients/entities) and cross-step scenario state, technology-agnostic and shared by every test runner in this monorepo — `services/gitea-selenium-vitest`, `services/gitea-selenium-cucumber`, `services/playwright-native`. None of them keeps its own copy of any of this. Despite the name this package used to have, nothing here ever depended on `selenium-webdriver` — every client but `auth.client.ts` already works against either `GotRequestStrategy` or `PlaywrightRequestStrategy`, and `auth.client.ts` is plain `got` + a cookie jar, usable from any browser technology.
 
 Concrete page objects used to live here too (`ui/pages/`), but moved to `@gitea-automation/business-logic-common` once a Strategy pattern made them technology-agnostic — see [`business-logic/README.md`](../README.md) for why. This package no longer has a `ui/` folder.
 
 ## Structure
 
 ```
-business-logic/selenium/
+business-logic/api/
 ├── api/
 │   ├── clients/     # auth/issue/label/milestone/organizations/repository/team/user — all but auth extend GiteaApiClient from @gitea-automation/core-api-client
 │   └── entities/    # issue/label/milestone/organization/repository/team/user — the shapes those clients return
 └── state/
-    └── scenario.entity.ts   # ScenarioState — cross-step scenario data (organization/team1/team2), shared by gitea-selenium-vitest and gitea-selenium-cucumber
+    └── scenario.entity.ts   # ScenarioState — cross-step scenario data (organization/team1/team2), shared by every test runner
 ```
 
 `state/` is a second top-level folder, sibling to `api/` — not an API payload (`ScenarioState` never travels over HTTP; it's local bookkeeping a test mutates as a scenario runs, e.g. "which organization did this scenario create", read back later for both page objects and cleanup). Putting it in `api/entities/` alongside `Organization`/`Team` would mix two different things: a real Gitea API response shape vs. local per-scenario state that merely references those shapes.
@@ -24,7 +24,7 @@ business-logic/selenium/
 ## Imports
 
 ```ts
-import { IssueClient } from "@gitea-automation/business-logic-selenium/api/clients/issue.client";
-import type { Organization } from "@gitea-automation/business-logic-selenium/api/entities/organization.entity";
-import type { ScenarioState } from "@gitea-automation/business-logic-selenium/state/scenario.entity";
+import { IssueClient } from "@gitea-automation/business-logic-api/api/clients/issue.client";
+import type { Organization } from "@gitea-automation/business-logic-api/api/entities/organization.entity";
+import type { ScenarioState } from "@gitea-automation/business-logic-api/state/scenario.entity";
 ```

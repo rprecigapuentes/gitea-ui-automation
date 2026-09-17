@@ -1,5 +1,5 @@
 {
-  "name": "@gitea-automation/business-logic-selenium",
+  "name": "@gitea-automation/business-logic-api",
   "version": "0.0.0",
   "private": true,
   "type": "module",

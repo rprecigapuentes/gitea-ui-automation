@@ -1,5 +1,5 @@
 import type { BrowserContext, Page } from "@playwright/test";
-import { AuthClient } from "@gitea-automation/business-logic-selenium/api/clients/auth.client";
+import { AuthClient } from "@gitea-automation/business-logic-api/api/clients/auth.client";
 
 export async function applySession(
   context: BrowserContext,

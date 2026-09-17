@@ -2,7 +2,7 @@ import { BasePage } from "@gitea-automation/core-page-objects/base.page";
 import { IInteractionStrategy } from "@gitea-automation/core-page-objects/interaction-strategy.interface";
 import { IElementHandle } from "@gitea-automation/core-page-objects/element-handle.interface";
 import { baseUrl } from "@gitea-automation/core-config/gitea.config";
-import { MilestoneRow } from "@gitea-automation/business-logic-selenium/api/entities/milestone.entity";
+import { MilestoneRow } from "@gitea-automation/business-logic-api/api/entities/milestone.entity";
 
 const WAIT_TIMEOUT_MS = 10000;
 

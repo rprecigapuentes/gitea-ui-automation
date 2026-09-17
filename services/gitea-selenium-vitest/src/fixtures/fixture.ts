@@ -1,16 +1,16 @@
 import { test as base } from "vitest";
 import * as allure from "allure-js-commons";
 import { ContentType } from "allure-js-commons";
-import { UserClient } from "@gitea-automation/business-logic-selenium/api/clients/user.client";
-import { OrganizationClient } from "@gitea-automation/business-logic-selenium/api/clients/organizations.client";
-import { RepositoryClient } from "@gitea-automation/business-logic-selenium/api/clients/repository.client";
-import { LabelClient } from "@gitea-automation/business-logic-selenium/api/clients/label.client";
-import { IssueClient } from "@gitea-automation/business-logic-selenium/api/clients/issue.client";
+import { UserClient } from "@gitea-automation/business-logic-api/api/clients/user.client";
+import { OrganizationClient } from "@gitea-automation/business-logic-api/api/clients/organizations.client";
+import { RepositoryClient } from "@gitea-automation/business-logic-api/api/clients/repository.client";
+import { LabelClient } from "@gitea-automation/business-logic-api/api/clients/label.client";
+import { IssueClient } from "@gitea-automation/business-logic-api/api/clients/issue.client";
 import { createGotStrategy } from "@gitea-automation/core-api-client/got-request-strategy";
-import { Organization } from "@gitea-automation/business-logic-selenium/api/entities/organization.entity";
-import { SeededIssue } from "@gitea-automation/business-logic-selenium/api/entities/issue.entity";
+import { Organization } from "@gitea-automation/business-logic-api/api/entities/organization.entity";
+import { SeededIssue } from "@gitea-automation/business-logic-api/api/entities/issue.entity";
 import { BrowserStackSession } from "../entities/browserstack.entity";
-import { ScenarioState } from "@gitea-automation/business-logic-selenium/state/scenario.entity";
+import { ScenarioState } from "@gitea-automation/business-logic-api/state/scenario.entity";
 import { WebDriver } from "selenium-webdriver";
 import { DriverFactory } from "@gitea-automation/core-selenium/ui/drivers/driver.factory";
 import { createSeleniumStrategy } from "@gitea-automation/core-page-objects/selenium-interaction.strategy";
@@ -30,7 +30,7 @@ import { NavBarFragment } from "@gitea-automation/business-logic-common/ui/pages
 import { OrganizationFacade } from "@gitea-automation/business-logic-common/ui/pages/organizations/facade/organization.facade";
 import { IssuePage } from "@gitea-automation/business-logic-common/ui/pages/issues/issue.page";
 import { IssueListPage } from "@gitea-automation/business-logic-common/ui/pages/issues/issue-list.page";
-import { AuthClient } from "@gitea-automation/business-logic-selenium/api/clients/auth.client";
+import { AuthClient } from "@gitea-automation/business-logic-api/api/clients/auth.client";
 import {
   isBrowserStack,
   setSessionStatus,
@@ -38,13 +38,13 @@ import {
 import { applySession, clearSession } from "../utils/session.util";
 import { SessionManager } from "../entities/session-manager.entity";
 import { LabelListPage } from "@gitea-automation/business-logic-common/ui/pages/issues/label-list.page";
-import { MilestoneClient } from "@gitea-automation/business-logic-selenium/api/clients/milestone.client";
+import { MilestoneClient } from "@gitea-automation/business-logic-api/api/clients/milestone.client";
 import {
   ScopedLabels,
   SeededLabel,
-} from "@gitea-automation/business-logic-selenium/api/entities/label.entity";
-import { SeededMilestone } from "@gitea-automation/business-logic-selenium/api/entities/milestone.entity";
-import { User } from "@gitea-automation/business-logic-selenium/api/entities/user.entity";
+} from "@gitea-automation/business-logic-api/api/entities/label.entity";
+import { SeededMilestone } from "@gitea-automation/business-logic-api/api/entities/milestone.entity";
+import { User } from "@gitea-automation/business-logic-api/api/entities/user.entity";
 import { testDataName, uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.util";
 import { CreateIssuePage } from "@gitea-automation/business-logic-common/ui/pages/issues/create-issue.page";
 import { MilestoneListPage } from "@gitea-automation/business-logic-common/ui/pages/issues/milestone-list.page";

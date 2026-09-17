@@ -32,7 +32,7 @@ export default defineConfig({
           "@gitea-automation/core-config",
           "@gitea-automation/core-logger",
           "@gitea-automation/core-data-handler",
-          "@gitea-automation/business-logic-selenium",
+          "@gitea-automation/business-logic-api",
           "@gitea-automation/business-logic-common",
           "@gitea-automation/core-page-objects",
         ],

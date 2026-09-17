@@ -5,7 +5,7 @@ import { baseUrl } from "@gitea-automation/core-config/gitea.config";
 import {
   LabelRow,
   NewScopedLabel,
-} from "@gitea-automation/business-logic-selenium/api/entities/label.entity";
+} from "@gitea-automation/business-logic-api/api/entities/label.entity";
 import { LabelChipFragment } from "./fragments/label-chip.fragment";
 
 const modal = "#issue-label-edit-modal";

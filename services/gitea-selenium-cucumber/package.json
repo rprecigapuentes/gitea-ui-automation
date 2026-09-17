@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@gitea-automation/business-logic-common": "*",
-    "@gitea-automation/business-logic-selenium": "*",
+    "@gitea-automation/business-logic-api": "*",
     "@gitea-automation/core-data-handler": "*",
     "@gitea-automation/core-page-objects": "*",
     "@gitea-automation/core-selenium": "*",

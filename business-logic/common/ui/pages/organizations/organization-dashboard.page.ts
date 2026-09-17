@@ -1,7 +1,7 @@
 import { BasePage } from "@gitea-automation/core-page-objects/base.page";
 import { IInteractionStrategy } from "@gitea-automation/core-page-objects/interaction-strategy.interface";
 import { baseUrl } from "@gitea-automation/core-config/gitea.config";
-import { Organization } from "@gitea-automation/business-logic-selenium/api/entities/organization.entity";
+import { Organization } from "@gitea-automation/business-logic-api/api/entities/organization.entity";
 
 export class OrganizationDashboardPage extends BasePage {
   protected organization: Organization | undefined;

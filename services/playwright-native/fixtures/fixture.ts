@@ -3,15 +3,15 @@ import type { IInteractionStrategy } from "@gitea-automation/core-page-objects/i
 import { createPlaywrightStrategy as createPlaywrightInteractionStrategy } from "@gitea-automation/core-page-objects/playwright-interaction.strategy";
 import { createPlaywrightStrategy as createPlaywrightRequestStrategy } from "@gitea-automation/core-api-client/playwright-request-strategy";
 import { PageFactory } from "@gitea-automation/business-logic-common/ui/page.factory";
-import type { ScenarioState } from "@gitea-automation/business-logic-selenium/state/scenario.entity";
-import { AuthClient } from "@gitea-automation/business-logic-selenium/api/clients/auth.client";
-import { OrganizationClient } from "@gitea-automation/business-logic-selenium/api/clients/organizations.client";
-import { RepositoryClient } from "@gitea-automation/business-logic-selenium/api/clients/repository.client";
-import { IssueClient } from "@gitea-automation/business-logic-selenium/api/clients/issue.client";
-import { LabelClient } from "@gitea-automation/business-logic-selenium/api/clients/label.client";
-import { TeamClient } from "@gitea-automation/business-logic-selenium/api/clients/team.client";
-import { MilestoneClient } from "@gitea-automation/business-logic-selenium/api/clients/milestone.client";
-import { UserClient } from "@gitea-automation/business-logic-selenium/api/clients/user.client";
+import type { ScenarioState } from "@gitea-automation/business-logic-api/state/scenario.entity";
+import { AuthClient } from "@gitea-automation/business-logic-api/api/clients/auth.client";
+import { OrganizationClient } from "@gitea-automation/business-logic-api/api/clients/organizations.client";
+import { RepositoryClient } from "@gitea-automation/business-logic-api/api/clients/repository.client";
+import { IssueClient } from "@gitea-automation/business-logic-api/api/clients/issue.client";
+import { LabelClient } from "@gitea-automation/business-logic-api/api/clients/label.client";
+import { TeamClient } from "@gitea-automation/business-logic-api/api/clients/team.client";
+import { MilestoneClient } from "@gitea-automation/business-logic-api/api/clients/milestone.client";
+import { UserClient } from "@gitea-automation/business-logic-api/api/clients/user.client";
 import { resolveOwnerCredentials, resolveOwnerToken } from "./credentials";
 import { applySession, clearSession } from "./session.util";
 

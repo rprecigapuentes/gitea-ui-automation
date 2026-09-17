@@ -1,4 +1,4 @@
-import { UserClient } from "@gitea-automation/business-logic-selenium/api/clients/user.client";
+import { UserClient } from "@gitea-automation/business-logic-api/api/clients/user.client";
 import { createGotStrategy } from "@gitea-automation/core-api-client/got-request-strategy";
 import { uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.util";
 import { resolveAdminToken } from "./credentials";

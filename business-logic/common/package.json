@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@gitea-automation/business-logic-selenium": "*",
+    "@gitea-automation/business-logic-api": "*",
     "@gitea-automation/core-config": "*",
     "@gitea-automation/core-logger": "*",
     "@gitea-automation/core-page-objects": "*"

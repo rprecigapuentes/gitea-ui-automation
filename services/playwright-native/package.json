@@ -5,7 +5,7 @@
   "type": "module",
   "dependencies": {
     "@gitea-automation/business-logic-common": "*",
-    "@gitea-automation/business-logic-selenium": "*",
+    "@gitea-automation/business-logic-api": "*",
     "@gitea-automation/core-api-client": "*",
     "@gitea-automation/core-page-objects": "*",
     "dotenv": "^17.4.2"

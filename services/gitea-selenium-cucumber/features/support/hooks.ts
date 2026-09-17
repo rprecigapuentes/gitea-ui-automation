@@ -5,17 +5,17 @@ import { Before, BeforeAll, After, AfterAll, setDefaultTimeout } from "@cucumber
 import "allure-cucumberjs";
 import { parameter } from "allure-js-commons";
 import { DriverFactory } from "@gitea-automation/core-selenium/ui/drivers/driver.factory";
-import { OrganizationClient } from "@gitea-automation/business-logic-selenium/api/clients/organizations.client";
-import { RepositoryClient } from "@gitea-automation/business-logic-selenium/api/clients/repository.client";
-import { IssueClient } from "@gitea-automation/business-logic-selenium/api/clients/issue.client";
-import { TeamClient } from "@gitea-automation/business-logic-selenium/api/clients/team.client";
-import { MilestoneClient } from "@gitea-automation/business-logic-selenium/api/clients/milestone.client";
+import { OrganizationClient } from "@gitea-automation/business-logic-api/api/clients/organizations.client";
+import { RepositoryClient } from "@gitea-automation/business-logic-api/api/clients/repository.client";
+import { IssueClient } from "@gitea-automation/business-logic-api/api/clients/issue.client";
+import { TeamClient } from "@gitea-automation/business-logic-api/api/clients/team.client";
+import { MilestoneClient } from "@gitea-automation/business-logic-api/api/clients/milestone.client";
 import { createGotStrategy } from "@gitea-automation/core-api-client/got-request-strategy";
 import { createSeleniumStrategy } from "@gitea-automation/core-page-objects/selenium-interaction.strategy";
 import type {
   ScenarioState,
   SeededRepository,
-} from "@gitea-automation/business-logic-selenium/state/scenario.entity";
+} from "@gitea-automation/business-logic-api/state/scenario.entity";
 import { testDataName, uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.util";
 import { PageFactory } from "@gitea-automation/business-logic-common/ui/page.factory";
 import { resolveOwnerToken } from "./credentials";
