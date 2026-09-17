@@ -1,7 +1,7 @@
 import { By, WebDriver } from "selenium-webdriver";
 import { BasePage } from "@gitea-automation/core-selenium/ui/base-pages/base.page";
 import { baseUrl } from "@gitea-automation/core-config/gitea.config";
-import { Organization } from "../../../api/entities/organization.entity";
+import { Organization } from "@gitea-automation/business-logic-selenium/api/entities/organization.entity";
 
 export class OrganizationDashboardPage extends BasePage {
   protected organization: Organization | undefined;

@@ -1,7 +1,10 @@
 import { By, WebDriver, WebElement } from "selenium-webdriver";
 import { BasePage } from "@gitea-automation/core-selenium/ui/base-pages/base.page";
 import { baseUrl } from "@gitea-automation/core-config/gitea.config";
-import { LabelRow, NewScopedLabel } from "../../../api/entities/label.entity";
+import {
+  LabelRow,
+  NewScopedLabel,
+} from "@gitea-automation/business-logic-selenium/api/entities/label.entity";
 import { LabelChipFragment } from "./fragments/label-chip.fragment";
 
 const modal = "#issue-label-edit-modal";

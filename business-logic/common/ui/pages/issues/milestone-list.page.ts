@@ -1,7 +1,7 @@
 import { By, WebDriver, WebElement } from "selenium-webdriver";
 import { BasePage } from "@gitea-automation/core-selenium/ui/base-pages/base.page";
 import { baseUrl } from "@gitea-automation/core-config/gitea.config";
-import { MilestoneRow } from "../../../api/entities/milestone.entity";
+import { MilestoneRow } from "@gitea-automation/business-logic-selenium/api/entities/milestone.entity";
 
 const WAIT_TIMEOUT_MS = 10000;
 

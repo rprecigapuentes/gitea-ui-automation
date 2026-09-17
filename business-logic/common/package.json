@@ -1,25 +1,22 @@
 {
-  "name": "@gitea-automation/business-logic-selenium",
+  "name": "@gitea-automation/business-logic-common",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "exports": {
-    "./api/*": "./api/*.ts",
-    "./state/*": "./state/*.ts"
+    "./ui/*": "./ui/*.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@gitea-automation/business-logic-selenium": "*",
     "@gitea-automation/core-config": "*",
     "@gitea-automation/core-logger": "*",
     "@gitea-automation/core-selenium": "*",
-    "got": "^16.0.0",
-    "selenium-webdriver": "^4.48.0",
-    "tough-cookie": "^6.0.2"
+    "selenium-webdriver": "^4.48.0"
   },
   "devDependencies": {
-    "@types/selenium-webdriver": "^4.35.6",
-    "@types/tough-cookie": "^4.0.5"
+    "@types/selenium-webdriver": "^4.35.6"
   }
 }

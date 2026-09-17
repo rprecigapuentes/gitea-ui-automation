@@ -1,5 +1,5 @@
 import { describe, expect } from "vitest";
-import { OrgTab } from "@gitea-automation/business-logic-selenium/ui/pages/organizations/fragments/org-navigation.fragment";
+import { OrgTab } from "@gitea-automation/business-logic-common/ui/pages/organizations/fragments/org-navigation.fragment";
 import { Organization } from "@gitea-automation/business-logic-selenium/api/entities/organization.entity";
 import { Team } from "@gitea-automation/business-logic-selenium/api/entities/team.entity";
 import { test } from "../src/fixtures/fixture";

@@ -6,7 +6,7 @@ import { NewTeamFragment } from "../fragments/new-team.fragment";
 import { SpecificTeamFragment } from "../fragments/specific-team.fragment";
 import { BasePage } from "@gitea-automation/core-selenium/ui/base-pages/base.page";
 import { baseUrl } from "@gitea-automation/core-config/gitea.config";
-import { Organization } from "../../../../api/entities/organization.entity";
+import { Organization } from "@gitea-automation/business-logic-selenium/api/entities/organization.entity";
 
 export class OrganizationFacade extends BasePage {
   private readonly organization: Organization;

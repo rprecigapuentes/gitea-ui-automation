@@ -17,6 +17,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@gitea-automation/business-logic-common": "*",
     "@gitea-automation/business-logic-selenium": "*",
     "@gitea-automation/core-data-handler": "*",
     "@gitea-automation/core-selenium": "*",
