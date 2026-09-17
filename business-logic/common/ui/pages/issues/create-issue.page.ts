@@ -1,5 +1,5 @@
-import { By, WebDriver, until } from "selenium-webdriver";
-import { BasePage } from "@gitea-automation/core-selenium/ui/base-pages/base.page";
+import { BasePage } from "@gitea-automation/core-page-objects/base.page";
+import { IInteractionStrategy } from "@gitea-automation/core-page-objects/interaction-strategy.interface";
 import { baseUrl } from "@gitea-automation/core-config/gitea.config";
 import { SidebarComboFragment } from "./fragments/sidebar-combo.fragment";
 
@@ -13,20 +13,20 @@ export class CreateIssuePage extends BasePage {
   private readonly assigneeCombo: SidebarComboFragment;
 
   private readonly locators = {
-    title: By.css(`${form} #issue_title`),
-    description: By.css(`${form} .combo-markdown-editor textarea[name="content"]`),
-    previewTab: By.css(`${form} a[data-tab-for="markdown-previewer"]`),
-    previewContent: By.css(`${previewPanel} *`),
-    previewPanel: By.css(previewPanel),
-    previewHeadings: By.css(`${previewPanel} h1, ${previewPanel} h2, ${previewPanel} h3`),
-    submitButton: By.css(`${form} .issue-content-left button.ui.primary.button`),
+    title: `${form} #issue_title`,
+    description: `${form} .combo-markdown-editor textarea[name="content"]`,
+    previewTab: `${form} a[data-tab-for="markdown-previewer"]`,
+    previewContent: `${previewPanel} *`,
+    previewPanel: previewPanel,
+    previewHeadings: `${previewPanel} h1, ${previewPanel} h2, ${previewPanel} h3`,
+    submitButton: `${form} .issue-content-left button.ui.primary.button`,
   };
 
-  constructor(driver: WebDriver) {
-    super(driver);
-    this.labelCombo = SidebarComboFragment.byField(driver, "label_ids");
-    this.milestoneCombo = SidebarComboFragment.byField(driver, "milestone_id");
-    this.assigneeCombo = SidebarComboFragment.byField(driver, "assignee_ids");
+  constructor(strategy: IInteractionStrategy) {
+    super(strategy);
+    this.labelCombo = SidebarComboFragment.byField(strategy, "label_ids");
+    this.milestoneCombo = SidebarComboFragment.byField(strategy, "milestone_id");
+    this.assigneeCombo = SidebarComboFragment.byField(strategy, "assignee_ids");
   }
 
   override getUrl(owner: string, repository: string): string {
@@ -51,15 +51,15 @@ export class CreateIssuePage extends BasePage {
 
   async openPreview(): Promise<void> {
     await this.click(this.locators.previewTab);
-    await this.driver.wait(
-      async () => (await this.driver.findElements(this.locators.previewContent)).length > 0,
+    await this.waitFor(
+      async () => (await this.queryAll(this.locators.previewContent)).length > 0,
       WAIT_TIMEOUT_MS,
       "the description preview never rendered",
     );
   }
 
   async getPreviewHeadings(): Promise<string[]> {
-    const headings = await this.driver.findElements(this.locators.previewHeadings);
+    const headings = await this.queryAll(this.locators.previewHeadings);
 
     return Promise.all(headings.map((heading) => heading.getText()));
   }
@@ -94,8 +94,8 @@ export class CreateIssuePage extends BasePage {
 
   async submit(): Promise<void> {
     await this.click(this.locators.submitButton);
-    await this.driver.wait(
-      until.urlMatches(/\/issues\/\d+$/),
+    await this.waitForUrl(
+      /\/issues\/\d+$/,
       WAIT_TIMEOUT_MS,
       "the browser never landed on the created issue",
     );

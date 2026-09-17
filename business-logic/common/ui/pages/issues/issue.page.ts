@@ -1,5 +1,5 @@
-import { By, WebDriver } from "selenium-webdriver";
-import { BasePage } from "@gitea-automation/core-selenium/ui/base-pages/base.page";
+import { BasePage } from "@gitea-automation/core-page-objects/base.page";
+import { IInteractionStrategy } from "@gitea-automation/core-page-objects/interaction-strategy.interface";
 import { baseUrl } from "@gitea-automation/core-config/gitea.config";
 import { SidebarComboFragment } from "./fragments/sidebar-combo.fragment";
 import { labelIdFromHref } from "./fragments/label-chip.fragment";
@@ -14,28 +14,28 @@ export class IssuePage extends BasePage {
   private readonly projectCombo: SidebarComboFragment;
 
   private readonly locators = {
-    timelineEvents: By.css(".timeline-item.event"),
-    eventLabels: By.css(".labels-list a.item"),
-    title: By.css("#issue-title-display h1"),
-    titleIndex: By.css("#issue-title-display h1 .index"),
-    stateLabel: By.css(".issue-state-label"),
-    renderedBody: By.css(".issue-content-comment .render-content.markup"),
-    dueDate: By.css(".due-date"),
-    dueDateInput: By.css("form.issue-due-form input[name='deadline']"),
-    dueDateSubmit: By.css("form.issue-due-form button"),
-    statusButton: By.css("#status-button"),
-    statusButtonReopen: By.css("#status-button[value='reopen']"),
+    timelineEvents: ".timeline-item.event",
+    eventLabels: ".labels-list a.item",
+    title: "#issue-title-display h1",
+    titleIndex: "#issue-title-display h1 .index",
+    stateLabel: ".issue-state-label",
+    renderedBody: ".issue-content-comment .render-content.markup",
+    dueDate: ".due-date",
+    dueDateInput: "form.issue-due-form input[name='deadline']",
+    dueDateSubmit: "form.issue-due-form button",
+    statusButton: "#status-button",
+    statusButtonReopen: "#status-button[value='reopen']",
     // An open issue's button carries no reopen value, which a page mid-reload has no button at all
     // to answer, so this is the presence check the reopen wait needs.
-    statusButtonClose: By.css("#status-button:not([value='reopen'])"),
+    statusButtonClose: "#status-button:not([value='reopen'])",
   };
 
-  constructor(driver: WebDriver) {
-    super(driver);
-    this.labelCombo = SidebarComboFragment.onIssue(driver, "/issues/labels");
-    this.milestoneCombo = SidebarComboFragment.byField(driver, "milestone_id");
-    this.assigneeCombo = SidebarComboFragment.byField(driver, "assignee_ids");
-    this.projectCombo = SidebarComboFragment.byField(driver, "project_ids");
+  constructor(strategy: IInteractionStrategy) {
+    super(strategy);
+    this.labelCombo = SidebarComboFragment.onIssue(strategy, "/issues/labels");
+    this.milestoneCombo = SidebarComboFragment.byField(strategy, "milestone_id");
+    this.assigneeCombo = SidebarComboFragment.byField(strategy, "assignee_ids");
+    this.projectCombo = SidebarComboFragment.byField(strategy, "project_ids");
   }
 
   override getUrl(owner: string, repository: string, issueNumber: number): string {
@@ -59,7 +59,7 @@ export class IssuePage extends BasePage {
   }
 
   async waitForAppliedLabels(expected: number[]): Promise<void> {
-    await this.driver.wait(
+    await this.waitFor(
       async () => {
         const applied = await this.getAppliedLabelIds();
 
@@ -75,7 +75,7 @@ export class IssuePage extends BasePage {
   }
 
   async getLabelEvents(): Promise<number[][]> {
-    const events = await this.driver.findElements(this.locators.timelineEvents);
+    const events = await this.queryAll(this.locators.timelineEvents);
     const labelEvents: number[][] = [];
 
     for (const event of events) {
@@ -157,8 +157,8 @@ export class IssuePage extends BasePage {
     if (!accepted) throw new Error(`the due date input never took the date ${isoDate}`);
 
     await this.click(this.locators.dueDateSubmit);
-    await this.driver.wait(
-      async () => (await this.driver.findElements(this.locators.dueDate)).length > 0,
+    await this.waitFor(
+      async () => (await this.queryAll(this.locators.dueDate)).length > 0,
       WAIT_TIMEOUT_MS,
       "the due date never appeared on the issue",
     );
@@ -175,8 +175,8 @@ export class IssuePage extends BasePage {
   async close(): Promise<void> {
     await this.clickAndWaitUntil(
       this.locators.statusButton,
-      () => this.isVisible(this.locators.statusButtonReopen, this.driver, INSTANT),
-      this.driver,
+      () => this.isVisible(this.locators.statusButtonReopen, undefined, INSTANT),
+      undefined,
       WAIT_TIMEOUT_MS,
     );
   }
@@ -184,8 +184,8 @@ export class IssuePage extends BasePage {
   async reopen(): Promise<void> {
     await this.clickAndWaitUntil(
       this.locators.statusButtonReopen,
-      () => this.isVisible(this.locators.statusButtonClose, this.driver, INSTANT),
-      this.driver,
+      () => this.isVisible(this.locators.statusButtonClose, undefined, INSTANT),
+      undefined,
       WAIT_TIMEOUT_MS,
     );
   }

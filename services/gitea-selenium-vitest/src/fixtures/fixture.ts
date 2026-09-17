@@ -226,18 +226,18 @@ export const test = base.extend<CustomFixtures>({
   labelClient: async ({}, use) => {
     await use(new LabelClient(process.env.GITEA_BASE_URL!, resolveOwnerToken()));
   },
-  labelListPage: async ({ driver }, use) => {
-    await use(new LabelListPage(driver));
+  labelListPage: async ({ strategy }, use) => {
+    await use(new LabelListPage(strategy));
   },
   issueClient: async ({}, use) => {
     await use(new IssueClient(process.env.GITEA_BASE_URL!, resolveOwnerToken()));
   },
-  issuePage: async ({ driver }, use) => {
-    const issuePage = new IssuePage(driver);
+  issuePage: async ({ strategy }, use) => {
+    const issuePage = new IssuePage(strategy);
     await use(issuePage);
   },
-  issueListPage: async ({ driver }, use) => {
-    const issueListPage = new IssueListPage(driver);
+  issueListPage: async ({ strategy }, use) => {
+    const issueListPage = new IssueListPage(strategy);
     await use(issueListPage);
   },
   loginPage: async ({ strategy }, use) => {
@@ -342,11 +342,11 @@ export const test = base.extend<CustomFixtures>({
   milestoneClient: async ({}, use) => {
     await use(new MilestoneClient(process.env.GITEA_BASE_URL!, resolveOwnerToken()));
   },
-  createIssuePage: async ({ driver }, use) => {
-    await use(new CreateIssuePage(driver));
+  createIssuePage: async ({ strategy }, use) => {
+    await use(new CreateIssuePage(strategy));
   },
-  milestoneListPage: async ({ driver }, use) => {
-    await use(new MilestoneListPage(driver));
+  milestoneListPage: async ({ strategy }, use) => {
+    await use(new MilestoneListPage(strategy));
   },
   maintainer: async ({ userClient }, use) => {
     await use((await userClient.getUser()).body);

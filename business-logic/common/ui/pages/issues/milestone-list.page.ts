@@ -1,5 +1,6 @@
-import { By, WebDriver, WebElement } from "selenium-webdriver";
-import { BasePage } from "@gitea-automation/core-selenium/ui/base-pages/base.page";
+import { BasePage } from "@gitea-automation/core-page-objects/base.page";
+import { IInteractionStrategy } from "@gitea-automation/core-page-objects/interaction-strategy.interface";
+import { IElementHandle } from "@gitea-automation/core-page-objects/element-handle.interface";
 import { baseUrl } from "@gitea-automation/core-config/gitea.config";
 import { MilestoneRow } from "@gitea-automation/business-logic-selenium/api/entities/milestone.entity";
 
@@ -9,14 +10,14 @@ const firstNumberIn = (text: string): number => Number(text.replace(/\D/g, ""));
 
 export class MilestoneListPage extends BasePage {
   private readonly locators = {
-    rows: By.css(".milestone-list > .item"),
-    rowName: By.css(".list-item-large-title a"),
-    rowProgress: By.css("progress.list-item-title-progress"),
-    rowCounters: By.css(".list-item-secondary-bar .flex-text-inline"),
+    rows: ".milestone-list > .item",
+    rowName: ".list-item-large-title a",
+    rowProgress: "progress.list-item-title-progress",
+    rowCounters: ".list-item-secondary-bar .flex-text-inline",
   };
 
-  constructor(driver: WebDriver) {
-    super(driver);
+  constructor(strategy: IInteractionStrategy) {
+    super(strategy);
   }
 
   override getUrl(owner: string, repository: string): string {
@@ -28,7 +29,7 @@ export class MilestoneListPage extends BasePage {
     await super.open([], owner, repository);
   }
 
-  private async readRow(row: WebElement): Promise<MilestoneRow> {
+  private async readRow(row: IElementHandle): Promise<MilestoneRow> {
     const progress = await row.findElement(this.locators.rowProgress);
     const counters = await row.findElements(this.locators.rowCounters);
     const [openIssues, closedIssues] = await Promise.all(
@@ -45,7 +46,7 @@ export class MilestoneListPage extends BasePage {
 
   async findRow(name: string): Promise<MilestoneRow | null> {
     try {
-      for (const row of await this.driver.findElements(this.locators.rows)) {
+      for (const row of await this.queryAll(this.locators.rows)) {
         const read = await this.readRow(row);
 
         if (read.name === name) return read;
@@ -58,7 +59,7 @@ export class MilestoneListPage extends BasePage {
   }
 
   async waitForRow(name: string): Promise<MilestoneRow> {
-    await this.driver.wait(
+    await this.waitFor(
       async () => (await this.findRow(name)) !== null,
       WAIT_TIMEOUT_MS,
       `the milestone "${name}" never appeared in the milestone list`,

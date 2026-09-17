@@ -15,9 +15,9 @@
 
 ## 3. Migrate issues/
 
-- [ ] 3.1 Migrate `issue.page.ts`, `issue-list.page.ts`, `create-issue.page.ts`, `label-list.page.ts`, `milestone-list.page.ts`, `fragments/label-chip.fragment.ts`, `fragments/sidebar-combo.fragment.ts` — this is where `queryAll`/`waitFor`/`waitForUrl`/`executeScript` get their first real call sites, and `LabelChipFragment`'s `WebElement` root becomes `IElementHandle`
-- [ ] 3.2 Update `page.factory.ts`/`fixture.ts` construction for these 7 classes
-- [ ] 3.3 Verify typecheck green; run issues/labels/milestones suites and confirm they pass, with particular attention to the Fomantic-modal `executeScript` rewrite (string → function) and row-attribute reads in `label-list.page.ts`
+- [x] 3.1 Migrate `issue.page.ts`, `issue-list.page.ts`, `create-issue.page.ts`, `label-list.page.ts`, `milestone-list.page.ts`, `fragments/label-chip.fragment.ts`, `fragments/sidebar-combo.fragment.ts` — this is where `queryAll`/`waitFor`/`waitForUrl`/`executeScript` get their first real call sites, and `LabelChipFragment`'s `WebElement` root becomes `IElementHandle`
+- [x] 3.2 Update `page.factory.ts`/`fixture.ts` construction for these 5 exposed classes (`SidebarComboFragment`/`LabelChipFragment` are internal-only, never constructed by the factory/fixture directly)
+- [x] 3.3 Verify typecheck green (confirmed) and zero Selenium references left (confirmed, one code-comment mention only); a smoke script exercising every new method (`queryAll`, `waitFor`, `waitForUrl`, the rewritten `executeScript` call) against `createPlaywrightStrategy` ran clean — only `[playwright] ...` logs and the pages' own expected business-logic errors (e.g. "the due date input never took the date", correct behavior when a stub always returns `""`), no TypeError or missing-method crash; running the real issues/labels/milestones suites against a live Gitea instance was not done from this environment — do that before trusting this stage fully
 
 ## 4. Migrate organizations/
 

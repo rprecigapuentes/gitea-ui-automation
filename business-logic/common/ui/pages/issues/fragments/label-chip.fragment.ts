@@ -1,5 +1,6 @@
-import { By, WebDriver, WebElement } from "selenium-webdriver";
-import { BaseComponent } from "@gitea-automation/core-selenium/ui/base-pages/base-component";
+import { BaseComponent } from "@gitea-automation/core-page-objects/base-component";
+import { IInteractionStrategy } from "@gitea-automation/core-page-objects/interaction-strategy.interface";
+import { IElementHandle } from "@gitea-automation/core-page-objects/element-handle.interface";
 import { baseUrl } from "@gitea-automation/core-config/gitea.config";
 
 export function labelIdFromHref(href: string | null): number | null {
@@ -10,15 +11,15 @@ export function labelIdFromHref(href: string | null): number | null {
 
 export class LabelChipFragment extends BaseComponent {
   private readonly locators = {
-    scope: By.css(".scope-left"),
-    item: By.css(".scope-right"),
+    scope: ".scope-left",
+    item: ".scope-right",
   };
 
   constructor(
-    driver: WebDriver,
-    private readonly root: WebElement,
+    strategy: IInteractionStrategy,
+    private readonly root: IElementHandle,
   ) {
-    super(driver);
+    super(strategy);
   }
 
   async isScoped(): Promise<boolean> {

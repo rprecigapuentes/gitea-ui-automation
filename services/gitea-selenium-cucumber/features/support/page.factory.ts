@@ -85,23 +85,23 @@ export class PageFactory {
   }
 
   get issuePage(): IssuePage {
-    return (this.#issuePage ??= new IssuePage(this.driver));
+    return (this.#issuePage ??= new IssuePage(this.strategy));
   }
 
   get createIssuePage(): CreateIssuePage {
-    return (this.#createIssuePage ??= new CreateIssuePage(this.driver));
+    return (this.#createIssuePage ??= new CreateIssuePage(this.strategy));
   }
 
   get issueListPage(): IssueListPage {
-    return (this.#issueListPage ??= new IssueListPage(this.driver));
+    return (this.#issueListPage ??= new IssueListPage(this.strategy));
   }
 
   get labelListPage(): LabelListPage {
-    return (this.#labelListPage ??= new LabelListPage(this.driver));
+    return (this.#labelListPage ??= new LabelListPage(this.strategy));
   }
 
   get milestoneListPage(): MilestoneListPage {
-    return (this.#milestoneListPage ??= new MilestoneListPage(this.driver));
+    return (this.#milestoneListPage ??= new MilestoneListPage(this.strategy));
   }
 
   get createProjectPage(): CreateProjectPage {

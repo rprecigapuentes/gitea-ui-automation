@@ -1,5 +1,5 @@
-import { By, WebDriver } from "selenium-webdriver";
-import { BaseComponent } from "@gitea-automation/core-selenium/ui/base-pages/base-component";
+import { BaseComponent } from "@gitea-automation/core-page-objects/base-component";
+import { IInteractionStrategy } from "@gitea-automation/core-page-objects/interaction-strategy.interface";
 import { labelIdFromHref } from "./label-chip.fragment";
 
 const INSTANT = 0;
@@ -7,36 +7,36 @@ const SELECTION_TIMEOUT_MS = 10000;
 
 export class SidebarComboFragment extends BaseComponent {
   private readonly locators: {
-    trigger: By;
-    menu: By;
-    menuItem: (value: number) => By;
-    selectedItems: By;
+    trigger: string;
+    menu: string;
+    menuItem: (value: number) => string;
+    selectedItems: string;
   };
 
   private constructor(
-    driver: WebDriver,
+    strategy: IInteractionStrategy,
     private readonly root: string,
   ) {
-    super(driver);
+    super(strategy);
     this.locators = {
-      trigger: By.css(`${root} .ui.dropdown a.fixed-text`),
+      trigger: `${root} .ui.dropdown a.fixed-text`,
       // The dropdown holds a scrolling menu inside its own menu, so only the outer one is "the menu".
-      menu: By.css(`${root} .ui.dropdown > .menu`),
-      menuItem: (value: number) => By.css(`${root} .menu a.item[data-value="${value}"]`),
-      selectedItems: By.css(`${root} .ui.list .item:not(.empty-list)`),
+      menu: `${root} .ui.dropdown > .menu`,
+      menuItem: (value: number) => `${root} .menu a.item[data-value="${value}"]`,
+      selectedItems: `${root} .ui.list .item:not(.empty-list)`,
     };
   }
 
-  static onIssue(driver: WebDriver, updateUrlFragment: string): SidebarComboFragment {
+  static onIssue(strategy: IInteractionStrategy, updateUrlFragment: string): SidebarComboFragment {
     return new SidebarComboFragment(
-      driver,
+      strategy,
       `.issue-sidebar-combo[data-update-url*="${updateUrlFragment}"]`,
     );
   }
 
-  static byField(driver: WebDriver, fieldName: string): SidebarComboFragment {
+  static byField(strategy: IInteractionStrategy, fieldName: string): SidebarComboFragment {
     return new SidebarComboFragment(
-      driver,
+      strategy,
       `.issue-sidebar-combo:has(> input.combo-value[name="${fieldName}"])`,
     );
   }
@@ -48,11 +48,11 @@ export class SidebarComboFragment extends BaseComponent {
   async offers(value: number): Promise<boolean> {
     await this.openMenu();
 
-    return this.isVisible(this.locators.menuItem(value), this.driver, INSTANT);
+    return this.isVisible(this.locators.menuItem(value), undefined, INSTANT);
   }
 
   private async openMenu(): Promise<void> {
-    if (await this.isVisible(this.locators.menu, this.driver, INSTANT)) return;
+    if (await this.isVisible(this.locators.menu, undefined, INSTANT)) return;
 
     await this.clickAndWaitFor(this.locators.trigger, [this.locators.menu]);
   }
@@ -82,7 +82,7 @@ export class SidebarComboFragment extends BaseComponent {
 
   async getSelectedTexts(): Promise<string[]> {
     try {
-      const items = await this.driver.findElements(this.locators.selectedItems);
+      const items = await this.queryAll(this.locators.selectedItems);
 
       return await Promise.all(items.map((item) => item.getText()));
     } catch {
@@ -92,7 +92,7 @@ export class SidebarComboFragment extends BaseComponent {
 
   async getSelectedIds(): Promise<number[]> {
     try {
-      const links = await this.driver.findElements(this.locators.selectedItems);
+      const links = await this.queryAll(this.locators.selectedItems);
       const hrefs = await Promise.all(links.map((link) => link.getAttribute("href")));
 
       return hrefs.map(labelIdFromHref).filter((id): id is number => id !== null);
