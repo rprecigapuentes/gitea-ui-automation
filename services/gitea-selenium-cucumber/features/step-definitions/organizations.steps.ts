@@ -6,6 +6,7 @@ import { uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.u
 import { Team } from "@gitea-automation/business-logic-selenium/api/entities/team.entity";
 import { Repository } from "@gitea-automation/business-logic-selenium/api/entities/repository.entity";
 import { OrganizationClient } from "@gitea-automation/business-logic-selenium/api/clients/organizations.client";
+import { createGotStrategy } from "@gitea-automation/core-api-client/got-request-strategy";
 import { resolveOwnerToken } from "../support/credentials";
 import { getSeededUser } from "../support/seeded-users";
 
@@ -47,8 +48,7 @@ Then("I should see the organization created successfully", async function (this:
 
 Given("an organization already exists", async function (this: GiteaWorld) {
   const organizationClient = new OrganizationClient(
-    process.env.GITEA_BASE_URL!,
-    resolveOwnerToken(),
+    createGotStrategy(process.env.GITEA_BASE_URL!, resolveOwnerToken()),
   );
   const organization: Organization = {
     name: `test-org-${process.env.BROWSER ?? "local"}-${uniqueSuffix()}`,

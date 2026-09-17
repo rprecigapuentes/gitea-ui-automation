@@ -10,6 +10,7 @@ import { RepositoryClient } from "@gitea-automation/business-logic-selenium/api/
 import { IssueClient } from "@gitea-automation/business-logic-selenium/api/clients/issue.client";
 import { TeamClient } from "@gitea-automation/business-logic-selenium/api/clients/team.client";
 import { MilestoneClient } from "@gitea-automation/business-logic-selenium/api/clients/milestone.client";
+import { createGotStrategy } from "@gitea-automation/core-api-client/got-request-strategy";
 import type {
   ScenarioState,
   SeededRepository,
@@ -44,15 +45,14 @@ function ownerClients(): {
   teams: TeamClient;
   milestones: MilestoneClient;
 } {
-  const baseUrl = process.env.GITEA_BASE_URL!;
-  const token = resolveOwnerToken();
+  const strategy = createGotStrategy(process.env.GITEA_BASE_URL!, resolveOwnerToken());
 
   return {
-    organizations: new OrganizationClient(baseUrl, token),
-    repositories: new RepositoryClient(baseUrl, token),
-    issues: new IssueClient(baseUrl, token),
-    teams: new TeamClient(baseUrl, token),
-    milestones: new MilestoneClient(baseUrl, token),
+    organizations: new OrganizationClient(strategy),
+    repositories: new RepositoryClient(strategy),
+    issues: new IssueClient(strategy),
+    teams: new TeamClient(strategy),
+    milestones: new MilestoneClient(strategy),
   };
 }
 

@@ -6,6 +6,7 @@ import { OrganizationClient } from "@gitea-automation/business-logic-selenium/ap
 import { RepositoryClient } from "@gitea-automation/business-logic-selenium/api/clients/repository.client";
 import { LabelClient } from "@gitea-automation/business-logic-selenium/api/clients/label.client";
 import { IssueClient } from "@gitea-automation/business-logic-selenium/api/clients/issue.client";
+import { createGotStrategy } from "@gitea-automation/core-api-client/got-request-strategy";
 import { Organization } from "@gitea-automation/business-logic-selenium/api/entities/organization.entity";
 import { SeededIssue } from "@gitea-automation/business-logic-selenium/api/entities/issue.entity";
 import { BrowserStackSession } from "../entities/browserstack.entity";
@@ -198,13 +199,14 @@ export const test = base.extend<CustomFixtures>({
     await use(scenarioState);
   },
   userClient: async ({}, use) => {
-    const userClient = new UserClient(process.env.GITEA_BASE_URL!, resolveOwnerToken());
+    const userClient = new UserClient(
+      createGotStrategy(process.env.GITEA_BASE_URL!, resolveOwnerToken()),
+    );
     await use(userClient);
   },
   organizationClient: async ({}, use) => {
     const organizationClient = new OrganizationClient(
-      process.env.GITEA_BASE_URL!,
-      resolveOwnerToken(),
+      createGotStrategy(process.env.GITEA_BASE_URL!, resolveOwnerToken()),
     );
     await use(organizationClient);
   },
@@ -212,8 +214,7 @@ export const test = base.extend<CustomFixtures>({
   cleanupOrganizationsBeforeRun: [
     async ({}, use) => {
       const organizationClient = new OrganizationClient(
-        process.env.GITEA_BASE_URL!,
-        resolveOwnerToken(),
+        createGotStrategy(process.env.GITEA_BASE_URL!, resolveOwnerToken()),
       );
       await organizationClient.deleteAllOrganizations();
       await use();
@@ -221,16 +222,18 @@ export const test = base.extend<CustomFixtures>({
     { scope: "file" },
   ],
   repositoryClient: async ({}, use) => {
-    await use(new RepositoryClient(process.env.GITEA_BASE_URL!, resolveOwnerToken()));
+    await use(
+      new RepositoryClient(createGotStrategy(process.env.GITEA_BASE_URL!, resolveOwnerToken())),
+    );
   },
   labelClient: async ({}, use) => {
-    await use(new LabelClient(process.env.GITEA_BASE_URL!, resolveOwnerToken()));
+    await use(new LabelClient(createGotStrategy(process.env.GITEA_BASE_URL!, resolveOwnerToken())));
   },
   labelListPage: async ({ strategy }, use) => {
     await use(new LabelListPage(strategy));
   },
   issueClient: async ({}, use) => {
-    await use(new IssueClient(process.env.GITEA_BASE_URL!, resolveOwnerToken()));
+    await use(new IssueClient(createGotStrategy(process.env.GITEA_BASE_URL!, resolveOwnerToken())));
   },
   issuePage: async ({ strategy }, use) => {
     const issuePage = new IssuePage(strategy);
@@ -340,7 +343,9 @@ export const test = base.extend<CustomFixtures>({
     await use({ id: response.id, number: response.number, title });
   },
   milestoneClient: async ({}, use) => {
-    await use(new MilestoneClient(process.env.GITEA_BASE_URL!, resolveOwnerToken()));
+    await use(
+      new MilestoneClient(createGotStrategy(process.env.GITEA_BASE_URL!, resolveOwnerToken())),
+    );
   },
   createIssuePage: async ({ strategy }, use) => {
     await use(new CreateIssuePage(strategy));

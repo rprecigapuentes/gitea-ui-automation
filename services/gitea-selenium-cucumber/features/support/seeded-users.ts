@@ -1,4 +1,5 @@
 import { UserClient } from "@gitea-automation/business-logic-selenium/api/clients/user.client";
+import { createGotStrategy } from "@gitea-automation/core-api-client/got-request-strategy";
 import { uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.util";
 import { resolveAdminToken } from "./credentials";
 
@@ -15,7 +16,7 @@ const SEEDED_USER_COUNT = 2;
 let seededUsers: SeededUser[] = [];
 
 function adminClient(): UserClient {
-  return new UserClient(process.env.GITEA_BASE_URL!, resolveAdminToken());
+  return new UserClient(createGotStrategy(process.env.GITEA_BASE_URL!, resolveAdminToken()));
 }
 
 function seededUsername(index: number): string {
