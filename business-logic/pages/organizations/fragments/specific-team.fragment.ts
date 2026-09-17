@@ -247,8 +247,13 @@ export class SpecificTeamFragment extends BaseComponent {
 
   async addRepository(repositoryName: string): Promise<void> {
     await this.type(this.locators.repoSearchInput, repositoryName);
-    await this.clickAndWaitUntil(this.locators.addRepoButton, () =>
-      this.hasAssignedRepository(repositoryName),
+    // The assignment re-render can outlast the default timeout under load, same as the other
+    // team-management actions in this fragment.
+    await this.clickAndWaitUntil(
+      this.locators.addRepoButton,
+      () => this.hasAssignedRepository(repositoryName),
+      undefined,
+      15000,
     );
   }
 
