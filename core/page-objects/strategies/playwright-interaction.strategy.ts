@@ -2,18 +2,11 @@ import { Page, Locator } from "@playwright/test";
 import { IElementHandle } from "../element-handle.interface";
 import { IInteractionStrategy } from "../interaction-strategy.interface";
 
-/**
- * Stub implementation — every method logs and returns a type-satisfying placeholder, never
- * throws. Real Playwright interaction logic is deliberately deferred to a later phase; this only
- * needs to exist so a page object typechecks and runs (without crashing) when constructed with
- * this strategy, proving it has no remaining Selenium dependency.
- */
 export class PlaywrightElementHandle implements IElementHandle {
-  constructor(private readonly locator: Locator) {}
+  constructor(readonly locator: Locator) {}
 
-  click(): Promise<void> {
-    console.log("[playwright] IElementHandle.click");
-    return Promise.resolve();
+  async click(): Promise<void> {
+    await this.locator.click();
   }
 
   getText(): Promise<string> {
@@ -47,41 +40,43 @@ export class PlaywrightElementHandle implements IElementHandle {
   }
 
   findElement(locator: string): Promise<IElementHandle> {
-    console.log("[playwright] IElementHandle.findElement", locator);
     return Promise.resolve(new PlaywrightElementHandle(this.locator.locator(locator)));
   }
 
-  findElements(locator: string): Promise<IElementHandle[]> {
-    console.log("[playwright] IElementHandle.findElements", locator);
-    return Promise.resolve([]);
+  async findElements(locator: string): Promise<IElementHandle[]> {
+    const found = await this.locator.locator(locator).all();
+    return found.map((element) => new PlaywrightElementHandle(element));
   }
 }
 
 export class PlaywrightInteractionStrategy implements IInteractionStrategy {
   constructor(private readonly page: Page) {}
 
-  findElement(locator: string, root?: IElementHandle, timeoutMs?: number): Promise<IElementHandle> {
-    console.log("[playwright] findElement", locator, { root, timeoutMs });
-    return Promise.resolve(new PlaywrightElementHandle(this.page.locator(locator)));
+  private locatorFor(locator: string, root?: IElementHandle): Locator {
+    const base = root instanceof PlaywrightElementHandle ? root.locator : this.page;
+    return base.locator(locator);
   }
 
-  findElements(
+  findElement(locator: string, root?: IElementHandle): Promise<IElementHandle> {
+    return Promise.resolve(new PlaywrightElementHandle(this.locatorFor(locator, root)));
+  }
+
+  async findElements(locator: string, root?: IElementHandle): Promise<IElementHandle[]> {
+    const found = await this.locatorFor(locator, root).all();
+    return found.map((element) => new PlaywrightElementHandle(element));
+  }
+
+  async click(locator: string, root?: IElementHandle, timeoutMs?: number): Promise<void> {
+    await this.locatorFor(locator, root).click({ timeout: timeoutMs });
+  }
+
+  async type(
     locator: string,
+    text: string,
     root?: IElementHandle,
     timeoutMs?: number,
-  ): Promise<IElementHandle[]> {
-    console.log("[playwright] findElements", locator, { root, timeoutMs });
-    return Promise.resolve([]);
-  }
-
-  click(locator: string, root?: IElementHandle, timeoutMs?: number): Promise<void> {
-    console.log("[playwright] click", locator, { root, timeoutMs });
-    return Promise.resolve();
-  }
-
-  type(locator: string, text: string, root?: IElementHandle, timeoutMs?: number): Promise<void> {
-    console.log("[playwright] type", locator, text, { root, timeoutMs });
-    return Promise.resolve();
+  ): Promise<void> {
+    await this.locatorFor(locator, root).fill(text, { timeout: timeoutMs });
   }
 
   clearAndType(
