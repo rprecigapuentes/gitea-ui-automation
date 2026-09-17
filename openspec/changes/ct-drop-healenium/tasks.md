@@ -14,3 +14,4 @@
 
 - [ ] 3.1 Dispatch CT manually for `gitea-selenium-vitest` and verify the job waits on Gitea and Selenium, runs the suite and uploads `allure-report-gitea-selenium-vitest`, with no step reaching a proxy or a store.
 - [ ] 3.2 Dispatch CT manually for `gitea-selenium-cucumber` and verify the same, then let one scheduled run cover both and confirm it reports green.
+- [ ] 3.3 Drop the temporary push trigger from `ct.yml` once a run on the branch is green; verify `on:` lists only `schedule` and `workflow_dispatch`.

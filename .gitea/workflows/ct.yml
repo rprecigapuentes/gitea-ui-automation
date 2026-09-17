@@ -1,6 +1,10 @@
 name: CT
 
 on:
+  # Temporary, for the Healenium removal only: drop this trigger before the pull request is opened.
+  push:
+    branches:
+      - 99-ct-drop-healenium
   schedule:
     - cron: "0 11 * * *"
   workflow_dispatch:
