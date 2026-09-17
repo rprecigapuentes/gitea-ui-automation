@@ -26,7 +26,7 @@ None.
 ## Impact
 
 - `.gitea/workflows/ct.yml`, `services/playwright-native/` (config, package, tests, `allurerc.js`), `package-lock.json`, and both READMEs.
-- No change to the Selenium suites beyond the name of the job that runs them.
+- `allure` re-resolves from 3.16.0 to 3.17.0 across the monorepo, inside the `^3.16.0` range the Selenium suites already declared, when added to a third workspace. A clean `npm ci` still resolves the plugin and generates. The Selenium suites change in nothing else but the name of the job that runs them.
 
 ## Out of Scope
 
