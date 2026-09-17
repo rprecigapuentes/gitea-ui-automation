@@ -35,13 +35,15 @@ export default defineConfig({
     headless: process.env.HEADED ? false : undefined,
   },
 
-  /* Browser matrix matches the Selenium services: chrome, firefox, edge. No `channel` on any
-     of them, so all three run on Playwright's own managed binaries (`playwright install`) —
-     nothing here depends on a real Chrome/Edge being present on whatever machine runs this. */
+  /* Browser matrix matches the Selenium services: chrome, firefox, edge. The branded projects set a
+     `channel`, because `Desktop Chrome` and `Desktop Edge` on their own both resolve to Playwright's
+     bundled Chromium, which would make two of the three results the same engine. CT provides the
+     real products with `playwright install chrome msedge`; locally they are the ones already on the
+     machine. Firefox needs no channel: the bundled build is Firefox. */
   projects: [
     {
       name: "chrome",
-      use: { ...devices["Desktop Chrome"] },
+      use: { ...devices["Desktop Chrome"], channel: "chrome" },
     },
 
     {
@@ -51,7 +53,7 @@ export default defineConfig({
 
     {
       name: "edge",
-      use: { ...devices["Desktop Edge"] },
+      use: { ...devices["Desktop Edge"], channel: "msedge" },
     },
   ],
 
