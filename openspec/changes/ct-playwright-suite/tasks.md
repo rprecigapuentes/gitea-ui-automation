@@ -24,4 +24,4 @@
 
 ## 6. Verify
 
-- [ ] 6.1 Confirm one green run per browser on the branch: `chrome`, `firefox` and `edge` each pass in the Playwright job and each is named in its Allure report. The temporary push trigger is then removed by `ct-drop-healenium` task 3.3, which closes the branch.
+- [x] 6.1 Confirm one green run per browser on the branch: `chrome`, `firefox` and `edge` each pass in the Playwright job and each is named in its Allure report. The temporary push trigger is then removed by `ct-drop-healenium` task 3.3, which closes the branch.
