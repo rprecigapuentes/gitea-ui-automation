@@ -12,7 +12,7 @@ export class MainPage extends BasePage {
     // nobody. Waiting for this is what says the tabs carry their labels and their active class.
     renderedPanel: "#dashboard-repo-list .dashboard-repos",
     repositoryOption: ".ui.two.item.menu a.item:nth-of-type(1)",
-    organizationOption: "#dashboard-repo-list .ui.two.item.menu a.item:nth-of-type(2)",
+    organizationOption: ".ui.two.item.menu a.item:nth-of-type(2)",
   };
 
   override getUrl(): string {
