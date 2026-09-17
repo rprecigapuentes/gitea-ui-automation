@@ -9,7 +9,7 @@ Concrete page objects used to live here too (`ui/pages/`), but moved to `@gitea-
 ```
 business-logic/selenium/
 ├── api/
-│   ├── clients/     # auth/issue/label/milestone/organizations/repository/team/user — extend GiteaApiClient from @gitea-automation/core-selenium
+│   ├── clients/     # auth/issue/label/milestone/organizations/repository/team/user — all but auth extend GiteaApiClient from @gitea-automation/core-api-client
 │   └── entities/    # issue/label/milestone/organization/repository/team/user — the shapes those clients return
 └── state/
     └── scenario.entity.ts   # ScenarioState — cross-step scenario data (organization/team1/team2), shared by gitea-selenium-vitest and gitea-selenium-cucumber
@@ -19,7 +19,7 @@ business-logic/selenium/
 
 ## Dependencies
 
-`@gitea-automation/core-selenium` (`GiteaApiClient` for `api/clients/`), `@gitea-automation/core-config` (`baseUrl`), `@gitea-automation/core-logger` (for `api/clients/auth.client.ts`, which is standalone and doesn't extend `GiteaApiClient`), `got`, `tough-cookie` (`auth.client.ts`'s form-login + cookie jar).
+`@gitea-automation/core-api-client` (`GiteaApiClient` for every `api/clients/` file except `auth.client.ts`), `@gitea-automation/core-logger` (for `auth.client.ts`, which is standalone and doesn't extend `GiteaApiClient`), `got`, `tough-cookie` (`auth.client.ts`'s form-login + cookie jar).
 
 ## Imports
 

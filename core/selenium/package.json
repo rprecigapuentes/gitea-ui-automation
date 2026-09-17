@@ -5,15 +5,12 @@
   "type": "module",
   "exports": {
     "./ui/*": "./ui/*.ts",
-    "./api/*": "./api/*.ts",
     "./config/*": "./config/*.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@gitea-automation/core-logger": "*",
-    "got": "^16.0.0",
     "selenium-webdriver": "^4.48.0"
   },
   "devDependencies": {
