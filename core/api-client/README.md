@@ -35,4 +35,4 @@ Only `GotRequestStrategy` exists. A Playwright-based `IRequestStrategy` (using `
 
 ## Dependencies
 
-`got`, `@gitea-automation/core-logger` (request/response debug logging, ported unchanged from the previous `GiteaApiClient`).
+`got`.

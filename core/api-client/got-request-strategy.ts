@@ -1,5 +1,4 @@
 import got, { Got } from "got";
-import { logger } from "@gitea-automation/core-logger/pino.logger";
 import { IRequestStrategy } from "./request-strategy.interface";
 
 export class GotRequestStrategy implements IRequestStrategy {
@@ -13,20 +12,6 @@ export class GotRequestStrategy implements IRequestStrategy {
         Accept: "application/json",
       },
       responseType: "json",
-      hooks: {
-        beforeRequest: [
-          (options) => {
-            logger.debug({ method: options.method, url: options.url?.toString() }, "api request");
-          },
-        ],
-        afterResponse: [
-          (response) => {
-            logger.debug({ url: response.url, status: response.statusCode }, "api response");
-
-            return response;
-          },
-        ],
-      },
     });
   }
 

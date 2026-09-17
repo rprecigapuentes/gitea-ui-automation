@@ -1,25 +1,20 @@
 import { GiteaApiClient } from "@gitea-automation/core-api-client/gitea-api-client";
-import type { OrganizationVisibility } from "../entities/organization.entity";
-
-export interface OrganizationSummary {
-  id: number;
-  name: string;
-}
+import type { Organization, OrganizationVisibility } from "../entities/organization.entity";
 
 export class OrganizationClient extends GiteaApiClient {
   async createOrganization(
     name: string,
     visibility: OrganizationVisibility = "private",
-  ): Promise<OrganizationSummary> {
-    return this.post<OrganizationSummary>("orgs", { username: name, visibility });
+  ): Promise<Organization> {
+    return this.post<Organization>("orgs", { username: name, visibility });
   }
 
-  async getAllOrganizations(): Promise<OrganizationSummary[]> {
-    return this.get<OrganizationSummary[]>("orgs");
+  async getAllOrganizations(): Promise<Organization[]> {
+    return this.get<Organization[]>("orgs");
   }
 
-  async getUserOrganizations(): Promise<OrganizationSummary[]> {
-    return this.get<OrganizationSummary[]>("user/orgs");
+  async getUserOrganizations(): Promise<Organization[]> {
+    return this.get<Organization[]>("user/orgs");
   }
 
   async deleteOrganization(organizationName: string): Promise<void> {
