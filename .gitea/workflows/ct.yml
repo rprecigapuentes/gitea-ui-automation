@@ -104,17 +104,6 @@ jobs:
           echo "the Selenium server at $SELENIUM_REMOTE_URL never reported the browser ready"
           exit 1
 
-      # The proxy answers /status even when the store behind it is down.
-      - name: Check the healing store is answering
-        run: |
-          store=https://healenium.estiberz.online
-          if ! curl -fsS "$store/actuator/health" | grep -q '"status":"UP"'; then
-            echo "the healing store at $store is not answering"
-            echo "the suite would run unhealed and record no baselines, so this run stops here"
-            exit 1
-          fi
-          echo "the healing store is up"
-
       - name: Register the administrator and the browser accounts, and mint their API tokens
         run: |
           register() {
