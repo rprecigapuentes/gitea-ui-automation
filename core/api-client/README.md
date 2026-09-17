@@ -1,6 +1,6 @@
 # @gitea-automation/core-api-client
 
-The Strategy pattern that lets a Gitea API client run against either `got` or a future Playwright request context: `IRequestStrategy`, its real `got`-based implementation, and `GiteaApiClient` — the base class every concrete client extends.
+The Strategy pattern that lets a Gitea API client run against either `got` or Playwright's `APIRequestContext`: `IRequestStrategy`, its two implementations, and `GiteaApiClient` — the base class every concrete client extends.
 
 ## Why this package, and why it isn't split by tool
 
@@ -10,14 +10,15 @@ The Strategy pattern that lets a Gitea API client run against either `got` or a 
 
 ```
 core/api-client/
-├── request-strategy.interface.ts   # IRequestStrategy — get/post/put/delete, returning the parsed body
-├── got-request-strategy.ts         # GotRequestStrategy — real implementation, plus createGotStrategy(baseUrl, token)
-└── gitea-api-client.ts             # GiteaApiClient — the base class every concrete client extends
+├── request-strategy.interface.ts     # IRequestStrategy — get/post/put/delete, returning the parsed body
+├── got-request-strategy.ts           # GotRequestStrategy + createGotStrategy(baseUrl, token)
+├── playwright-request-strategy.ts    # PlaywrightRequestStrategy + createPlaywrightStrategy(baseUrl, token)
+└── gitea-api-client.ts               # GiteaApiClient — the base class every concrete client extends
 ```
 
 ## The pattern
 
-A concrete client (in `@gitea-automation/business-logic-selenium`) extends `GiteaApiClient` and only ever calls its inherited `get`/`post`/`put`/`delete` methods. It never imports `got`, and never decides what's making the request underneath:
+A concrete client (in `@gitea-automation/business-logic-selenium`) extends `GiteaApiClient` and only ever calls its inherited `get`/`post`/`put`/`delete` methods. It never imports `got` or `@playwright/test`, and never decides what's making the request underneath:
 
 ```ts
 export class IssueClient extends GiteaApiClient {
@@ -27,12 +28,13 @@ export class IssueClient extends GiteaApiClient {
 }
 ```
 
-`GiteaApiClient`'s constructor still takes `(baseUrl, token)` — unlike `core/page-objects`' `BaseComponent`, it doesn't take an injected strategy yet, because there's no second implementation to choose between. It builds a `GotRequestStrategy` internally. When a Playwright-based strategy exists, `GiteaApiClient` becomes the injection point the same way `BaseComponent` already is.
+The choice of strategy is made where the client is constructed, exactly like `core/page-objects`' `BaseComponent`:
 
-## Current limitation
-
-Only `GotRequestStrategy` exists. A Playwright-based `IRequestStrategy` (using `APIRequestContext` or similar) is future work, not started.
+```ts
+new IssueClient(createGotStrategy(baseUrl, token));
+new IssueClient(createPlaywrightStrategy(baseUrl, token));
+```
 
 ## Dependencies
 
-`got`.
+`got`, `@playwright/test`.

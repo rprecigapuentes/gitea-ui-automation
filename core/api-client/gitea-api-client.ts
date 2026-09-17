@@ -1,12 +1,7 @@
 import { IRequestStrategy } from "./request-strategy.interface";
-import { createGotStrategy } from "./got-request-strategy";
 
 export abstract class GiteaApiClient {
-  private readonly strategy: IRequestStrategy;
-
-  constructor(baseUrl: string, token: string) {
-    this.strategy = createGotStrategy(baseUrl, token);
-  }
+  constructor(private readonly strategy: IRequestStrategy) {}
 
   protected get<T>(endpoint: string): Promise<T> {
     return this.strategy.get<T>(endpoint);
