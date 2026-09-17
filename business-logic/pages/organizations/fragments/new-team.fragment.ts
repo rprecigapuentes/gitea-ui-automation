@@ -1,5 +1,5 @@
 import { BaseComponent } from "@gitea-automation/core-page-objects/base-component";
-import { TeamVisibility } from "@gitea-automation/business-logic-api/api/entities/team.entity";
+import { TeamVisibility } from "../../../entities/team.entity";
 
 export class NewTeamFragment extends BaseComponent {
   private readonly locators = {

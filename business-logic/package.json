@@ -1,10 +1,12 @@
 {
-  "name": "@gitea-automation/business-logic-api",
+  "name": "@gitea-automation/business-logic",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "exports": {
-    "./api/*": "./api/*.ts",
+    "./clients/*": "./clients/*.ts",
+    "./pages/*": "./pages/*.ts",
+    "./entities/*": "./entities/*.ts",
     "./state/*": "./state/*.ts"
   },
   "scripts": {
@@ -12,7 +14,9 @@
   },
   "dependencies": {
     "@gitea-automation/core-api-client": "*",
+    "@gitea-automation/core-config": "*",
     "@gitea-automation/core-logger": "*",
+    "@gitea-automation/core-page-objects": "*",
     "got": "^16.0.0",
     "tough-cookie": "^6.0.2"
   },

@@ -5,7 +5,7 @@
   "type": "module",
   "workspaces": [
     "core/*",
-    "business-logic/*",
+    "business-logic",
     "services/*"
   ],
   "engines": {

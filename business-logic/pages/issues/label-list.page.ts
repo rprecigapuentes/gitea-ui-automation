@@ -2,10 +2,7 @@ import { BasePage } from "@gitea-automation/core-page-objects/base.page";
 import { IInteractionStrategy } from "@gitea-automation/core-page-objects/interaction-strategy.interface";
 import { IElementHandle } from "@gitea-automation/core-page-objects/element-handle.interface";
 import { baseUrl } from "@gitea-automation/core-config/gitea.config";
-import {
-  LabelRow,
-  NewScopedLabel,
-} from "@gitea-automation/business-logic-api/api/entities/label.entity";
+import { LabelRow, NewScopedLabel } from "../../entities/label.entity";
 import { LabelChipFragment } from "./fragments/label-chip.fragment";
 
 const modal = "#issue-label-edit-modal";

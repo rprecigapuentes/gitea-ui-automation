@@ -1,53 +1,50 @@
 import { test as base } from "vitest";
 import * as allure from "allure-js-commons";
 import { ContentType } from "allure-js-commons";
-import { UserClient } from "@gitea-automation/business-logic-api/api/clients/user.client";
-import { OrganizationClient } from "@gitea-automation/business-logic-api/api/clients/organizations.client";
-import { RepositoryClient } from "@gitea-automation/business-logic-api/api/clients/repository.client";
-import { LabelClient } from "@gitea-automation/business-logic-api/api/clients/label.client";
-import { IssueClient } from "@gitea-automation/business-logic-api/api/clients/issue.client";
-import { createGotStrategy } from "@gitea-automation/core-api-client/got-request-strategy";
-import { Organization } from "@gitea-automation/business-logic-api/api/entities/organization.entity";
-import { SeededIssue } from "@gitea-automation/business-logic-api/api/entities/issue.entity";
+import { UserClient } from "@gitea-automation/business-logic/clients/user.client";
+import { OrganizationClient } from "@gitea-automation/business-logic/clients/organizations.client";
+import { RepositoryClient } from "@gitea-automation/business-logic/clients/repository.client";
+import { LabelClient } from "@gitea-automation/business-logic/clients/label.client";
+import { IssueClient } from "@gitea-automation/business-logic/clients/issue.client";
+import { RequestStrategyFactory } from "@gitea-automation/core-api-client/request-strategy.factory";
+import { Organization } from "@gitea-automation/business-logic/entities/organization.entity";
+import { SeededIssue } from "@gitea-automation/business-logic/entities/issue.entity";
 import { BrowserStackSession } from "../entities/browserstack.entity";
-import { ScenarioState } from "@gitea-automation/business-logic-api/state/scenario.entity";
+import { ScenarioState } from "@gitea-automation/business-logic/state/scenario.entity";
 import { WebDriver } from "selenium-webdriver";
-import { DriverFactory } from "@gitea-automation/core-selenium/ui/drivers/driver.factory";
-import { createSeleniumStrategy } from "@gitea-automation/core-page-objects/selenium-interaction.strategy";
+import { DriverFactory } from "@gitea-automation/core-selenium/drivers/driver.factory";
+import { InteractionStrategyFactory } from "@gitea-automation/core-page-objects/interaction-strategy.factory";
 import { IInteractionStrategy } from "@gitea-automation/core-page-objects/interaction-strategy.interface";
-import { LoginPage } from "@gitea-automation/business-logic-common/ui/pages/authentication/login.page";
-import { MainPage } from "@gitea-automation/business-logic-common/ui/pages/common/main.page";
-import { CreateOrganizationPage } from "@gitea-automation/business-logic-common/ui/pages/organizations/create-organization.page";
-import { OrganizationDashboardPage } from "@gitea-automation/business-logic-common/ui/pages/organizations/organization-dashboard.page";
+import { LoginPage } from "@gitea-automation/business-logic/pages/authentication/login.page";
+import { MainPage } from "@gitea-automation/business-logic/pages/common/main.page";
+import { CreateOrganizationPage } from "@gitea-automation/business-logic/pages/organizations/create-organization.page";
+import { OrganizationDashboardPage } from "@gitea-automation/business-logic/pages/organizations/organization-dashboard.page";
 //Org Fragments
-import { OrgRepositoriesFragment } from "@gitea-automation/business-logic-common/ui/pages/organizations/fragments/org-repositories.fragment";
-import { OrgTeamsFragment } from "@gitea-automation/business-logic-common/ui/pages/organizations/fragments/org-teams.fragment";
-import { NewTeamFragment } from "@gitea-automation/business-logic-common/ui/pages/organizations/fragments/new-team.fragment";
-import { SpecificTeamFragment } from "@gitea-automation/business-logic-common/ui/pages/organizations/fragments/specific-team.fragment";
-import { OrgNavigationFragment } from "@gitea-automation/business-logic-common/ui/pages/organizations/fragments/org-navigation.fragment";
-import { NavBarFragment } from "@gitea-automation/business-logic-common/ui/pages/common/fragments/nav-bar.fragment";
+import { OrgRepositoriesFragment } from "@gitea-automation/business-logic/pages/organizations/fragments/org-repositories.fragment";
+import { OrgTeamsFragment } from "@gitea-automation/business-logic/pages/organizations/fragments/org-teams.fragment";
+import { NewTeamFragment } from "@gitea-automation/business-logic/pages/organizations/fragments/new-team.fragment";
+import { SpecificTeamFragment } from "@gitea-automation/business-logic/pages/organizations/fragments/specific-team.fragment";
+import { OrgNavigationFragment } from "@gitea-automation/business-logic/pages/organizations/fragments/org-navigation.fragment";
+import { NavBarFragment } from "@gitea-automation/business-logic/pages/common/fragments/nav-bar.fragment";
 //Org facade
-import { OrganizationFacade } from "@gitea-automation/business-logic-common/ui/pages/organizations/facade/organization.facade";
-import { IssuePage } from "@gitea-automation/business-logic-common/ui/pages/issues/issue.page";
-import { IssueListPage } from "@gitea-automation/business-logic-common/ui/pages/issues/issue-list.page";
-import { AuthClient } from "@gitea-automation/business-logic-api/api/clients/auth.client";
+import { OrganizationFacade } from "@gitea-automation/business-logic/pages/organizations/facade/organization.facade";
+import { IssuePage } from "@gitea-automation/business-logic/pages/issues/issue.page";
+import { IssueListPage } from "@gitea-automation/business-logic/pages/issues/issue-list.page";
+import { AuthClient } from "@gitea-automation/business-logic/clients/auth.client";
 import {
   isBrowserStack,
   setSessionStatus,
-} from "@gitea-automation/core-selenium/config/browserstack.config";
+} from "@gitea-automation/core-selenium/browserstack-config/browserstack.config";
 import { applySession, clearSession } from "../utils/session.util";
 import { SessionManager } from "../entities/session-manager.entity";
-import { LabelListPage } from "@gitea-automation/business-logic-common/ui/pages/issues/label-list.page";
-import { MilestoneClient } from "@gitea-automation/business-logic-api/api/clients/milestone.client";
-import {
-  ScopedLabels,
-  SeededLabel,
-} from "@gitea-automation/business-logic-api/api/entities/label.entity";
-import { SeededMilestone } from "@gitea-automation/business-logic-api/api/entities/milestone.entity";
-import { User } from "@gitea-automation/business-logic-api/api/entities/user.entity";
+import { LabelListPage } from "@gitea-automation/business-logic/pages/issues/label-list.page";
+import { MilestoneClient } from "@gitea-automation/business-logic/clients/milestone.client";
+import { ScopedLabels, SeededLabel } from "@gitea-automation/business-logic/entities/label.entity";
+import { SeededMilestone } from "@gitea-automation/business-logic/entities/milestone.entity";
+import { User } from "@gitea-automation/business-logic/entities/user.entity";
 import { testDataName, uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.util";
-import { CreateIssuePage } from "@gitea-automation/business-logic-common/ui/pages/issues/create-issue.page";
-import { MilestoneListPage } from "@gitea-automation/business-logic-common/ui/pages/issues/milestone-list.page";
+import { CreateIssuePage } from "@gitea-automation/business-logic/pages/issues/create-issue.page";
+import { MilestoneListPage } from "@gitea-automation/business-logic/pages/issues/milestone-list.page";
 import {
   resolveInvitedCredentials,
   resolveOwnerCredentials,
@@ -113,7 +110,7 @@ export const test = base.extend<CustomFixtures>({
     { scope: "file" },
   ],
   strategy: async ({ driver }, use) => {
-    await use(createSeleniumStrategy(driver));
+    await use(InteractionStrategyFactory.selenium(driver));
   },
   screenshotOnFailure: [
     async ({ driver, task, onTestFailed }, use) => {
@@ -200,13 +197,13 @@ export const test = base.extend<CustomFixtures>({
   },
   userClient: async ({}, use) => {
     const userClient = new UserClient(
-      createGotStrategy(process.env.GITEA_BASE_URL!, resolveOwnerToken()),
+      RequestStrategyFactory.got(process.env.GITEA_BASE_URL!, resolveOwnerToken()),
     );
     await use(userClient);
   },
   organizationClient: async ({}, use) => {
     const organizationClient = new OrganizationClient(
-      createGotStrategy(process.env.GITEA_BASE_URL!, resolveOwnerToken()),
+      RequestStrategyFactory.got(process.env.GITEA_BASE_URL!, resolveOwnerToken()),
     );
     await use(organizationClient);
   },
@@ -214,7 +211,7 @@ export const test = base.extend<CustomFixtures>({
   cleanupOrganizationsBeforeRun: [
     async ({}, use) => {
       const organizationClient = new OrganizationClient(
-        createGotStrategy(process.env.GITEA_BASE_URL!, resolveOwnerToken()),
+        RequestStrategyFactory.got(process.env.GITEA_BASE_URL!, resolveOwnerToken()),
       );
       await organizationClient.deleteAllOrganizations();
       await use();
@@ -223,17 +220,23 @@ export const test = base.extend<CustomFixtures>({
   ],
   repositoryClient: async ({}, use) => {
     await use(
-      new RepositoryClient(createGotStrategy(process.env.GITEA_BASE_URL!, resolveOwnerToken())),
+      new RepositoryClient(
+        RequestStrategyFactory.got(process.env.GITEA_BASE_URL!, resolveOwnerToken()),
+      ),
     );
   },
   labelClient: async ({}, use) => {
-    await use(new LabelClient(createGotStrategy(process.env.GITEA_BASE_URL!, resolveOwnerToken())));
+    await use(
+      new LabelClient(RequestStrategyFactory.got(process.env.GITEA_BASE_URL!, resolveOwnerToken())),
+    );
   },
   labelListPage: async ({ strategy }, use) => {
     await use(new LabelListPage(strategy));
   },
   issueClient: async ({}, use) => {
-    await use(new IssueClient(createGotStrategy(process.env.GITEA_BASE_URL!, resolveOwnerToken())));
+    await use(
+      new IssueClient(RequestStrategyFactory.got(process.env.GITEA_BASE_URL!, resolveOwnerToken())),
+    );
   },
   issuePage: async ({ strategy }, use) => {
     const issuePage = new IssuePage(strategy);
@@ -344,7 +347,9 @@ export const test = base.extend<CustomFixtures>({
   },
   milestoneClient: async ({}, use) => {
     await use(
-      new MilestoneClient(createGotStrategy(process.env.GITEA_BASE_URL!, resolveOwnerToken())),
+      new MilestoneClient(
+        RequestStrategyFactory.got(process.env.GITEA_BASE_URL!, resolveOwnerToken()),
+      ),
     );
   },
   createIssuePage: async ({ strategy }, use) => {

@@ -4,8 +4,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@gitea-automation/business-logic-common": "*",
-    "@gitea-automation/business-logic-api": "*",
+    "@gitea-automation/business-logic": "*",
     "@gitea-automation/core-api-client": "*",
     "@gitea-automation/core-page-objects": "*",
     "dotenv": "^17.4.2"

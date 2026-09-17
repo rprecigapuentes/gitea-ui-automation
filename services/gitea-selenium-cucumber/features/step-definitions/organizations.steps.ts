@@ -1,10 +1,10 @@
 import { Given, When, Then, DataTable } from "@cucumber/cucumber";
 import { expect } from "vitest";
 import type { GiteaWorld } from "../support/world";
-import { Organization } from "@gitea-automation/business-logic-api/api/entities/organization.entity";
+import { Organization } from "@gitea-automation/business-logic/entities/organization.entity";
 import { uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.util";
-import { Team } from "@gitea-automation/business-logic-api/api/entities/team.entity";
-import { Repository } from "@gitea-automation/business-logic-api/api/entities/repository.entity";
+import { Team } from "@gitea-automation/business-logic/entities/team.entity";
+import { Repository } from "@gitea-automation/business-logic/entities/repository.entity";
 import { getSeededUser } from "../support/seeded-users";
 
 When(

@@ -4,20 +4,20 @@ import { Before, BeforeAll, After, AfterAll, setDefaultTimeout } from "@cucumber
 // Allure API below reach the report instead of a no-op.
 import "allure-cucumberjs";
 import { parameter } from "allure-js-commons";
-import { DriverFactory } from "@gitea-automation/core-selenium/ui/drivers/driver.factory";
-import { OrganizationClient } from "@gitea-automation/business-logic-api/api/clients/organizations.client";
-import { RepositoryClient } from "@gitea-automation/business-logic-api/api/clients/repository.client";
-import { IssueClient } from "@gitea-automation/business-logic-api/api/clients/issue.client";
-import { TeamClient } from "@gitea-automation/business-logic-api/api/clients/team.client";
-import { MilestoneClient } from "@gitea-automation/business-logic-api/api/clients/milestone.client";
-import { createGotStrategy } from "@gitea-automation/core-api-client/got-request-strategy";
-import { createSeleniumStrategy } from "@gitea-automation/core-page-objects/selenium-interaction.strategy";
+import { DriverFactory } from "@gitea-automation/core-selenium/drivers/driver.factory";
+import { OrganizationClient } from "@gitea-automation/business-logic/clients/organizations.client";
+import { RepositoryClient } from "@gitea-automation/business-logic/clients/repository.client";
+import { IssueClient } from "@gitea-automation/business-logic/clients/issue.client";
+import { TeamClient } from "@gitea-automation/business-logic/clients/team.client";
+import { MilestoneClient } from "@gitea-automation/business-logic/clients/milestone.client";
+import { InteractionStrategyFactory } from "@gitea-automation/core-page-objects/interaction-strategy.factory";
+import { RequestStrategyFactory } from "@gitea-automation/core-api-client/request-strategy.factory";
 import type {
   ScenarioState,
   SeededRepository,
-} from "@gitea-automation/business-logic-api/state/scenario.entity";
+} from "@gitea-automation/business-logic/state/scenario.entity";
 import { testDataName, uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.util";
-import { PageFactory } from "@gitea-automation/business-logic-common/ui/page.factory";
+import { PageFactory } from "@gitea-automation/business-logic/pages/page.factory";
 import { resolveOwnerToken } from "./credentials";
 import { createSeededUsers, deleteSeededUsers } from "./seeded-users";
 import type { GiteaWorld } from "./world";
@@ -46,7 +46,7 @@ function ownerClients(): {
   teams: TeamClient;
   milestones: MilestoneClient;
 } {
-  const strategy = createGotStrategy(process.env.GITEA_BASE_URL!, resolveOwnerToken());
+  const strategy = RequestStrategyFactory.got(process.env.GITEA_BASE_URL!, resolveOwnerToken());
 
   return {
     organizations: new OrganizationClient(strategy),
@@ -100,7 +100,7 @@ Before(async function (this: GiteaWorld) {
   this.driver = await DriverFactory.getDriver();
   const scenarioState: ScenarioState = {};
   this.scenarioState = scenarioState;
-  this.pages = new PageFactory(createSeleniumStrategy(this.driver), scenarioState);
+  this.pages = new PageFactory(InteractionStrategyFactory.selenium(this.driver), scenarioState);
   this.organizationClient = ownerClients().organizations;
 });
 

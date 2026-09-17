@@ -1,8 +1,8 @@
-import { Organization } from "../api/entities/organization.entity";
-import { SeededIssue } from "../api/entities/issue.entity";
-import { SeededLabel } from "../api/entities/label.entity";
-import { SeededMilestone } from "../api/entities/milestone.entity";
-import { Team } from "../api/entities/team.entity";
+import { Organization } from "../entities/organization.entity";
+import { SeededIssue } from "../entities/issue.entity";
+import { SeededLabel } from "../entities/label.entity";
+import { SeededMilestone } from "../entities/milestone.entity";
+import { Team } from "../entities/team.entity";
 
 export interface SeededRepository {
   name: string;
