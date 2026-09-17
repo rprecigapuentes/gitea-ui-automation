@@ -13,6 +13,7 @@
     "@gitea-automation/business-logic-selenium": "*",
     "@gitea-automation/core-config": "*",
     "@gitea-automation/core-logger": "*",
+    "@gitea-automation/core-page-objects": "*",
     "@gitea-automation/core-selenium": "*",
     "selenium-webdriver": "^4.48.0"
   },

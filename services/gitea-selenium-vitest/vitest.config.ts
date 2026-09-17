@@ -34,6 +34,7 @@ export default defineConfig({
           "@gitea-automation/core-data-handler",
           "@gitea-automation/business-logic-selenium",
           "@gitea-automation/business-logic-common",
+          "@gitea-automation/core-page-objects",
         ],
       },
     },

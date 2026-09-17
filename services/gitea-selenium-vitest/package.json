@@ -20,6 +20,7 @@
     "@gitea-automation/business-logic-common": "*",
     "@gitea-automation/business-logic-selenium": "*",
     "@gitea-automation/core-data-handler": "*",
+    "@gitea-automation/core-page-objects": "*",
     "@gitea-automation/core-selenium": "*",
     "dotenv": "^17.4.2",
     "selenium-webdriver": "^4.48.0"

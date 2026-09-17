@@ -12,6 +12,8 @@ import { BrowserStackSession } from "../entities/browserstack.entity";
 import { ScenarioState } from "@gitea-automation/business-logic-selenium/state/scenario.entity";
 import { WebDriver } from "selenium-webdriver";
 import { DriverFactory } from "@gitea-automation/core-selenium/ui/drivers/driver.factory";
+import { createSeleniumStrategy } from "@gitea-automation/core-page-objects/selenium-interaction.strategy";
+import { IInteractionStrategy } from "@gitea-automation/core-page-objects/interaction-strategy.interface";
 import { LoginPage } from "@gitea-automation/business-logic-common/ui/pages/authentication/login.page";
 import { MainPage } from "@gitea-automation/business-logic-common/ui/pages/common/main.page";
 import { CreateOrganizationPage } from "@gitea-automation/business-logic-common/ui/pages/organizations/create-organization.page";
@@ -53,6 +55,7 @@ import {
 
 interface CustomFixtures {
   driver: WebDriver;
+  strategy: IInteractionStrategy;
   browserstackSession: BrowserStackSession;
   browserstackStatus: void;
   screenshotOnFailure: void;
@@ -108,6 +111,9 @@ export const test = base.extend<CustomFixtures>({
     },
     { scope: "file" },
   ],
+  strategy: async ({ driver }, use) => {
+    await use(createSeleniumStrategy(driver));
+  },
   screenshotOnFailure: [
     async ({ driver, task, onTestFailed }, use) => {
       onTestFailed(async () => {
@@ -234,12 +240,12 @@ export const test = base.extend<CustomFixtures>({
     const issueListPage = new IssueListPage(driver);
     await use(issueListPage);
   },
-  loginPage: async ({ driver }, use) => {
-    const loginPage = new LoginPage(driver);
+  loginPage: async ({ strategy }, use) => {
+    const loginPage = new LoginPage(strategy);
     await use(loginPage);
   },
-  mainPage: async ({ driver }, use) => {
-    const mainPage = new MainPage(driver);
+  mainPage: async ({ strategy }, use) => {
+    const mainPage = new MainPage(strategy);
     await use(mainPage);
   },
   createOrganizationPage: async ({ driver }, use) => {
@@ -369,8 +375,8 @@ export const test = base.extend<CustomFixtures>({
 
     await use({ id: response.body.id, title, description, dueDate });
   },
-  navBarFragment: async ({ driver }, use) => {
-    const navBarFragment = new NavBarFragment(driver);
+  navBarFragment: async ({ strategy }, use) => {
+    const navBarFragment = new NavBarFragment(strategy);
     await use(navBarFragment);
   },
 });

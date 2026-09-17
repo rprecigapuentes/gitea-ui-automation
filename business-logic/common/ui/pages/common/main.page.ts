@@ -1,26 +1,26 @@
-import { By, WebDriver } from "selenium-webdriver";
 import { logger } from "@gitea-automation/core-logger/pino.logger";
-import { BasePage } from "@gitea-automation/core-selenium/ui/base-pages/base.page";
+import { BasePage } from "@gitea-automation/core-page-objects/base.page";
+import { IInteractionStrategy } from "@gitea-automation/core-page-objects/interaction-strategy.interface";
 import { baseUrl } from "@gitea-automation/core-config/gitea.config";
 
 export class MainPage extends BasePage {
   private readonly locators = {
     // Server-rendered: it is on the page before Vue mounts anything into it, so waiting for it
     // proves nothing about the tab strip.
-    dashboardRepoList: By.css("#dashboard-repo-list"),
+    dashboardRepoList: "#dashboard-repo-list",
     // Rendered by the same Vue component as the tab strip, in the same patch, and asserted on by
     // nobody. Waiting for this is what says the tabs carry their labels and their active class.
-    renderedPanel: By.css("#dashboard-repo-list .dashboard-repos"),
-    repositoryOption: By.css(".ui.two.item.menu a.item:nth-of-type(1)"),
-    organizationOption: By.css("#dashboard-repo-list .ui.two.item.menu a.item:nth-of-type(2)"),
+    renderedPanel: "#dashboard-repo-list .dashboard-repos",
+    repositoryOption: ".ui.two.item.menu a.item:nth-of-type(1)",
+    organizationOption: "#dashboard-repo-list .ui.two.item.menu a.item:nth-of-type(2)",
   };
 
   override getUrl(): string {
     return `${baseUrl}/`;
   }
 
-  constructor(driver: WebDriver) {
-    super(driver);
+  constructor(strategy: IInteractionStrategy) {
+    super(strategy);
   }
 
   async open(): Promise<void> {
@@ -61,7 +61,7 @@ export class MainPage extends BasePage {
       logger.warn(
         {
           pageContext: "dashboard",
-          url: await this.driver.getCurrentUrl().catch(() => "unknown"),
+          url: await this.getCurrentUrl().catch(() => "unknown"),
           reason: String(thrown),
         },
         "Dashboard tabs could not be read",

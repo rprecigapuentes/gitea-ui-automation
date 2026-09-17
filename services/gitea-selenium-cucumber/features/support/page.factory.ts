@@ -1,4 +1,6 @@
 import type { WebDriver } from "selenium-webdriver";
+import { createSeleniumStrategy } from "@gitea-automation/core-page-objects/selenium-interaction.strategy";
+import type { IInteractionStrategy } from "@gitea-automation/core-page-objects/interaction-strategy.interface";
 import { LoginPage } from "@gitea-automation/business-logic-common/ui/pages/authentication/login.page";
 import { MainPage } from "@gitea-automation/business-logic-common/ui/pages/common/main.page";
 import { NavBarFragment } from "@gitea-automation/business-logic-common/ui/pages/common/fragments/nav-bar.fragment";
@@ -54,10 +56,14 @@ export class PageFactory {
   #forkPrompt?: ForkPromptFragment;
   #orgFacade?: OrganizationFacade;
 
+  private readonly strategy: IInteractionStrategy;
+
   constructor(
     private readonly driver: WebDriver,
     private readonly scenarioState: ScenarioState,
-  ) {}
+  ) {
+    this.strategy = createSeleniumStrategy(driver);
+  }
 
   private requireOrganization(): Organization {
     if (!this.scenarioState.organization) {
@@ -67,15 +73,15 @@ export class PageFactory {
   }
 
   get loginPage(): LoginPage {
-    return (this.#loginPage ??= new LoginPage(this.driver));
+    return (this.#loginPage ??= new LoginPage(this.strategy));
   }
 
   get mainPage(): MainPage {
-    return (this.#mainPage ??= new MainPage(this.driver));
+    return (this.#mainPage ??= new MainPage(this.strategy));
   }
 
   get navBar(): NavBarFragment {
-    return (this.#navBar ??= new NavBarFragment(this.driver));
+    return (this.#navBar ??= new NavBarFragment(this.strategy));
   }
 
   get issuePage(): IssuePage {

@@ -1,20 +1,20 @@
-import { WebDriver, By } from "selenium-webdriver";
-import { BasePage } from "@gitea-automation/core-selenium/ui/base-pages/base.page";
+import { BasePage } from "@gitea-automation/core-page-objects/base.page";
+import { IInteractionStrategy } from "@gitea-automation/core-page-objects/interaction-strategy.interface";
 import { baseUrl } from "@gitea-automation/core-config/gitea.config";
 
 export class LoginPage extends BasePage {
   private readonly locators = {
-    usernameInput: By.id("user_name"),
-    passwordInput: By.id("password"),
-    loginButton: By.css("form button"),
+    usernameInput: "#user_name",
+    passwordInput: "#password",
+    loginButton: "form button",
   };
 
   override getUrl(): string {
     return `${baseUrl}/user/login`;
   }
 
-  constructor(driver: WebDriver) {
-    super(driver);
+  constructor(strategy: IInteractionStrategy) {
+    super(strategy);
   }
 
   // A rejected login re-renders /user/login, so waiting for anything but the destination would

@@ -1,41 +1,41 @@
-import { By, WebDriver } from "selenium-webdriver";
 import { logger } from "@gitea-automation/core-logger/pino.logger";
-import { BaseComponent } from "@gitea-automation/core-selenium/ui/base-pages/base-component";
+import { BaseComponent } from "@gitea-automation/core-page-objects/base-component";
+import { IInteractionStrategy } from "@gitea-automation/core-page-objects/interaction-strategy.interface";
 
 const INSTANT = 0;
 
 export class NavBarFragment extends BaseComponent {
   private readonly navigationBarLocators = {
     // container for the main navigation bar
-    navigationBarContainer: By.css("#navbar"),
+    navigationBarContainer: "#navbar",
   };
 
   private readonly secondaryBarLocators = {
     // container for the secondary navigation bar
-    secondaryBarContainer: By.css(".ui.secondary.stackable.menu"),
-    rightOptionsContainer: By.css(".right.menu.tw-flex-wrap.tw-justify-end"),
+    secondaryBarContainer: ".ui.secondary.stackable.menu",
+    rightOptionsContainer: ".right.menu.tw-flex-wrap.tw-justify-end",
     // elements within the secondary navigation bar
-    organizationDropdown: By.css(".text [class=gt-ellipsis]"),
-    teamsDropdown: By.css("div.ui.floating.dropdown.jump:nth-of-type(2)"),
-    activitiesOption: By.css(".item.tw-ml-auto"),
-    issuesOption: By.css(".ui.secondary.stackable.menu a[href$='/issues']"),
-    pullRequestsOption: By.css(".ui.secondary.stackable.menu a[href$='/pulls']"),
-    milestonesOption: By.css(".ui.secondary.stackable.menu a[href$='/milestones']"),
-    viewOrganizationButton: By.css(".basic.button"),
-    accountDropdown: By.css("[data-tooltip-content='Profile and Settings…']"),
-    accountAvatar: By.css("[data-tooltip-content='Profile and Settings…'] img.ui.avatar"),
-    signOutLink: By.css("a[href='/user/logout']"),
+    organizationDropdown: ".text [class=gt-ellipsis]",
+    teamsDropdown: "div.ui.floating.dropdown.jump:nth-of-type(2)",
+    activitiesOption: ".item.tw-ml-auto",
+    issuesOption: ".ui.secondary.stackable.menu a[href$='/issues']",
+    pullRequestsOption: ".ui.secondary.stackable.menu a[href$='/pulls']",
+    milestonesOption: ".ui.secondary.stackable.menu a[href$='/milestones']",
+    viewOrganizationButton: ".basic.button",
+    accountDropdown: "[data-tooltip-content='Profile and Settings…']",
+    accountAvatar: "[data-tooltip-content='Profile and Settings…'] img.ui.avatar",
+    signOutLink: "a[href='/user/logout']",
   };
 
   private readonly dropdownOrganizationLocators = {
     // container for the options within the organization dropdown
-    menuOptionsContainer: By.css(".menu.context-user-switch.transition"),
+    menuOptionsContainer: ".menu.context-user-switch.transition",
     // List of organizations within the dropdown
-    organizationsContainer: By.css(".scrolling.menu"),
+    organizationsContainer: ".scrolling.menu",
     // options within the organization dropdown
-    newOrganizationOption: By.css(".tw-ml-1.tw-mr-5.svg.octicon-plus"),
-    organizationAvatar: By.css(".secondary-nav .ui.floating.dropdown.jump span.text img.ui.avatar"),
-    organizationName: By.css(".secondary-nav .text span.gt-ellipsis"),
+    newOrganizationOption: ".tw-ml-1.tw-mr-5.svg.octicon-plus",
+    organizationAvatar: ".secondary-nav .ui.floating.dropdown.jump span.text img.ui.avatar",
+    organizationName: ".secondary-nav .text span.gt-ellipsis",
   };
 
   private readonly baseLocators = [
@@ -43,12 +43,12 @@ export class NavBarFragment extends BaseComponent {
     this.dropdownOrganizationLocators.organizationAvatar,
   ];
 
-  constructor(driver: WebDriver) {
-    super(driver);
+  constructor(strategy: IInteractionStrategy) {
+    super(strategy);
   }
 
   async getCurrentOrganization(timeoutMs?: number): Promise<string> {
-    return this.getText(this.secondaryBarLocators.organizationDropdown, this.driver, timeoutMs);
+    return this.getText(this.secondaryBarLocators.organizationDropdown, undefined, timeoutMs);
   }
 
   async clickNewOrganizationDropdownOption(): Promise<void> {
@@ -72,10 +72,8 @@ export class NavBarFragment extends BaseComponent {
     try {
       const [usernameMatches, teamsDropdownAbsent, rightOptionsAbsent] = await Promise.all([
         this.getCurrentOrganization().then((text) => text === username),
-        this.isVisible(this.secondaryBarLocators.teamsDropdown, this.driver, INSTANT).then(
-          (v) => !v,
-        ),
-        this.isVisible(this.secondaryBarLocators.rightOptionsContainer, this.driver, INSTANT).then(
+        this.isVisible(this.secondaryBarLocators.teamsDropdown, undefined, INSTANT).then((v) => !v),
+        this.isVisible(this.secondaryBarLocators.rightOptionsContainer, undefined, INSTANT).then(
           (v) => !v,
         ),
       ]);
@@ -87,7 +85,7 @@ export class NavBarFragment extends BaseComponent {
       logger.warn(
         {
           pageContext: "main",
-          url: await this.driver.getCurrentUrl().catch(() => "unknown"),
+          url: await this.getCurrentUrl().catch(() => "unknown"),
           reason: String(thrown),
         },
         "Navbar expectations could not be read",
@@ -128,7 +126,7 @@ export class NavBarFragment extends BaseComponent {
   }
 
   async getDropdownOrganizationsList(): Promise<string[]> {
-    const organizationsLocator: By = By.css(":scope > *");
+    const organizationsLocator = ":scope > *";
     const menuOptionsContainer = await this.findElement(
       this.dropdownOrganizationLocators.menuOptionsContainer,
     );

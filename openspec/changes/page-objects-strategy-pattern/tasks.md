@@ -9,9 +9,9 @@
 
 ## 2. Migrate authentication/ + common/
 
-- [ ] 2.1 Migrate `login.page.ts`, `main.page.ts`, `common/fragments/nav-bar.fragment.ts`: base-class import → `core-page-objects`, locators → strings, constructor → injected `strategy`, the two direct `this.driver.getCurrentUrl()` calls → `this.getCurrentUrl()`
-- [ ] 2.2 Wire `createSeleniumStrategy(driver)` into `page.factory.ts` and `fixture.ts` for these 3 classes' construction sites
-- [ ] 2.3 Verify `npm run typecheck --workspaces --if-present` is green; run the login-related Cucumber/Vitest scenarios against a real Gitea instance and confirm they still pass
+- [x] 2.1 Migrate `login.page.ts`, `main.page.ts`, `common/fragments/nav-bar.fragment.ts`: base-class import → `core-page-objects`, locators → strings, constructor → injected `strategy`, the two direct `this.driver.getCurrentUrl()` calls → `this.getCurrentUrl()`
+- [x] 2.2 Wire `createSeleniumStrategy(driver)` into `page.factory.ts` and `fixture.ts` for these 3 classes' construction sites
+- [x] 2.3 Verify `npm run typecheck --workspaces --if-present` is green (confirmed); grep confirms zero Selenium references left in the 3 migrated files; a smoke script instantiating all 3 with `createPlaywrightStrategy` and calling their methods (`login()`, `getUrl()`, `waitForElements()`) ran clean, only `[playwright] ...` logs, no throw — running the actual Cucumber/Vitest login scenarios against a real Gitea instance was not done from this environment (no reachable test instance here); do that functional run in your own environment before trusting this stage fully
 
 ## 3. Migrate issues/
 
