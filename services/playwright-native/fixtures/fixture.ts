@@ -12,7 +12,8 @@ import { LabelClient } from "@gitea-automation/business-logic-selenium/api/clien
 import { TeamClient } from "@gitea-automation/business-logic-selenium/api/clients/team.client";
 import { MilestoneClient } from "@gitea-automation/business-logic-selenium/api/clients/milestone.client";
 import { UserClient } from "@gitea-automation/business-logic-selenium/api/clients/user.client";
-import { resolveOwnerToken } from "./credentials";
+import { resolveOwnerCredentials, resolveOwnerToken } from "./credentials";
+import { applySession, clearSession } from "./session.util";
 
 interface Clients {
   auth: AuthClient;
@@ -25,11 +26,18 @@ interface Clients {
   users: UserClient;
 }
 
+interface SessionManager {
+  loginAs: (username: string, password: string) => Promise<void>;
+  loginAsOwner: () => Promise<void>;
+  logout: () => Promise<void>;
+}
+
 interface CustomFixtures {
   strategy: IInteractionStrategy;
   clients: Clients;
   pages: PageFactory;
   scenarioState: ScenarioState;
+  sessionManager: SessionManager;
 }
 
 export const test = base.extend<CustomFixtures>({
@@ -57,6 +65,17 @@ export const test = base.extend<CustomFixtures>({
   },
   pages: async ({ strategy, scenarioState }, use) => {
     await use(new PageFactory(strategy, scenarioState));
+  },
+  sessionManager: async ({ clients, context, page }, use) => {
+    await use({
+      loginAs: (username: string, password: string) =>
+        applySession(context, page, clients.auth, username, password),
+      loginAsOwner: () => {
+        const { username, password } = resolveOwnerCredentials();
+        return applySession(context, page, clients.auth, username, password);
+      },
+      logout: () => clearSession(context),
+    });
   },
 });
 

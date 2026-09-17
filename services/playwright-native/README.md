@@ -10,28 +10,30 @@ services/playwright-native/
 ├── .env                          # gitignored — GITEA_BASE_URL, GITEA_OWNER_<BROWSER>[_PASSWORD], GITEA_TOKEN_<BROWSER>
 ├── fixtures/
 │   ├── credentials.ts            # resolveOwnerCredentials()/resolveOwnerToken() — same scheme as gitea-selenium-cucumber
-│   └── fixture.ts                # custom test fixtures: strategy, clients, pages, scenarioState
+│   ├── session.util.ts           # applySession()/clearSession() — cookie-based API login, same shape as gitea-selenium-vitest's session.util.ts
+│   └── fixture.ts                # custom test fixtures: strategy, clients, pages, scenarioState, sessionManager
 └── tests/
     ├── example.spec.ts           # the default file npm init playwright@latest scaffolds, exercises playwright.dev itself
-    └── login-api.spec.ts         # Gitea-specific: logs in via AuthClient, injects the session into the browser context
+    └── login-api.spec.ts         # Gitea-specific: logs in and out via sessionManager, cookie-based, no UI
 ```
 
 - `chrome`, `firefox` and `edge` project configs, matching the browser matrix the Selenium services already cover — naming and env-var convention only. None of the three sets a `channel`, so all run on Playwright's own managed binaries (whatever `playwright install` downloads into `~/AppData/Local/ms-playwright/`), never a real installed Chrome/Edge/Firefox. That's on purpose: a `channel` (`'chrome'`/`'msedge'`) would need the real browser present on whatever machine runs the tests, which a CI runner isn't guaranteed to have, and would need its own install step beyond plain `playwright install`. It's also why a browser's window shows a different icon than your everyday one when run `:headed` — it's the Playwright-managed copy, not your system's.
 
 ## Custom fixtures
 
-`fixtures/fixture.ts` extends `@playwright/test`'s own `test` with four fixtures, the same four building blocks `gitea-selenium-cucumber`'s `GiteaWorld` has:
+`fixtures/fixture.ts` extends `@playwright/test`'s own `test` with five fixtures:
 
 - `strategy: IInteractionStrategy` — Playwright's own `page` fixture wrapped with `createPlaywrightStrategy` from [`@gitea-automation/core-page-objects`](../../core/page-objects/README.md).
 - `clients` — the 7 Gitea API clients (`organizations`, `repositories`, `issues`, `labels`, `teams`, `milestones`, `users`), each built via `createPlaywrightStrategy` from [`@gitea-automation/core-api-client`](../../core/api-client/README.md), sharing one `PlaywrightRequestStrategy` instance — plus `auth: AuthClient`, which stays `got`-based (see that package's README for why it's out of the Strategy pattern).
 - `pages: PageFactory` — [`@gitea-automation/business-logic-common/ui/page.factory.ts`](../../business-logic/common/README.md), built from `strategy` and `scenarioState`.
 - `scenarioState: ScenarioState` — starts as `{}` per test, same type the other two suites use.
+- `sessionManager` — `loginAs(username, password)`, `loginAsOwner()`, `logout()`. A test says who to log in as, not how — the same shape as `gitea-selenium-vitest`'s `sessionManager` fixture. Underneath, `fixtures/session.util.ts`'s `applySession`/`clearSession` do the same cookie dance `gitea-selenium-vitest`'s `session.util.ts` does for a `WebDriver` (`AuthClient.loginViaApi` → clear cookies → set the returned ones → reload), just through `BrowserContext.addCookies`/`clearCookies` instead of `driver.manage()`.
 
 ```ts
 import { test, expect } from "../fixtures/fixture";
 
-test("...", async ({ clients, pages, scenarioState }) => {
-  await clients.organizations.createOrganization("my-org");
+test("...", async ({ sessionManager, pages, scenarioState }) => {
+  await sessionManager.loginAsOwner();
 });
 ```
 
