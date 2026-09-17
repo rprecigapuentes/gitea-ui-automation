@@ -54,20 +54,21 @@ Installs the dependencies of every workspace (5 under `core/`, 2 under `business
 - **[business-logic](business-logic/README.md)** — organizational root for 2 packages: [`business-logic-selenium`](business-logic/selenium/README.md) (concrete Gitea page objects + API clients/entities, shared by every Selenium-based service below — neither `gitea-selenium-vitest` nor `gitea-selenium-cucumber` keeps its own copy) and [`business-logic-playwright`](business-logic/playwright/README.md) (reserved).
 - **[services/gitea-selenium-vitest](services/gitea-selenium-vitest/README.md)** — the original suite: Selenium WebDriver + Vitest, BrowserStack, Allure, multi-account/multi-browser credentials. Full documentation in its own README.
 - **[services/gitea-selenium-cucumber](services/gitea-selenium-cucumber/README.md)** — Selenium + Cucumber (BDD/Gherkin). Login, organizations (teams, repositories, and assigning one to the other) and project-board features, tagged `@smoke`/`@e2e`, run across all 3 browsers; still growing.
-- **services/playwright-native** and **services/playwright-bdd** — reserved for future Playwright-based automation. Today they're empty workspaces (just a `package.json`), no code or dependencies.
+- **[services/playwright-native](services/playwright-native/README.md)** — Playwright's own test runner against the same Gitea, on real Chrome, Firefox and Edge. A smoke suite today: `core-playwright` and `business-logic-playwright` stay reserved until it grows page objects.
+- **services/playwright-bdd** — reserved for a future Playwright + BDD suite. An empty workspace (just a `package.json`), no code or dependencies.
 
 ## CI/CD
 
 `.gitea/workflows/` runs on the project's own Gitea instance (self-hosted, GitHub Actions-compatible syntax):
 
 - `ci.yml` — on every push/PR: `npm ci` + `format:check` + `lint` + `typecheck` across the whole monorepo. Never runs real tests, never blocked by external infra.
-- `ct.yml` — "Continuous Testing": one job per suite, each deploying its own disposable Gitea and its own Selenium, then running that suite's `npm test`. Manual dispatch + daily cron.
+- `ct.yml` — "Continuous Testing": two jobs, one per framework, each deploying its own disposable Gitea, then running that framework's suites. Manual dispatch + daily cron.
 - `bs.yml` — same as `ct.yml` but against BrowserStack (`gitea-selenium-vitest` only). Manual dispatch + weekly cron.
 
 ### Which suites `ct.yml` runs
 
-Every service workspace that exposes a `test` script: today `gitea-selenium-vitest` and `gitea-selenium-cucumber`. `playwright-native` and `playwright-bdd` expose none and are skipped until they do — adding a suite to CI is adding that script, not editing the workflow.
+Every service workspace that exposes a `test` script, split across two jobs by how the suite reaches a browser. The `selenium` job runs `gitea-selenium-vitest` and `gitea-selenium-cucumber` against a Selenium server it starts beside them. The `playwright` job runs `playwright-native` inside `mcr.microsoft.com/playwright`, which carries the browsers Playwright launches in-process, and installs the real Chrome and Edge on top; that image tag tracks the `@playwright/test` version in `package-lock.json` and is bumped with it. `playwright-bdd` exposes no `test` script and is skipped until it does — adding it to CI is adding that script, not editing the workflow.
 
-The cron run covers all of them. A manual dispatch takes a `suite` input to run exactly one; leaving it at `all` runs the lot. Suites run one at a time and a failing suite does not cancel the others, so a red Cucumber run still leaves you the vitest report. Each publishes its own artifact, named `allure-report-<suite>`.
+The cron run covers all of them. A manual dispatch takes a `suite` input to run exactly one; leaving it at `all` runs the lot. Suites run one at a time, and the `playwright` job waits on the `selenium` job so a single VPS never hosts two applications under test at once — but it runs whatever that job's outcome was. A failing suite does not cancel the others, so a red Cucumber run still leaves you the vitest report. Each publishes its own artifact, named `allure-report-<suite>`.
 
 `ct.yml` is scheduled, never a merge gate; `ci.yml` stays lint, format and typecheck.
