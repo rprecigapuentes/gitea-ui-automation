@@ -8,7 +8,7 @@ See proposal.md - Why. This touches two layers (`core/api-client` and every call
 
 - `PlaywrightRequestStrategy` is a real, working `IRequestStrategy` implementation — verified against the local Gitea instance, not just typechecked.
 - `GiteaApiClient` becomes the injection point: it takes an `IRequestStrategy` and delegates, exactly like `BaseComponent`. No client subclass changes — they still only ever call `this.get/post/put/delete`.
-- Existing behavior is unchanged: every current call site keeps using `got`, matching `GotRequestStrategy`'s error behavior (throw on non-2xx) so `deleteAllOrganizations`'s try/catch keeps working the same way regardless of which strategy is behind it.
+- Existing behavior is unchanged: every current call site keeps using `got`.
 
 **Non-Goals:**
 
@@ -21,11 +21,12 @@ See proposal.md - Why. This touches two layers (`core/api-client` and every call
 
 **`PlaywrightRequestStrategy` builds its own `APIRequestContext` via `request.newContext()`**, not via an injected `Page`/`APIRequestContext` — API clients aren't tied to a browser page's lifecycle the way UI interactions are, and `@playwright/test`'s `request` fixture works standalone. It takes `(baseUrl, token)`, matching `GotRequestStrategy`'s own constructor shape, and lazily creates the context on first use (constructing it is itself an async operation, and `IRequestStrategy` methods are the only async boundary available).
 
-**`PlaywrightRequestStrategy` throws on a non-ok response**, since Playwright's `APIRequestContext` doesn't throw on 4xx/5xx the way `got` does by default. Without this, `PlaywrightRequestStrategy` would silently succeed where `GotRequestStrategy` throws, breaking the one caller (`deleteAllOrganizations`) that relies on catching a failure per-item.
-
 **Empty response bodies (204, or any endpoint returning no body) resolve to `undefined`** rather than throwing on `JSON.parse("")`. Read the response as text first; parse only if non-empty. `delete<T = void>` is the method this matters for — nothing calls it expecting a value back.
+
+**Client construction stays out of Cucumber step definitions.** `organizations.steps.ts` originally built its own `OrganizationClient(createGotStrategy(...))` inline — a review comment caught this: steps should only reach clients/pages through the world or through hooks, never construct their own. Fixed by adding `organizationClient` to `GiteaWorld`, populated once per scenario in the general `Before` hook (`hooks.ts`) via the existing `ownerClients()` helper; the step now reads `this.organizationClient`.
 
 ## Risks / Trade-offs
 
 - **Changing `GiteaApiClient`'s constructor breaks all 14 call sites at once** — same as the return-type change in the prior api-client refactor, this can't be split without a temporary dual constructor. Accepted: one commit touches the base class and every call site together.
 - **No test in the repo exercises `PlaywrightRequestStrategy`** (nothing constructs a client with it). Verification is a standalone `tsx` smoke script against the local Gitea instance, not the real suites — same approach used to verify `PlaywrightInteractionStrategy` could be instantiated without crashing, but here checking actual HTTP round-trips since the strategy is fully implemented, not stubbed.
+- **`PlaywrightRequestStrategy` does not throw on a non-ok response**, unlike `GotRequestStrategy`. A review comment flagged the original throw-on-non-ok wrapper as unnecessary for now — nothing yet constructs a client with this strategy, so there's no real caller depending on that behavior. Revisit if/when a real caller needs it.

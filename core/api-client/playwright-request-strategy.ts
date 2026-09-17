@@ -27,35 +27,28 @@ export class PlaywrightRequestStrategy implements IRequestStrategy {
     return this.contextPromise;
   }
 
-  private async handle<T>(response: APIResponse, endpoint: string): Promise<T> {
-    if (!response.ok()) {
-      throw new Error(`Playwright request failed: ${response.status()} ${endpoint}`);
-    }
-    return parseBody<T>(response);
-  }
-
   async get<T>(endpoint: string): Promise<T> {
     const context = await this.context();
     const response = await context.get(endpoint);
-    return this.handle<T>(response, endpoint);
+    return parseBody<T>(response);
   }
 
   async post<T>(endpoint: string, body?: unknown): Promise<T> {
     const context = await this.context();
     const response = await context.post(endpoint, { data: body });
-    return this.handle<T>(response, endpoint);
+    return parseBody<T>(response);
   }
 
   async put<T>(endpoint: string, body?: unknown): Promise<T> {
     const context = await this.context();
     const response = await context.put(endpoint, { data: body });
-    return this.handle<T>(response, endpoint);
+    return parseBody<T>(response);
   }
 
   async delete<T = void>(endpoint: string): Promise<T> {
     const context = await this.context();
     const response = await context.delete(endpoint);
-    return this.handle<T>(response, endpoint);
+    return parseBody<T>(response);
   }
 }
 
