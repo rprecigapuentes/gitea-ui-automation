@@ -18,7 +18,7 @@ core/api-client/
 
 ## The pattern
 
-A concrete client (in `@gitea-automation/business-logic-selenium`) extends `GiteaApiClient` and only ever calls its inherited `get`/`post`/`put`/`delete` methods. It never imports `got` or `@playwright/test`, and never decides what's making the request underneath:
+A concrete client (in `@gitea-automation/business-logic-api`) extends `GiteaApiClient` and only ever calls its inherited `get`/`post`/`put`/`delete` methods. It never imports `got` or `@playwright/test`, and never decides what's making the request underneath:
 
 ```ts
 export class IssueClient extends GiteaApiClient {

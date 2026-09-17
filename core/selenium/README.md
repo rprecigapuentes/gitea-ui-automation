@@ -1,6 +1,6 @@
 # @gitea-automation/core-selenium
 
-Selenium WebDriver framework: driver lifecycle, BrowserStack integration. No Gitea-specific knowledge — that's `@gitea-automation/business-logic-selenium`.
+Selenium WebDriver framework: driver lifecycle, BrowserStack integration. No Gitea-specific knowledge — that's `@gitea-automation/business-logic-api`.
 
 Used to also hold `ui/base-pages/` (`BaseComponent`/`BasePage`) and `api/gitea-client.client.ts` (`GiteaApiClient`) — those were retired once `@gitea-automation/core-page-objects` and `@gitea-automation/core-api-client` replaced them with technology-agnostic equivalents every page object and API client in the monorepo now extends instead. See [`core/page-objects/README.md`](../page-objects/README.md) and [`core/api-client/README.md`](../api-client/README.md).
 

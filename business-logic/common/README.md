@@ -24,7 +24,7 @@ Every class extends `BaseComponent`/`BasePage` from `@gitea-automation/core-page
 
 ## Dependencies
 
-`@gitea-automation/core-page-objects` (`BaseComponent`/`BasePage`, `IInteractionStrategy`, `IElementHandle`), `@gitea-automation/core-config` (`baseUrl`), `@gitea-automation/core-logger`, `@gitea-automation/business-logic-selenium` (the `api/entities/**` shapes a page returns or accepts — those stay tool-agnostic data, not moved here). No dependency on `selenium-webdriver` or `@gitea-automation/core-selenium`: nothing here references either.
+`@gitea-automation/core-page-objects` (`BaseComponent`/`BasePage`, `IInteractionStrategy`, `IElementHandle`), `@gitea-automation/core-config` (`baseUrl`), `@gitea-automation/core-logger`, `@gitea-automation/business-logic-api` (the `api/entities/**` shapes a page returns or accepts — those stay tool-agnostic data, not moved here). No dependency on `selenium-webdriver` or `@gitea-automation/core-selenium`: nothing here references either.
 
 ## Imports
 
