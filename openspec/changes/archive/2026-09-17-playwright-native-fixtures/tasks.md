@@ -22,3 +22,9 @@
 - [x] 3.2 Ran it against the local Gitea instance on all three browsers: `npm run test:chrome/firefox/edge -w @gitea-automation/playwright-native` — 1/1 passed on each
 - [x] 3.3 Verified `npm run typecheck --workspaces --if-present` and `npm run lint` green across the whole repo; re-ran `gitea-selenium-cucumber` chrome — 6/6 scenarios passed (clean, no flake this time), confirming the `PageFactory` relocation caused zero regressions
 - [x] 3.4 Archive this change and commit
+
+## 4. Code review fix
+
+- [x] 4.1 Replaced `login-api.spec.ts`'s inline `context.addCookies` call with a `sessionManager` fixture (`loginAs`/`loginAsOwner`/`logout`) — flagged as needing the same shape `gitea-selenium-vitest`'s `sessionManager` fixture already has, where a test says who to log in as rather than handling cookies itself. Added `fixtures/session.util.ts` (`applySession`/`clearSession`), the same cookie dance as `gitea-selenium-vitest`'s `session.util.ts` through `BrowserContext.addCookies`/`clearCookies` instead of `driver.manage()`
+- [x] 4.2 `login-api.spec.ts` now logs in and out through `sessionManager` and asserts both the authenticated and the logged-out state
+- [x] 4.3 Verified `npm run typecheck --workspaces --if-present` and `npm run lint` green; re-ran the test on all three browsers — 1/1 passed on each
