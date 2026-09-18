@@ -18,7 +18,14 @@
 - [x] 3.2 `clickAndWaitFor`/`typeAndWaitFor` compose `click`/`type` + `actAndWaitFor`
 - [x] 3.3 Verified typecheck/lint green
 
-## 4. Verify
+## 4. Drop `expect` from the strategy
+
+- [x] 4.1 Removed `@playwright/test`'s `expect.poll` from `waitUntil`/`actAndWaitUntil`/`waitFor` — `expect` is a test-assertion primitive and has no place in a strategy pages (and everything built on them) depend on; replaced with a plain interval `poll()` helper, the same shape as the Selenium strategy's own `driver.wait()`
+- [x] 4.2 `waitFor` throws with `message` (or a default) on timeout; `waitUntil` reports `false`; `actAndWaitUntil` delegates to `waitFor`
+- [x] 4.3 Confirmed via grep that no `expect` import remains anywhere outside `services/*/tests/**`
+- [x] 4.4 Verified typecheck/lint green and the full `playwright-native` suite still passes (12/12)
+
+## 5. Verify
 
 - [x] 4.1 Ran the full `playwright-native` suite (all three browsers, one worker process — matching how CI invokes it) — 12/12 passed, zero regressions
 - [x] 4.2 Confirmed no `console.log` stub or `try`/`catch` block remains anywhere in the file

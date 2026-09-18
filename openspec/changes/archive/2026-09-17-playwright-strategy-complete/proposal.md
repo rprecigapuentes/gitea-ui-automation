@@ -12,7 +12,7 @@ Every remaining `IInteractionStrategy` method, and the four still-stubbed `IElem
 - `getCurrentUrl` — `page.url()`.
 - `reload` — `page.reload()`, then `Locator.waitFor()` per ready locator.
 - `queryAll` — `Locator.all()`, Playwright's documented way to snapshot every match immediately, no wait.
-- `waitFor`/`waitUntil`/`actAndWaitUntil` — `expect.poll(predicate, { timeout, message })`, Playwright's own documented tool for waiting on an arbitrary async condition. `waitUntil` reports `false` instead of throwing on timeout (`.catch(() => false)`), matching its "never throws" contract.
+- `waitFor`/`waitUntil`/`actAndWaitUntil` — a plain interval poll of the predicate (mirroring the Selenium strategy's own `driver.wait()`), not `@playwright/test`'s `expect.poll`. `expect` is a test-assertion primitive; pages, and everything built on them, must stay usable outside a test's `expect` context, so no framework-level wait may depend on it. `waitFor` throws with `message` (or a default) on timeout, `waitUntil` reports `false`, and `actAndWaitUntil` delegates to `waitFor`.
 - `clickAndWaitUntil`/`clickAndWaitFor`/`typeAndWaitFor` — each composes the primitive already implemented (`click`/`type` + `actAndWaitUntil`/`actAndWaitFor`), the same composition shape the interface's other methods already use.
 - `actAndWaitFor` — runs the action, then `Locator.waitFor()`s each ready locator before wrapping it as a handle.
 - `waitForUrl` — `page.waitForURL()`.

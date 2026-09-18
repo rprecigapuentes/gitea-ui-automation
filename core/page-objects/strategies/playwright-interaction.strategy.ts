@@ -1,6 +1,18 @@
-import { Page, Locator, expect } from "@playwright/test";
+import { Page, Locator } from "@playwright/test";
 import { IElementHandle } from "../element-handle.interface";
 import { IInteractionStrategy } from "../interaction-strategy.interface";
+
+const DEFAULT_TIMEOUT_MS = 5000;
+const POLL_INTERVAL_MS = 100;
+
+async function poll(predicate: () => Promise<boolean>, timeoutMs: number): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs;
+  while (!(await predicate())) {
+    if (Date.now() >= deadline) return false;
+    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+  }
+  return true;
+}
 
 function toElementHandle(locator: Locator): IElementHandle {
   return {
@@ -112,21 +124,20 @@ export class PlaywrightInteractionStrategy implements IInteractionStrategy {
     return results.every(Boolean);
   }
 
-  waitUntil(predicate: () => Promise<boolean>, timeoutMs?: number): Promise<boolean> {
-    return expect
-      .poll(predicate, { timeout: timeoutMs })
-      .toBe(true)
-      .then(() => true)
-      .catch(() => false);
+  waitUntil(
+    predicate: () => Promise<boolean>,
+    timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  ): Promise<boolean> {
+    return poll(predicate, timeoutMs);
   }
 
   async actAndWaitUntil(
     action: () => Promise<void>,
     predicate: () => Promise<boolean>,
-    timeoutMs?: number,
+    timeoutMs: number = DEFAULT_TIMEOUT_MS,
   ): Promise<void> {
     await action();
-    await expect.poll(predicate, { timeout: timeoutMs }).toBe(true);
+    await this.waitFor(predicate, timeoutMs);
   }
 
   async clickAndWaitUntil(
@@ -227,7 +238,9 @@ export class PlaywrightInteractionStrategy implements IInteractionStrategy {
     timeoutMs: number,
     message?: string,
   ): Promise<void> {
-    await expect.poll(predicate, { timeout: timeoutMs, message }).toBe(true);
+    if (!(await poll(predicate, timeoutMs))) {
+      throw new Error(message ?? `Timed out after ${timeoutMs}ms waiting for condition`);
+    }
   }
 
   async waitForUrl(pattern: RegExp | string, timeoutMs?: number): Promise<void> {
