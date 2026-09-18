@@ -1,6 +1,7 @@
 import { Page, Locator } from "@playwright/test";
 import { IElementHandle } from "../element-handle.interface";
 import { IInteractionStrategy } from "../interaction-strategy.interface";
+import { simulateHtml5Drag } from "./playwright-html5-drag.util";
 
 const DEFAULT_TIMEOUT_MS = 5000;
 const POLL_INTERVAL_MS = 100;
@@ -92,8 +93,9 @@ export class PlaywrightInteractionStrategy implements IInteractionStrategy {
     await this.page.mouse.up();
   }
 
+  /** For a browser whose automation protocol moves the pointer and never emits the drop (Firefox). */
   async dispatchDragEvents(sourceLocator: string, targetLocator: string): Promise<void> {
-    await this.dragAndDrop(sourceLocator, targetLocator);
+    await simulateHtml5Drag(this.page.locator(sourceLocator), this.page.locator(targetLocator));
   }
 
   async getText(locator: string, root?: IElementHandle, timeoutMs?: number): Promise<string> {

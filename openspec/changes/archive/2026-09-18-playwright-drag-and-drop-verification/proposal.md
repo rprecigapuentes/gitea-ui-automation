@@ -30,3 +30,12 @@ Added `@gitea-automation/core-data-handler` as a direct dependency — the new s
 ## Impact
 
 Modified: `core/page-objects/strategies/playwright-interaction.strategy.ts`, `business-logic/pages/projects/project-board.page.ts` (additive), `services/playwright-native/package.json`. Added: `services/playwright-native/tests/project-board-drag-and-drop.spec.ts`.
+
+## Follow-up: the Firefox limitation was fixable after all
+
+Given explicit permission to try a JavaScript-based workaround, the "confirmed, permanent limitation" above turned out not to be permanent:
+
+- **`dispatchDragEvents` is now a real fallback**, not a delegate to `dragAndDrop`. New file `strategies/playwright-html5-drag.util.ts`'s `simulateHtml5Drag` dispatches the native `pointerdown`/`mousedown`/`dragstart`/`dragenter`/`dragover`×2/`drop`/`dragend` sequence by hand via `page.evaluate` against element handles — the same idea as the Selenium strategy's own `core-selenium/utils/html5-drag.util.ts`, ported to Playwright's evaluate-with-`ElementHandle` mechanism instead of `executeAsyncScript`.
+- `ProjectBoardPage.moveCard` (unmodified, still exactly as it was for Selenium) already tries `dragAndDrop` first and only calls `dispatchDragEvents` if the drop didn't reach the server — so once that fallback was real, `moveCard` worked correctly on Playwright with **zero page-object changes needed**.
+- `dragCardOnto` (the new method from the first pass) was **removed** — it existed only to isolate the drag from `moveCard`'s retry choreography while diagnosing the failure, and became unnecessary once the real fallback made that choreography work as designed. `project-board.page.ts` ends this stage completely unmodified.
+- The spec now calls `pageObjects.projectBoardPage.moveCard(...)` directly, with no `test.skip` for any browser. Confirmed stable across repeated runs (firefox: 3/3; full suite: 2/2, 15/15 each) — chrome/edge also occasionally need the same fallback (a stray timing miss on the primary manual-mouse attempt), and it recovers them just as reliably.

@@ -19,8 +19,17 @@
 - [x] 3.4 Confirmed via Playwright's own docs (fetched directly, not from memory) that the manual recipe used in 3.2 is the officially documented one; no further, simpler option exists
 - [x] 3.5 Decided not to chase a Selenium-style native-`DragEvent`-dispatch fallback for firefox — tried and discarded during this stage as unnecessary complexity for one browser on one widget, per explicit instruction to keep this simple
 
-## 4. Land it
+## 4. Land it (first pass)
 
 - [x] 4.1 Added `ProjectBoardPage.dragCardOnto(issueId, toColumnTitle)` — new method, `moveCard` and every other existing method untouched
 - [x] 4.2 Marked firefox `test.skip` in the new spec with the reason inline, rather than leaving a permanently red or silently-passing-for-the-wrong-reason test
 - [x] 4.3 Verified typecheck, lint, and the full `playwright-native` suite (14 passed, 1 skipped) and, as a regression check on the shared page object, the Cucumber `@project-board` suite (unaffected — `dragCardOnto` is additive)
+
+## 5. Follow-up: build the JS fallback, with explicit permission
+
+- [x] 5.1 Given explicit permission to try a JavaScript-based workaround for firefox, wrote `core/page-objects/strategies/playwright-html5-drag.util.ts`'s `simulateHtml5Drag`: dispatches `pointerdown`/`mousedown`/`dragstart`/`dragenter`/`dragover`×2/`drop`/`dragend` by hand via `page.evaluate` against element handles, the same idea as the Selenium strategy's own `simulateHtml5Drag`, ported to Playwright's evaluate-with-`ElementHandle` mechanism
+- [x] 5.2 Wired it into `PlaywrightInteractionStrategy.dispatchDragEvents` (previously just a delegate to `dragAndDrop`)
+- [x] 5.3 Switched the spec back to the existing, unmodified `ProjectBoardPage.moveCard` (which already tries `dragAndDrop` then falls back to `dispatchDragEvents` on failure) instead of `dragCardOnto` — all three browsers passed
+- [x] 5.4 Removed `dragCardOnto` and its `test.skip` for firefox: no longer needed once the fallback was real, so `project-board.page.ts` ends this stage completely unmodified (confirmed via `git diff` against its pre-stage state)
+- [x] 5.5 Ran firefox three times and the full suite twice more to confirm stability — 100% pass rate; chrome/edge occasionally need the same fallback too (a stray timing miss on the primary attempt), and it recovers them just as reliably
+- [x] 5.6 Re-verified typecheck, lint, and the full `playwright-native` suite (15/15 passed, no skips)

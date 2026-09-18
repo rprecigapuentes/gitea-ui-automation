@@ -11,15 +11,6 @@ test.describe("Project board drag and drop", () => {
     pageObjects,
     sessionManager,
   }, testInfo) => {
-    // Playwright's mouse never triggers a drop on this board under Firefox: neither Locator.dragTo()
-    // nor a manual, stepped mouse.move() (both tried and confirmed working on chrome/edge) land the
-    // card there. Known limitation of Playwright's Firefox automation for this widget, not a bug in
-    // the test or the strategy.
-    test.skip(
-      testInfo.project.name === "firefox",
-      "drag-and-drop never lands under Playwright's Firefox automation for this board",
-    );
-
     const organizationName = `at-board-${testInfo.project.name}-${uniqueSuffix()}`;
     await clients.organizations.createOrganization(organizationName);
     const repositories: SeededRepository[] = [];
@@ -55,8 +46,7 @@ test.describe("Project board drag and drop", () => {
       await pageObjects.projectBoardPage.openFor(organizationName, projectId);
 
       const [first, second] = repositories;
-      const landed = await pageObjects.projectBoardPage.dragCardOnto(first.issue.id, TARGET_COLUMN);
-      expect(landed).toBe(true);
+      await pageObjects.projectBoardPage.moveCard(first.issue.id, TARGET_COLUMN);
 
       expect(await pageObjects.projectBoardPage.getColumnCardIssueIds(TARGET_COLUMN)).toEqual([
         first.issue.id,
