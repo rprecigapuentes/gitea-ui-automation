@@ -6,6 +6,7 @@
   "dependencies": {
     "@gitea-automation/business-logic": "*",
     "@gitea-automation/core-api-client": "*",
+    "@gitea-automation/core-data-handler": "*",
     "@gitea-automation/core-page-objects": "*",
     "dotenv": "^17.4.2"
   },

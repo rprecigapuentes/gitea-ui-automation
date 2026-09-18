@@ -120,6 +120,17 @@ export class ProjectBoardPage extends BasePage {
     );
   }
 
+  /** A single drag, then one re-read of the board — no retry, for a caller whose drag already
+   *  lands in one gesture and only wants to know whether the server kept it. */
+  async dragCardOnto(issueId: number, toColumnTitle: string): Promise<boolean> {
+    const cards = this.column(toColumnTitle).getCardsLocator();
+
+    await this.dragAndDrop(this.locators.card(issueId), cards);
+    await this.reload([this.locators.board]);
+
+    return this.column(toColumnTitle).holdsIssueNow(issueId);
+  }
+
   /** Reads the board again, so the answer is the state Gitea kept and not the one the drop left. */
   private async keptCardIn(title: string, issueId: number): Promise<boolean> {
     await this.reload([this.locators.board]);

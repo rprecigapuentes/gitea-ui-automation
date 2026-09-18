@@ -69,24 +69,31 @@ export class PlaywrightInteractionStrategy implements IInteractionStrategy {
     await this.page.locator(locator).fill(text, { timeout: timeoutMs });
   }
 
-  async dragAndDrop(
-    sourceLocator: string,
-    targetLocator: string,
-    root?: IElementHandle,
-    timeoutMs?: number,
-  ): Promise<void> {
-    await this.page
-      .locator(sourceLocator)
-      .dragTo(this.page.locator(targetLocator), { timeout: timeoutMs });
+  // Moving the mouse by hand, not Locator.dragTo(), because Gitea's board only reacts to a real,
+  // gradual mousemove/mouseup sequence, not the native HTML5 DragEvents dragTo() dispatches instead.
+  async dragAndDrop(sourceLocator: string, targetLocator: string): Promise<void> {
+    const sourceBox = await this.page.locator(sourceLocator).boundingBox();
+    const targetBox = await this.page.locator(targetLocator).boundingBox();
+
+    if (!sourceBox || !targetBox) {
+      throw new Error("dragAndDrop could not resolve a bounding box for its source or target");
+    }
+
+    await this.page.mouse.move(
+      sourceBox.x + sourceBox.width / 2,
+      sourceBox.y + sourceBox.height / 2,
+    );
+    await this.page.mouse.down();
+    await this.page.mouse.move(
+      targetBox.x + targetBox.width / 2,
+      targetBox.y + targetBox.height / 2,
+      { steps: 10 },
+    );
+    await this.page.mouse.up();
   }
 
-  async dispatchDragEvents(
-    sourceLocator: string,
-    targetLocator: string,
-    root?: IElementHandle,
-    timeoutMs?: number,
-  ): Promise<void> {
-    await this.dragAndDrop(sourceLocator, targetLocator, root, timeoutMs);
+  async dispatchDragEvents(sourceLocator: string, targetLocator: string): Promise<void> {
+    await this.dragAndDrop(sourceLocator, targetLocator);
   }
 
   async getText(locator: string, root?: IElementHandle, timeoutMs?: number): Promise<string> {
@@ -112,13 +119,17 @@ export class PlaywrightInteractionStrategy implements IInteractionStrategy {
     timeoutMs?: number,
   ): Promise<boolean> {
     const list = Array.isArray(locators) ? locators : [locators];
+    // Playwright treats a `timeout` of 0 as "no timeout" (wait forever), the opposite of the
+    // callers here that pass 0 meaning "check right now" — so that case skips waitFor entirely.
     const results = await Promise.all(
       list.map((locator) =>
-        this.page
-          .locator(locator)
-          .waitFor({ state: "visible", timeout: timeoutMs })
-          .then(() => true)
-          .catch(() => false),
+        timeoutMs === 0
+          ? this.page.locator(locator).isVisible()
+          : this.page
+              .locator(locator)
+              .waitFor({ state: "visible", timeout: timeoutMs })
+              .then(() => true)
+              .catch(() => false),
       ),
     );
     return results.every(Boolean);

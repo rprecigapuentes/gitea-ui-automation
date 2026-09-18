@@ -1,0 +1,26 @@
+## 1. Write the verification spec
+
+- [x] 1.1 Read `project-board.feature`'s drag-and-drop scenario and its step definitions to know exactly what to replicate: seed org + 2 repos + 1 issue each, create a Basic Kanban project, assign both issues, drag the first card into "In Progress", assert both columns' contents
+- [x] 1.2 Wrote `services/playwright-native/tests/project-board-drag-and-drop.spec.ts` using only existing page objects (`createProjectPage`, `projectListPage`, `issuePage`) and API clients already exposed by the `clients` fixture
+- [x] 1.3 Added `@gitea-automation/core-data-handler` to `services/playwright-native/package.json` (already used by the other two suites for the same `testDataName`/`uniqueSuffix` helpers)
+
+## 2. Diagnose the first failure (looked like a Firefox drag bug, wasn't)
+
+- [x] 2.1 First run: chrome/edge passed, firefox hung to the test's own timeout with no useful error
+- [x] 2.2 Instrumented with per-step timestamps; found the hang wasn't in the drag gesture at all — it was in `holdsIssueNow`'s `isVisible(locator, undefined, 0)` after a genuinely failed drag
+- [x] 2.3 Root-caused: Playwright's `Locator.waitFor({ timeout: 0 })` means "no timeout," not "check now" — the opposite of what every `INSTANT = 0` call site in the page objects intends. Confirmed via a raw, strategy-free reproduction using `page.locator(...).isVisible()` directly, which returned `false` immediately
+- [x] 2.4 Fixed `PlaywrightInteractionStrategy.isVisible` to special-case `timeoutMs === 0` into `Locator.isVisible()`, restoring the intended "no wait" behavior across every fragment that relies on it
+
+## 3. Get drag-and-drop actually working
+
+- [x] 3.1 With the hang fixed, chrome/edge kept passing and firefox now failed fast (`false`, not a hang) — a real, isolated result to work from
+- [x] 3.2 Replaced `Locator.dragTo()` with Playwright's documented manual-drag recipe (hover source, mouse down, hover target twice, mouse up) — still failed on firefox
+- [x] 3.3 Replaced that with a stepped `page.mouse.move(x, y, { steps: 10 })` between bounding-box centers — chrome/edge still pass, firefox still does not land the drop
+- [x] 3.4 Confirmed via Playwright's own docs (fetched directly, not from memory) that the manual recipe used in 3.2 is the officially documented one; no further, simpler option exists
+- [x] 3.5 Decided not to chase a Selenium-style native-`DragEvent`-dispatch fallback for firefox — tried and discarded during this stage as unnecessary complexity for one browser on one widget, per explicit instruction to keep this simple
+
+## 4. Land it
+
+- [x] 4.1 Added `ProjectBoardPage.dragCardOnto(issueId, toColumnTitle)` — new method, `moveCard` and every other existing method untouched
+- [x] 4.2 Marked firefox `test.skip` in the new spec with the reason inline, rather than leaving a permanently red or silently-passing-for-the-wrong-reason test
+- [x] 4.3 Verified typecheck, lint, and the full `playwright-native` suite (14 passed, 1 skipped) and, as a regression check on the shared page object, the Cucumber `@project-board` suite (unaffected — `dragCardOnto` is additive)
