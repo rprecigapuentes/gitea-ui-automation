@@ -16,3 +16,8 @@
 - [x] 3.2 Ran `test:chrome`/`test:firefox`/`test:edge` individually — 4/4 each
 - [x] 3.3 Found and cleaned up a stale `@rolldown/binding-linux-x64-gnu` lockfile entry (from a prior install on a different OS) that had left this machine's `node_modules/.bin` without proper Windows `.cmd` shims for `eslint`/`cross-env`; `npm install` regenerated them correctly
 - [x] 3.4 Archive this change and commit
+
+## 4. Follow-up: the registration step itself failed on the real pipeline
+
+- [x] 4.1 Actually running it hit `/var/run/act/workflow/5.sh: 24: Bad substitution` — `${!owner_user}` is bash's indirect variable expansion, which `sh`/`dash` doesn't support. The `selenium` job's identical script works because it runs directly on the runner (bash by default); the `playwright` job runs inside a `container:`, where the runner defaults container steps to `sh`. Fixed by setting `shell: bash` on just this one step, rather than rewriting the script to avoid indirection and diverge from the selenium job's established pattern
+- [x] 4.2 Validated the workflow YAML still parses and the step's `shell` field is set
