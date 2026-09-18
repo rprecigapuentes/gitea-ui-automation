@@ -258,6 +258,10 @@ jobs:
           exit 1
 
       - name: Register the browser accounts and mint their API tokens
+        # A container job's steps default to sh, which doesn't support ${!var} indirection -
+        # the selenium job's identical script gets bash for free by running directly on the
+        # runner instead of in a container.
+        shell: bash
         run: |
           register() {
             local jar="$1" user="$2" pass="$3"
