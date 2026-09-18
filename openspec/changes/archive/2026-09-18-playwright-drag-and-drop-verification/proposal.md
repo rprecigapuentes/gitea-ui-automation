@@ -39,3 +39,13 @@ Given explicit permission to try a JavaScript-based workaround, the "confirmed, 
 - `ProjectBoardPage.moveCard` (unmodified, still exactly as it was for Selenium) already tries `dragAndDrop` first and only calls `dispatchDragEvents` if the drop didn't reach the server — so once that fallback was real, `moveCard` worked correctly on Playwright with **zero page-object changes needed**.
 - `dragCardOnto` (the new method from the first pass) was **removed** — it existed only to isolate the drag from `moveCard`'s retry choreography while diagnosing the failure, and became unnecessary once the real fallback made that choreography work as designed. `project-board.page.ts` ends this stage completely unmodified.
 - The spec now calls `pageObjects.projectBoardPage.moveCard(...)` directly, with no `test.skip` for any browser. Confirmed stable across repeated runs (firefox: 3/3; full suite: 2/2, 15/15 each) — chrome/edge also occasionally need the same fallback (a stray timing miss on the primary manual-mouse attempt), and it recovers them just as reliably.
+
+## Follow-up: no try/finally in the test, a real utils location, and tags
+
+Three review comments on the work above:
+
+- **No `try`/`finally` in a test.** The spec's org/repo/issue seeding and cleanup moved out of the test body into a new fixture file, `services/playwright-native/fixtures/hooks-fixtures.ts`: `seededOrganizationWithRepositories` runs its precondition before `use()` and its postcondition after, which Playwright runs even when the test fails — no manual `try`/`finally` needed. This file is meant to hold every future hook the Playwright suites need, the same role `hooks.ts`'s `Before`/`After` blocks play for Cucumber.
+- **Tags pair a test with the fixture it needs.** `hooks-fixtures.ts` exports `PROJECT_BOARD_TAG = "@project-board"` (the exact tag `project-board.feature` already carries) right next to the fixture it belongs to. The spec tags its test with it via Playwright's own `test(title, { tag }, body)` API, so `npx playwright test --grep "@project-board"` selects it — the same filtering `cucumber-js --tags "@project-board"` already gives the Selenium suite.
+- **`strategies/playwright-html5-drag.util.ts` was misplaced** — sitting directly in `strategies/`, a sibling of the strategy classes, rather than in a `utils/` folder the way `core-selenium/utils/html5-drag.util.ts` is. Moved to `strategies/utils/html5-drag.util.ts`, mirroring `core-selenium`'s own layout for the same kind of file.
+
+`business-logic/pages/projects/project-board.page.ts` is untouched by this follow-up too.

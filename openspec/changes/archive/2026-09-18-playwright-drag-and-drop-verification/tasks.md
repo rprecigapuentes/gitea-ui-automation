@@ -33,3 +33,12 @@
 - [x] 5.4 Removed `dragCardOnto` and its `test.skip` for firefox: no longer needed once the fallback was real, so `project-board.page.ts` ends this stage completely unmodified (confirmed via `git diff` against its pre-stage state)
 - [x] 5.5 Ran firefox three times and the full suite twice more to confirm stability — 100% pass rate; chrome/edge occasionally need the same fallback too (a stray timing miss on the primary attempt), and it recovers them just as reliably
 - [x] 5.6 Re-verified typecheck, lint, and the full `playwright-native` suite (15/15 passed, no skips)
+
+## 6. Follow-up: no try/finally, real hooks fixture, tags, and a proper utils location
+
+- [x] 6.1 Moved `strategies/playwright-html5-drag.util.ts` to `strategies/utils/html5-drag.util.ts`, mirroring `core-selenium/utils/html5-drag.util.ts`'s layout; updated the one import in `playwright-interaction.strategy.ts`
+- [x] 6.2 Wrote `services/playwright-native/fixtures/hooks-fixtures.ts`, extending `fixtures/fixture.ts`'s `test`: a `seededOrganizationWithRepositories` fixture runs its setup before `use()` and its teardown after, the same precondition/postcondition the spec's `try`/`finally` used to do by hand
+- [x] 6.3 Exported `PROJECT_BOARD_TAG = "@project-board"` from that file, next to the fixture it pairs with — the same tag `project-board.feature` already carries
+- [x] 6.4 Tagged the spec's test with it via Playwright's `test(title, { tag }, body)`; confirmed `npx playwright test --grep "@project-board"` selects exactly this test
+- [x] 6.5 Removed the `try`/`finally` from `project-board-drag-and-drop.spec.ts` entirely — the test now only calls page objects and asserts
+- [x] 6.6 Re-verified typecheck, lint, and the full `playwright-native` suite (15/15 passed) plus the tag filter running the one test in isolation
