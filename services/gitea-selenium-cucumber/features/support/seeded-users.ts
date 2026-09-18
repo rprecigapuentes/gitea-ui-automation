@@ -1,4 +1,5 @@
-import { UserClient } from "@gitea-automation/business-logic-selenium/api/clients/user.client";
+import { UserClient } from "@gitea-automation/business-logic/clients/user.client";
+import { RequestStrategyFactory } from "@gitea-automation/core-api-client/request-strategy.factory";
 import { uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.util";
 import { resolveAdminToken } from "./credentials";
 
@@ -15,7 +16,9 @@ const SEEDED_USER_COUNT = 2;
 let seededUsers: SeededUser[] = [];
 
 function adminClient(): UserClient {
-  return new UserClient(process.env.GITEA_BASE_URL!, resolveAdminToken());
+  return new UserClient(
+    RequestStrategyFactory.got(process.env.GITEA_BASE_URL!, resolveAdminToken()),
+  );
 }
 
 function seededUsername(index: number): string {
@@ -28,11 +31,7 @@ export async function createSeededUsers(): Promise<void> {
 
   for (let index = 1; index <= SEEDED_USER_COUNT; index += 1) {
     const username = seededUsername(index);
-    const { body: user } = await client.createUser(
-      username,
-      `${username}@example.com`,
-      SEEDED_USER_PASSWORD,
-    );
+    const user = await client.createUser(username, `${username}@example.com`, SEEDED_USER_PASSWORD);
     created.push({ id: user.id, username, password: SEEDED_USER_PASSWORD });
   }
 

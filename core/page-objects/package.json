@@ -1,0 +1,20 @@
+{
+  "name": "@gitea-automation/core-page-objects",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": "./*.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@gitea-automation/core-logger": "*",
+    "@playwright/test": "^1.63.0",
+    "selenium-webdriver": "^4.48.0"
+  },
+  "devDependencies": {
+    "@types/selenium-webdriver": "^4.35.6"
+  }
+}

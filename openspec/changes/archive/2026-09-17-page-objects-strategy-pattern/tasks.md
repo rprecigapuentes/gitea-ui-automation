@@ -1,0 +1,43 @@
+## 1. Scaffolding, interfaces, both strategies, Context classes
+
+- [x] 1.1 Create `core/page-objects/package.json` (`@gitea-automation/core-page-objects`, `exports: {"./*": "./*.ts"}`, deps on `core-logger`/`core-selenium`/`selenium-webdriver`/`@playwright/test`) and `tsconfig.json`; verify `npm install` links the workspace
+- [x] 1.2 Write `element-handle.interface.ts` (`IElementHandle`) and `interaction-strategy.interface.ts` (`IInteractionStrategy`, locators as `string`, including the four new methods `queryAll`/`waitFor`/`waitForUrl`/`executeScript`)
+- [x] 1.3 Write `base-component.ts`/`base.page.ts` (the Context classes: constructor-injected `strategy: IInteractionStrategy`, every method a one-line delegate)
+- [x] 1.4 Write `selenium-interaction.strategy.ts` (real port of `core/selenium/ui/base-pages/base-component.ts`'s logic — stale-element retry, `lookupTails` dedup, drag handling — wrapping `WebElement`s into `IElementHandle` only after the retry loop) and `playwright-interaction.strategy.ts` (every interface method stubbed with `console.log` + a type-satisfying placeholder return, never throwing); delete the two placeholder files (`selenium-base-component.strategy.ts`, `playwright-base-component.strategy.ts`) they replace
+- [x] 1.5 Write `createSeleniumStrategy(driver)`/`createPlaywrightStrategy(page)` factory functions
+- [x] 1.6 Verify `npm run typecheck -w @gitea-automation/core-page-objects` passes standalone and nothing else in the repo changes
+
+## 2. Migrate authentication/ + common/
+
+- [x] 2.1 Migrate `login.page.ts`, `main.page.ts`, `common/fragments/nav-bar.fragment.ts`: base-class import → `core-page-objects`, locators → strings, constructor → injected `strategy`, the two direct `this.driver.getCurrentUrl()` calls → `this.getCurrentUrl()`
+- [x] 2.2 Wire `createSeleniumStrategy(driver)` into `page.factory.ts` and `fixture.ts` for these 3 classes' construction sites
+- [x] 2.3 Verify `npm run typecheck --workspaces --if-present` is green (confirmed); grep confirms zero Selenium references left in the 3 migrated files; a smoke script instantiating all 3 with `createPlaywrightStrategy` and calling their methods (`login()`, `getUrl()`, `waitForElements()`) ran clean, only `[playwright] ...` logs, no throw — running the actual Cucumber/Vitest login scenarios against a real Gitea instance was not done from this environment (no reachable test instance here); do that functional run in your own environment before trusting this stage fully
+
+## 3. Migrate issues/
+
+- [x] 3.1 Migrate `issue.page.ts`, `issue-list.page.ts`, `create-issue.page.ts`, `label-list.page.ts`, `milestone-list.page.ts`, `fragments/label-chip.fragment.ts`, `fragments/sidebar-combo.fragment.ts` — this is where `queryAll`/`waitFor`/`waitForUrl`/`executeScript` get their first real call sites, and `LabelChipFragment`'s `WebElement` root becomes `IElementHandle`
+- [x] 3.2 Update `page.factory.ts`/`fixture.ts` construction for these 5 exposed classes (`SidebarComboFragment`/`LabelChipFragment` are internal-only, never constructed by the factory/fixture directly)
+- [x] 3.3 Verify typecheck green (confirmed) and zero Selenium references left (confirmed, one code-comment mention only); a smoke script exercising every new method (`queryAll`, `waitFor`, `waitForUrl`, the rewritten `executeScript` call) against `createPlaywrightStrategy` ran clean — only `[playwright] ...` logs and the pages' own expected business-logic errors (e.g. "the due date input never took the date", correct behavior when a stub always returns `""`), no TypeError or missing-method crash; running the real issues/labels/milestones suites against a live Gitea instance was not done from this environment — do that before trusting this stage fully
+
+## 4. Migrate organizations/
+
+- [x] 4.1 Migrate `create-organization.page.ts` (normalize its 4 `By.id`/inconsistent-`By.css` locators to plain `#id` strings), `organization-dashboard.page.ts`, `facade/organization.facade.ts`, and the 5 `organizations/fragments/*.fragment.ts` files — also found and closed an escape hatch the plan didn't anticipate: `specific-team.fragment.ts` checked Selenium's `seleniumError.ElementClickInterceptedError` directly, so a new shared `InteractionInterceptedError` was added to `core-page-objects` (thrown by `SeleniumInteractionStrategy.click`), and the fragment now checks that instead
+- [x] 4.2 Update `page.factory.ts`/`fixture.ts` construction for these 7 classes, including `OrganizationFacade`'s multi-fragment constructor forwarding `strategy` to each injected fragment
+- [x] 4.3 Verify typecheck and lint green (confirmed) and zero Selenium references left (confirmed); a smoke script exercising all 8 classes (including the facade and the new `InteractionInterceptedError` path) against `createPlaywrightStrategy` ran clean; running organization/team suites against a live Gitea instance, including `services/gitea-selenium-vitest/tests/organizations.test.ts`'s direct fragment import, was not done from this environment — do that before trusting this stage fully
+
+## 5. Migrate projects/
+
+- [x] 5.1 Migrate `create-project.page.ts`, `project-list.page.ts`, `project-board.page.ts`, `fragments/project-column.fragment.ts` — fix every mid-method `this.driver` → `this.strategy` in `project-board.page.ts`'s 5 `ProjectColumnFragment.byTitle`/`.default` call sites, and change `getCardsLocator(): By` to `(): string`
+- [x] 5.2 Update `page.factory.ts` construction for these 4 classes (confirmed `gitea-selenium-vitest`'s `fixture.ts`/tests never reference any projects/ class, so nothing to change there)
+- [x] 5.3 Verify typecheck and lint green (confirmed) and zero Selenium references left (confirmed); a smoke script exercising `moveCard` (including the Firefox-style drag-fallback path) against `createPlaywrightStrategy` ran clean; running the real project-board suite against a live Gitea instance was not done from this environment — do that before trusting this stage fully
+
+## 6. Migrate repositories/
+
+- [x] 6.1 Migrate `create-repository.page.ts` and the 5 `repositories/fragments/*.fragment.ts` files; leave `create-repository.page.ts`'s `getUrl()` throwing `"Method not implemented."` as-is
+- [x] 6.2 Update `page.factory.ts` construction for these 6 classes (confirmed `gitea-selenium-vitest`'s `fixture.ts`/tests never reference any repositories/ class, so nothing to change there)
+- [x] 6.3 Verify typecheck and lint green (confirmed) and zero Selenium references left (confirmed); a smoke script exercising all 6 classes against `createPlaywrightStrategy` ran clean; running the real repository suites against a live Gitea instance was not done from this environment — do that before trusting this stage fully
+
+## 7. Retire the old Selenium-only base classes
+
+- [x] 7.1 Delete `core/selenium/ui/base-pages/base-component.ts` and `base.page.ts`
+- [x] 7.2 Verify `npm run typecheck --workspaces --if-present` and `npm run lint` are green (confirmed), grep confirms zero remaining imports of `@gitea-automation/core-selenium/ui/base-pages/*` anywhere in the repo (confirmed), `core-selenium`'s own typecheck still passes (confirmed — the export map's `ui/*` glob still resolves `drivers/`/`utils/`). Ran the real suites against a locally reachable Gitea instance: `gitea-selenium-vitest`'s full chrome suite — 4/4 test files, 4/4 tests passed (login, organizations+teams+navbar, issue metadata with labels/milestone/assignee, scoped labels) — real Chrome via real Selenium WebDriver, exercising stages 2-4's migrated classes end to end. `gitea-selenium-cucumber`'s `@smoke`-tagged scenarios — 4/5 passed (Create Organization, Create teams for an existing organization, Add a user to a team, Create a repository for an existing organization); the fifth ("Add a repository to a team") failed on "When I add the following repositories to each team:" — a **pre-existing, already-documented failure**, not a regression: `openspec/changes/cucumber-demo-e2e/design.md`'s Risks/Trade-offs section records this exact step failing "before this change and after it." Did not run the large `@e2e` "Change team members permissions" scenario or the firefox/edge browsers from this environment — recommend running those too before merging.

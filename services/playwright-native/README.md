@@ -8,13 +8,31 @@ UI automation against Gitea with Playwright's native test runner (`@playwright/t
 - `allurerc.js` and the `allure-playwright` reporter, the same Allure 3 setup the Selenium suites use. `npm run report` turns `allure-results/` into a single-file `allure-report/index.html`, and each result carries the project it ran on, so a failure names its browser without opening the job log.
 - `chrome`, `firefox` and `edge` project configs, matching the browser matrix the Selenium services already cover. `chrome` and `edge` set `channel: 'chrome'` and `channel: 'msedge'`, so each drives the real product. Without a channel, `Desktop Chrome` and `Desktop Edge` both resolve to Playwright's bundled Chromium, and two of the three results would be the same engine under different names. Firefox needs no channel: the bundled build is Firefox. The branded browsers are a separate install (`npx playwright install chrome msedge`); on CT the job runs inside `mcr.microsoft.com/playwright`, which already carries the bundled ones and their system libraries, and adds those two on top.
 
+## Custom fixtures
+
+`fixtures/fixture.ts` extends `@playwright/test`'s own `test` with five fixtures:
+
+- `strategy: IInteractionStrategy` — Playwright's own `page` fixture wrapped with `InteractionStrategyFactory.playwright` from [`@gitea-automation/core-page-objects`](../../core/page-objects/README.md).
+- `clients` — the 7 Gitea API clients (`organizations`, `repositories`, `issues`, `labels`, `teams`, `milestones`, `users`), each built via `RequestStrategyFactory.playwright` from [`@gitea-automation/core-api-client`](../../core/api-client/README.md), sharing one `PlaywrightRequestStrategy` instance — plus `auth: AuthClient`, which stays `got`-based (see that package's README for why it's out of the Strategy pattern).
+- `pageObjects: PageFactory` — [`@gitea-automation/business-logic/pages/page.factory.ts`](../../business-logic/README.md), built from `strategy` and `scenarioState`.
+- `scenarioState: ScenarioState` — starts as `{}` per test, same type the other two suites use.
+- `sessionManager` — `loginAs(username, password)`, `loginAsOwner()`, `logout()`. A test says who to log in as, not how — the same shape as `gitea-selenium-vitest`'s `sessionManager` fixture. Underneath, `fixtures/session.util.ts`'s `applySession`/`clearSession` do the same cookie dance `gitea-selenium-vitest`'s `session.util.ts` does for a `WebDriver` (`AuthClient.loginViaApi` → clear cookies → set the returned ones → reload), just through `BrowserContext.addCookies`/`clearCookies` instead of `driver.manage()`.
+
+```ts
+import { test, expect } from "../fixtures/fixture";
+
+test("...", async ({ sessionManager, pageObjects, scenarioState }) => {
+  await sessionManager.loginAsOwner();
+});
+```
+
 ## Running it
 
 ```bash
 npm test -w @gitea-automation/playwright-native
 ```
 
-runs the smoke on all three browsers in one process. Browser binaries are installed separately, not as part of `npm install`:
+runs every spec (`gitea-smoke.spec.ts`, `login-api.spec.ts`, `login-ui.spec.ts`) on all three browsers in one process. Browser binaries are installed separately, not as part of `npm install`:
 
 ```bash
 npx playwright install firefox        # the bundled build
@@ -32,7 +50,7 @@ npm run test:edge -w @gitea-automation/playwright-native
 npm run test:parallel -w @gitea-automation/playwright-native   # the three above, concurrently
 ```
 
-Each of `test:chrome`/`test:firefox`/`test:edge` sets `BROWSER=<name>` in its process, the same convention `gitea-selenium-vitest`'s `session-credentials.util.ts` reads to pick a browser-specific Gitea account. Nothing here resolves that yet — there is no Gitea test or Playwright client to consume it — but a future one can read `process.env.BROWSER` the same way.
+`fixtures/credentials.ts`'s `resolveOwnerCredentials`/`resolveOwnerToken` pick a browser-specific Gitea account, but not from an env var: `npm test` runs all three projects in one worker process, where an env var can't vary per project. They take the project name as a parameter instead, sourced from Playwright's own `testInfo.project.name` — the same convention whether a test runs standalone (`test:chrome`), as part of `test:parallel`, or all three together via plain `npm test`.
 
 To watch the browsers instead of running headless, add `:headed` (sets `HEADED=1`, which `playwright.config.ts` reads to turn `headless` off):
 
@@ -43,6 +61,28 @@ npm run test:parallel:headed -w @gitea-automation/playwright-native   # all thre
 
 or pass `--headed` directly to any single-browser script, e.g. `npm run test:chrome -w @gitea-automation/playwright-native -- --headed`.
 
-## When page objects start here
+## UI tests
 
-This project can reuse `@gitea-automation/business-logic-selenium/api/entities/**` (Gitea entities — tool-agnostic; the clients extend `GiteaApiClient` from `core-selenium`, so a Playwright client layer would need its own base, likely in `@gitea-automation/core-playwright`) as a reference. It cannot reuse `@gitea-automation/core-selenium/**` or `@gitea-automation/business-logic-selenium/ui/pages/**` (built on `selenium-webdriver`'s `WebDriver`/`By`, incompatible with Playwright's `Page`/`Locator`). The reserved packages for this are already scaffolded: [`core/playwright`](../../core/playwright/README.md) (empty, sibling of `core/selenium`) and [`business-logic/playwright`](../../business-logic/playwright/README.md) (empty, sibling of `business-logic/selenium`) — that's where this project's driver/base-pages and page objects/clients go when work starts.
+`login-api.spec.ts` proves the `clients` fixture end to end (`PlaywrightRequestStrategy`, real HTTP against the local Gitea instance) and drives real browser state via `context.addCookies` — but it asserts through Playwright's own `page`/`expect`, not through `pageObjects`.
+
+`login-ui.spec.ts` drives a real login the same way the Selenium suites do: `pageObjects.loginPage.open()`/`.login(...)`, asserted through `pageObjects.mainPage.hasExpectedElementsDisplayed()`/`navBar.getCurrentOrganization()`. `PlaywrightInteractionStrategy` (see [`@gitea-automation/core-page-objects`](../../core/page-objects/README.md)) is fully implemented, so any existing Selenium-driven page-object flow can be exercised here without touching a page object — porting more of the Selenium suites' scenarios to this service is a separate, later stage.
+
+`project-board-drag-and-drop.spec.ts` replicates the Cucumber suite's project-board drag-and-drop smoke (`project-board.feature`'s "A card dragged onto another column is kept there by the board"): it creates a Basic Kanban project and assigns both seeded issues to it through `pageObjects`, then moves the first card into "In Progress" with `pageObjects.projectBoardPage.moveCard(issueId, columnTitle)` — the same, unmodified method the Selenium suites use. It passes on all three browsers: the manual mouse drag lands directly on chrome and edge, and `moveCard`'s own fallback to `dispatchDragEvents` (now a real native-event-dispatch implementation, see the core-page-objects README's "Playwright strategy notes") reliably recovers it on firefox.
+
+## Hooks fixtures
+
+`fixtures/hooks-fixtures.ts` is where a test's precondition/postcondition setup lives, instead of a `try`/`finally` in the test body: Playwright tears a fixture's setup down (the code after `use()`) even when the test fails, so no manual cleanup handling is needed in the test itself. It extends `fixtures/fixture.ts`'s own `test`, the same way `fixture.ts` extends `@playwright/test`'s.
+
+Each fixture here is paired with a tag a test opts into with `{ tag }` — the same idea as the Cucumber suite's own `Before({ tags: ... })` hooks in `hooks.ts`, so a fixture's precondition only runs for a test that actually declared it needs it:
+
+- `PROJECT_BOARD_TAG` (`"@project-board"`, mirroring `project-board.feature`'s own tag) pairs with the `seededOrganizationWithRepositories` fixture — one organization, two repositories, one issue in each, torn down after the test.
+
+```ts
+import { test, expect, PROJECT_BOARD_TAG } from "../fixtures/hooks-fixtures";
+
+test("...", { tag: PROJECT_BOARD_TAG }, async ({ seededOrganizationWithRepositories }) => {
+  const { organizationName, repositories } = seededOrganizationWithRepositories;
+});
+```
+
+A test can filter to just this tag the same way Cucumber does with `--tags`: `npx playwright test --grep "@project-board"`.

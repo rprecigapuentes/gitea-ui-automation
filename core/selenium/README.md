@@ -1,38 +1,31 @@
 # @gitea-automation/core-selenium
 
-Selenium WebDriver framework: driver lifecycle, base page/component classes, BrowserStack integration. No Gitea-specific knowledge — that's `@gitea-automation/business-logic-selenium`.
+Selenium WebDriver framework: driver lifecycle, BrowserStack integration. No Gitea-specific knowledge — that's `@gitea-automation/business-logic`.
+
+Used to also hold `ui/base-pages/` (`BaseComponent`/`BasePage`) and `api/gitea-client.client.ts` (`GiteaApiClient`) — those were retired once `@gitea-automation/core-page-objects` and `@gitea-automation/core-api-client` replaced them with technology-agnostic equivalents every page object and API client in the monorepo now extends instead. `utils/html5-drag.util.ts` moved there too, into `core-page-objects/strategies/utils/`, alongside its Playwright counterpart — the only thing that ever imported it was the Selenium strategy, already living in that package. See [`core/page-objects/README.md`](../page-objects/README.md) and [`core/api-client/README.md`](../api-client/README.md).
 
 ## Structure
 
 ```
 core/selenium/
-├── ui/
-│   ├── base-pages/   # BaseComponent (find/click/type) + BasePage (+URL) + Navigable
-│   └── drivers/       # driver.factory.ts — builds/quits a WebDriver (chrome/firefox/edge), remote grid + BrowserStack support
-├── api/
-│   └── gitea-client.client.ts   # abstract GiteaApiClient: shared got instance, auth header, request/response logging
-└── config/
+├── drivers/
+│   └── driver.factory.ts   # builds/quits a WebDriver (chrome/firefox/edge), remote grid + BrowserStack support
+└── browserstack-config/
     └── browserstack.config.ts   # credentials, hubUrl, bstackOptions(), setSessionStatus() (WebDriver-typed — why this lives here, not in core-config)
 ```
 
-`ui/`+`api/` is a layer split kept from the previous `core/` design — `ui/` is what any Selenium page object builds on, `api/` is what any Gitea API client builds on. `config/` holds BrowserStack config specifically because `setSessionStatus()` needs a real `WebDriver`.
-
-## Why `GiteaApiClient` lives here and not in `business-logic-selenium`
-
-It's shared HTTP framework (the `got` instance setup, the `Authorization: token` header, logging hooks) — not knowledge of any specific Gitea endpoint. The concrete clients that extend it (`IssueClient`, `LabelClient`, etc.) are the ones with real endpoint knowledge, and those live in `@gitea-automation/business-logic-selenium/api/clients/`.
+No `ui/` wrapper anymore — `drivers/` and the retired `utils/` were the only thing inside it, so the folder said nothing a flatter structure didn't already say. `config/` renamed to `browserstack-config/` for the same reason: everything in it is BrowserStack-specific, and the old name didn't say that.
 
 ## Dependencies
 
-`@gitea-automation/core-logger` (for request/response logging in `gitea-client.client.ts` and `base-component.ts`), `selenium-webdriver`, `got` (used by `gitea-client.client.ts`).
+`selenium-webdriver`. Nothing else — `got` and `@gitea-automation/core-logger` were only needed by the now-retired `api/gitea-client.client.ts`.
 
 ## Imports
 
 ```ts
-import { DriverFactory } from "@gitea-automation/core-selenium/ui/drivers/driver.factory";
-import { BasePage } from "@gitea-automation/core-selenium/ui/base-pages/base.page";
-import { GiteaApiClient } from "@gitea-automation/core-selenium/api/gitea-client.client";
+import { DriverFactory } from "@gitea-automation/core-selenium/drivers/driver.factory";
 import {
   isBrowserStack,
   setSessionStatus,
-} from "@gitea-automation/core-selenium/config/browserstack.config";
+} from "@gitea-automation/core-selenium/browserstack-config/browserstack.config";
 ```

@@ -1,6 +1,6 @@
-import type { SeededRepository } from "@gitea-automation/business-logic-selenium/state/scenario.entity";
-import type { SeededLabel } from "@gitea-automation/business-logic-selenium/api/entities/label.entity";
-import type { SeededMilestone } from "@gitea-automation/business-logic-selenium/api/entities/milestone.entity";
+import type { SeededRepository } from "@gitea-automation/business-logic/state/scenario.entity";
+import type { SeededLabel } from "@gitea-automation/business-logic/entities/label.entity";
+import type { SeededMilestone } from "@gitea-automation/business-logic/entities/milestone.entity";
 import type { GiteaWorld } from "./world";
 
 export function organizationName(world: GiteaWorld): string {

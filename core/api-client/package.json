@@ -1,0 +1,16 @@
+{
+  "name": "@gitea-automation/core-api-client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": "./*.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "got": "^16.0.0",
+    "@playwright/test": "^1.63.0"
+  }
+}

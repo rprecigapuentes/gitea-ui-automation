@@ -1,7 +1,7 @@
 import { describe, expect } from "vitest";
-import { OrgTab } from "@gitea-automation/business-logic-selenium/ui/pages/organizations/fragments/org-navigation.fragment";
-import { Organization } from "@gitea-automation/business-logic-selenium/api/entities/organization.entity";
-import { Team } from "@gitea-automation/business-logic-selenium/api/entities/team.entity";
+import { OrgTab } from "@gitea-automation/business-logic/pages/organizations/fragments/org-navigation.fragment";
+import { Organization } from "@gitea-automation/business-logic/entities/organization.entity";
+import { Team } from "@gitea-automation/business-logic/entities/team.entity";
 import { test } from "../src/fixtures/fixture";
 import * as allure from "allure-js-commons";
 import "dotenv/config";

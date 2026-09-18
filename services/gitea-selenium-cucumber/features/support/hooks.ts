@@ -4,18 +4,20 @@ import { Before, BeforeAll, After, AfterAll, setDefaultTimeout } from "@cucumber
 // Allure API below reach the report instead of a no-op.
 import "allure-cucumberjs";
 import { parameter } from "allure-js-commons";
-import { DriverFactory } from "@gitea-automation/core-selenium/ui/drivers/driver.factory";
-import { OrganizationClient } from "@gitea-automation/business-logic-selenium/api/clients/organizations.client";
-import { RepositoryClient } from "@gitea-automation/business-logic-selenium/api/clients/repository.client";
-import { IssueClient } from "@gitea-automation/business-logic-selenium/api/clients/issue.client";
-import { TeamClient } from "@gitea-automation/business-logic-selenium/api/clients/team.client";
-import { MilestoneClient } from "@gitea-automation/business-logic-selenium/api/clients/milestone.client";
+import { DriverFactory } from "@gitea-automation/core-selenium/drivers/driver.factory";
+import { OrganizationClient } from "@gitea-automation/business-logic/clients/organizations.client";
+import { RepositoryClient } from "@gitea-automation/business-logic/clients/repository.client";
+import { IssueClient } from "@gitea-automation/business-logic/clients/issue.client";
+import { TeamClient } from "@gitea-automation/business-logic/clients/team.client";
+import { MilestoneClient } from "@gitea-automation/business-logic/clients/milestone.client";
+import { InteractionStrategyFactory } from "@gitea-automation/core-page-objects/interaction-strategy.factory";
+import { RequestStrategyFactory } from "@gitea-automation/core-api-client/request-strategy.factory";
 import type {
   ScenarioState,
   SeededRepository,
-} from "@gitea-automation/business-logic-selenium/state/scenario.entity";
+} from "@gitea-automation/business-logic/state/scenario.entity";
 import { testDataName, uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.util";
-import { PageFactory } from "./page.factory";
+import { PageFactory } from "@gitea-automation/business-logic/pages/page.factory";
 import { resolveOwnerToken } from "./credentials";
 import { createSeededUsers, deleteSeededUsers } from "./seeded-users";
 import type { GiteaWorld } from "./world";
@@ -44,15 +46,14 @@ function ownerClients(): {
   teams: TeamClient;
   milestones: MilestoneClient;
 } {
-  const baseUrl = process.env.GITEA_BASE_URL!;
-  const token = resolveOwnerToken();
+  const strategy = RequestStrategyFactory.got(process.env.GITEA_BASE_URL!, resolveOwnerToken());
 
   return {
-    organizations: new OrganizationClient(baseUrl, token),
-    repositories: new RepositoryClient(baseUrl, token),
-    issues: new IssueClient(baseUrl, token),
-    teams: new TeamClient(baseUrl, token),
-    milestones: new MilestoneClient(baseUrl, token),
+    organizations: new OrganizationClient(strategy),
+    repositories: new RepositoryClient(strategy),
+    issues: new IssueClient(strategy),
+    teams: new TeamClient(strategy),
+    milestones: new MilestoneClient(strategy),
   };
 }
 
@@ -71,7 +72,7 @@ async function seedOrganizationWithIssues(world: GiteaWorld, prefix: string): Pr
     await repositoryClient.createOrganizationRepository(organizationName, repositoryName);
 
     const title = testDataName("S2-SMK-ISS", `Issue-${index}`);
-    const { body: issue } = await issues.createIssue(organizationName, repositoryName, title);
+    const issue = await issues.createIssue(organizationName, repositoryName, title);
 
     repositories.push({
       name: repositoryName,
@@ -99,7 +100,8 @@ Before(async function (this: GiteaWorld) {
   this.driver = await DriverFactory.getDriver();
   const scenarioState: ScenarioState = {};
   this.scenarioState = scenarioState;
-  this.pages = new PageFactory(this.driver, scenarioState);
+  this.pages = new PageFactory(InteractionStrategyFactory.selenium(this.driver), scenarioState);
+  this.organizationClient = ownerClients().organizations;
 });
 
 Before({ tags: PROJECT_BOARD_TAG }, async function (this: GiteaWorld) {
@@ -116,11 +118,11 @@ Before({ tags: DEMO_E2E_TAG }, async function (this: GiteaWorld) {
   const dueDate = new Date(Date.now() + SEEDED_MILESTONE_DUE_DAYS * MS_PER_DAY);
   const title = testDataName("S2-DEMO-MS", "Release");
 
-  const { body: milestone } = await milestones.createMilestone(
-    organization.name,
-    firstRepository.name,
-    { title, description: "Demo end to end", due_on: dueDate.toISOString() },
-  );
+  const milestone = await milestones.createMilestone(organization.name, firstRepository.name, {
+    title,
+    description: "Demo end to end",
+    due_on: dueDate.toISOString(),
+  });
 
   this.scenarioState.milestone = {
     id: milestone.id,

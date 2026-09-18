@@ -67,71 +67,6 @@ Every suite SHALL produce a test report and publish it under a name that identif
 - **WHEN** a suite's tests fail
 - **THEN** its report is still generated and published
 
-### Requirement: Suites reach the browser through the healing proxy
-
-A suite SHALL address the browser through Healenium's proxy rather than the Selenium server directly, so that a locator whose target has drifted can be resolved against a stored baseline instead of failing the test.
-
-#### Scenario: A suite starts a session
-
-- **WHEN** a suite requests a browser session
-- **THEN** the request is made to the healing proxy
-- **AND** the proxy forwards it to the Selenium server that runs in the same job
-
-#### Scenario: A locator no longer matches but a baseline exists
-
-- **WHEN** a locator fails to match any element
-- **AND** the healing store holds a node path recorded for that locator on an earlier run
-- **THEN** the session continues against the best-scoring candidate
-- **AND** the substitution is recorded in the healing store
-
-#### Scenario: The healing path is not available
-
-- **WHEN** the proxy does not become ready, or cannot reach the healing store
-- **THEN** the job fails before any test executes
-- **AND** the failure names the unreachable component
-
-### Requirement: The healing store outlives the run
-
-The workflow SHALL treat the healing store as an external, persistent service. It MUST NOT create the store as part of a run, because a store created per run holds no baseline from any earlier run and can therefore never heal.
-
-#### Scenario: A run records a baseline
-
-- **WHEN** a suite resolves a locator successfully
-- **THEN** the node path it resolved to is written to the external store
-- **AND** it remains available to a later, separate workflow run
-
-#### Scenario: The store is unavailable
-
-- **WHEN** the external store cannot be reached at the start of a job
-- **THEN** the job fails rather than proceeding with healing silently disabled
-
-### Requirement: A run publishes what the healing proxy did in each of its sessions
-
-For every browser session a suite opens through the healing proxy, the workflow SHALL publish the proxy's log for that session and the store's report for it, as part of the same artifact that carries the suite's report. It SHALL do so whether the suite passed or failed, and SHALL summarize the heals in the run's log so that a reader does not need the artifact to know whether anything was healed. The summary SHALL be derived from the proxy's log, which records every heal, rather than from the store's report, which the proxy leaves empty when it saves a heal without a session key.
-
-#### Scenario: A session healed a locator
-
-- **WHEN** a suite's session resolved at least one locator through a stored baseline
-- **THEN** the run's log names, for that session, the locator that failed, the locator it was healed to, and the score of the substitution, read from the proxy's log
-- **AND** the artifact holds the proxy's log lines for that session and the store's report for it
-
-#### Scenario: A session healed nothing
-
-- **WHEN** a suite's session resolved every locator directly
-- **THEN** the run's log states that the session recorded no heal
-- **AND** the artifact still holds the proxy's log lines for that session
-
-#### Scenario: The suite failed before the evidence was collected
-
-- **WHEN** the suite's step fails
-- **THEN** the evidence for every session it opened is still collected and published
-
-#### Scenario: The evidence cannot be collected
-
-- **WHEN** the proxy or the store does not answer the request for a session's evidence
-- **THEN** the run reports which session's evidence is missing
-- **AND** the suite's own outcome decides the job, not the missing evidence
-
 ### Requirement: A suite's test entry point drives every browser the framework supports
 
 The `test` script of every test-bearing workspace SHALL run the suite on each browser the framework supports, so that the workflow covers the same browsers for every suite without knowing how a suite is organized internally. Every result a suite publishes SHALL name the browser it ran on.
@@ -147,3 +82,24 @@ The `test` script of every test-bearing workspace SHALL run the suite on each br
 - **WHEN** the suite's report is generated
 - **THEN** each of the three results of a scenario carries the name of its browser
 - **AND** a reader can tell which browser a failure belongs to without opening the job log
+
+### Requirement: A suite reaches the browser through the Selenium server its own job starts
+
+A suite SHALL address the Selenium server started alongside it in the same job. The job SHALL fail before any test executes when that server does not report itself ready, and the failure SHALL name the component that did not answer.
+
+#### Scenario: A suite starts a session
+
+- **WHEN** a suite requests a browser session
+- **THEN** the request is made to the Selenium server running in the same job
+
+#### Scenario: The browser never becomes ready
+
+- **WHEN** the Selenium server does not report itself ready within the job's wait
+- **THEN** the job fails before any test executes
+- **AND** the failure names the server that did not answer
+
+#### Scenario: A locator no longer matches any element
+
+- **WHEN** a locator fails to match any element
+- **THEN** the test fails on that locator
+- **AND** no substitute element is resolved on its behalf

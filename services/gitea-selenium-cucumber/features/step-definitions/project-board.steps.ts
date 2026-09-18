@@ -1,7 +1,7 @@
 import { Given, When, Then } from "@cucumber/cucumber";
 import { expect } from "vitest";
 import { testDataName } from "@gitea-automation/core-data-handler/data-handler.util";
-import type { SeededRepository } from "@gitea-automation/business-logic-selenium/state/scenario.entity";
+import type { SeededRepository } from "@gitea-automation/business-logic/state/scenario.entity";
 import { resolveOwnerCredentials } from "../support/credentials";
 import type { GiteaWorld } from "../support/world";
 

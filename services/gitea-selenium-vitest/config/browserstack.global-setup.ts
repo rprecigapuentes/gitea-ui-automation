@@ -3,7 +3,7 @@ import { Local } from "browserstack-local";
 import {
   credentials,
   localIdentifier,
-} from "@gitea-automation/core-selenium/config/browserstack.config";
+} from "@gitea-automation/core-selenium/browserstack-config/browserstack.config";
 
 export default async function setup(): Promise<() => Promise<void>> {
   const tunnel = new Local();

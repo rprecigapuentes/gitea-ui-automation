@@ -227,6 +227,12 @@ jobs:
 
     env:
       GITEA_BASE_URL: http://gitea-test:3000
+      GITEA_OWNER_CHROME: chrome-owner
+      GITEA_OWNER_CHROME_PASSWORD: Qa-bot-not-a-secret-1
+      GITEA_OWNER_FIREFOX: firefox-owner
+      GITEA_OWNER_FIREFOX_PASSWORD: Qa-bot-not-a-secret-1
+      GITEA_OWNER_EDGE: edge-owner
+      GITEA_OWNER_EDGE_PASSWORD: Qa-bot-not-a-secret-1
 
     steps:
       - uses: actions/checkout@v4
@@ -250,6 +256,46 @@ jobs:
           done
           echo "gitea-test never became healthy"
           exit 1
+
+      - name: Register the browser accounts and mint their API tokens
+        # A container job's steps default to sh, which doesn't support ${!var} indirection -
+        # the selenium job's identical script gets bash for free by running directly on the
+        # runner instead of in a container.
+        shell: bash
+        run: |
+          register() {
+            local jar="$1" user="$2" pass="$3"
+            csrf=$(curl -fsS -c "$jar" "$GITEA_BASE_URL/user/sign_up" \
+              | sed -n 's/.*name="_csrf" value="\([^"]*\)".*/\1/p' | head -1)
+            curl -fsS -b "$jar" -o /dev/null \
+              -X POST "$GITEA_BASE_URL/user/sign_up" \
+              --data-urlencode "_csrf=$csrf" \
+              --data-urlencode "user_name=$user" \
+              --data-urlencode "email=$user@example.com" \
+              --data-urlencode "password=$pass" \
+              --data-urlencode "retype=$pass"
+            curl -fsS -u "$user:$pass" "$GITEA_BASE_URL/api/v1/user" > /dev/null
+            echo "account $user is usable"
+          }
+
+          # Gitea makes the first user of a fresh instance an administrator, so this one
+          # registers before the browser accounts and none of them inherits the privilege.
+          register "/tmp/gitea-pw-admin.jar" "pw-admin" "Qa-admin-not-a-secret-1"
+
+          for b in CHROME FIREFOX EDGE; do
+            owner_user="GITEA_OWNER_$b"; owner_pass="GITEA_OWNER_${b}_PASSWORD"
+
+            register "/tmp/gitea-$b-owner.jar" "${!owner_user}" "${!owner_pass}"
+
+            token=$(curl -fsS -u "${!owner_user}:${!owner_pass}" \
+              -H "Content-Type: application/json" \
+              -X POST "$GITEA_BASE_URL/api/v1/users/${!owner_user}/tokens" \
+              -d '{"name":"continuous-testing","scopes":["write:user","write:repository","write:issue","write:organization"]}' \
+              | node -pe 'JSON.parse(require("fs").readFileSync(0, "utf8")).sha1')
+            echo "::add-mask::$token"
+            echo "GITEA_TOKEN_$b=$token" >> "$GITHUB_ENV"
+            echo "token minted for ${!owner_user}"
+          done
 
       - name: Run the suite
         run: npm test -w @gitea-automation/${{ matrix.suite }}

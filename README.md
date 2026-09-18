@@ -5,22 +5,21 @@ An `npm workspaces` monorepo grouping Gitea UI/API automation into several indep
 ```
 /
 ├── core/                          # organizational only — each subfolder is its own package
-│   ├── selenium/                   # @gitea-automation/core-selenium — Selenium driver, base pages, BrowserStack
-│   ├── playwright/                 # @gitea-automation/core-playwright — reserved, empty
+│   ├── selenium/                   # @gitea-automation/core-selenium — Selenium driver, drivers/utils/browserstack-config
+│   ├── page-objects/                # @gitea-automation/core-page-objects — Strategy pattern: interfaces, Context classes, strategies/, InteractionStrategyFactory
+│   ├── api-client/                  # @gitea-automation/core-api-client — same pattern, for Gitea API clients, strategies/, RequestStrategyFactory
 │   ├── config/                     # @gitea-automation/core-config — Gitea app config, tool-agnostic
 │   ├── data-handler/               # @gitea-automation/core-data-handler — test-data naming, tool-agnostic
 │   └── logger/                     # @gitea-automation/core-logger — logging, tool-agnostic
-├── business-logic/                # organizational only — each subfolder is its own package
-│   ├── selenium/                   # @gitea-automation/business-logic-selenium — concrete Gitea pages + API clients/entities
-│   └── playwright/                 # @gitea-automation/business-logic-playwright — reserved, empty
+├── business-logic/                # @gitea-automation/business-logic — a single package: clients/, pages/, entities/, state/
 ├── services/
 │   ├── gitea-selenium-vitest/     # Selenium + Vitest — active project, full suite
 │   ├── gitea-selenium-cucumber/   # Selenium + Cucumber (BDD) — under construction
-│   ├── playwright-native/         # reserved — no code yet
+│   ├── playwright-native/         # Playwright's native test runner — clients/strategy/pages/scenarioState fixtures, a login-via-API test
 │   └── playwright-bdd/            # reserved — no code yet
 ```
 
-`core/` and `business-logic/` are **not workspaces themselves** — no `package.json` at that level, purely folders for organizing their subfolder-packages. Each subfolder underneath them is.
+`core/` is **not a workspace itself** — no `package.json` at that level, purely a folder for organizing its subfolder-packages, each of which is. `business-logic/` **is** a workspace — one package, holding everything technology-agnostic that used to be split across two.
 
 ## Installation
 
@@ -28,7 +27,7 @@ An `npm workspaces` monorepo grouping Gitea UI/API automation into several indep
 npm install
 ```
 
-Installs the dependencies of every workspace (5 under `core/`, 2 under `business-logic/`, and the 4 services) in one shot.
+Installs the dependencies of every workspace (6 under `core/`, `business-logic` itself, and the 4 services) in one shot.
 
 ## Root scripts (delegate to the matching workspace)
 
@@ -50,12 +49,12 @@ Installs the dependencies of every workspace (5 under `core/`, 2 under `business
 
 ## Each project
 
-- **[core](core/README.md)** — organizational root for 5 packages: [`core-selenium`](core/selenium/README.md) (Selenium driver + base pages), [`core-playwright`](core/playwright/README.md) (reserved), [`core-config`](core/config/README.md), [`core-data-handler`](core/data-handler/README.md), [`core-logger`](core/logger/README.md) — all tool-and-domain-agnostic except `core-selenium`.
-- **[business-logic](business-logic/README.md)** — organizational root for 2 packages: [`business-logic-selenium`](business-logic/selenium/README.md) (concrete Gitea page objects + API clients/entities, shared by every Selenium-based service below — neither `gitea-selenium-vitest` nor `gitea-selenium-cucumber` keeps its own copy) and [`business-logic-playwright`](business-logic/playwright/README.md) (reserved).
+- **[core](core/README.md)** — organizational root for 6 packages: [`core-selenium`](core/selenium/README.md) (Selenium driver + BrowserStack config), [`core-page-objects`](core/page-objects/README.md) (the Strategy pattern for page objects: interfaces, Context classes, `strategies/` for both tools, `InteractionStrategyFactory`), [`core-api-client`](core/api-client/README.md) (the same pattern for Gitea API clients, `RequestStrategyFactory`), [`core-config`](core/config/README.md), [`core-data-handler`](core/data-handler/README.md), [`core-logger`](core/logger/README.md) — all tool-and-domain-agnostic except `core-selenium` (and `core-page-objects`/`core-api-client`, deliberately, since those bridge the two tools).
+- **[business-logic](business-logic/README.md)** — one package, `@gitea-automation/business-logic`: `clients/` and `entities/` (Gitea API clients, technology-agnostic — every one but `auth.client.ts` runs against either `GotRequestStrategy` or `PlaywrightRequestStrategy`), `state/` (cross-step scenario state), `pages/` (concrete Gitea page objects, technology-agnostic via `core-page-objects`'s Strategy pattern — one `LoginPage`/`IssuePage`/etc. class runs against either Selenium or Playwright depending on which strategy it's constructed with, plus `PageFactory` to assemble them). Used to be two packages split by a technology distinction (`api`/`common`) that no longer applies; none of `gitea-selenium-vitest`, `gitea-selenium-cucumber`, or `playwright-native` keeps its own copy of any of it.
 - **[services/gitea-selenium-vitest](services/gitea-selenium-vitest/README.md)** — the original suite: Selenium WebDriver + Vitest, BrowserStack, Allure, multi-account/multi-browser credentials. Full documentation in its own README.
 - **[services/gitea-selenium-cucumber](services/gitea-selenium-cucumber/README.md)** — Selenium + Cucumber (BDD/Gherkin). Login, organizations (teams, repositories, and assigning one to the other) and project-board features, tagged `@smoke`/`@e2e`, run across all 3 browsers; still growing.
-- **[services/playwright-native](services/playwright-native/README.md)** — Playwright's own test runner against the same Gitea, on real Chrome, Firefox and Edge. A smoke suite today: `core-playwright` and `business-logic-playwright` stay reserved until it grows page objects.
-- **services/playwright-bdd** — reserved for a future Playwright + BDD suite. An empty workspace (just a `package.json`), no code or dependencies.
+- **[services/playwright-native](services/playwright-native/README.md)** — Playwright's native test runner (chrome/firefox/edge, `npm test`), now wired to the shared abstractions: `clients`/`strategy`/`pages`/`scenarioState` fixtures and a real login-via-API test (`AuthClient` + `context.addCookies`). A UI-driven test still needs `core-page-objects`'s Playwright strategy to be more than a stub.
+- **services/playwright-bdd** — reserved for a future Playwright-based BDD suite. Today it's an empty workspace (just a `package.json`), no code or dependencies.
 
 ## CI/CD
 
@@ -67,7 +66,7 @@ Installs the dependencies of every workspace (5 under `core/`, 2 under `business
 
 ### Which suites `ct.yml` runs
 
-Every service workspace that exposes a `test` script, split across two jobs by how the suite reaches a browser. The `selenium` job runs `gitea-selenium-vitest` and `gitea-selenium-cucumber` against a Selenium server it starts beside them. The `playwright` job runs `playwright-native` inside `mcr.microsoft.com/playwright`, which carries the browsers Playwright launches in-process, and installs the real Chrome and Edge on top; that image tag tracks the `@playwright/test` version in `package-lock.json` and is bumped with it. `playwright-bdd` exposes no `test` script and is skipped until it does — adding it to CI is adding that script, not editing the workflow.
+`ct.yml`'s matrix is hardcoded to `gitea-selenium-vitest` and `gitea-selenium-cucumber` — it does not discover suites by scanning for a `test` script. `playwright-native` has one now (`example.spec.ts` against playwright.dev, `login-api.spec.ts` against a real Gitea instance) but isn't wired into this workflow; doing so needs both adding it to the matrix/`workflow_dispatch` choices here and installing real browsers on the runner rather than relying on the Selenium grid service this workflow already spins up (Playwright doesn't speak WebDriver, so it can't reuse that container the way the two Selenium suites do). `playwright-bdd` still exposes no `test` script at all.
 
 The cron run covers all of them. A manual dispatch takes a `suite` input to run exactly one; leaving it at `all` runs the lot. Suites run one at a time, and the `playwright` job waits on the `selenium` job so a single VPS never hosts two applications under test at once — but it runs whatever that job's outcome was. A failing suite does not cancel the others, so a red Cucumber run still leaves you the vitest report. Each publishes its own artifact, named `allure-report-<suite>`.
 

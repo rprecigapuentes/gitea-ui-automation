@@ -1,0 +1,176 @@
+import type { IInteractionStrategy } from "@gitea-automation/core-page-objects/interaction-strategy.interface";
+import { LoginPage } from "./authentication/login.page";
+import { MainPage } from "./common/main.page";
+import { NavBarFragment } from "./common/fragments/nav-bar.fragment";
+import { OrganizationDashboardPage } from "./organizations/organization-dashboard.page";
+import { IssuePage } from "./issues/issue.page";
+import { CreateIssuePage } from "./issues/create-issue.page";
+import { IssueListPage } from "./issues/issue-list.page";
+import { LabelListPage } from "./issues/label-list.page";
+import { MilestoneListPage } from "./issues/milestone-list.page";
+import { CreateProjectPage } from "./projects/create-project.page";
+import { ProjectListPage } from "./projects/project-list.page";
+import { ProjectBoardPage } from "./projects/project-board.page";
+import { CreateOrganizationPage } from "./organizations/create-organization.page";
+import { CreateRepositoryPage } from "./repositories/create-repository.page";
+import { OrgNavigationFragment } from "./organizations/fragments/org-navigation.fragment";
+import { OrgRepositoriesFragment } from "./organizations/fragments/org-repositories.fragment";
+import { OrgTeamsFragment } from "./organizations/fragments/org-teams.fragment";
+import { NewTeamFragment } from "./organizations/fragments/new-team.fragment";
+import { SpecificTeamFragment } from "./organizations/fragments/specific-team.fragment";
+import { RepoNavBarFragment } from "./repositories/fragments/repo-nav-bar.fragment";
+import { RepoCodeTabFragment } from "./repositories/fragments/repo-code-tab.fragment";
+import { CreateRepoFileFragment } from "./repositories/fragments/create-repo-file.fragment";
+import { RepoFileFragment } from "./repositories/fragments/repo-file.fragment";
+import { ForkPromptFragment } from "./repositories/fragments/fork-prompt.fragment";
+import { OrganizationFacade } from "./organizations/facade/organization.facade";
+import type { Organization } from "../entities/organization.entity";
+import type { ScenarioState } from "../state/scenario.entity";
+
+export class PageFactory {
+  #loginPage?: LoginPage;
+  #mainPage?: MainPage;
+  #navBar?: NavBarFragment;
+  #issuePage?: IssuePage;
+  #createIssuePage?: CreateIssuePage;
+  #issueListPage?: IssueListPage;
+  #labelListPage?: LabelListPage;
+  #milestoneListPage?: MilestoneListPage;
+  #createProjectPage?: CreateProjectPage;
+  #projectListPage?: ProjectListPage;
+  #projectBoardPage?: ProjectBoardPage;
+  #createOrganizationPage?: CreateOrganizationPage;
+  #createRepositoryPage?: CreateRepositoryPage;
+  #organizationDashboardPage?: OrganizationDashboardPage;
+  #orgNavigation?: OrgNavigationFragment;
+  #orgRepositories?: OrgRepositoriesFragment;
+  #orgTeams?: OrgTeamsFragment;
+  #orgNewTeam?: NewTeamFragment;
+  #orgSpecificTeam?: SpecificTeamFragment;
+  #repoNavBar?: RepoNavBarFragment;
+  #repoCodeTab?: RepoCodeTabFragment;
+  #createRepoFile?: CreateRepoFileFragment;
+  #repoFile?: RepoFileFragment;
+  #forkPrompt?: ForkPromptFragment;
+  #orgFacade?: OrganizationFacade;
+
+  constructor(
+    private readonly strategy: IInteractionStrategy,
+    private readonly scenarioState: ScenarioState,
+  ) {}
+
+  private requireOrganization(): Organization {
+    if (!this.scenarioState.organization) {
+      throw new Error("organization is not set in scenarioState");
+    }
+    return this.scenarioState.organization;
+  }
+
+  get loginPage(): LoginPage {
+    return (this.#loginPage ??= new LoginPage(this.strategy));
+  }
+
+  get mainPage(): MainPage {
+    return (this.#mainPage ??= new MainPage(this.strategy));
+  }
+
+  get navBar(): NavBarFragment {
+    return (this.#navBar ??= new NavBarFragment(this.strategy));
+  }
+
+  get issuePage(): IssuePage {
+    return (this.#issuePage ??= new IssuePage(this.strategy));
+  }
+
+  get createIssuePage(): CreateIssuePage {
+    return (this.#createIssuePage ??= new CreateIssuePage(this.strategy));
+  }
+
+  get issueListPage(): IssueListPage {
+    return (this.#issueListPage ??= new IssueListPage(this.strategy));
+  }
+
+  get labelListPage(): LabelListPage {
+    return (this.#labelListPage ??= new LabelListPage(this.strategy));
+  }
+
+  get milestoneListPage(): MilestoneListPage {
+    return (this.#milestoneListPage ??= new MilestoneListPage(this.strategy));
+  }
+
+  get createProjectPage(): CreateProjectPage {
+    return (this.#createProjectPage ??= new CreateProjectPage(this.strategy));
+  }
+
+  get projectListPage(): ProjectListPage {
+    return (this.#projectListPage ??= new ProjectListPage(this.strategy));
+  }
+
+  get projectBoardPage(): ProjectBoardPage {
+    return (this.#projectBoardPage ??= new ProjectBoardPage(this.strategy));
+  }
+
+  get createOrganizationPage(): CreateOrganizationPage {
+    return (this.#createOrganizationPage ??= new CreateOrganizationPage(this.strategy));
+  }
+
+  get createRepositoryPage(): CreateRepositoryPage {
+    return (this.#createRepositoryPage ??= new CreateRepositoryPage(this.strategy));
+  }
+
+  get organizationDashboardPage(): OrganizationDashboardPage {
+    return (this.#organizationDashboardPage ??= new OrganizationDashboardPage(this.strategy));
+  }
+
+  get orgNavigation(): OrgNavigationFragment {
+    return (this.#orgNavigation ??= new OrgNavigationFragment(this.strategy));
+  }
+
+  get orgRepositories(): OrgRepositoriesFragment {
+    return (this.#orgRepositories ??= new OrgRepositoriesFragment(this.strategy));
+  }
+
+  get orgTeams(): OrgTeamsFragment {
+    return (this.#orgTeams ??= new OrgTeamsFragment(this.strategy));
+  }
+
+  get orgNewTeam(): NewTeamFragment {
+    return (this.#orgNewTeam ??= new NewTeamFragment(this.strategy));
+  }
+
+  get orgSpecificTeam(): SpecificTeamFragment {
+    return (this.#orgSpecificTeam ??= new SpecificTeamFragment(this.strategy));
+  }
+
+  get repoNavBar(): RepoNavBarFragment {
+    return (this.#repoNavBar ??= new RepoNavBarFragment(this.strategy));
+  }
+
+  get repoCodeTab(): RepoCodeTabFragment {
+    return (this.#repoCodeTab ??= new RepoCodeTabFragment(this.strategy));
+  }
+
+  get createRepoFile(): CreateRepoFileFragment {
+    return (this.#createRepoFile ??= new CreateRepoFileFragment(this.strategy));
+  }
+
+  get repoFile(): RepoFileFragment {
+    return (this.#repoFile ??= new RepoFileFragment(this.strategy));
+  }
+
+  get forkPrompt(): ForkPromptFragment {
+    return (this.#forkPrompt ??= new ForkPromptFragment(this.strategy));
+  }
+
+  get orgFacade(): OrganizationFacade {
+    return (this.#orgFacade ??= new OrganizationFacade(
+      this.strategy,
+      this.requireOrganization(),
+      this.orgNavigation,
+      this.orgRepositories,
+      this.orgTeams,
+      this.orgNewTeam,
+      this.orgSpecificTeam,
+    ));
+  }
+}

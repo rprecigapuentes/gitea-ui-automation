@@ -1,5 +1,5 @@
 import { WebDriver } from "selenium-webdriver";
-import { AuthClient } from "@gitea-automation/business-logic-selenium/api/clients/auth.client";
+import { AuthClient } from "@gitea-automation/business-logic/clients/auth.client";
 
 export async function applySession(
   driver: WebDriver,

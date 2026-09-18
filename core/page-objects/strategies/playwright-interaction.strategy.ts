@@ -1,0 +1,266 @@
+import { Page, Locator } from "@playwright/test";
+import { IElementHandle } from "../element-handle.interface";
+import { IInteractionStrategy } from "../interaction-strategy.interface";
+import { simulateHtml5Drag } from "./utils/playwright-html5-drag.util";
+
+const DEFAULT_TIMEOUT_MS = 5000;
+const POLL_INTERVAL_MS = 100;
+
+async function poll(predicate: () => Promise<boolean>, timeoutMs: number): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs;
+  while (!(await predicate())) {
+    if (Date.now() >= deadline) return false;
+    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+  }
+  return true;
+}
+
+function toElementHandle(locator: Locator): IElementHandle {
+  return {
+    click: () => locator.click(),
+    getText: async () => (await locator.textContent()) ?? "",
+    getAttribute: async (name: string) => (await locator.getAttribute(name)) ?? "",
+    isSelected: () => locator.isChecked(),
+    isDisplayed: () => locator.isVisible(),
+    clear: () => locator.clear(),
+    sendKeys: (text: string) => locator.fill(text),
+    findElement: (childLocator: string) =>
+      Promise.resolve(toElementHandle(locator.locator(childLocator))),
+    findElements: async (childLocator: string) =>
+      (await locator.locator(childLocator).all()).map(toElementHandle),
+  };
+}
+
+export class PlaywrightInteractionStrategy implements IInteractionStrategy {
+  constructor(private readonly page: Page) {}
+
+  findElement(locator: string, root?: IElementHandle): Promise<IElementHandle> {
+    if (root) return root.findElement(locator);
+    return Promise.resolve(toElementHandle(this.page.locator(locator)));
+  }
+
+  async findElements(locator: string, root?: IElementHandle): Promise<IElementHandle[]> {
+    if (root) return root.findElements(locator);
+    return (await this.page.locator(locator).all()).map(toElementHandle);
+  }
+
+  async click(locator: string, root?: IElementHandle, timeoutMs?: number): Promise<void> {
+    if (root) {
+      await (await root.findElement(locator)).click();
+      return;
+    }
+    await this.page.locator(locator).click({ timeout: timeoutMs });
+  }
+
+  async type(
+    locator: string,
+    text: string,
+    root?: IElementHandle,
+    timeoutMs?: number,
+  ): Promise<void> {
+    await this.page.locator(locator).fill(text, { timeout: timeoutMs });
+  }
+
+  async clearAndType(
+    locator: string,
+    text: string,
+    root?: IElementHandle,
+    timeoutMs?: number,
+  ): Promise<void> {
+    await this.page.locator(locator).fill(text, { timeout: timeoutMs });
+  }
+
+  // Moving the mouse by hand, not Locator.dragTo(), because Gitea's board only reacts to a real,
+  // gradual mousemove/mouseup sequence, not the native HTML5 DragEvents dragTo() dispatches instead.
+  async dragAndDrop(sourceLocator: string, targetLocator: string): Promise<void> {
+    const sourceBox = await this.page.locator(sourceLocator).boundingBox();
+    const targetBox = await this.page.locator(targetLocator).boundingBox();
+
+    if (!sourceBox || !targetBox) {
+      throw new Error("dragAndDrop could not resolve a bounding box for its source or target");
+    }
+
+    await this.page.mouse.move(
+      sourceBox.x + sourceBox.width / 2,
+      sourceBox.y + sourceBox.height / 2,
+    );
+    await this.page.mouse.down();
+    await this.page.mouse.move(
+      targetBox.x + targetBox.width / 2,
+      targetBox.y + targetBox.height / 2,
+      { steps: 10 },
+    );
+    await this.page.mouse.up();
+  }
+
+  /** For a browser whose automation protocol moves the pointer and never emits the drop (Firefox). */
+  async dispatchDragEvents(sourceLocator: string, targetLocator: string): Promise<void> {
+    await simulateHtml5Drag(this.page.locator(sourceLocator), this.page.locator(targetLocator));
+  }
+
+  async getText(locator: string, root?: IElementHandle, timeoutMs?: number): Promise<string> {
+    if (root) return (await root.findElement(locator)).getText();
+    return (await this.page.locator(locator).textContent({ timeout: timeoutMs })) ?? "";
+  }
+
+  async getAttribute(
+    locator: string,
+    attributeName: string,
+    root?: IElementHandle,
+    timeoutMs?: number,
+  ): Promise<string> {
+    if (root) return (await root.findElement(locator)).getAttribute(attributeName);
+    return (
+      (await this.page.locator(locator).getAttribute(attributeName, { timeout: timeoutMs })) ?? ""
+    );
+  }
+
+  async isVisible(
+    locators: string | string[],
+    root?: IElementHandle,
+    timeoutMs?: number,
+  ): Promise<boolean> {
+    const list = Array.isArray(locators) ? locators : [locators];
+    // Playwright treats a `timeout` of 0 as "no timeout" (wait forever), the opposite of the
+    // callers here that pass 0 meaning "check right now" — so that case skips waitFor entirely.
+    const results = await Promise.all(
+      list.map((locator) =>
+        timeoutMs === 0
+          ? this.page.locator(locator).isVisible()
+          : this.page
+              .locator(locator)
+              .waitFor({ state: "visible", timeout: timeoutMs })
+              .then(() => true)
+              .catch(() => false),
+      ),
+    );
+    return results.every(Boolean);
+  }
+
+  waitUntil(
+    predicate: () => Promise<boolean>,
+    timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  ): Promise<boolean> {
+    return poll(predicate, timeoutMs);
+  }
+
+  async actAndWaitUntil(
+    action: () => Promise<void>,
+    predicate: () => Promise<boolean>,
+    timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  ): Promise<void> {
+    await action();
+    await this.waitFor(predicate, timeoutMs);
+  }
+
+  async clickAndWaitUntil(
+    clickLocator: string,
+    predicate: () => Promise<boolean>,
+    root?: IElementHandle,
+    timeoutMs?: number,
+  ): Promise<void> {
+    await this.actAndWaitUntil(
+      () => this.click(clickLocator, root, timeoutMs),
+      predicate,
+      timeoutMs,
+    );
+  }
+
+  async actAndWaitFor(
+    action: () => Promise<void>,
+    readyLocators: string[],
+    root?: IElementHandle,
+    timeoutMs?: number,
+  ): Promise<IElementHandle[]> {
+    await action();
+    return Promise.all(
+      readyLocators.map(async (locator) => {
+        if (root) return root.findElement(locator);
+        const target = this.page.locator(locator);
+        await target.waitFor({ timeout: timeoutMs });
+        return toElementHandle(target);
+      }),
+    );
+  }
+
+  clickAndWaitFor(
+    clickLocator: string,
+    readyLocators: string[],
+    root?: IElementHandle,
+    timeoutMs?: number,
+  ): Promise<IElementHandle[]> {
+    return this.actAndWaitFor(
+      () => this.click(clickLocator, root, timeoutMs),
+      readyLocators,
+      root,
+      timeoutMs,
+    );
+  }
+
+  typeAndWaitFor(
+    typeLocator: string,
+    text: string,
+    readyLocators: string[],
+    root?: IElementHandle,
+    timeoutMs?: number,
+  ): Promise<IElementHandle[]> {
+    return this.actAndWaitFor(
+      () => this.type(typeLocator, text, root, timeoutMs),
+      readyLocators,
+      root,
+      timeoutMs,
+    );
+  }
+
+  async clickAndWaitForUrl(
+    clickLocator: string,
+    urlPattern: RegExp,
+    root?: IElementHandle,
+    timeoutMs?: number,
+  ): Promise<void> {
+    await Promise.all([
+      this.page.waitForURL(urlPattern, { timeout: timeoutMs }),
+      this.click(clickLocator, root, timeoutMs),
+    ]);
+  }
+
+  getCurrentUrl(): Promise<string> {
+    return Promise.resolve(this.page.url());
+  }
+
+  async reload(readyLocators: string[], timeoutMs?: number): Promise<void> {
+    await this.page.reload();
+    await Promise.all(
+      readyLocators.map((locator) => this.page.locator(locator).waitFor({ timeout: timeoutMs })),
+    );
+  }
+
+  async open(url: string, readyLocators: string[] = [], timeoutMs?: number): Promise<void> {
+    await this.page.goto(url);
+    await Promise.all(
+      readyLocators.map((locator) => this.page.locator(locator).waitFor({ timeout: timeoutMs })),
+    );
+  }
+
+  async queryAll(locator: string): Promise<IElementHandle[]> {
+    return (await this.page.locator(locator).all()).map(toElementHandle);
+  }
+
+  async waitFor(
+    predicate: () => Promise<boolean>,
+    timeoutMs: number,
+    message?: string,
+  ): Promise<void> {
+    if (!(await poll(predicate, timeoutMs))) {
+      throw new Error(message ?? `Timed out after ${timeoutMs}ms waiting for condition`);
+    }
+  }
+
+  async waitForUrl(pattern: RegExp | string, timeoutMs?: number): Promise<void> {
+    await this.page.waitForURL(pattern, { timeout: timeoutMs });
+  }
+
+  executeScript<T>(script: (...args: unknown[]) => T, ...args: unknown[]): Promise<T> {
+    return this.page.evaluate(script, args[0]);
+  }
+}
