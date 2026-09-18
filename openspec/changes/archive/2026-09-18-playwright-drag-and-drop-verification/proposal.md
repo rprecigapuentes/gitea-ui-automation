@@ -49,3 +49,12 @@ Three review comments on the work above:
 - **`strategies/playwright-html5-drag.util.ts` was misplaced** — sitting directly in `strategies/`, a sibling of the strategy classes, rather than in a `utils/` folder the way `core-selenium/utils/html5-drag.util.ts` is. Moved to `strategies/utils/html5-drag.util.ts`, mirroring `core-selenium`'s own layout for the same kind of file.
 
 `business-logic/pages/projects/project-board.page.ts` is untouched by this follow-up too.
+
+## Follow-up: both html5-drag utils in one folder
+
+One more review comment: `core-selenium/utils/html5-drag.util.ts` and `core-page-objects/strategies/utils/html5-drag.util.ts` (the file the previous follow-up just relocated) should sit together, not in two different packages. Confirmed via grep that `SeleniumInteractionStrategy` — already living in `core-page-objects` — was the only importer of the Selenium one anywhere in the repo, so there was no reason for it to live in a separate package.
+
+- Moved `core-selenium/utils/html5-drag.util.ts` into `core-page-objects/strategies/utils/selenium-html5-drag.util.ts`. The Playwright one was renamed from `utils/html5-drag.util.ts` to `utils/playwright-html5-drag.util.ts` so the two sit side by side without a name collision — the same `selenium-`/`playwright-` prefix the strategy files one level up already use.
+- Removed the now-empty `core-selenium/utils/` folder, its `"./utils/*"` export entry, and `core-page-objects`'s dependency on `@gitea-automation/core-selenium` — that dependency existed for this one file alone.
+- Updated `core/README.md`, `core/selenium/README.md`, and `core/page-objects/README.md` accordingly.
+- Verified with the Cucumber `@project-board` suite (unaffected — only the Selenium strategy's import path changed, not its behavior) in addition to the usual typecheck/lint/full `playwright-native` suite.

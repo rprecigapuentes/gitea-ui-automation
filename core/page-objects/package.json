@@ -11,7 +11,6 @@
   },
   "dependencies": {
     "@gitea-automation/core-logger": "*",
-    "@gitea-automation/core-selenium": "*",
     "@playwright/test": "^1.63.0",
     "selenium-webdriver": "^4.48.0"
   },

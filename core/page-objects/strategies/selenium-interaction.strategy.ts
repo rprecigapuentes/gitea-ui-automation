@@ -1,6 +1,6 @@
 import { WebDriver, By, WebElement, until, error as seleniumError } from "selenium-webdriver";
 import { logger } from "@gitea-automation/core-logger/pino.logger";
-import { simulateHtml5Drag } from "@gitea-automation/core-selenium/utils/html5-drag.util";
+import { simulateHtml5Drag } from "./utils/selenium-html5-drag.util";
 import { IElementHandle } from "../element-handle.interface";
 import { IInteractionStrategy } from "../interaction-strategy.interface";
 import { InteractionInterceptedError } from "../errors";

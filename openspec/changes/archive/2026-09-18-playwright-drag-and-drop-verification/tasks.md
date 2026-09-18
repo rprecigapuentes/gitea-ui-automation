@@ -42,3 +42,12 @@
 - [x] 6.4 Tagged the spec's test with it via Playwright's `test(title, { tag }, body)`; confirmed `npx playwright test --grep "@project-board"` selects exactly this test
 - [x] 6.5 Removed the `try`/`finally` from `project-board-drag-and-drop.spec.ts` entirely — the test now only calls page objects and asserts
 - [x] 6.6 Re-verified typecheck, lint, and the full `playwright-native` suite (15/15 passed) plus the tag filter running the one test in isolation
+
+## 7. Follow-up: put both html5-drag utils in the same folder
+
+- [x] 7.1 Moved `core-selenium/utils/html5-drag.util.ts` into `core-page-objects/strategies/utils/selenium-html5-drag.util.ts` — confirmed via grep that `SeleniumInteractionStrategy` (already in `core-page-objects`) was its only importer anywhere in the repo
+- [x] 7.2 Renamed the Playwright one from `utils/html5-drag.util.ts` to `utils/playwright-html5-drag.util.ts` so both tool-specific utils sit side by side in `strategies/utils/` without a name collision, mirroring the `selenium-interaction.strategy.ts`/`playwright-interaction.strategy.ts` naming already used one level up
+- [x] 7.3 Updated both strategies' imports to the new local paths; removed the now-empty `core-selenium/utils/` folder and its `"./utils/*"` export entry
+- [x] 7.4 Removed `@gitea-automation/core-selenium` from `core-page-objects/package.json` — it was a dependency only for this one file, which no longer lives there; `npm install` cleaned the lockfile accordingly
+- [x] 7.5 Updated `core/README.md`, `core/selenium/README.md`, `core/page-objects/README.md` to reflect the move and the dropped dependency
+- [x] 7.6 Re-verified typecheck, lint, the full `playwright-native` suite (15/15 passed), and the Cucumber `@project-board` suite as a regression check on `SeleniumInteractionStrategy`'s changed import (exit 0, unaffected)

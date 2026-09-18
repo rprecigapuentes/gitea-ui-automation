@@ -4,7 +4,7 @@ Purely organizational — **not an npm workspace itself** (no `package.json` her
 
 ```
 core/
-├── selenium/      @gitea-automation/core-selenium      — Selenium driver, drivers/utils/browserstack-config (WebDriver-coupled)
+├── selenium/      @gitea-automation/core-selenium      — Selenium driver, drivers/browserstack-config (WebDriver-coupled)
 ├── page-objects/  @gitea-automation/core-page-objects   — Strategy pattern: the interfaces + Context classes every page object extends, strategies/ for both tools, InteractionStrategyFactory
 ├── api-client/    @gitea-automation/core-api-client     — Strategy pattern: the interface + GiteaApiClient every API client extends, strategies/ for both tools, RequestStrategyFactory
 ├── config/        @gitea-automation/core-config         — Gitea app config (baseUrl), tool-agnostic
@@ -18,7 +18,7 @@ Each subfolder encapsulates exactly what it depends on: if a file has any real d
 
 `core/page-objects/` and `core/api-client/` are the two deliberate exceptions to "split by tool": each exists specifically to hold code that talks to _both_ tools (or neither, in the Context classes' case) behind one shared interface — see their own READMEs for why that's not a contradiction of the rule above. Each also holds both tools' concrete strategy implementations in its own `strategies/` subfolder, and a Factory (`InteractionStrategyFactory`, `RequestStrategyFactory`) as the one place that picks between them.
 
-`core/selenium/` used to also hold `ui/base-pages/` (`BaseComponent`/`BasePage`) and `api/gitea-client.client.ts` (`GiteaApiClient`); both were retired once `core/page-objects/` and `core/api-client/` replaced them for every page object and API client in the monorepo. What's left (`drivers/`, `utils/`, `browserstack-config/`) is genuinely Selenium-specific: driver lifecycle, the drag-event fallback, and BrowserStack session config — no `ui/` wrapper folder anymore, since those three were the only thing inside it.
+`core/selenium/` used to also hold `ui/base-pages/` (`BaseComponent`/`BasePage`), `api/gitea-client.client.ts` (`GiteaApiClient`), and `utils/html5-drag.util.ts`; all three were retired once `core/page-objects/` and `core/api-client/` replaced them — the drag util moved into `core/page-objects/strategies/utils/`, next to its Playwright counterpart, since the Selenium strategy that's its only caller already lives there. What's left (`drivers/`, `browserstack-config/`) is genuinely Selenium-specific: driver lifecycle and BrowserStack session config — no `ui/` wrapper folder anymore, since those two are the only thing inside it.
 
 ## Read each package's own README
 

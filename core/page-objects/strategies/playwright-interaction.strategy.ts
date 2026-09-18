@@ -1,7 +1,7 @@
 import { Page, Locator } from "@playwright/test";
 import { IElementHandle } from "../element-handle.interface";
 import { IInteractionStrategy } from "../interaction-strategy.interface";
-import { simulateHtml5Drag } from "./utils/html5-drag.util";
+import { simulateHtml5Drag } from "./utils/playwright-html5-drag.util";
 
 const DEFAULT_TIMEOUT_MS = 5000;
 const POLL_INTERVAL_MS = 100;
