@@ -61,8 +61,8 @@ npm run test:parallel:headed -w @gitea-automation/playwright-native   # all thre
 
 or pass `--headed` directly to any single-browser script, e.g. `npm run test:chrome -w @gitea-automation/playwright-native -- --headed`.
 
-## Current limitation: UI tests
+## UI tests
 
 `login-api.spec.ts` proves the `clients` fixture end to end (`PlaywrightRequestStrategy`, real HTTP against the local Gitea instance) and drives real browser state via `context.addCookies` — but it asserts through Playwright's own `page`/`expect`, not through `pageObjects`.
 
-`login-ui.spec.ts` drives a real login the same way the Selenium suites do: `pageObjects.loginPage.open()`/`.login(...)`, asserted through `pageObjects.mainPage.hasExpectedElementsDisplayed()`/`navBar.getCurrentOrganization()`. That needed `open`, `clickAndWaitForUrl`, `isVisible`, `getText`, and `getAttribute` real on top of `findElement`/`findElements`/`click`/`type` — every one of `PlaywrightInteractionStrategy`'s methods this login flow touches is real now. Everything else on `IInteractionStrategy` (`clearAndType`, drag-and-drop, the remaining `*AndWait*` compositions, `waitFor`/`waitForUrl` as standalone calls, `executeScript`) is still a stub.
+`login-ui.spec.ts` drives a real login the same way the Selenium suites do: `pageObjects.loginPage.open()`/`.login(...)`, asserted through `pageObjects.mainPage.hasExpectedElementsDisplayed()`/`navBar.getCurrentOrganization()`. `PlaywrightInteractionStrategy` (see [`@gitea-automation/core-page-objects`](../../core/page-objects/README.md)) is fully implemented, so any existing Selenium-driven page-object flow can be exercised here without touching a page object — porting more of the Selenium suites' scenarios to this service is a separate, later stage.

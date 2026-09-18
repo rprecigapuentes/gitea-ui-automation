@@ -1,4 +1,4 @@
-import { Page, Locator } from "@playwright/test";
+import { Page, Locator, expect } from "@playwright/test";
 import { IElementHandle } from "../element-handle.interface";
 import { IInteractionStrategy } from "../interaction-strategy.interface";
 
@@ -7,10 +7,10 @@ function toElementHandle(locator: Locator): IElementHandle {
     click: () => locator.click(),
     getText: async () => (await locator.textContent()) ?? "",
     getAttribute: async (name: string) => (await locator.getAttribute(name)) ?? "",
-    isSelected: () => Promise.resolve(false),
-    isDisplayed: () => Promise.resolve(false),
-    clear: () => Promise.resolve(),
-    sendKeys: () => Promise.resolve(),
+    isSelected: () => locator.isChecked(),
+    isDisplayed: () => locator.isVisible(),
+    clear: () => locator.clear(),
+    sendKeys: (text: string) => locator.fill(text),
     findElement: (childLocator: string) =>
       Promise.resolve(toElementHandle(locator.locator(childLocator))),
     findElements: async (childLocator: string) =>
@@ -48,37 +48,33 @@ export class PlaywrightInteractionStrategy implements IInteractionStrategy {
     await this.page.locator(locator).fill(text, { timeout: timeoutMs });
   }
 
-  clearAndType(
+  async clearAndType(
     locator: string,
     text: string,
     root?: IElementHandle,
     timeoutMs?: number,
   ): Promise<void> {
-    console.log("[playwright] clearAndType", locator, text, { root, timeoutMs });
-    return Promise.resolve();
+    await this.page.locator(locator).fill(text, { timeout: timeoutMs });
   }
 
-  dragAndDrop(
+  async dragAndDrop(
     sourceLocator: string,
     targetLocator: string,
     root?: IElementHandle,
     timeoutMs?: number,
   ): Promise<void> {
-    console.log("[playwright] dragAndDrop", sourceLocator, targetLocator, { root, timeoutMs });
-    return Promise.resolve();
+    await this.page
+      .locator(sourceLocator)
+      .dragTo(this.page.locator(targetLocator), { timeout: timeoutMs });
   }
 
-  dispatchDragEvents(
+  async dispatchDragEvents(
     sourceLocator: string,
     targetLocator: string,
     root?: IElementHandle,
     timeoutMs?: number,
   ): Promise<void> {
-    console.log("[playwright] dispatchDragEvents", sourceLocator, targetLocator, {
-      root,
-      timeoutMs,
-    });
-    return Promise.resolve();
+    await this.dragAndDrop(sourceLocator, targetLocator, root, timeoutMs);
   }
 
   async getText(locator: string, root?: IElementHandle, timeoutMs?: number): Promise<string> {
@@ -117,37 +113,50 @@ export class PlaywrightInteractionStrategy implements IInteractionStrategy {
   }
 
   waitUntil(predicate: () => Promise<boolean>, timeoutMs?: number): Promise<boolean> {
-    console.log("[playwright] waitUntil", { timeoutMs });
-    return Promise.resolve(false);
+    return expect
+      .poll(predicate, { timeout: timeoutMs })
+      .toBe(true)
+      .then(() => true)
+      .catch(() => false);
   }
 
-  actAndWaitUntil(
+  async actAndWaitUntil(
     action: () => Promise<void>,
     predicate: () => Promise<boolean>,
     timeoutMs?: number,
   ): Promise<void> {
-    console.log("[playwright] actAndWaitUntil", { timeoutMs });
-    return Promise.resolve();
+    await action();
+    await expect.poll(predicate, { timeout: timeoutMs }).toBe(true);
   }
 
-  clickAndWaitUntil(
+  async clickAndWaitUntil(
     clickLocator: string,
     predicate: () => Promise<boolean>,
     root?: IElementHandle,
     timeoutMs?: number,
   ): Promise<void> {
-    console.log("[playwright] clickAndWaitUntil", clickLocator, { root, timeoutMs });
-    return Promise.resolve();
+    await this.actAndWaitUntil(
+      () => this.click(clickLocator, root, timeoutMs),
+      predicate,
+      timeoutMs,
+    );
   }
 
-  actAndWaitFor(
+  async actAndWaitFor(
     action: () => Promise<void>,
     readyLocators: string[],
     root?: IElementHandle,
     timeoutMs?: number,
   ): Promise<IElementHandle[]> {
-    console.log("[playwright] actAndWaitFor", readyLocators, { root, timeoutMs });
-    return Promise.resolve([]);
+    await action();
+    return Promise.all(
+      readyLocators.map(async (locator) => {
+        if (root) return root.findElement(locator);
+        const target = this.page.locator(locator);
+        await target.waitFor({ timeout: timeoutMs });
+        return toElementHandle(target);
+      }),
+    );
   }
 
   clickAndWaitFor(
@@ -156,8 +165,12 @@ export class PlaywrightInteractionStrategy implements IInteractionStrategy {
     root?: IElementHandle,
     timeoutMs?: number,
   ): Promise<IElementHandle[]> {
-    console.log("[playwright] clickAndWaitFor", clickLocator, readyLocators, { root, timeoutMs });
-    return Promise.resolve([]);
+    return this.actAndWaitFor(
+      () => this.click(clickLocator, root, timeoutMs),
+      readyLocators,
+      root,
+      timeoutMs,
+    );
   }
 
   typeAndWaitFor(
@@ -167,8 +180,12 @@ export class PlaywrightInteractionStrategy implements IInteractionStrategy {
     root?: IElementHandle,
     timeoutMs?: number,
   ): Promise<IElementHandle[]> {
-    console.log("[playwright] typeAndWaitFor", typeLocator, readyLocators, { root, timeoutMs });
-    return Promise.resolve([]);
+    return this.actAndWaitFor(
+      () => this.type(typeLocator, text, root, timeoutMs),
+      readyLocators,
+      root,
+      timeoutMs,
+    );
   }
 
   async clickAndWaitForUrl(
@@ -184,13 +201,14 @@ export class PlaywrightInteractionStrategy implements IInteractionStrategy {
   }
 
   getCurrentUrl(): Promise<string> {
-    console.log("[playwright] getCurrentUrl");
-    return Promise.resolve("");
+    return Promise.resolve(this.page.url());
   }
 
-  reload(readyLocators: string[], timeoutMs?: number): Promise<void> {
-    console.log("[playwright] reload", readyLocators, { timeoutMs });
-    return Promise.resolve();
+  async reload(readyLocators: string[], timeoutMs?: number): Promise<void> {
+    await this.page.reload();
+    await Promise.all(
+      readyLocators.map((locator) => this.page.locator(locator).waitFor({ timeout: timeoutMs })),
+    );
   }
 
   async open(url: string, readyLocators: string[] = [], timeoutMs?: number): Promise<void> {
@@ -200,23 +218,23 @@ export class PlaywrightInteractionStrategy implements IInteractionStrategy {
     );
   }
 
-  queryAll(locator: string): Promise<IElementHandle[]> {
-    console.log("[playwright] queryAll", locator);
-    return Promise.resolve([]);
+  async queryAll(locator: string): Promise<IElementHandle[]> {
+    return (await this.page.locator(locator).all()).map(toElementHandle);
   }
 
-  waitFor(predicate: () => Promise<boolean>, timeoutMs: number, message?: string): Promise<void> {
-    console.log("[playwright] waitFor", { timeoutMs, message });
-    return Promise.resolve();
+  async waitFor(
+    predicate: () => Promise<boolean>,
+    timeoutMs: number,
+    message?: string,
+  ): Promise<void> {
+    await expect.poll(predicate, { timeout: timeoutMs, message }).toBe(true);
   }
 
-  waitForUrl(pattern: RegExp | string, timeoutMs?: number, message?: string): Promise<void> {
-    console.log("[playwright] waitForUrl", pattern, { timeoutMs, message });
-    return Promise.resolve();
+  async waitForUrl(pattern: RegExp | string, timeoutMs?: number): Promise<void> {
+    await this.page.waitForURL(pattern, { timeout: timeoutMs });
   }
 
   executeScript<T>(script: (...args: unknown[]) => T, ...args: unknown[]): Promise<T> {
-    console.log("[playwright] executeScript", { args });
-    return Promise.resolve(undefined as T);
+    return this.page.evaluate(script, args[0]);
   }
 }

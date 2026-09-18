@@ -1,6 +1,6 @@
 # @gitea-automation/core-page-objects
 
-The Strategy pattern that lets one page-object class run against either Selenium or Playwright: the shared interfaces, the two Context classes every page object extends, both tools' concrete strategies (one real, one a stub), and the Factory that picks between them.
+The Strategy pattern that lets one page-object class run against either Selenium or Playwright: the shared interfaces, the two Context classes every page object extends, both tools' concrete strategies (both real), and the Factory that picks between them.
 
 ## Why this package, and why it isn't split by tool
 
@@ -18,7 +18,7 @@ core/page-objects/
 ├── interaction-strategy.factory.ts     # InteractionStrategyFactory — the one place that picks a concrete strategy
 └── strategies/
     ├── selenium-interaction.strategy.ts    # SeleniumInteractionStrategy — real implementation, ported from core-selenium's former base-component.ts
-    └── playwright-interaction.strategy.ts  # PlaywrightInteractionStrategy — stub: every method logs and returns a placeholder, never throws
+    └── playwright-interaction.strategy.ts  # PlaywrightInteractionStrategy — real implementation, every method a direct Playwright API call
 ```
 
 ## The pattern
@@ -45,10 +45,10 @@ const loginPage = new LoginPage(strategy); // same LoginPage class either way
 - **`waitForUrl(pattern, timeoutMs?, message?)`** — waits for the current URL to match/contain `pattern`; `clickAndWaitForUrl` composes this instead of duplicating URL-wait logic.
 - **`executeScript(script, ...args)`** — runs a real function in the browser, for the one page that needed to read a Fomantic UI modal's live DOM state directly.
 
-## Current limitation
+## Playwright strategy notes
 
-`PlaywrightInteractionStrategy` is partially real: `findElement`, `findElements`, `click`, `type` (`Locator.fill`), `open` (`page.goto` + `Locator.waitFor`), `clickAndWaitForUrl` (`page.waitForURL` raced with the click), `isVisible` (`Locator.waitFor({ state: "visible" })`), `getText` (`Locator.textContent`), and `getAttribute` (`Locator.getAttribute`) all work against a live browser — enough for `LoginPage.login()` and `MainPage.hasExpectedElementsDisplayed()` to run for real, exercised by `services/playwright-native/tests/login-ui.spec.ts`. Every other method (`clearAndType`, drag-and-drop, the remaining `*AndWait*` compositions, `waitFor`/`waitForUrl` as standalone calls, `reload`, `executeScript`) still logs its call and returns a type-satisfying placeholder, as do `isSelected`/`isDisplayed`/`clear`/`sendKeys` on the Playwright element handle.
+`PlaywrightInteractionStrategy` maps every `IInteractionStrategy`/`IElementHandle` method to a direct Playwright API call, e.g. `type`/`clearAndType` → `Locator.fill` (fill already clears the field, so no separate `Locator.clear()` call), `dragAndDrop`/`dispatchDragEvents` → `Locator.dragTo` (Playwright's native drag primitive needs no manual event choreography, unlike the Selenium strategy's fallback), `queryAll` → `Locator.all`, and `waitFor`/`waitUntil`/`actAndWaitUntil` → `expect.poll(predicate, { timeout, message })`, Playwright's documented tool for waiting on an arbitrary async condition. No method holds a `try`/`catch`; the strategy has no reason to intercept a Playwright error and translate it, unlike the Selenium strategy's `resolveRoot()`.
 
 ## Dependencies
 
-`@gitea-automation/core-logger`, `@gitea-automation/core-selenium` (only for `utils/html5-drag.util.ts`, used by the Selenium strategy's drag fallback), `selenium-webdriver`, `@playwright/test` (for the `Page`/`Locator` types the Playwright strategy's constructor and `IElementHandle` implementation reference, even though its bodies are stubs).
+`@gitea-automation/core-logger`, `@gitea-automation/core-selenium` (only for `utils/html5-drag.util.ts`, used by the Selenium strategy's drag fallback), `selenium-webdriver`, `@playwright/test` (`Page`/`Locator` types and APIs the Playwright strategy and `IElementHandle` implementation use directly).

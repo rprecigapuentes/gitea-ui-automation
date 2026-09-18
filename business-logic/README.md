@@ -58,10 +58,6 @@ pages.loginPage.login(username, password);
 
 It never picks a strategy itself — whoever constructs it already has. `gitea-selenium-cucumber`'s `GiteaWorld.pages` and `playwright-native`'s `pages` fixture are both a `PageFactory` built this way, one from `InteractionStrategyFactory.selenium(driver)`, the other from `InteractionStrategyFactory.playwright(page)`.
 
-## Current limitation
-
-`PlaywrightInteractionStrategy` (in `core-page-objects`) is partially real: `findElement`/`findElements`/`click`/`type`/`open`/`clickAndWaitForUrl`/`isVisible`/`getText`/`getAttribute` drive a live browser, enough for `LoginPage.login()` and `MainPage.hasExpectedElementsDisplayed()` to work end to end. Everything else still logs and returns a placeholder.
-
 ## Dependencies
 
 `@gitea-automation/core-api-client` (`GiteaApiClient` for every `clients/` file except `auth.client.ts`), `@gitea-automation/core-page-objects` (`BaseComponent`/`BasePage`, `IInteractionStrategy`, `IElementHandle`), `@gitea-automation/core-config` (`baseUrl`), `@gitea-automation/core-logger` (for `auth.client.ts`), `got`, `tough-cookie` (`auth.client.ts`'s form-login + cookie jar).
