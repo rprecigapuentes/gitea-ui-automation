@@ -63,6 +63,7 @@ Installs the dependencies of every workspace (6 under `core/`, `business-logic` 
 - `ci.yml` — on every push/PR: `npm ci` + `format:check` + `lint` + `typecheck` across the whole monorepo. Never runs real tests, never blocked by external infra.
 - `ct.yml` — "Continuous Testing": two jobs, one per framework, each deploying its own disposable Gitea, then running that framework's suites. Manual dispatch + daily cron.
 - `bs.yml` — same as `ct.yml` but against BrowserStack (`gitea-selenium-vitest` only). Manual dispatch + weekly cron.
+- `accessibility.yml` — the `playwright-native` accessibility scans against a disposable Gitea, publishing `accessibility-scans` (the raw axe JSON plus the Allure report). Manual dispatch only: the scans produce evidence for a person to read, so they stay out of the scheduled run and out of its duration.
 
 ### Which suites `ct.yml` runs
 

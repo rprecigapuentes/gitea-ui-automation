@@ -1,0 +1,119 @@
+name: Accessibility
+
+# Dispatch only: the scans are read, not gated, so they stay out of the scheduled run.
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: accessibility
+  cancel-in-progress: true
+
+jobs:
+  accessibility:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    # The tag tracks the @playwright/test version in package-lock.json and is bumped with it.
+    container: mcr.microsoft.com/playwright:v1.63.0-noble
+
+    services:
+      gitea-test:
+        image: docker.gitea.com/gitea:1.27.3
+        env:
+          USER_UID: "1000"
+          USER_GID: "1000"
+          GITEA__server__ROOT_URL: http://gitea-test:3000/
+          GITEA__server__HTTP_PORT: "3000"
+          GITEA__server__START_SSH_SERVER: "false"
+          GITEA__database__DB_TYPE: sqlite3
+          GITEA__security__INSTALL_LOCK: "true"
+          GITEA__security__SECRET_KEY: gitea-test-not-a-secret
+          GITEA__service__DISABLE_REGISTRATION: "false"
+          GITEA__service__REGISTER_EMAIL_CONFIRM: "false"
+
+    env:
+      GITEA_BASE_URL: http://gitea-test:3000
+      # One account per browser project, and this workflow runs only the Chromium one.
+      GITEA_OWNER_CHROMIUM: chromium-owner
+      GITEA_OWNER_CHROMIUM_PASSWORD: Qa-bot-not-a-secret-1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # The image ships Node 24; the repo declares >=22 <23 and has no .npmrc to enforce it.
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - run: npm ci
+
+      - name: Wait for the application under test
+        run: |
+          for _ in $(seq 1 60); do
+            curl -fsS "$GITEA_BASE_URL/api/healthz" > /dev/null && exit 0
+            sleep 2
+          done
+          echo "gitea-test never became healthy"
+          exit 1
+
+      - name: Register the browser account and mint its API token
+        # A container job's steps default to sh, which doesn't support ${!var} indirection.
+        shell: bash
+        run: |
+          register() {
+            local jar="$1" user="$2" pass="$3"
+            csrf=$(curl -fsS -c "$jar" "$GITEA_BASE_URL/user/sign_up" \
+              | sed -n 's/.*name="_csrf" value="\([^"]*\)".*/\1/p' | head -1)
+            curl -fsS -b "$jar" -o /dev/null \
+              -X POST "$GITEA_BASE_URL/user/sign_up" \
+              --data-urlencode "_csrf=$csrf" \
+              --data-urlencode "user_name=$user" \
+              --data-urlencode "email=$user@example.com" \
+              --data-urlencode "password=$pass" \
+              --data-urlencode "retype=$pass"
+            curl -fsS -u "$user:$pass" "$GITEA_BASE_URL/api/v1/user" > /dev/null
+            echo "account $user is usable"
+          }
+
+          # Gitea makes the first user of a fresh instance an administrator, so this one
+          # registers before the browser accounts and none of them inherits the privilege.
+          register "/tmp/gitea-a11y-admin.jar" "a11y-admin" "Qa-admin-not-a-secret-1"
+
+          for b in CHROMIUM; do
+            owner_user="GITEA_OWNER_$b"; owner_pass="GITEA_OWNER_${b}_PASSWORD"
+
+            register "/tmp/gitea-$b-owner.jar" "${!owner_user}" "${!owner_pass}"
+
+            token=$(curl -fsS -u "${!owner_user}:${!owner_pass}" \
+              -H "Content-Type: application/json" \
+              -X POST "$GITEA_BASE_URL/api/v1/users/${!owner_user}/tokens" \
+              -d '{"name":"accessibility","scopes":["write:user","write:organization"]}' \
+              | node -pe 'JSON.parse(require("fs").readFileSync(0, "utf8")).sha1')
+            echo "::add-mask::$token"
+            echo "GITEA_TOKEN_$b=$token" >> "$GITHUB_ENV"
+            echo "token minted for ${!owner_user}"
+          done
+
+      - name: Scan the pages
+        run: npm run test:a11y -w @gitea-automation/playwright-native
+
+      # A scan that failed on a new violation is the one most worth summarising.
+      - name: Summarise the scans by severity
+        if: always()
+        run: npm run report:a11y -w @gitea-automation/playwright-native
+
+      - name: Generate the Allure report
+        if: always()
+        continue-on-error: true
+        run: npm run report -w @gitea-automation/playwright-native
+
+      # The raw JSON is what severity triage reads; the Allure report is what the other suites
+      # already publish, and carries the same scans as attachments.
+      - name: Upload the scans
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: accessibility-scans
+          path: |
+            services/playwright-native/reports/accessibility/
+            services/playwright-native/allure-report/
+          retention-days: 14

@@ -1,0 +1,7 @@
+aria-required-children	#footer-theme-selector
+aria-required-children	.upward
+color-contrast	.help
+color-contrast	.primary
+color-contrast	a[href$="about.gitea.com"]
+color-contrast	a[href$="licenses.txt"]
+color-contrast	a[href$="swagger"]

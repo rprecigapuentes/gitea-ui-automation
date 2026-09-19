@@ -11,6 +11,7 @@
     "dotenv": "^17.4.2"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "^1.63.0",
     "@types/node": "^22.20.3",
     "allure": "^3.17.0",
@@ -18,13 +19,18 @@
   },
   "scripts": {
     "pretest": "node -e \"require('fs').rmSync('allure-results', { recursive: true, force: true })\"",
-    "test": "playwright test",
+    "test": "playwright test --project=chrome --project=firefox --project=edge",
     "test:chrome": "cross-env BROWSER=chrome playwright test --project=chrome --workers=1",
     "test:firefox": "cross-env BROWSER=firefox playwright test --project=firefox --workers=1",
     "test:edge": "cross-env BROWSER=edge playwright test --project=edge --workers=1",
     "test:parallel": "concurrently -n chrome,firefox,edge -c blue,yellow,cyan \"npm:test:chrome\" \"npm:test:firefox\" \"npm:test:edge\"",
-    "test:headed": "cross-env HEADED=1 playwright test",
+    "test:headed": "cross-env HEADED=1 playwright test --project=chrome --project=firefox --project=edge",
     "test:parallel:headed": "cross-env HEADED=1 concurrently -n chrome,firefox,edge -c blue,yellow,cyan \"npm:test:chrome\" \"npm:test:firefox\" \"npm:test:edge\"",
+    "pretest:a11y": "node -e \"for (const d of ['allure-results', 'reports/accessibility']) require('fs').rmSync(d, { recursive: true, force: true })\"",
+    "test:a11y": "playwright test --project=accessibility-chromium",
+    "test:a11y:all": "playwright test --project=accessibility-chromium --project=accessibility-chrome --project=accessibility-firefox --project=accessibility-edge",
+    "test:a11y:update": "playwright test --project=accessibility-chromium --update-snapshots",
+    "report:a11y": "node scripts/accessibility-summary.mjs",
     "typecheck": "tsc --noEmit",
     "report": "allure generate ./allure-results",
     "report:open": "allure open ./allure-report/"

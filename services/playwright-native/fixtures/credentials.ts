@@ -3,8 +3,13 @@ export interface Credentials {
   password: string;
 }
 
+/** Projects of a non-functional area are named `<area>-<browser>`; accounts are per browser. */
+function browserOf(project: string): string {
+  return project.slice(project.lastIndexOf("-") + 1);
+}
+
 export function resolveOwnerCredentials(project: string): Credentials {
-  const suffix = project.toUpperCase();
+  const suffix = browserOf(project).toUpperCase();
   const username = process.env[`GITEA_OWNER_${suffix}`];
   const password = process.env[`GITEA_OWNER_${suffix}_PASSWORD`];
 
@@ -16,7 +21,7 @@ export function resolveOwnerCredentials(project: string): Credentials {
 }
 
 export function resolveOwnerToken(project: string): string {
-  const suffix = project.toUpperCase();
+  const suffix = browserOf(project).toUpperCase();
   const token = process.env[`GITEA_TOKEN_${suffix}`];
 
   if (!token) {

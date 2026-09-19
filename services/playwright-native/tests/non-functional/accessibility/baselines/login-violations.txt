@@ -1,0 +1,8 @@
+aria-required-children	#footer-theme-selector
+aria-required-children	.upward
+color-contrast	.field > a[href$="sign_up"]
+color-contrast	.primary
+color-contrast	a[href$="about.gitea.com"]
+color-contrast	a[href$="forgot_password"]
+color-contrast	a[href$="licenses.txt"]
+color-contrast	a[href$="swagger"]

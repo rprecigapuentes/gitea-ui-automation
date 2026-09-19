@@ -6,7 +6,7 @@ UI automation against Gitea with Playwright's native test runner (`@playwright/t
 
 - `tests/gitea-smoke.spec.ts` — asserts the Gitea at `baseURL` serves its landing page and the sign-up form, on every browser in the matrix. `playwright.config.ts` reads that URL from `GITEA_BASE_URL`, falling back to `http://localhost:3000`, so the suite points at whatever instance you give it. Nothing here logs in; account-level flows wait on the page objects described at the end of this README.
 - `allurerc.js` and the `allure-playwright` reporter, the same Allure 3 setup the Selenium suites use. `npm run report` turns `allure-results/` into a single-file `allure-report/index.html`, and each result carries the project it ran on, so a failure names its browser without opening the job log.
-- `chrome`, `firefox` and `edge` project configs, matching the browser matrix the Selenium services already cover. `chrome` and `edge` set `channel: 'chrome'` and `channel: 'msedge'`, so each drives the real product. Without a channel, `Desktop Chrome` and `Desktop Edge` both resolve to Playwright's bundled Chromium, and two of the three results would be the same engine under different names. Firefox needs no channel: the bundled build is Firefox. The branded browsers are a separate install (`npx playwright install chrome msedge`); on CT the job runs inside `mcr.microsoft.com/playwright`, which already carries the bundled ones and their system libraries, and adds those two on top.
+- `chrome`, `firefox` and `edge` project configs, matching the browser matrix the Selenium services already cover. `playwright.config.ts` derives them from one browser list, and derives the non-functional projects from the same list, so a browser is defined once. `chrome` and `edge` set `channel: 'chrome'` and `channel: 'msedge'`, so each drives the real product. Without a channel, `Desktop Chrome` and `Desktop Edge` both resolve to Playwright's bundled Chromium, and two of the three results would be the same engine under different names. Firefox needs no channel: the bundled build is Firefox. The branded browsers are a separate install (`npx playwright install chrome msedge`); on CT the job runs inside `mcr.microsoft.com/playwright`, which already carries the bundled ones and their system libraries, and adds those two on top.
 
 ## Custom fixtures
 
@@ -32,7 +32,7 @@ test("...", async ({ sessionManager, pageObjects, scenarioState }) => {
 npm test -w @gitea-automation/playwright-native
 ```
 
-runs every spec (`gitea-smoke.spec.ts`, `login-api.spec.ts`, `login-ui.spec.ts`) on all three browsers in one process. Browser binaries are installed separately, not as part of `npm install`:
+runs the functional specs on all three browsers in one process. It names the three browser projects rather than running every project, so the non-functional scans described at the end of this README stay out of it. Browser binaries are installed separately, not as part of `npm install`:
 
 ```bash
 npx playwright install firefox        # the bundled build
@@ -86,3 +86,49 @@ test("...", { tag: PROJECT_BOARD_TAG }, async ({ seededOrganizationWithRepositor
 ```
 
 A test can filter to just this tag the same way Cucumber does with `--tags`: `npx playwright test --grep "@project-board"`.
+
+## Accessibility scans
+
+`tests/non-functional/accessibility/` scans the login form, the user dashboard and organization creation with [`@axe-core/playwright`](https://playwright.dev/docs/accessibility-testing), on the `wcag2a`, `wcag2aa`, `wcag21a` and `wcag21aa` rule tags. `fixtures/axe.fixture.ts` holds those tags and two fixtures, `makeAxeBuilder()` and `publishScan()`, and extends `fixtures/fixture.ts` so a scan signs in through `sessionManager`.
+
+They are not part of `npm test`. Each non-functional area gets its own projects, derived in `playwright.config.ts` from the same browser list the functional ones use:
+
+| Project                                     | Runs                                                        |
+| ------------------------------------------- | ----------------------------------------------------------- |
+| `chrome`, `firefox`, `edge`                 | everything but `tests/non-functional/`                      |
+| `accessibility-chromium`                    | `tests/non-functional/accessibility/` only, without retries |
+| `accessibility-chrome`, `-firefox`, `-edge` | the same scans, on demand                                   |
+
+A scan runs on bundled Chromium, which every Playwright install carries, so the accessibility workflow installs no browser. The branded projects are defined for the same scans and share the same baselines: axe evaluates the DOM, so all four agree, and a divergence is worth seeing rather than worth assuming.
+
+```bash
+npm run test:a11y -w @gitea-automation/playwright-native          # scan on Chromium
+npm run test:a11y:all -w @gitea-automation/playwright-native      # and on the three branded ones
+npm run report:a11y -w @gitea-automation/playwright-native        # read the result
+npm run test:a11y:update -w @gitea-automation/playwright-native   # re-record the baselines
+```
+
+### Output
+
+In `reports/accessibility/`, git-ignored, uploaded whole as the `accessibility-scans` artifact:
+
+- `summary.html`, one self-contained page: the counts per `impact`, then a card per rule with its offending elements. `report:a11y` writes it and prints the same counts for a pull request description.
+- `<page>-<browser>.json`, the full axe result, also attached to the test so Allure carries it.
+
+### Baselines
+
+A scan asserts a sorted `rule<tab>target` fingerprint against `tests/non-functional/accessibility/baselines/`, so it fails on a violation the baseline does not record rather than on the ones the application already has. One baseline per page, shared by the three browsers.
+
+A baseline only matches the application it was recorded against, so record it against a disposable Gitea seeded the way `.gitea/workflows/accessibility.yml` seeds one:
+
+```bash
+docker network create a11y-net
+docker run -d --name gitea-test --network a11y-net \
+  -e GITEA__server__ROOT_URL=http://gitea-test:3000/ \
+  -e GITEA__security__INSTALL_LOCK=true \
+  -e GITEA__service__DISABLE_REGISTRATION=false \
+  -e GITEA__service__REGISTER_EMAIL_CONFIRM=false \
+  docker.gitea.com/gitea:1.27.3
+```
+
+Register one owner account per browser project you intend to run, named `<browser>-owner`, as that workflow's seeding step does: `chromium-owner` for `test:a11y`, plus `chrome-owner`, `firefox-owner` and `edge-owner` for `test:a11y:all`. Register one throwaway account before them, since Gitea makes the first user of an instance an administrator. Then export `GITEA_BASE_URL` and the matching `GITEA_OWNER_*`/`GITEA_TOKEN_*` variables and run `test:a11y:update` inside `mcr.microsoft.com/playwright:v1.63.0-noble` on that network. Commit regenerated baselines on their own, never with code changes.

@@ -18,6 +18,12 @@ context: |
   the method that fits, and when none does, add one to BaseComponent or widen an existing one so
   every page gains it.
 
+  A test reaches the browser only through a page object. A spec that calls page.locator, page.goto,
+  driver.findElement, or asserts on a raw locator is a review blocker: use the page object that owns
+  the page, and when it has no method for what the test asserts, add one there rather than reaching
+  past it. This holds for non-functional suites too: a scanner is handed the page, the navigation and
+  the assertions around it are not.
+
   The repository wiki is a separate git repository. Never edit wiki pages from here.
 
 rules:

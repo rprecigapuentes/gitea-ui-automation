@@ -21,6 +21,18 @@ export class LoginPage extends BasePage {
   // let a failed sign-in pass as a slow one.
   private readonly signedIn = /^https?:\/\/[^/]+\/(\?.*)?$/;
 
+  override async open(): Promise<void> {
+    await super.open([this.locators.usernameInput]);
+  }
+
+  async hasExpectedFormElements(): Promise<boolean> {
+    return this.isVisible([
+      this.locators.usernameInput,
+      this.locators.passwordInput,
+      this.locators.loginButton,
+    ]);
+  }
+
   async login(username: string, password: string): Promise<void> {
     await this.type(this.locators.usernameInput, username);
     await this.type(this.locators.passwordInput, password);
