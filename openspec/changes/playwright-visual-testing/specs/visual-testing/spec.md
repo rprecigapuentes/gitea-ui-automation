@@ -31,6 +31,21 @@ The visual tester SHALL reach a test as a fixture that extends the suite fixture
 - **WHEN** a functional test runs
 - **THEN** the visual fixture is not loaded
 
+### Requirement: A page declares the regions of its view that vary between runs
+
+A page object SHALL expose the selectors of the regions of its view whose content varies between runs, as plain selector strings, and SHALL expose an empty list until a region is identified. A spec SHALL take the regions to leave out of a comparison from the page object and SHALL NOT build locators for them itself.
+
+#### Scenario: A view has no known volatile region
+
+- **WHEN** a page object has no identified volatile region
+- **THEN** it exposes an empty list
+
+#### Scenario: A volatile region is identified
+
+- **WHEN** a region of a view is found to vary between runs
+- **THEN** its selector is added to that page object's list
+- **AND** no spec changes
+
 ### Requirement: A visual mismatch does not stop the test
 
 A screenshot check SHALL be a soft assertion. A mismatch SHALL be recorded and the test SHALL continue with the steps after it, and SHALL fail when it ends. The failure SHALL keep the expected, actual and diff images.

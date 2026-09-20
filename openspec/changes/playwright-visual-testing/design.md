@@ -38,6 +38,10 @@ The functional suite reaches parallelism by launching one process per browser wi
 
 The name passed to a check carries its extension (`login-page.png`). Playwright numbers unnamed screenshots per test, which would rename a baseline whenever a check is added before it.
 
+## Volatile regions
+
+The visual tester is used by every view, not only login, so what varies between runs is split in two. Regions common to the whole application, such as the footer's `Page: Nms Template: Nms`, are a default of the visual tester's fixture. Regions of one view belong to that view's page object, because only it knows the DOM: `BasePage.getVolatileRegions()` returns `string[]`, empty by default, and a page overrides it when a region is identified. The list is plain selectors, so the page object gains no Playwright dependency, and the spec passes it to the check instead of calling `page.locator`. The list starts empty everywhere and grows as runs reveal what varies.
+
 ## Credentials for the bundled Chromium
 
 Accounts are resolved from the project-name suffix, and the environment holds `CHROME`, `FIREFOX` and `EDGE` only. `browserOf` maps `chromium` to `chrome`. This also reaches the `accessibility-chromium` projects, which resolve through the same function.
