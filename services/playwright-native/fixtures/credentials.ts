@@ -3,9 +3,11 @@ export interface Credentials {
   password: string;
 }
 
-/** Projects of a non-functional area are named `<area>-<browser>`; accounts are per browser. */
+/** Projects of a non-functional area are named `<area>-<browser>`; accounts are per browser.
+ *  Bundled Chromium shares the Chrome account. */
 function browserOf(project: string): string {
-  return project.slice(project.lastIndexOf("-") + 1);
+  const browser = project.slice(project.lastIndexOf("-") + 1);
+  return browser === "chromium" ? "chrome" : browser;
 }
 
 export function resolveOwnerCredentials(project: string): Credentials {
