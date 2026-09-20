@@ -9,9 +9,9 @@ Visual regression is the second non-functional area the module implements after 
 - Add a `VisualTester` in a new `core/playwright` workspace package, with `verifyPage(page, name)` and `verifyComponent(locator, name)`. It sits outside the page-object layer: a page object cannot own a screenshot assertion, because the Selenium strategy has no equivalent.
 - Make both checks soft assertions, so a visual mismatch is recorded and the test carries on to its functional steps, and still fails at the end.
 - Expose it as a `visualTester` fixture in `fixtures/visual.fixture.ts`, extending the suite fixture the way `axe.fixture.ts` does, so functional tests never load it.
-- Add a `visual-chromium` Playwright project on `tests/non-functional/visual/`, with baselines stored per project name, and a first login-page spec.
-- Add `test:visual`, which runs only that project and opens the native HTML report when it ends, and `test:visual:update` to record baselines.
-- Resolve the owner credentials of a `chromium` project from the Chrome account, since the bundled Chromium has no account of its own.
+- Add `visual-chrome`, `visual-firefox` and `visual-edge` Playwright projects on `tests/non-functional/visual/`, derived from the same browser list as the functional projects, with baselines stored per project name, and a first login-page spec.
+- Add `test:visual`, which runs the three projects in parallel in one Playwright process and opens a single native HTML report when it ends, `test:visual:update` to record the baselines of all three, and `test:visual:chrome`, `:firefox` and `:edge` to run one browser.
+- Resolve the owner credentials of a `chromium` project from the Chrome account, since the bundled Chromium has no account of its own. The visual projects no longer need it; it stays for the `accessibility-chromium` projects that resolve through the same function.
 
 ## Capabilities
 
@@ -31,5 +31,5 @@ None.
 
 - Arguments beyond the page or locator and the baseline name (masking, thresholds, animations): added one at a time as a test needs them.
 - Stabilising the login baseline against the Gitea footer's render timings, tracked as its own task.
-- Firefox and Edge visual projects, and a CI workflow for the suite.
+- A CI workflow for the suite.
 - Any page beyond the login page, and any change to the Selenium side.

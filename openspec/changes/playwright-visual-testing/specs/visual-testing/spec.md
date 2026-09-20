@@ -46,7 +46,7 @@ A screenshot check SHALL be a soft assertion. A mismatch SHALL be recorded and t
 - **WHEN** a screenshot check finds the page matches its baseline
 - **THEN** the check records no failure
 
-### Requirement: The visual suite has its own project and baselines
+### Requirement: The visual suite has its own projects and baselines
 
 The visual specs SHALL run in projects of their own on `tests/non-functional/visual/`, and the functional projects SHALL NOT run them. Baselines SHALL be stored per project name, so two browsers never share a baseline, and a project SHALL NOT retry a failed comparison.
 
@@ -61,15 +61,35 @@ The visual specs SHALL run in projects of their own on `tests/non-functional/vis
 - **THEN** it is stored under that project's name
 - **AND** no other project reads it
 
-### Requirement: The visual suite has its own entry point that opens its report
+### Requirement: The visual suite runs on every functional browser, in parallel
 
-The visual suite SHALL have its own entry point that runs only the visual project, and SHALL open the native Playwright report when the run ends, whether it passed or failed. A separate entry point SHALL record baselines. The default test entry point SHALL NOT run either.
+The visual suite SHALL have one project per browser the functional suite runs on, derived from the same browser list so the two never diverge. A run of the whole suite SHALL execute those projects in parallel inside a single test process, and each project SHALL sign in with the account of its own browser.
+
+#### Scenario: The visual suite is run
+
+- **WHEN** the visual suite is run
+- **THEN** every browser the functional suite runs on has a visual project
+- **AND** those projects execute in parallel in one process
+
+#### Scenario: The functional browser list changes
+
+- **WHEN** a browser is added to or removed from the functional browser list
+- **THEN** the visual projects follow it without a second edit
+
+### Requirement: The visual suite has its own entry points that open one report
+
+The visual suite SHALL have an entry point that runs only the visual projects and SHALL open one native Playwright report covering every browser when the run ends, whether it passed or failed. A separate entry point SHALL record the baselines of every browser, and one entry point per browser SHALL run that browser alone. The default test entry point SHALL NOT run any of them.
 
 #### Scenario: The visual suite is run
 
 - **WHEN** the visual entry point is run
-- **THEN** only the visual project runs
-- **AND** the native report opens when it ends, pass or fail
+- **THEN** only the visual projects run
+- **AND** one native report opens when it ends, pass or fail
+
+#### Scenario: One browser is run
+
+- **WHEN** the entry point of one browser is run
+- **THEN** only that browser's visual project runs
 
 #### Scenario: The default test entry point is run
 

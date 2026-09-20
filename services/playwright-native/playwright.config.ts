@@ -48,6 +48,6 @@ export default defineConfig({
       name: `accessibility-${browser.name}`,
     })),
 
-    { name: "visual-chromium", ...visual, use: { ...devices["Desktop Chrome"] } },
+    ...browsers.map((browser) => ({ ...browser, ...visual, name: `visual-${browser.name}` })),
   ],
 });
