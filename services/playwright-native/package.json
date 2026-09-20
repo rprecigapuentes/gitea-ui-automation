@@ -8,6 +8,7 @@
     "@gitea-automation/core-api-client": "*",
     "@gitea-automation/core-data-handler": "*",
     "@gitea-automation/core-page-objects": "*",
+    "@gitea-automation/core-playwright": "*",
     "dotenv": "^17.4.2"
   },
   "devDependencies": {
