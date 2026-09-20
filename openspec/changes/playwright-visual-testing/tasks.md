@@ -33,3 +33,8 @@
 
 - [x] 7.1 Add `getVolatileRegions(): string[]` to `BasePage`, returning an empty list, so every page object has it and can override it; verify `npm run typecheck -w @gitea-automation/playwright-native` passes and a page object that does not override it returns `[]`.
 - [x] 7.2 Let the visual tester take a list of selectors to mask per check, and a default list from its fixture holding the footer, replacing 5.1's single-purpose argument; verify the login spec passes on four consecutive runs and a spec passing `getVolatileRegions()` masks those regions.
+
+## 8. Organizations smoke
+
+- [x] 8.1 Add an automatic fixture to `hooks-fixtures.ts` that deletes `scenarioState.organization` after each test, and make `visual.fixture.ts` extend `hooks-fixtures`; verify the organization is gone after a passing run and after a run whose test throws.
+- [x] 8.2 Add the organizations smoke spec: the empty create form, then the organization profile and its teams tab after creating the organization and a team through the API in the test body; verify the three views are checked on the three browsers, the baselines are recorded, and four consecutive runs pass.

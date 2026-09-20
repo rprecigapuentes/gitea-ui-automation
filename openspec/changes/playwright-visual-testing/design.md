@@ -42,6 +42,12 @@ The name passed to a check carries its extension (`login-page.png`). Playwright 
 
 The visual tester is used by every view, not only login, so what varies between runs is split in two. Regions common to the whole application, such as the footer's `Page: Nms Template: Nms`, are a default of the visual tester's fixture. Regions of one view belong to that view's page object, because only it knows the DOM: `BasePage.getVolatileRegions()` returns `string[]`, empty by default, and a page overrides it when a region is identified. The list is plain selectors, so the page object gains no Playwright dependency, and the spec passes it to the check instead of calling `page.locator`. The list starts empty everywhere and grows as runs reveal what varies.
 
+## How a visual spec reaches a state
+
+A visual spec is one test with a checkpoint per view: create through the API, open the view through its page object, compare, and go on. The creation stays in the test body, as `clients.<resource>.create...` calls, so a reader sees what state each view is in without opening a fixture. The page object opens and waits, and the tester only compares, so the tester does not learn URLs or readiness selectors.
+
+Clean-up is the opposite: it belongs in a hook, because it must run when a step fails and asserts nothing. The spec records what it created in `scenarioState` and an automatic fixture in `hooks-fixtures.ts` removes it after the test, the way the Cucumber hooks do. Names are fixed per project (`<prefix>-<project>`), not random, which keeps them out of the screenshot's variance; the hook is what guarantees a rerun finds nothing left behind.
+
 ## Credentials for the bundled Chromium
 
 Accounts are resolved from the project-name suffix, and the environment holds `CHROME`, `FIREFOX` and `EDGE` only. `browserOf` maps `chromium` to `chrome`. This also reaches the `accessibility-chromium` projects, which resolve through the same function.

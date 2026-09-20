@@ -15,6 +15,7 @@ interface SeededOrganizationWithRepositories {
 
 interface HooksFixtures {
   seededOrganizationWithRepositories: SeededOrganizationWithRepositories;
+  cleanupCreatedOrganization: void;
 }
 
 /**
@@ -24,6 +25,18 @@ interface HooksFixtures {
  * the test fails, so no try/finally is needed in the test itself.
  */
 export const test = base.extend<HooksFixtures>({
+  // A test that creates an organization records it in `scenarioState`; this removes it afterwards,
+  // whether the test passed or failed.
+  cleanupCreatedOrganization: [
+    async ({ clients, scenarioState }, use) => {
+      await use();
+      if (scenarioState.organization) {
+        await clients.organizations.deleteOrganization(scenarioState.organization.name);
+      }
+    },
+    { auto: true },
+  ],
+
   seededOrganizationWithRepositories: async ({ clients }, use, testInfo) => {
     const organizationName = `at-board-${testInfo.project.name}-${uniqueSuffix()}`;
     await clients.organizations.createOrganization(organizationName);

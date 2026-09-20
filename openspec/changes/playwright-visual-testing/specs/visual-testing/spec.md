@@ -46,6 +46,21 @@ A page object SHALL expose the selectors of the regions of its view whose conten
 - **THEN** its selector is added to that page object's list
 - **AND** no spec changes
 
+### Requirement: A visual spec prepares its state through the API inside the test
+
+A visual spec SHALL create the state a view needs through the API clients, in the body of the test and before it opens the view, and SHALL NOT drive the interface to reach a state the API can create. The data it creates SHALL be named per project, so browsers running in parallel never share one. What the spec creates SHALL be removed by a hook, not by the body of the test, so that the removal runs when a step fails and the test body holds no clean-up.
+
+#### Scenario: A view needs an organization
+
+- **WHEN** a visual spec needs an organization to exist before a view
+- **THEN** the spec creates it through the API client, in the test body
+- **AND** opens the view through its page object
+
+#### Scenario: A step fails partway
+
+- **WHEN** a step of a visual spec fails after it created data
+- **THEN** the data is still removed by the hook
+
 ### Requirement: A visual mismatch does not stop the test
 
 A screenshot check SHALL be a soft assertion. A mismatch SHALL be recorded and the test SHALL continue with the steps after it, and SHALL fail when it ends. The failure SHALL keep the expected, actual and diff images.

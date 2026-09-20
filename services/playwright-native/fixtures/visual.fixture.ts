@@ -1,4 +1,4 @@
-import { test as base } from "./fixture";
+import { test as base } from "./hooks-fixtures";
 import { VisualTester } from "@gitea-automation/core-playwright/visual-tester/visual-tester";
 
 /** Regions every Gitea page renders that change on each load: the footer's render timings. */
