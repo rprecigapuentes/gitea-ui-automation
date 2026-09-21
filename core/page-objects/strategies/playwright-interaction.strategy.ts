@@ -18,7 +18,7 @@ async function poll(predicate: () => Promise<boolean>, timeoutMs: number): Promi
 function toElementHandle(locator: Locator): IElementHandle {
   return {
     click: () => locator.click(),
-    getText: async () => (await locator.textContent()) ?? "",
+    getText: async () => (await locator.innerText()).trim(),
     getAttribute: async (name: string) => (await locator.getAttribute(name)) ?? "",
     isSelected: () => locator.isChecked(),
     isDisplayed: () => locator.isVisible(),
@@ -99,9 +99,10 @@ export class PlaywrightInteractionStrategy implements IInteractionStrategy {
     await simulateHtml5Drag(this.page.locator(sourceLocator), this.page.locator(targetLocator));
   }
 
+  // The rendered text, trimmed, like WebElement.getText, not the raw text nodes with their whitespace.
   async getText(locator: string, root?: IElementHandle, timeoutMs?: number): Promise<string> {
     if (root) return (await root.findElement(locator)).getText();
-    return (await this.page.locator(locator).textContent({ timeout: timeoutMs })) ?? "";
+    return (await this.page.locator(locator).innerText({ timeout: timeoutMs })).trim();
   }
 
   async getAttribute(
