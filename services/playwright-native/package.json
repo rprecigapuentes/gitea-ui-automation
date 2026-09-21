@@ -8,6 +8,7 @@
     "@gitea-automation/core-api-client": "*",
     "@gitea-automation/core-data-handler": "*",
     "@gitea-automation/core-page-objects": "*",
+    "@gitea-automation/core-playwright": "*",
     "dotenv": "^17.4.2"
   },
   "devDependencies": {
@@ -31,6 +32,14 @@
     "test:a11y:all": "playwright test --project=accessibility-chromium --project=accessibility-chrome --project=accessibility-firefox --project=accessibility-edge",
     "test:a11y:update": "playwright test --project=accessibility-chromium --update-snapshots",
     "report:a11y": "node scripts/accessibility-summary.mjs",
+    "test:visual": "node scripts/visual.mjs",
+    "test:visual:chrome": "cross-env PLAYWRIGHT_HTML_OPEN=always playwright test --project=visual-chrome --workers=1 --reporter=list,html",
+    "test:visual:firefox": "cross-env PLAYWRIGHT_HTML_OPEN=always playwright test --project=visual-firefox --workers=1 --reporter=list,html",
+    "test:visual:edge": "cross-env PLAYWRIGHT_HTML_OPEN=always playwright test --project=visual-edge --workers=1 --reporter=list,html",
+    "test:visual:ci": "cross-env PLAYWRIGHT_HTML_OPEN=never playwright test --project=visual-chrome --project=visual-firefox --project=visual-edge --reporter=list,html",
+    "test:visual:ci:missing": "cross-env PLAYWRIGHT_HTML_OPEN=never playwright test --project=visual-chrome --project=visual-firefox --project=visual-edge --reporter=list,html --update-snapshots=missing",
+    "test:visual:ci:update": "playwright test --project=visual-chrome --project=visual-firefox --project=visual-edge --update-snapshots",
+    "test:visual:update": "node scripts/visual.mjs --update-snapshots",
     "typecheck": "tsc --noEmit",
     "report": "allure generate ./allure-results",
     "report:open": "allure open ./allure-report/"

@@ -22,6 +22,12 @@ const nonFunctional = {
   use: { trace: "retain-on-failure" as const },
 };
 
+const visual = {
+  testDir: "./tests/non-functional/visual",
+  snapshotPathTemplate: "{testDir}/baselines/{projectName}/{platform}/{arg}{ext}",
+  retries: 0,
+};
+
 export default defineConfig({
   testDir: "./tests",
   fullyParallel: true,
@@ -51,5 +57,7 @@ export default defineConfig({
       /* Merged, not spread: nonFunctional's use would otherwise drop the browser's channel. */
       use: { ...browser.use, ...nonFunctional.use },
     })),
+
+    ...browsers.map((browser) => ({ ...browser, ...visual, name: `visual-${browser.name}` })),
   ],
 });
