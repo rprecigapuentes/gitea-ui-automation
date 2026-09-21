@@ -37,9 +37,7 @@ export class IssueListPage extends BasePage {
   async filterByLabel(labelId: number): Promise<void> {
     await this.click(this.locators.filterDropdown);
     await this.click(this.locators.filterItem(labelId));
-    // A regex rather than a string: the two strategies read a string differently, since
-    // until.urlContains matches a substring and page.waitForURL matches a glob against the whole
-    // URL, and both read a regex the same way. filterByMilestone below already waits like this.
+    // A regex, not a string: the two strategies match a string differently.
     await this.waitForUrl(new RegExp(`labels=${labelId}(&|$)`), WAIT_TIMEOUT_MS);
   }
 
