@@ -38,3 +38,10 @@
 
 - [x] 8.1 Add an automatic fixture to `hooks-fixtures.ts` that deletes `scenarioState.organization` after each test, and make `visual.fixture.ts` extend `hooks-fixtures`; verify the organization is gone after a passing run and after a run whose test throws.
 - [x] 8.2 Add the organizations smoke spec: the empty create form, then the organization profile and its teams tab after creating the organization and a team through the API in the test body; verify the three views are checked on the three browsers, the baselines are recorded, and four consecutive runs pass.
+
+## 9. Run the visual suite from its own workflow
+
+- [x] 9.1 Add `{platform}` to the visual `snapshotPathTemplate` and move the committed baselines into `baselines/<project>/win32/`; verify `npm run test:visual` passes locally against the moved baselines.
+- [x] 9.2 Add `test:visual:ci`, which runs the three visual projects with the html reporter and `PLAYWRIGHT_HTML_OPEN=never`; verify it leaves `playwright-report/index.html` and returns without opening anything.
+- [x] 9.3 Add `.gitea/workflows/visual.yml`, dispatch only, with the container, `gitea-test`, the three accounts and tokens, the branded browsers, a `record_baselines` input, and uploads of the native report and of the recorded baselines with `if: always()`; verify the workflow parses and `ct.yml` does not reference it.
+- [ ] 9.4 Dispatch the workflow once to record the runner's baselines, review the artifact and commit it under `linux/`; verify a second dispatch passes and publishes the native report.

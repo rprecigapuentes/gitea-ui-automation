@@ -36,6 +36,7 @@
     "test:visual:chrome": "cross-env PLAYWRIGHT_HTML_OPEN=always playwright test --project=visual-chrome --reporter=list,html",
     "test:visual:firefox": "cross-env PLAYWRIGHT_HTML_OPEN=always playwright test --project=visual-firefox --reporter=list,html",
     "test:visual:edge": "cross-env PLAYWRIGHT_HTML_OPEN=always playwright test --project=visual-edge --reporter=list,html",
+    "test:visual:ci": "cross-env PLAYWRIGHT_HTML_OPEN=never playwright test --project=visual-chrome --project=visual-firefox --project=visual-edge --reporter=list,html",
     "test:visual:update": "playwright test --project=visual-chrome --project=visual-firefox --project=visual-edge --update-snapshots",
     "typecheck": "tsc --noEmit",
     "report": "allure generate ./allure-results",

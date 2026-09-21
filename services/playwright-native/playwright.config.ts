@@ -21,7 +21,7 @@ const nonFunctional = {
 
 const visual = {
   testDir: "./tests/non-functional/visual",
-  snapshotPathTemplate: "{testDir}/baselines/{projectName}/{arg}{ext}",
+  snapshotPathTemplate: "{testDir}/baselines/{projectName}/{platform}/{arg}{ext}",
   retries: 0,
 };
 

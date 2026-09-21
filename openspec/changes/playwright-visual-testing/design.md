@@ -28,7 +28,7 @@ A visual mismatch says the page looks different, not that the flow is broken. Wi
 
 ## Baselines
 
-`snapshotPathTemplate` is `{testDir}/baselines/{projectName}/{arg}{ext}`. Screenshots are pixel-exact per browser and platform, so unlike the accessibility baselines they cannot be shared across projects. One project exists per browser of the functional list (`visual-chrome`, `visual-firefox`, `visual-edge`), each with its own baselines.
+`snapshotPathTemplate` is `{testDir}/baselines/{projectName}/{platform}/{arg}{ext}`. Screenshots are pixel-exact per browser and per platform, so unlike the accessibility baselines they cannot be shared across projects, and a baseline recorded on Windows cannot be compared on the workflow's Linux runner. Without the platform in the path the two would overwrite each other's files and each would fail against the other's. One project exists per browser of the functional list (`visual-chrome`, `visual-firefox`, `visual-edge`), each with its own baselines.
 
 ## Cross-browser and parallel
 
@@ -47,6 +47,12 @@ The visual tester is used by every view, not only login, so what varies between 
 A visual spec is one test with a checkpoint per view: create through the API, open the view through its page object, compare, and go on. The creation stays in the test body, as `clients.<resource>.create...` calls, so a reader sees what state each view is in without opening a fixture. The page object opens and waits, and the tester only compares, so the tester does not learn URLs or readiness selectors.
 
 Clean-up is the opposite: it belongs in a hook, because it must run when a step fails and asserts nothing. The spec records what it created in `scenarioState` and an automatic fixture in `hooks-fixtures.ts` removes it after the test, the way the Cucumber hooks do. Names are fixed per project (`<prefix>-<project>`), not random, which keeps them out of the screenshot's variance; the hook is what guarantees a rerun finds nothing left behind.
+
+## The visual workflow
+
+`visual.yml` follows `accessibility.yml`: its own workflow, dispatch only, the Playwright container, its own `gitea-test` service, an administrator registered first, artifacts published with `if: always()`. It differs in four ways. It runs three browsers, so it registers three accounts and mints their tokens, and installs the branded Chrome and Edge that the image does not carry, as `ct.yml` does. The native report cannot open itself on a runner, so `test:visual:ci` runs with `PLAYWRIGHT_HTML_OPEN=never` and the workflow uploads `playwright-report/`. A `record_baselines` input switches the run to `test:visual:update` and uploads the recorded baselines, because the ones committed from a workstation do not match the runner. Recording does not commit: a person downloads, looks at, and commits them.
+
+It stays manual for now, like accessibility. Nothing gates on it until baselines exist for the runner and the volatile regions have settled; a scheduled run before that would report noise. Promoting it to a scheduled job after the Playwright job in `ct.yml` is a later change.
 
 ## Credentials for the bundled Chromium
 

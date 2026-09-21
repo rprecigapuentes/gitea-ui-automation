@@ -78,7 +78,7 @@ A screenshot check SHALL be a soft assertion. A mismatch SHALL be recorded and t
 
 ### Requirement: The visual suite has its own projects and baselines
 
-The visual specs SHALL run in projects of their own on `tests/non-functional/visual/`, and the functional projects SHALL NOT run them. Baselines SHALL be stored per project name, so two browsers never share a baseline, and a project SHALL NOT retry a failed comparison.
+The visual specs SHALL run in projects of their own on `tests/non-functional/visual/`, and the functional projects SHALL NOT run them. Baselines SHALL be stored per project name and per platform, so two browsers never share a baseline and a baseline recorded on one platform is never compared on another, and a project SHALL NOT retry a failed comparison.
 
 #### Scenario: The functional suite runs
 
@@ -88,8 +88,8 @@ The visual specs SHALL run in projects of their own on `tests/non-functional/vis
 #### Scenario: A baseline is recorded
 
 - **WHEN** a baseline is recorded by a visual project
-- **THEN** it is stored under that project's name
-- **AND** no other project reads it
+- **THEN** it is stored under that project's name and the platform it was recorded on
+- **AND** no other project or platform reads it
 
 ### Requirement: The visual suite runs on every functional browser, in parallel
 
