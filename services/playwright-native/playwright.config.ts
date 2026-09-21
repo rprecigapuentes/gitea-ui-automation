@@ -13,10 +13,13 @@ const browsers = [
    four agree, and the recorded baselines are shared. */
 const scanBrowsers = [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }, ...browsers];
 
+/* These projects take no retry, so the global on-first-retry trace would never be recorded.
+   Retaining on failure keeps the cost to the scans worth investigating. */
 const nonFunctional = {
   testDir: "./tests/non-functional/accessibility",
   snapshotPathTemplate: "{testDir}/baselines/{arg}{ext}",
   retries: 0,
+  use: { trace: "retain-on-failure" as const },
 };
 
 export default defineConfig({
@@ -40,6 +43,8 @@ export default defineConfig({
       ...browser,
       ...nonFunctional,
       name: `accessibility-${browser.name}`,
+      /* Merged, not spread: nonFunctional's use would otherwise drop the browser's channel. */
+      use: { ...browser.use, ...nonFunctional.use },
     })),
   ],
 });
