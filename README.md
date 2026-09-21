@@ -64,7 +64,7 @@ Installs the dependencies of every workspace (6 under `core/`, `business-logic` 
 - `ct.yml` — "Continuous Testing": two jobs, one per framework, each deploying its own disposable Gitea, then running that framework's suites. Manual dispatch + daily cron.
 - `bs.yml` — same as `ct.yml` but against BrowserStack (`gitea-selenium-vitest` only). Manual dispatch + weekly cron.
 - `visual.yml` — the `playwright-native` visual suite on Chrome, Firefox and Edge against a disposable Gitea, in two jobs: the first records the baselines the runner lacks (or runs the suite when none is missing), the second compares against them. It publishes `playwright-report-visual`, and `visual-baselines-linux` when it recorded. Push-triggered on its feature branch for now, manual dispatch once merged, and never part of `ct.yml`.
-- `accessibility.yml` — the `playwright-native` accessibility scans against a disposable Gitea, publishing `accessibility-scans` (the raw axe JSON plus the Allure report). Manual dispatch only: the scans produce evidence for a person to read, so they stay out of the scheduled run and out of its duration.
+- `accessibility.yml` — the `playwright-native` accessibility scans against a disposable Gitea, publishing `accessibility-scans`: the raw axe JSON, the severity summary, the Allure report, the stock Playwright report, and a trace for each scan that failed. Three readings of one run, kept side by side because each answers a different question. Manual dispatch only: the scans produce evidence for a person to read, so they stay out of the scheduled run and out of its duration.
 
 ### Which suites `ct.yml` runs
 

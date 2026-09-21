@@ -11,6 +11,9 @@ export default tseslint.config(
       "reports",
       "allure-results",
       "allure-report",
+      /* The html reporter bundles Playwright's own trace viewer here, browser code lint cannot read.
+         A bare directory name does not match its contents, so the glob is required. */
+      "**/playwright-report/**",
     ],
   },
   js.configs.recommended,

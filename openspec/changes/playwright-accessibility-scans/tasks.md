@@ -19,6 +19,10 @@
 
 - [x] 4.2 Add `scripts/accessibility-summary.mjs` and the `report:a11y` script, writing `reports/accessibility/summary.html` as one self-contained page with the counts per impact and a card per distinct rule, and run it from the workflow with `if: always()`; verify the artifact answers the severity question on opening, without a raw result and without a network connection.
 
+- [x] 4.3 Retain a trace for a scan that failed and upload it with the evidence, so a violation can be inspected in the DOM it fired on rather than only read as a selector; verify a failing scan leaves a `trace.zip`, a passing one leaves none, and Allure offers it.
+
+- [x] 4.4 Add the stock `html` reporter and upload `playwright-report/` with the rest, so one run can be read three ways: the severity summary, Allure, and Playwright's own report with its bundled trace viewer; verify each is downloadable and opens offline, and that the native one is kept whole since it is a folder rather than a page.
+
 ## 5. Decide the outcome against a baseline
 
 - [x] 5.1 Assert a `{ rule, targets }` fingerprint against `toMatchSnapshot`, record the first baseline per page and browser, and commit it; verify a re-run passes unchanged and a deliberately broken page fails naming the rule.
