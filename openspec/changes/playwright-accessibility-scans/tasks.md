@@ -21,6 +21,8 @@
 
 - [x] 4.3 Retain a trace for a scan that failed and upload it with the evidence, so a violation can be inspected in the DOM it fired on rather than only read as a selector; verify a failing scan leaves a `trace.zip`, a passing one leaves none, and Allure offers it.
 
+- [x] 4.4 Add the stock `html` reporter and upload `playwright-report/` with the rest, so one run can be read three ways: the severity summary, Allure, and Playwright's own report with its bundled trace viewer; verify each is downloadable and opens offline, and that the native one is kept whole since it is a folder rather than a page.
+
 ## 5. Decide the outcome against a baseline
 
 - [x] 5.1 Assert a `{ rule, targets }` fingerprint against `toMatchSnapshot`, record the first baseline per page and browser, and commit it; verify a re-run passes unchanged and a deliberately broken page fails naming the rule.
