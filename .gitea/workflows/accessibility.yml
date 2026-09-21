@@ -106,9 +106,10 @@ jobs:
         continue-on-error: true
         run: npm run report -w @gitea-automation/playwright-native
 
-      # The raw JSON is what severity triage reads; the Allure report is what the other suites
-      # already publish, and carries the same scans as attachments. test-results/ holds the trace
-      # of a failed scan, which Allure also carries but the step above may not have produced.
+      # Four readings of one run: the raw JSON for severity triage, summary.html for the counts
+      # per impact, Allure for the verdict in the format the other suites publish, and the stock
+      # Playwright report for the same verdict with its trace viewer bundled. test-results/ holds
+      # the trace under a usable name; the report's copy of it is content-hashed.
       - name: Upload the scans
         if: always()
         uses: actions/upload-artifact@v3
@@ -117,5 +118,6 @@ jobs:
           path: |
             services/playwright-native/reports/accessibility/
             services/playwright-native/allure-report/
+            services/playwright-native/playwright-report/
             services/playwright-native/test-results/
           retention-days: 14
