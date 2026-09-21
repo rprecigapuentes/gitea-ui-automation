@@ -15,11 +15,26 @@ async function poll(predicate: () => Promise<boolean>, timeoutMs: number): Promi
   return true;
 }
 
+// Like WebElement.getAttribute: the live property when the element has one (an input's typed
+// value), the attribute otherwise. Locator.getAttribute only reads the attribute.
+async function readAttribute(locator: Locator, name: string, timeout?: number): Promise<string> {
+  const value = await locator.evaluate(
+    (element, attribute) => {
+      const property = (element as unknown as Record<string, unknown>)[attribute];
+      if (typeof property === "boolean") return property ? "true" : null;
+      return typeof property === "string" ? property : element.getAttribute(attribute);
+    },
+    name,
+    { timeout },
+  );
+  return value ?? "";
+}
+
 function toElementHandle(locator: Locator): IElementHandle {
   return {
     click: () => locator.click(),
     getText: async () => (await locator.textContent()) ?? "",
-    getAttribute: async (name: string) => (await locator.getAttribute(name)) ?? "",
+    getAttribute: (name: string) => readAttribute(locator, name),
     isSelected: () => locator.isChecked(),
     isDisplayed: () => locator.isVisible(),
     clear: () => locator.clear(),
@@ -39,9 +54,24 @@ export class PlaywrightInteractionStrategy implements IInteractionStrategy {
     return Promise.resolve(toElementHandle(this.page.locator(locator)));
   }
 
-  async findElements(locator: string, root?: IElementHandle): Promise<IElementHandle[]> {
-    if (root) return root.findElements(locator);
-    return (await this.page.locator(locator).all()).map(toElementHandle);
+  // Waits for at least one match and requires every match to be visible, then throws, as the
+  // Selenium strategy does; 0 checks once.
+  async findElements(
+    locator: string,
+    root?: IElementHandle,
+    timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  ): Promise<IElementHandle[]> {
+    let found: IElementHandle[] = [];
+    const settled = await poll(async () => {
+      found = root
+        ? await root.findElements(locator)
+        : (await this.page.locator(locator).all()).map(toElementHandle);
+      const visible = await Promise.all(found.map((element) => element.isDisplayed()));
+      return found.length > 0 && visible.every(Boolean);
+    }, timeoutMs);
+
+    if (!settled) throw new Error(`No visible element(s) for locator "${locator}"`);
+    return found;
   }
 
   async click(locator: string, root?: IElementHandle, timeoutMs?: number): Promise<void> {
@@ -52,13 +82,14 @@ export class PlaywrightInteractionStrategy implements IInteractionStrategy {
     await this.page.locator(locator).click({ timeout: timeoutMs });
   }
 
+  // Appends keystrokes like WebElement.sendKeys, where fill() would replace the field's value.
   async type(
     locator: string,
     text: string,
     root?: IElementHandle,
     timeoutMs?: number,
   ): Promise<void> {
-    await this.page.locator(locator).fill(text, { timeout: timeoutMs });
+    await this.page.locator(locator).pressSequentially(text, { timeout: timeoutMs });
   }
 
   async clearAndType(
@@ -110,9 +141,7 @@ export class PlaywrightInteractionStrategy implements IInteractionStrategy {
     timeoutMs?: number,
   ): Promise<string> {
     if (root) return (await root.findElement(locator)).getAttribute(attributeName);
-    return (
-      (await this.page.locator(locator).getAttribute(attributeName, { timeout: timeoutMs })) ?? ""
-    );
+    return readAttribute(this.page.locator(locator), attributeName, timeoutMs);
   }
 
   async isVisible(
@@ -125,13 +154,18 @@ export class PlaywrightInteractionStrategy implements IInteractionStrategy {
     // callers here that pass 0 meaning "check right now" — so that case skips waitFor entirely.
     const results = await Promise.all(
       list.map((locator) =>
-        timeoutMs === 0
-          ? this.page.locator(locator).isVisible()
-          : this.page
-              .locator(locator)
-              .waitFor({ state: "visible", timeout: timeoutMs })
-              .then(() => true)
-              .catch(() => false),
+        root
+          ? poll(
+              async () => (await root.findElement(locator)).isDisplayed(),
+              timeoutMs ?? DEFAULT_TIMEOUT_MS,
+            )
+          : timeoutMs === 0
+            ? this.page.locator(locator).isVisible()
+            : this.page
+                .locator(locator)
+                .waitFor({ state: "visible", timeout: timeoutMs })
+                .then(() => true)
+                .catch(() => false),
       ),
     );
     return results.every(Boolean);
