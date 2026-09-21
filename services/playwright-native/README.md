@@ -91,7 +91,7 @@ test("...", { tag: PROJECT_BOARD_TAG }, async ({ seededOrganizationWithRepositor
 
 A test can filter to just this tag the same way Cucumber does with `--tags`: `npx playwright test --grep "@project-board"`.
 
-- `ORGANIZATION_TAG` (`"@organization"`) pairs with `cleanupOrganizationsBeforeRun`, the counterpart of the Vitest suite's fixture of that name: it removes the organizations a crashed run left behind. It only removes those named with `ORGANIZATION_NAME_PREFIX`, so a parallel worker's organizations are never touched, where the Vitest one clears every organization of the account.
+- `ORGANIZATION_TAG` (`"@organization"`) pairs with `cleanupOrganizationsBeforeRun`, the counterpart of the Vitest suite's fixture of that name: an automatic fixture that, for a test carrying the tag, removes the organizations a crashed run left behind. It only removes those named with `ORGANIZATION_NAME_PREFIX`, so a parallel worker's organizations are never touched, where the Vitest one clears every organization of the account.
 
 `cleanupCreatedOrganization` is an automatic fixture (`{ auto: true }`), so it needs no tag. A test that creates an organization records it in `scenarioState.organization`; after the test, whether it passed or failed, the fixture deletes the repositories the organization holds and then the organization, because Gitea refuses to delete an organization that still owns one. The visual specs rely on it.
 

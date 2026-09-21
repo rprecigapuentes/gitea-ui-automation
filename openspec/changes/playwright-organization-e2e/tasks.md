@@ -12,16 +12,20 @@
 Found while running 2.2: the port failed on three points where `PlaywrightInteractionStrategy` differed from the Selenium contract the page objects assume.
 
 - [x] 3.1 `isVisible` searches inside `root` instead of the whole page
-- [x] 3.2 `findElements` waits for visible matches and throws when none appears
-- [x] 3.3 `type` appends keystrokes and `getAttribute` reads the live property
+- [x] 3.2 `type` appends keystrokes and `getAttribute("value")` reads the live value
+- [x] 3.3 `hasUserSearchResults` waits for the list with `waitUntil`
 
-## 4. Pipeline
+## 4. Review fixes
+
+- [x] 4.1 The cleanup is an automatic fixture, the test carries no timeout and reaches every page as `pageObjects.<page>`, and the strategy keeps its methods as simple as before
+
+## 5. Pipeline
 
 Found on the first pipeline run: the `playwright-native` job of `ct.yml` had no invited accounts, so the spec failed with "Missing invited credentials".
 
-- [x] 4.1 Declare the `GITEA_INV_<BROWSER>` variables and register the three invited accounts in the `playwright-native` job, as the Selenium job does
+- [x] 5.1 Declare the `GITEA_INV_<BROWSER>` variables and register the three invited accounts in the `playwright-native` job, as the Selenium job does
 
-## 5. Wrap up
+## 6. Wrap up
 
-- [x] 5.1 Document the spec and fixture in the README
-- [x] 5.2 Verify `npm run format`, `npm run lint` and `npm run typecheck` are green
+- [x] 6.1 Document the spec and fixture in the README
+- [x] 6.2 Verify `npm run format`, `npm run lint` and `npm run typecheck` are green

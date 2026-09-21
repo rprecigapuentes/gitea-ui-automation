@@ -51,14 +51,19 @@ export const test = base.extend<HooksFixtures>({
 
   // Removes what a crashed run left behind, only under the test's own prefix so a parallel
   // worker's organizations are never touched.
-  cleanupOrganizationsBeforeRun: async ({ clients }, use) => {
-    for (const { name } of await clients.organizations.getUserOrganizations()) {
-      if (name.startsWith(ORGANIZATION_NAME_PREFIX)) {
-        await clients.organizations.deleteOrganization(name);
+  cleanupOrganizationsBeforeRun: [
+    async ({ clients }, use, testInfo) => {
+      if (testInfo.tags.includes(ORGANIZATION_TAG)) {
+        for (const { name } of await clients.organizations.getUserOrganizations()) {
+          if (name.startsWith(ORGANIZATION_NAME_PREFIX)) {
+            await clients.organizations.deleteOrganization(name);
+          }
+        }
       }
-    }
-    await use();
-  },
+      await use();
+    },
+    { auto: true },
+  ],
 
   seededOrganizationWithRepositories: async ({ clients }, use, testInfo) => {
     const organizationName = `at-board-${testInfo.project.name}-${uniqueSuffix()}`;
