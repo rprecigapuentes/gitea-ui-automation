@@ -123,7 +123,7 @@ export class PlaywrightInteractionStrategy implements IInteractionStrategy {
   async isVisible(
     locators: string | string[],
     root?: IElementHandle,
-    timeoutMs?: number,
+    timeoutMs: number = DEFAULT_TIMEOUT_MS,
   ): Promise<boolean> {
     const list = Array.isArray(locators) ? locators : [locators];
     if (root) {
