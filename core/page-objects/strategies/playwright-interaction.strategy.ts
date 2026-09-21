@@ -15,13 +15,27 @@ async function poll(predicate: () => Promise<boolean>, timeoutMs: number): Promi
   return true;
 }
 
+// Like WebElement.getAttribute: the live property when the element carries a string one, such as
+// the value a user typed into an input, and the content attribute otherwise. Locator.getAttribute
+// only reads the attribute, which a date input set by the page never updates. Reading the property
+// rather than calling inputValue() keeps a non-input element working: <progress value="50"> has a
+// numeric .value, so it falls through to the attribute.
+async function readAttribute(locator: Locator, name: string): Promise<string> {
+  const value = await locator.evaluate((element, attribute) => {
+    const property = (element as unknown as Record<string, unknown>)[attribute];
+    return typeof property === "string" ? property : element.getAttribute(attribute);
+  }, name);
+
+  return value ?? "";
+}
+
 function toElementHandle(locator: Locator): IElementHandle {
   return {
     click: () => locator.click(),
     // Trimmed, like WebElement.getText. Locator.textContent returns the raw node content, so a
     // value Gitea renders indented inside its markup comes back wrapped in newlines and tabs.
     getText: async () => ((await locator.textContent()) ?? "").trim(),
-    getAttribute: async (name: string) => (await locator.getAttribute(name)) ?? "",
+    getAttribute: (name: string) => readAttribute(locator, name),
     isSelected: () => locator.isChecked(),
     isDisplayed: () => locator.isVisible(),
     clear: () => locator.clear(),
