@@ -5,7 +5,7 @@ UI automation against Gitea with Playwright's native test runner (`@playwright/t
 ## What's here
 
 - `tests/gitea-smoke.spec.ts` — asserts the Gitea at `baseURL` serves its landing page and the sign-up form, on every browser in the matrix. `playwright.config.ts` reads that URL from `GITEA_BASE_URL`, falling back to `http://localhost:3000`, so the suite points at whatever instance you give it. Nothing here logs in; account-level flows wait on the page objects described at the end of this README.
-- `allurerc.js` and the `allure-playwright` reporter, the same Allure 3 setup the Selenium suites use. `npm run report` turns `allure-results/` into a single-file `allure-report/index.html`, and each result carries the project it ran on, so a failure names its browser without opening the job log.
+- `allurerc.js` and the `allure-playwright` reporter, the same Allure 3 setup the Selenium suites use. `npm run report` turns `allure-results/` into a single-file `allure-report/index.html`, and each result carries the project it ran on, so a failure names its browser without opening the job log. The stock `html` reporter runs alongside it and writes `playwright-report/` during the run, with no generation step of its own.
 - `chrome`, `firefox` and `edge` project configs, matching the browser matrix the Selenium services already cover. `playwright.config.ts` derives them from one browser list, and derives the non-functional projects from the same list, so a browser is defined once. `chrome` and `edge` set `channel: 'chrome'` and `channel: 'msedge'`, so each drives the real product. Without a channel, `Desktop Chrome` and `Desktop Edge` both resolve to Playwright's bundled Chromium, and two of the three results would be the same engine under different names. Firefox needs no channel: the bundled build is Firefox. The branded browsers are a separate install (`npx playwright install chrome msedge`); on CT the job runs inside `mcr.microsoft.com/playwright`, which already carries the bundled ones and their system libraries, and adds those two on top.
 
 ## Custom fixtures
@@ -119,10 +119,36 @@ npm run test:a11y:update -w @gitea-automation/playwright-native   # re-record th
 
 ### Output
 
-In `reports/accessibility/`, git-ignored, uploaded whole as the `accessibility-scans` artifact:
+Everything below is git-ignored and uploaded as the `accessibility-scans` artifact.
+
+In `reports/accessibility/`:
 
 - `summary.html`, one self-contained page: the counts per `impact`, then a card per rule with its offending elements. `report:a11y` writes it and prints the same counts for a pull request description.
 - `<page>-<browser>.json`, the full axe result, also attached to the test so Allure carries it.
+
+In `test-results/`, only for a scan that failed:
+
+- `trace.zip`, a Playwright trace of the run. It carries a DOM snapshot per action, so the element a violation names can be selected and read with its computed style instead of being reproduced by hand from a selector and two hex colours. A scan that passed leaves none: the accessibility projects set `trace: "retain-on-failure"`, since the suite-wide `on-first-retry` never fires on projects configured with no retries. It opens with no network connection, and under this path rather than the repository root:
+
+```bash
+npx playwright show-trace test-results/<test-directory>/trace.zip
+```
+
+In `playwright-report/`, the stock Playwright report:
+
+- `index.html` and the `data/` and `trace/` folders beside it. Unlike the other two it is not one page: attachments land in `data/` under a content hash, and once a trace exists Playwright bundles its own viewer into `trace/`, which is how the report opens a trace without reaching `trace.playwright.dev`. Keep the folder whole or the report loses its attachments.
+
+### Reading one run three ways
+
+Every report below describes the same run. They answer different questions, which is why all three are published.
+
+| Report                               | Answers                                                                      | Shape              |
+| ------------------------------------ | ---------------------------------------------------------------------------- | ------------------ |
+| `reports/accessibility/summary.html` | How many violations, at what `impact`, on which page                         | One page, ~20 KB   |
+| `allure-report/index.html`           | Did the suite pass, which step failed, grouped by suite and kept across runs | One page, ~11 MB   |
+| `playwright-report/index.html`       | The same verdict, with the trace viewer bundled for offline use              | A folder, 28 files |
+
+Only `summary.html` answers the severity question, because only it reads inside the axe result. Allure's own `severity` is a label on a test, one per page, while `impact` belongs to each violation.
 
 ### Baselines
 
@@ -140,7 +166,7 @@ docker run -d --name gitea-test --network a11y-net \
   docker.gitea.com/gitea:1.27.3
 ```
 
-Register one owner account per browser project you intend to run, named `<browser>-owner`, as that workflow's seeding step does: `chromium-owner` for `test:a11y`, plus `chrome-owner`, `firefox-owner` and `edge-owner` for `test:a11y:all`. Register one throwaway account before them, since Gitea makes the first user of an instance an administrator. Then export `GITEA_BASE_URL` and the matching `GITEA_OWNER_*`/`GITEA_TOKEN_*` variables and run `test:a11y:update` inside `mcr.microsoft.com/playwright:v1.63.0-noble` on that network. Commit regenerated baselines on their own, never with code changes.
+Register one owner account per browser project you intend to run, named `<browser>-owner`, as that workflow's seeding step does: `chrome-owner` covers `test:a11y`, since the bundled Chromium project resolves to the Chrome account, and `firefox-owner` and `edge-owner` are needed on top for `test:a11y:all`. Register one throwaway account before them, since Gitea makes the first user of an instance an administrator. Then export `GITEA_BASE_URL` and the matching `GITEA_OWNER_*`/`GITEA_TOKEN_*` variables and run `test:a11y:update` inside `mcr.microsoft.com/playwright:v1.63.0-noble` on that network. Commit regenerated baselines on their own, never with code changes.
 
 ## Visual testing
 
