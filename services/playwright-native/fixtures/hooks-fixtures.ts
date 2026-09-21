@@ -10,6 +10,10 @@ export const PROJECT_BOARD_TAG = "@project-board";
 /** Mirrors the Cucumber suite's own `@smoke` tag. */
 export const SMOKE_TAG = "@smoke";
 
+/** Mirrors the Cucumber suite's own `@team-repository` tag — tag a test with this to pick up the
+ *  `seededOrganizationWithTeamAndRepository` fixture below. */
+export const TEAM_REPOSITORY_TAG = "@team-repository";
+
 /** Tag of the organization end-to-end test; pairs with `cleanupOrganizationsBeforeRun`. */
 export const ORGANIZATION_TAG = "@organization";
 
@@ -17,15 +21,24 @@ export const ORGANIZATION_TAG = "@organization";
 export const ORGANIZATION_NAME_PREFIX = "test-orgs";
 
 const PROJECT_BOARD_REPOSITORY_COUNT = 2;
+const SEEDED_TEAM_NAME = "team-1";
+const SEEDED_REPOSITORY_NAME = "frontend";
 
 interface SeededOrganizationWithRepositories {
   organizationName: string;
   repositories: SeededRepository[];
 }
 
+interface SeededOrganizationWithTeamAndRepository {
+  organizationName: string;
+  teamName: string;
+  repositoryName: string;
+}
+
 interface HooksFixtures {
   seededOrganizationWithRepositories: SeededOrganizationWithRepositories;
   existingOrganization: Organization;
+  seededOrganizationWithTeamAndRepository: SeededOrganizationWithTeamAndRepository;
   cleanupCreatedOrganization: void;
   cleanupOrganizationsBeforeRun: void;
 }
@@ -82,6 +95,26 @@ export const test = base.extend<HooksFixtures>({
     scenarioState.organization = organization;
 
     await use(organization);
+  },
+
+  // One organization with a team and a repository: the state `@team-repository`-tagged tests start
+  // from, mirroring the Cucumber hook of that tag. `cleanupCreatedOrganization` removes it.
+  seededOrganizationWithTeamAndRepository: async ({ clients, scenarioState }, use, testInfo) => {
+    const organizationName = `at-team-repo-${testInfo.project.name}-${uniqueSuffix()}`;
+
+    await clients.organizations.createOrganization(organizationName);
+    scenarioState.organization = { name: organizationName, visibility: "private" };
+    await clients.teams.createTeam(organizationName, SEEDED_TEAM_NAME, "write");
+    await clients.repositories.createOrganizationRepository(
+      organizationName,
+      SEEDED_REPOSITORY_NAME,
+    );
+
+    await use({
+      organizationName,
+      teamName: SEEDED_TEAM_NAME,
+      repositoryName: SEEDED_REPOSITORY_NAME,
+    });
   },
 
   seededOrganizationWithRepositories: async ({ clients }, use, testInfo) => {

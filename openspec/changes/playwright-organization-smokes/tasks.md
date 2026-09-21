@@ -10,10 +10,10 @@
 
 ## 3. Add a repository to a team
 
-- [ ] 3.1 Port "Add a repository to a team", with the `@team-repository` fixture
-- [ ] 3.2 Run it on chrome, firefox and edge
+- [x] 3.1 Port "Add a repository to a team", with the `@team-repository` fixture
+- [x] 3.2 Run it on chrome, firefox and edge
 
 ## 4. Wrap up
 
-- [ ] 4.1 Document the spec and the fixtures in the README
-- [ ] 4.2 Verify `npm run format`, `npm run lint` and `npm run typecheck` are green
+- [x] 4.1 Document the spec and the fixtures in the README
+- [x] 4.2 Verify `npm run format`, `npm run lint` and `npm run typecheck` are green

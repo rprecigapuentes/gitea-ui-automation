@@ -1,4 +1,4 @@
-import { test, expect, SMOKE_TAG } from "../fixtures/hooks-fixtures";
+import { test, expect, SMOKE_TAG, TEAM_REPOSITORY_TAG } from "../fixtures/hooks-fixtures";
 import { resolveInvitedCredentials } from "../fixtures/credentials";
 import type { PageFactory } from "@gitea-automation/business-logic/pages/page.factory";
 import type { Organization } from "@gitea-automation/business-logic/entities/organization.entity";
@@ -147,6 +147,30 @@ test.describe("Organization smokes", () => {
 
       expect(await pageObjects.orgRepositories.getOwnersRepositoriesCount()).toBe("1");
       expect(await pageObjects.orgRepositories.getRepositoryNames()).toContain(repository.name);
+    },
+  );
+
+  test(
+    "Add a repository to a team",
+    { tag: [SMOKE_TAG, TEAM_REPOSITORY_TAG] },
+    async ({ pageObjects, sessionManager, seededOrganizationWithTeamAndRepository }) => {
+      const { teamName, repositoryName } = seededOrganizationWithTeamAndRepository;
+
+      await sessionManager.loginAsOwner();
+      await pageObjects.orgFacade.open();
+      await pageObjects.orgFacade.waitForElements();
+
+      await pageObjects.orgFacade.navigateToTeamsTab();
+      await pageObjects.orgFacade.navigateToSpecificTeam(teamName);
+      await pageObjects.orgSpecificTeam.navigateToRepositoriesTab();
+      await pageObjects.orgSpecificTeam.addRepository(repositoryName);
+      await pageObjects.orgFacade.navigateToTeamsTab();
+
+      await pageObjects.orgFacade.navigateToSpecificTeam(teamName);
+      await pageObjects.orgSpecificTeam.navigateToRepositoriesTab();
+      expect(await pageObjects.orgSpecificTeam.getAssignedRepositoryNames()).toEqual([
+        repositoryName,
+      ]);
     },
   );
 });
