@@ -1,8 +1,12 @@
 name: Visual
 
-# Dispatch only: baselines for this runner do not exist until one dispatch records them, and the
-# volatile regions are still being found, so a scheduled run would report noise.
+# Dispatch only once merged: baselines for this runner do not exist until a run records them, and
+# the volatile regions are still being found, so a scheduled run would report noise.
 on:
+  # Temporary: Gitea lists only the workflows of the default branch, so until this merges the
+  # only way to run it is a push. Remove it before the branch merges.
+  push:
+    branches: [rene/106-visual-testing]
   workflow_dispatch:
     inputs:
       record_baselines:
@@ -107,17 +111,29 @@ jobs:
             echo "token minted for ${!owner_user}"
           done
 
+      # A dispatch records only when asked. The temporary push trigger records until the runner's
+      # baselines are committed, then compares.
+      - name: Decide whether to record or compare
+        shell: bash
+        run: |
+          baselines=services/playwright-native/tests/non-functional/visual/baselines
+          if [ "${{ github.event.inputs.record_baselines }}" = "true" ]             || { [ "${{ github.event_name }}" = "push" ] && ! ls "$baselines"/*/linux > /dev/null 2>&1; }; then
+            echo "VISUAL_RECORD=true" >> "$GITHUB_ENV"
+          else
+            echo "VISUAL_RECORD=false" >> "$GITHUB_ENV"
+          fi
+
       - name: Compare the views against the committed baselines
-        if: github.event.inputs.record_baselines != 'true'
+        if: env.VISUAL_RECORD != 'true'
         run: npm run test:visual:ci -w @gitea-automation/playwright-native
 
       - name: Record this runner's baselines
-        if: github.event.inputs.record_baselines == 'true'
+        if: env.VISUAL_RECORD == 'true'
         run: npm run test:visual:update -w @gitea-automation/playwright-native
 
       # The native report carries the expected, actual and diff images of a failing check.
       - name: Upload the Playwright report
-        if: always() && github.event.inputs.record_baselines != 'true'
+        if: always() && env.VISUAL_RECORD != 'true'
         uses: actions/upload-artifact@v3
         with:
           name: playwright-report-visual
@@ -126,7 +142,7 @@ jobs:
 
       # Recording commits nothing: a person downloads these, looks at them, and commits them.
       - name: Upload the recorded baselines
-        if: always() && github.event.inputs.record_baselines == 'true'
+        if: always() && env.VISUAL_RECORD == 'true'
         uses: actions/upload-artifact@v3
         with:
           name: visual-baselines-linux

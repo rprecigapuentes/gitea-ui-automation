@@ -45,3 +45,4 @@
 - [x] 9.2 Add `test:visual:ci`, which runs the three visual projects with the html reporter and `PLAYWRIGHT_HTML_OPEN=never`; verify it leaves `playwright-report/index.html` and returns without opening anything.
 - [x] 9.3 Add `.gitea/workflows/visual.yml`, dispatch only, with the container, `gitea-test`, the three accounts and tokens, the branded browsers, a `record_baselines` input, and uploads of the native report and of the recorded baselines with `if: always()`; verify the workflow parses and `ct.yml` does not reference it.
 - [ ] 9.4 Dispatch the workflow once to record the runner's baselines, review the artifact and commit it under `linux/`; verify a second dispatch passes and publishes the native report.
+- [ ] 9.5 Remove the temporary `push` trigger from `.gitea/workflows/visual.yml`; verify the workflow is dispatch-only before the branch merges, so the suite never runs on a push again.

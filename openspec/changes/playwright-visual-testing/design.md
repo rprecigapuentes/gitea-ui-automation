@@ -52,6 +52,8 @@ Clean-up is the opposite: it belongs in a hook, because it must run when a step 
 
 `visual.yml` follows `accessibility.yml`: its own workflow, dispatch only, the Playwright container, its own `gitea-test` service, an administrator registered first, artifacts published with `if: always()`. It differs in four ways. It runs three browsers, so it registers three accounts and mints their tokens, and installs the branded Chrome and Edge that the image does not carry, as `ct.yml` does. The native report cannot open itself on a runner, so `test:visual:ci` runs with `PLAYWRIGHT_HTML_OPEN=never` and the workflow uploads `playwright-report/`. A `record_baselines` input switches the run to `test:visual:update` and uploads the recorded baselines, because the ones committed from a workstation do not match the runner. Recording does not commit: a person downloads, looks at, and commits them.
 
+Gitea lists only the default branch's workflows in its Actions menu, so before this merges the workflow carries a temporary `push` trigger on the feature branch, as `accessibility.yml` did. A push records the runner's baselines while none are committed and compares once they are, so the first run needs no input. The trigger is removed before the merge.
+
 It stays manual for now, like accessibility. Nothing gates on it until baselines exist for the runner and the volatile regions have settled; a scheduled run before that would report noise. Promoting it to a scheduled job after the Playwright job in `ct.yml` is a later change.
 
 ## Credentials for the bundled Chromium
