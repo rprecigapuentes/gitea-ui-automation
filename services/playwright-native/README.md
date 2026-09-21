@@ -110,10 +110,22 @@ npm run test:a11y:update -w @gitea-automation/playwright-native   # re-record th
 
 ### Output
 
-In `reports/accessibility/`, git-ignored, uploaded whole as the `accessibility-scans` artifact:
+Everything below is git-ignored and uploaded as the `accessibility-scans` artifact.
 
-- `summary.html`, one self-contained page: the counts per `impact`, then a card per rule with its offending elements. `report:a11y` writes it and prints the same counts for a pull request description.
+In `reports/accessibility/`:
+
+- `summary.html`, one self-contained page: the counts per `impact`, then a card per rule with its offending elements. `report:a11y` writes it and prints the same counts for a pull request description. No test report answers the severity question, because none of them reads inside the axe result: Allure's own `severity` is a label on a test, one per page, while `impact` belongs to each violation.
 - `<page>-<browser>.json`, the full axe result, also attached to the test so Allure carries it.
+
+In `test-results/`, only for a scan that failed:
+
+- `trace.zip`, a Playwright trace of the run. It carries a DOM snapshot per action, so the element a violation names can be selected and read with its computed style instead of being reproduced by hand from a selector and two hex colours. Allure offers it on the failed result, and locally it opens without a network connection:
+
+```bash
+npx playwright show-trace test-results/<test-directory>/trace.zip
+```
+
+A scan that passed leaves no trace: the accessibility projects set `trace: "retain-on-failure"`, since the suite-wide `on-first-retry` never fires on projects configured with no retries.
 
 ### Baselines
 
