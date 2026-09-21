@@ -18,7 +18,9 @@ async function poll(predicate: () => Promise<boolean>, timeoutMs: number): Promi
 function toElementHandle(locator: Locator): IElementHandle {
   return {
     click: () => locator.click(),
-    getText: async () => (await locator.textContent()) ?? "",
+    // Trimmed, like WebElement.getText. Locator.textContent returns the raw node content, so a
+    // value Gitea renders indented inside its markup comes back wrapped in newlines and tabs.
+    getText: async () => ((await locator.textContent()) ?? "").trim(),
     getAttribute: async (name: string) => (await locator.getAttribute(name)) ?? "",
     isSelected: () => locator.isChecked(),
     isDisplayed: () => locator.isVisible(),
