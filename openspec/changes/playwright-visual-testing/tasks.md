@@ -53,6 +53,14 @@
 - [x] 10.2 Add three organization smokes under `organizations/`: create an organization through the form, create a team, and browse the repositories and members of an organization; verify each checks its views on the three browsers and leaves nothing behind.
 - [x] 10.3 Add three smokes under `issues/` and `project-board/`: the issue list and an issue, the issue form with its labels and milestones, and the project board with cards; verify each checks its views on the three browsers and leaves nothing behind.
 - [x] 10.4 Record the win32 baselines of the new views; verify two consecutive local runs list only the views whose regions still vary.
-- [ ] 10.5 Let a push record baselines when its commit message says `[record-baselines]`, and record the runner's baselines of the new views; verify a push without the marker compares and passes on views without volatile regions.
 - [x] 10.6 Replace the single-process `test:visual` and `test:visual:update` with `scripts/visual.mjs`, which runs one process per browser with `--workers=1` and blob reports, merges them into one native report and opens it; make `test:visual:<browser>` single-worker; verify the browsers run in parallel while each browser's specs run one after another, and one report covers all three.
-- [ ] 10.7 Give the workflow's token the four scopes the smokes need; verify a dispatch that records baselines passes all 21 tests, the repository views show their repositories, and the project board shows its two cards.
+
+## 11. Main-view smoke
+
+- [x] 11.1 Add `resolveInvitedCredentials` beside the owner's in `fixtures/credentials.ts`, reading `GITEA_INV_<BROWSER>`, and put the invited accounts in the Playwright `.env`; verify it returns the invited account for each browser and names the variable when it is missing.
+- [x] 11.2 Replace the login-page visual spec with the main-view smoke (sign in as the owner, check `main.png`, sign out, sign in as the invited user, check `main.png`) and remove the login-page baselines; verify it runs on the three browsers and that the second check fails in the report on the regions that belong to the account.
+
+## 12. Two-job workflow
+
+- [x] 12.1 Split `visual.yml` into a `baselines` job that records only the missing baselines (or all of them when asked) and reports whether it recorded anything, and a `visual` job that runs only then, downloads them and compares; register the invited accounts in both; verify the file parses and the second job is skipped when nothing was recorded.
+- [ ] 12.2 Run the workflow on a push: verify it records the new main-view baselines in the first job, the second job compares against them, and a following push with nothing missing runs only the first job.

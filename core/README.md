@@ -7,6 +7,7 @@ core/
 ├── selenium/      @gitea-automation/core-selenium      — Selenium driver, drivers/browserstack-config (WebDriver-coupled)
 ├── page-objects/  @gitea-automation/core-page-objects   — Strategy pattern: the interfaces + Context classes every page object extends, strategies/ for both tools, InteractionStrategyFactory
 ├── api-client/    @gitea-automation/core-api-client     — Strategy pattern: the interface + GiteaApiClient every API client extends, strategies/ for both tools, RequestStrategyFactory
+├── playwright/    @gitea-automation/core-playwright     — Playwright-only helpers with no Selenium equivalent: the VisualTester
 ├── config/        @gitea-automation/core-config         — Gitea app config (baseUrl), tool-agnostic
 ├── data-handler/  @gitea-automation/core-data-handler   — test-data naming helpers, tool-agnostic
 └── logger/        @gitea-automation/core-logger         — Logger adapter + Pino implementation, tool-agnostic
@@ -25,6 +26,7 @@ Each subfolder encapsulates exactly what it depends on: if a file has any real d
 - [`core/selenium/README.md`](selenium/README.md)
 - [`core/page-objects/README.md`](page-objects/README.md)
 - [`core/api-client/README.md`](api-client/README.md)
+- [`core/playwright/README.md`](playwright/README.md)
 - [`core/config/README.md`](config/README.md)
 - [`core/data-handler/README.md`](data-handler/README.md)
 - [`core/logger/README.md`](logger/README.md)

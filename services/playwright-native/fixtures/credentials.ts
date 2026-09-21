@@ -22,6 +22,18 @@ export function resolveOwnerCredentials(project: string): Credentials {
   return { username, password };
 }
 
+export function resolveInvitedCredentials(project: string): Credentials {
+  const suffix = browserOf(project).toUpperCase();
+  const username = process.env[`GITEA_INV_${suffix}`];
+  const password = process.env[`GITEA_INV_${suffix}_PASSWORD`];
+
+  if (!username || !password) {
+    throw new Error(`Missing invited credentials for browser "${suffix}" (GITEA_INV_${suffix})`);
+  }
+
+  return { username, password };
+}
+
 export function resolveOwnerToken(project: string): string {
   const suffix = browserOf(project).toUpperCase();
   const token = process.env[`GITEA_TOKEN_${suffix}`];

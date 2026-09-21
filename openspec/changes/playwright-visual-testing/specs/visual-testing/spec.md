@@ -76,6 +76,30 @@ A visual spec SHALL live in a folder named for the area of the application it co
 - **WHEN** a spec creates repositories inside an organization it recorded
 - **THEN** the clean-up hook removes those repositories and then the organization
 
+### Requirement: A view can be checked as two accounts against one baseline
+
+A visual spec MAY sign in through the interface as one account, check a view, sign out, sign in as a second account and check the same view against the same baseline, so that a view meant to look the same for every user is proven to. The two accounts SHALL be the owner and the invited account of the project's browser. A region that legitimately differs between the accounts SHALL be excluded by masking it, not by using two baselines.
+
+#### Scenario: Two accounts see the same view
+
+- **WHEN** a spec checks a view as the owner and then as the invited account
+- **THEN** both checks compare against the same baseline
+
+#### Scenario: A region differs between the accounts
+
+- **WHEN** the two checks differ only in a region that belongs to the account
+- **THEN** the region is masked and the checks pass
+
+### Requirement: A project resolves the owner and the invited account of its browser
+
+A visual project SHALL resolve the invited account as it resolves the owner account, from the environment variables of its browser, and a missing variable SHALL fail with an error that names it. A project named for the bundled Chromium SHALL resolve both from the Chrome accounts.
+
+#### Scenario: The invited account is missing
+
+- **WHEN** the environment lacks the invited account of a project's browser
+- **THEN** resolving it fails
+- **AND** the error names the missing variable
+
 ### Requirement: A visual mismatch does not stop the test
 
 A screenshot check SHALL be a soft assertion. A mismatch SHALL be recorded and the test SHALL continue with the steps after it, and SHALL fail when it ends. The failure SHALL keep the expected, actual and diff images.
