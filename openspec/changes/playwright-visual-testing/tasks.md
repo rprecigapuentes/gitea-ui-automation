@@ -55,3 +55,4 @@
 - [x] 10.4 Record the win32 baselines of the new views; verify two consecutive local runs list only the views whose regions still vary.
 - [ ] 10.5 Let a push record baselines when its commit message says `[record-baselines]`, and record the runner's baselines of the new views; verify a push without the marker compares and passes on views without volatile regions.
 - [x] 10.6 Replace the single-process `test:visual` and `test:visual:update` with `scripts/visual.mjs`, which runs one process per browser with `--workers=1` and blob reports, merges them into one native report and opens it; make `test:visual:<browser>` single-worker; verify the browsers run in parallel while each browser's specs run one after another, and one report covers all three.
+- [ ] 10.7 Give the workflow's token the four scopes the smokes need; verify a dispatch that records baselines passes all 21 tests, the repository views show their repositories, and the project board shows its two cards.

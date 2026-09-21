@@ -66,6 +66,8 @@ Names of organizations, repositories, issues and labels are fixed per project, n
 
 The clean-up hook removes an organization's repositories before the organization, because Gitea refuses to delete an organization that still owns one. Baseline names carry the area as a prefix (`organization-`, `issue-`, `project-board-`) because every spec's baselines share one folder per project and platform.
 
+The workflow's token carries the four scopes `ct.yml` mints (`write:user`, `write:repository`, `write:issue`, `write:organization`), because the smokes create repositories, issues, labels and milestones. The API client does not check the HTTP status, so a token that lacks a scope does not fail the step that needed it: the 403 body is parsed as if it were the resource, and the failure surfaces later as a page that never renders. The accessibility workflow gets by with two scopes because its scans create nothing.
+
 While the workflow lives on a branch, a push records baselines when its commit message says `[record-baselines]`, since a push carries no input and new views have no baseline on the runner yet.
 
 ## Credentials for the bundled Chromium

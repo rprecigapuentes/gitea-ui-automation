@@ -104,7 +104,7 @@ jobs:
             token=$(curl -fsS -u "${!owner_user}:${!owner_pass}" \
               -H "Content-Type: application/json" \
               -X POST "$GITEA_BASE_URL/api/v1/users/${!owner_user}/tokens" \
-              -d '{"name":"visual","scopes":["write:user","write:organization"]}' \
+              -d '{"name":"visual","scopes":["write:user","write:repository","write:issue","write:organization"]}' \
               | node -pe 'JSON.parse(require("fs").readFileSync(0, "utf8")).sha1')
             echo "::add-mask::$token"
             echo "GITEA_TOKEN_$b=$token" >> "$GITHUB_ENV"
