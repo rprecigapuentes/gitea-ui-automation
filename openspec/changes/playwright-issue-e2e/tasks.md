@@ -7,14 +7,14 @@
 - [x] 2.1 Write `tests/issue-metadata.spec.ts` against `pageObjects`, with no assertion dropped
 - [ ] 2.2 Run it on chrome, firefox and edge, alone and with `test:parallel`
 
-Passes on firefox once `playwright-organization-e2e`'s `getAttribute` fix is applied, verified by cherry-picking `36e05d8` onto this branch. On this branch alone it still fails, see section 6. Chrome and edge are unrun: the branded browsers are not installed on this machine, only bundled Chromium and Firefox.
+Green on firefox. Chrome and edge are unrun: their branded builds are not installed on this machine, only bundled Chromium and Firefox.
 
 ## 3. Port AT-ISS-02
 
 - [x] 3.1 Write `tests/scoped-labels.spec.ts` against `pageObjects`, with no assertion dropped
 - [ ] 3.2 Run it on chrome, firefox and edge, alone and with `test:parallel`
 
-Passes on firefox on this branch. Chrome and edge unrun, same reason.
+Green on firefox. Chrome and edge unrun, same reason.
 
 ## 4. Agree on what a URL wait means
 
@@ -30,15 +30,16 @@ Both found by running 2.2, each one assertion further into the case.
 - [x] 5.1 `getText` trims, as `WebElement.getText` does. `Locator.textContent` returns the raw node content, so the milestone name Gitea renders indented came back wrapped in newlines and tabs and failed a `toEqual`
 - [x] 5.2 `IssuePage.getTitle` looks the index up at top level rather than scoped to the heading. A scoped find resolves the whole selector on Selenium and keeps the matches under the element; Playwright chains it relative to the element, so `#issue-title-display h1 .index` searched for the heading inside the heading
 
-## 6. Wait on the organization change for the third alignment
+## 6. Read an attribute the way WebElement does
 
-`IssuePage.setDueDate` tries three spellings of the date and reads `getAttribute("value")` back to see which one the input took. `Locator.getAttribute` reads the content attribute, which a date input set programmatically does not carry, so every spelling looks rejected and the second one reaches `fill()` as a malformed value and throws.
+Found by running 2.2 after 5.2. `IssuePage.setDueDate` tries three spellings of the date and reads `getAttribute("value")` back to see which the input took. `Locator.getAttribute` reads the content attribute, which a date input set by the page never updates, so every spelling looked rejected and the second reached `fill()` as a malformed value and threw.
 
-The fix already exists as `readAttribute` in `playwright-organization-e2e` (`36e05d8`). Duplicating it here would conflict in the same function, so this change waits instead.
+`playwright-organization-e2e` fixes the same divergence on the strategy's own `getAttribute`, for `value` only, through `inputValue()`. The element handle keeps the old reading, and `setDueDate` goes through the handle.
 
-- [ ] 6.1 Rebase on main once `playwright-organization-e2e` lands, then rerun 2.2
+- [x] 6.1 Read the live property in the handle's `getAttribute`, falling back to the content attribute. Reading the property rather than calling `inputValue()` is what keeps `<progress value="50">` working, which the same case asserts on through the milestone list
 
 ## 7. Wrap up
 
 - [x] 7.1 Document both specs and the fixture file in the `playwright-native` README
 - [x] 7.2 Verify `npm run format`, `npm run lint` and `npm run typecheck` are green
+- [x] 7.3 Run the whole `playwright-native` suite on firefox, 7 of 7 green, so the two handle changes leave the existing specs alone
