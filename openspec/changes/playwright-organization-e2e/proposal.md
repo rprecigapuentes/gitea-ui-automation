@@ -10,6 +10,7 @@ The organization end-to-end test exists only for Vitest + Selenium. To compare t
 - Add an `ORGANIZATION_TAG` and a `cleanupOrganizationsBeforeRun` fixture to `fixtures/hooks-fixtures.ts`, the counterpart of Vitest's file-scoped fixture of that name. It removes leftovers of a crashed run, and only those with the test's own name prefix, so a parallel worker's data is never touched.
 - Reuse the existing `cleanupCreatedOrganization` auto fixture for teardown.
 - Align `PlaywrightInteractionStrategy` with the Selenium contract the page objects assume, on the three points the port exposed: `isVisible` honours its `root`, `findElements` waits for visible matches and throws when none appears, and `type` appends keystrokes while `getAttribute` reads the live property.
+- Give the `playwright-native` job of `ct.yml` the invited accounts the spec needs: their `GITEA_INV_<BROWSER>` variables and their registration, as the Selenium job already does.
 - Document the spec, the fixture and those three points in the READMEs.
 
 ## Capabilities
@@ -18,10 +19,9 @@ No requirement text changes: an existing scenario is ported to a runner that alr
 
 ## Impact
 
-New: `services/playwright-native/tests/organization.spec.ts`. Modified: `core/page-objects/strategies/playwright-interaction.strategy.ts`, `core/page-objects/README.md`, `services/playwright-native/fixtures/hooks-fixtures.ts`, `services/playwright-native/README.md`.
+New: `services/playwright-native/tests/organization.spec.ts`. Modified: `.gitea/workflows/ct.yml`, `core/page-objects/strategies/playwright-interaction.strategy.ts`, `core/page-objects/README.md`, `services/playwright-native/fixtures/hooks-fixtures.ts`, `services/playwright-native/README.md`.
 
 ## Out of Scope
 
 - Changes to page objects or the Selenium/Vitest suite.
 - The comparison itself (timings, flakiness): a later task.
-- CI wiring: the functional projects already run every spec in `tests/`.
