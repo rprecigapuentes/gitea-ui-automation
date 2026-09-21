@@ -14,7 +14,7 @@ core/page-objects/
 ├── element-handle.interface.ts         # IElementHandle — what findElement/findElements return, replacing a raw WebElement
 ├── errors.ts                           # InteractionInterceptedError — e.g. a click blocked by a transitioning overlay, tool-agnostic
 ├── base-component.ts                   # BaseComponent — the Context: holds an injected IInteractionStrategy, delegates every method to it
-├── base.page.ts                        # BasePage extends BaseComponent — adds getUrl()/open(), the Navigable contract
+├── base.page.ts                        # BasePage extends BaseComponent — adds getUrl()/open(), the Navigable contract, and getVolatileRegions()
 ├── interaction-strategy.factory.ts     # InteractionStrategyFactory — the one place that picks a concrete strategy
 └── strategies/
     ├── selenium-interaction.strategy.ts    # SeleniumInteractionStrategy — real implementation, ported from core-selenium's former base-component.ts
@@ -23,6 +23,10 @@ core/page-objects/
         ├── selenium-html5-drag.util.ts     # simulateHtml5Drag — Selenium's dispatchDragEvents fallback (moved from core-selenium/utils/)
         └── playwright-html5-drag.util.ts   # simulateHtml5Drag — Playwright's dispatchDragEvents fallback
 ```
+
+## Volatile regions
+
+`BasePage.getVolatileRegions()` returns the selectors, as plain strings, of the regions of a page whose content changes between runs. It is empty by default and a page overrides it when a run shows something varies. Only the visual tests read it, to mask those regions before comparing a screenshot; the screenshot comparison itself is not part of the strategy contract, because Selenium has nothing equivalent (see [`core/playwright`](../playwright/README.md)).
 
 ## The pattern
 

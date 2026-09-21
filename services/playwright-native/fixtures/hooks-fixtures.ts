@@ -15,6 +15,7 @@ interface SeededOrganizationWithRepositories {
 
 interface HooksFixtures {
   seededOrganizationWithRepositories: SeededOrganizationWithRepositories;
+  cleanupCreatedOrganization: void;
 }
 
 /**
@@ -24,6 +25,23 @@ interface HooksFixtures {
  * the test fails, so no try/finally is needed in the test itself.
  */
 export const test = base.extend<HooksFixtures>({
+  // A test that creates an organization records it in `scenarioState`; this removes it and its
+  // repositories afterwards, whether the test passed or failed.
+  cleanupCreatedOrganization: [
+    async ({ clients, scenarioState }, use) => {
+      await use();
+      if (scenarioState.organization) {
+        const { name } = scenarioState.organization;
+        // Gitea refuses to delete an organization that still owns a repository.
+        for (const repository of await clients.repositories.getOrganizationRepositories(name)) {
+          await clients.repositories.deleteRepository(name, repository.name);
+        }
+        await clients.organizations.deleteOrganization(name);
+      }
+    },
+    { auto: true },
+  ],
+
   seededOrganizationWithRepositories: async ({ clients }, use, testInfo) => {
     const organizationName = `at-board-${testInfo.project.name}-${uniqueSuffix()}`;
     await clients.organizations.createOrganization(organizationName);

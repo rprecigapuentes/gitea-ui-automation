@@ -19,6 +19,12 @@ const nonFunctional = {
   retries: 0,
 };
 
+const visual = {
+  testDir: "./tests/non-functional/visual",
+  snapshotPathTemplate: "{testDir}/baselines/{projectName}/{platform}/{arg}{ext}",
+  retries: 0,
+};
+
 export default defineConfig({
   testDir: "./tests",
   fullyParallel: true,
@@ -41,5 +47,7 @@ export default defineConfig({
       ...nonFunctional,
       name: `accessibility-${browser.name}`,
     })),
+
+    ...browsers.map((browser) => ({ ...browser, ...visual, name: `visual-${browser.name}` })),
   ],
 });
