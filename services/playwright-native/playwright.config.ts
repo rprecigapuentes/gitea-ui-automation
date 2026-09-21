@@ -28,7 +28,12 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: [["list"], ["allure-playwright", { resultsDir: "allure-results" }]],
+  reporter: [
+    ["list"],
+    /* open: never, or the run ends by launching a browser and CI hangs on it. */
+    ["html", { outputFolder: "playwright-report", open: "never" }],
+    ["allure-playwright", { resultsDir: "allure-results" }],
+  ],
   use: {
     baseURL: process.env.GITEA_BASE_URL ?? "http://localhost:3000",
     trace: "on-first-retry",
