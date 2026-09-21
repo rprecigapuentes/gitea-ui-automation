@@ -71,6 +71,16 @@ or pass `--headed` directly to any single-browser script, e.g. `npm run test:chr
 
 `project-board-drag-and-drop.spec.ts` replicates the Cucumber suite's project-board drag-and-drop smoke (`project-board.feature`'s "A card dragged onto another column is kept there by the board"): it creates a Basic Kanban project and assigns both seeded issues to it through `pageObjects`, then moves the first card into "In Progress" with `pageObjects.projectBoardPage.moveCard(issueId, columnTitle)` — the same, unmodified method the Selenium suites use. It passes on all three browsers: the manual mouse drag lands directly on chrome and edge, and `moveCard`'s own fallback to `dispatchDragEvents` (now a real native-event-dispatch implementation, see the core-page-objects README's "Playwright strategy notes") reliably recovers it on firefox.
 
+`issue-metadata.spec.ts` and `scoped-labels.spec.ts` are the Playwright side of `AT-ISS-01` and `AT-ISS-02`, replicated from `gitea-selenium-vitest/tests/issue-metadata.test.ts` and `tests/issues.test.ts` for the week 3 comparison, with no assertion dropped. `AT-ISS-01` creates an issue carrying a Markdown description, a label, a milestone and an assignee, checks both list filters return it, and checks that closing it drives its milestone to 100 percent. `AT-ISS-02` creates three scoped labels through the UI and checks that a scoped label replaces the one of its own scope, coexists with another scope, and leaves the issue when removed.
+
+Two differences from their Vitest originals, both forced by the runner rather than chosen. Where the Vitest tests navigate with `driver.get(page.getUrl(...))`, these call the page object's own `openFor(...)`, which also waits for that view's ready locators. And both sign in with an explicit `sessionManager.loginAsOwner()`, because the Vitest suite logs in through an automatic `loggedInSession` fixture that this service has no counterpart to.
+
+## Seed fixtures
+
+`fixtures/issues-fixtures.ts` holds the API-seeded state those two specs start from, the Playwright form of the Vitest fixtures of the same names: `owner`, `repository`, `issue`, `maintainer`, `classificationLabel` and `milestone`. They build on the `clients` fixture rather than on their own HTTP, and only `repository` cleans up, because deleting it takes its issues, labels and milestones with it.
+
+`owner` and `repository` derive the browser from `testInfo.project.name`, where the Vitest fixtures read `process.env.BROWSER`: accounts are per browser, and the project name is what a Playwright fixture has.
+
 ## Hooks fixtures
 
 `fixtures/hooks-fixtures.ts` is where a test's precondition/postcondition setup lives, instead of a `try`/`finally` in the test body: Playwright tears a fixture's setup down (the code after `use()`) even when the test fails, so no manual cleanup handling is needed in the test itself. It extends `fixtures/fixture.ts`'s own `test`, the same way `fixture.ts` extends `@playwright/test`'s.
