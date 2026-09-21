@@ -5,8 +5,8 @@
 
 ## 2. Add a user to a team and create a repository
 
-- [ ] 2.1 Port "Add a user to a team" and "Create a repository for an existing organization"
-- [ ] 2.2 Run both on chrome, firefox and edge
+- [x] 2.1 Port "Add a user to a team" and "Create a repository for an existing organization"
+- [x] 2.2 Run both on chrome, firefox and edge
 
 ## 3. Add a repository to a team
 

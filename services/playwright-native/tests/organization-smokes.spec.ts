@@ -1,7 +1,25 @@
 import { test, expect, SMOKE_TAG } from "../fixtures/hooks-fixtures";
+import { resolveInvitedCredentials } from "../fixtures/credentials";
+import type { PageFactory } from "@gitea-automation/business-logic/pages/page.factory";
 import type { Organization } from "@gitea-automation/business-logic/entities/organization.entity";
 import type { Team } from "@gitea-automation/business-logic/entities/team.entity";
+import type { Repository } from "@gitea-automation/business-logic/entities/repository.entity";
 import { uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.util";
+
+// The step both team smokes share: "I create the following teams".
+async function createTeam(pageObjects: PageFactory, team: Team): Promise<void> {
+  await pageObjects.orgFacade.navigateToTeamsTab();
+  await pageObjects.orgTeams.clickNewTeamButton();
+  await pageObjects.orgNewTeam.waitForElements();
+  await pageObjects.orgNewTeam.createTeam(
+    team.name,
+    team.visibility,
+    team.repoCodeAccess!,
+    team.createRepositories,
+  );
+  await pageObjects.orgSpecificTeam.waitForElements();
+  await pageObjects.orgNavigation.waitForElements();
+}
 
 test.describe("Organization smokes", () => {
   test(
@@ -54,19 +72,81 @@ test.describe("Organization smokes", () => {
         await pageObjects.orgNavigation.hasOrganizationNameDisplayed(existingOrganization.name),
       ).toBe(true);
 
-      await pageObjects.orgFacade.navigateToTeamsTab();
-      await pageObjects.orgTeams.clickNewTeamButton();
-      await pageObjects.orgNewTeam.waitForElements();
-      await pageObjects.orgNewTeam.createTeam(
-        team.name,
-        team.visibility,
-        team.repoCodeAccess!,
-        team.createRepositories,
-      );
-      await pageObjects.orgSpecificTeam.waitForElements();
-      await pageObjects.orgNavigation.waitForElements();
+      await createTeam(pageObjects, team);
 
       expect(await pageObjects.orgSpecificTeam.waitForElements()).toBe(true);
+    },
+  );
+
+  test(
+    "Add a user to a team",
+    { tag: SMOKE_TAG },
+    async ({ pageObjects, sessionManager, existingOrganization }, testInfo) => {
+      const { username } = resolveInvitedCredentials(testInfo.project.name);
+      const team: Team = {
+        name: "team-1",
+        visibility: "private",
+        repoCodeAccess: "none",
+        createRepositories: true,
+        permissions: "general",
+      };
+
+      await sessionManager.loginAsOwner();
+      await pageObjects.orgFacade.open();
+      await pageObjects.orgFacade.waitForElements();
+      expect(
+        await pageObjects.orgNavigation.hasOrganizationNameDisplayed(existingOrganization.name),
+      ).toBe(true);
+
+      await createTeam(pageObjects, team);
+
+      await pageObjects.orgFacade.navigateToTeamsTab();
+      expect(await pageObjects.orgTeams.hasTeamContainer(team.name)).toBe(true);
+      // +1 for the organization's own default "Owners" team.
+      expect(await pageObjects.orgTeams.getTeamContainersCount()).toBe(2);
+
+      await pageObjects.orgFacade.navigateToSpecificTeam(team.name);
+      await pageObjects.orgSpecificTeam.addMemberByUsername(username);
+      expect(await pageObjects.orgSpecificTeam.hasMember(username)).toBe(true);
+      await pageObjects.orgFacade.navigateToTeamsTab();
+
+      expect(await pageObjects.orgTeams.getTeamMembersCount(team.name)).toBe("1 members");
+      expect(await pageObjects.orgTeams.getTeamAvatarUsernames(team.name)).toEqual([username]);
+    },
+  );
+
+  test(
+    "Create a repository for an existing organization",
+    { tag: SMOKE_TAG },
+    async ({ pageObjects, sessionManager, existingOrganization }) => {
+      const repository: Repository = { name: "frontend", visibility: true };
+
+      await sessionManager.loginAsOwner();
+      await pageObjects.orgFacade.open();
+      await pageObjects.orgFacade.waitForElements();
+      expect(
+        await pageObjects.orgNavigation.hasOrganizationNameDisplayed(existingOrganization.name),
+      ).toBe(true);
+
+      await pageObjects.orgFacade.navigateToRepositoriesTab();
+      await pageObjects.orgRepositories.clickNewRepositoryButton();
+      await pageObjects.createRepositoryPage.waitForElements();
+      await pageObjects.createRepositoryPage.createRepository(
+        repository.name,
+        repository.visibility!,
+      );
+
+      await pageObjects.repoNavBar.waitForElements();
+      await pageObjects.repoCodeTab.waitForElements(existingOrganization.name, repository.name);
+      const title = await pageObjects.repoNavBar.getRepoTitle();
+      expect(title).toContain(existingOrganization.name);
+      expect(title).toContain(repository.name);
+
+      await pageObjects.repoNavBar.clickOrganizationLink();
+      await pageObjects.orgRepositories.waitForElements();
+
+      expect(await pageObjects.orgRepositories.getOwnersRepositoriesCount()).toBe("1");
+      expect(await pageObjects.orgRepositories.getRepositoryNames()).toContain(repository.name);
     },
   );
 });
