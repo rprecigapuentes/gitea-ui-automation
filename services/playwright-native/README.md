@@ -71,6 +71,8 @@ or pass `--headed` directly to any single-browser script, e.g. `npm run test:chr
 
 `project-board-drag-and-drop.spec.ts` replicates the Cucumber suite's project-board drag-and-drop smoke (`project-board.feature`'s "A card dragged onto another column is kept there by the board"): it creates a Basic Kanban project and assigns both seeded issues to it through `pageObjects`, then moves the first card into "In Progress" with `pageObjects.projectBoardPage.moveCard(issueId, columnTitle)` — the same, unmodified method the Selenium suites use. It passes on all three browsers: the manual mouse drag lands directly on chrome and edge, and `moveCard`'s own fallback to `dispatchDragEvents` (now a real native-event-dispatch implementation, see the core-page-objects README's "Playwright strategy notes") reliably recovers it on firefox.
 
+`organization.spec.ts` replicates `gitea-selenium-vitest`'s `organizations.test.ts` so the two runners can be compared on the same scenario: the owner creates an organization and two private teams, adds the invited user to the first, removes them and reviews the persisted Teams state. It calls the same page-object methods with the same assertions, only through `pageObjects` instead of one fixture per page, and `test.step` takes the place of Allure's `step`. It runs on the three browsers like every other spec.
+
 ## Hooks fixtures
 
 `fixtures/hooks-fixtures.ts` is where a test's precondition/postcondition setup lives, instead of a `try`/`finally` in the test body: Playwright tears a fixture's setup down (the code after `use()`) even when the test fails, so no manual cleanup handling is needed in the test itself. It extends `fixtures/fixture.ts`'s own `test`, the same way `fixture.ts` extends `@playwright/test`'s.
@@ -88,6 +90,8 @@ test("...", { tag: PROJECT_BOARD_TAG }, async ({ seededOrganizationWithRepositor
 ```
 
 A test can filter to just this tag the same way Cucumber does with `--tags`: `npx playwright test --grep "@project-board"`.
+
+- `ORGANIZATION_TAG` (`"@organization"`) pairs with `cleanupOrganizationsBeforeRun`, the counterpart of the Vitest suite's fixture of that name: it removes the organizations a crashed run left behind. It only removes those named with `ORGANIZATION_NAME_PREFIX`, so a parallel worker's organizations are never touched, where the Vitest one clears every organization of the account.
 
 `cleanupCreatedOrganization` is an automatic fixture (`{ auto: true }`), so it needs no tag. A test that creates an organization records it in `scenarioState.organization`; after the test, whether it passed or failed, the fixture deletes the repositories the organization holds and then the organization, because Gitea refuses to delete an organization that still owns one. The visual specs rely on it.
 

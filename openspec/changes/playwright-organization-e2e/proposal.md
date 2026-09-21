@@ -9,7 +9,8 @@ The organization end-to-end test exists only for Vitest + Selenium. To compare t
 - Add `tests/organization.spec.ts` to `services/playwright-native`, replicating `gitea-selenium-vitest/tests/organizations.test.ts` step by step: create an organization, create two private teams, add the invited user to the first, remove them, and review the persisted Teams state. It reaches the browser only through `pageObjects`, with the same methods and assertions; Allure steps become `test.step`.
 - Add an `ORGANIZATION_TAG` and a `cleanupOrganizationsBeforeRun` fixture to `fixtures/hooks-fixtures.ts`, the counterpart of Vitest's file-scoped fixture of that name. It removes leftovers of a crashed run, and only those with the test's own name prefix, so a parallel worker's data is never touched.
 - Reuse the existing `cleanupCreatedOrganization` auto fixture for teardown.
-- Document the spec and the fixture in the service README.
+- Align `PlaywrightInteractionStrategy` with the Selenium contract the page objects assume, on the three points the port exposed: `isVisible` honours its `root`, `findElements` waits for visible matches and throws when none appears, and `type` appends keystrokes while `getAttribute` reads the live property.
+- Document the spec, the fixture and those three points in the READMEs.
 
 ## Capabilities
 
@@ -17,10 +18,10 @@ No requirement text changes: an existing scenario is ported to a runner that alr
 
 ## Impact
 
-New: `services/playwright-native/tests/organization.spec.ts`. Modified: `services/playwright-native/fixtures/hooks-fixtures.ts`, `services/playwright-native/README.md`.
+New: `services/playwright-native/tests/organization.spec.ts`. Modified: `core/page-objects/strategies/playwright-interaction.strategy.ts`, `core/page-objects/README.md`, `services/playwright-native/fixtures/hooks-fixtures.ts`, `services/playwright-native/README.md`.
 
 ## Out of Scope
 
-- Changes to page objects, the Selenium/Vitest suite or `PlaywrightInteractionStrategy`, unless a step fails on Playwright for a reason only they can fix.
+- Changes to page objects or the Selenium/Vitest suite.
 - The comparison itself (timings, flakiness): a later task.
 - CI wiring: the functional projects already run every spec in `tests/`.

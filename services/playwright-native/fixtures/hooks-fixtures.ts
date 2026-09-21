@@ -6,6 +6,12 @@ import type { SeededRepository } from "@gitea-automation/business-logic/state/sc
  *  with this to pick up the `seededOrganizationWithRepositories` fixture below. */
 export const PROJECT_BOARD_TAG = "@project-board";
 
+/** Tag of the organization end-to-end test; pairs with `cleanupOrganizationsBeforeRun`. */
+export const ORGANIZATION_TAG = "@organization";
+
+/** Prefix of the organizations the organization end-to-end test creates. */
+export const ORGANIZATION_NAME_PREFIX = "test-orgs";
+
 const PROJECT_BOARD_REPOSITORY_COUNT = 2;
 
 interface SeededOrganizationWithRepositories {
@@ -16,6 +22,7 @@ interface SeededOrganizationWithRepositories {
 interface HooksFixtures {
   seededOrganizationWithRepositories: SeededOrganizationWithRepositories;
   cleanupCreatedOrganization: void;
+  cleanupOrganizationsBeforeRun: void;
 }
 
 /**
@@ -41,6 +48,17 @@ export const test = base.extend<HooksFixtures>({
     },
     { auto: true },
   ],
+
+  // Removes what a crashed run left behind, only under the test's own prefix so a parallel
+  // worker's organizations are never touched.
+  cleanupOrganizationsBeforeRun: async ({ clients }, use) => {
+    for (const { name } of await clients.organizations.getUserOrganizations()) {
+      if (name.startsWith(ORGANIZATION_NAME_PREFIX)) {
+        await clients.organizations.deleteOrganization(name);
+      }
+    }
+    await use();
+  },
 
   seededOrganizationWithRepositories: async ({ clients }, use, testInfo) => {
     const organizationName = `at-board-${testInfo.project.name}-${uniqueSuffix()}`;
