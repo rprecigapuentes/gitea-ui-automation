@@ -1,4 +1,7 @@
 import { test as base } from "./fixture";
+import { resolveAdminToken } from "./credentials";
+import { UserClient } from "@gitea-automation/business-logic/clients/user.client";
+import { RequestStrategyFactory } from "@gitea-automation/core-api-client/request-strategy.factory";
 import { testDataName, uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.util";
 import type { SeededRepository } from "@gitea-automation/business-logic/state/scenario.entity";
 import type { Organization } from "@gitea-automation/business-logic/entities/organization.entity";
@@ -14,6 +17,9 @@ export const SMOKE_TAG = "@smoke";
  *  `seededOrganizationWithTeamAndRepository` fixture below. */
 export const TEAM_REPOSITORY_TAG = "@team-repository";
 
+/** Mirrors the Cucumber suite's own `@e2e` tag. */
+export const E2E_TAG = "@e2e";
+
 /** Tag of the organization end-to-end test; pairs with `cleanupOrganizationsBeforeRun`. */
 export const ORGANIZATION_TAG = "@organization";
 
@@ -21,6 +27,8 @@ export const ORGANIZATION_TAG = "@organization";
 export const ORGANIZATION_NAME_PREFIX = "test-orgs";
 
 const PROJECT_BOARD_REPOSITORY_COUNT = 2;
+const SEEDED_USER_COUNT = 2;
+const SEEDED_USER_PASSWORD = "Passw0rd!123";
 const SEEDED_TEAM_NAME = "team-1";
 const SEEDED_REPOSITORY_NAME = "frontend";
 
@@ -35,9 +43,15 @@ interface SeededOrganizationWithTeamAndRepository {
   repositoryName: string;
 }
 
+export interface SeededUser {
+  username: string;
+  password: string;
+}
+
 interface HooksFixtures {
   seededOrganizationWithRepositories: SeededOrganizationWithRepositories;
   existingOrganization: Organization;
+  seededUsers: SeededUser[];
   seededOrganizationWithTeamAndRepository: SeededOrganizationWithTeamAndRepository;
   cleanupCreatedOrganization: void;
   cleanupOrganizationsBeforeRun: void;
@@ -95,6 +109,27 @@ export const test = base.extend<HooksFixtures>({
     scenarioState.organization = organization;
 
     await use(organization);
+  },
+
+  // The Cucumber suite's `createSeededUsers`: "user 1" and "user 2", created through the admin API
+  // and deleted after the test. Named per browser, so the three browsers never share one.
+  seededUsers: async ({}, use, testInfo) => {
+    const users = new UserClient(
+      RequestStrategyFactory.playwright(process.env.GITEA_BASE_URL!, resolveAdminToken()),
+    );
+    const seeded: SeededUser[] = [];
+
+    for (let index = 1; index <= SEEDED_USER_COUNT; index += 1) {
+      const username = `at-user-${index}-${testInfo.project.name}-${uniqueSuffix()}`;
+      await users.createUser(username, `${username}@example.com`, SEEDED_USER_PASSWORD);
+      seeded.push({ username, password: SEEDED_USER_PASSWORD });
+    }
+
+    await use(seeded);
+
+    for (const { username } of seeded) {
+      await users.deleteUser(username);
+    }
   },
 
   // One organization with a team and a repository: the state `@team-repository`-tagged tests start

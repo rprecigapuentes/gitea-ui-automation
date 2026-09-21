@@ -1,11 +1,11 @@
 ## 1. Seeded users
 
-- [ ] 1.1 Add `resolveAdminToken` to `fixtures/credentials.ts`
-- [ ] 1.2 Add the `seededUsers` fixture to `fixtures/hooks-fixtures.ts`
+- [x] 1.1 Add `resolveAdminToken` to `fixtures/credentials.ts`
+- [x] 1.2 Add the `seededUsers` fixture to `fixtures/hooks-fixtures.ts`
 
 ## 2. Pipeline
 
-- [ ] 2.1 Mint the admin token in the `playwright-native` job of `ct.yml` and prove it holds `write:admin`
+- [x] 2.1 Mint the admin token in the `playwright-native` job of `ct.yml` and prove it holds `write:admin`
 
 ## 3. The scenario
 
