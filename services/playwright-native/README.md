@@ -75,6 +75,8 @@ or pass `--headed` directly to any single-browser script, e.g. `npm run test:chr
 
 `organization-smokes.spec.ts` replicates the five smokes of the Cucumber suite's `organizations.feature`, one test each and in the same order: create an organization, create a team, add a user to a team, create a repository, add a repository to a team. They call the same page-object methods and assert the same things through `pageObjects`. Where the feature adds a seeded user to the team, the test adds the browser's invited account, since the job has no admin token to seed users with.
 
+`organization-cucumber-e2e.spec.ts` replicates the `@e2e` scenario of the same feature, "Change team members permissions", step by step: the owner creates an organization, two teams, their members, a repository and files, then user 1 and user 2 write, read and lose access as the owner changes the teams. It takes about a minute, so `playwright.config.ts` sets a 120 second test timeout, the same the Vitest suite gives its organization test, instead of the test carrying one.
+
 ## Hooks fixtures
 
 `fixtures/hooks-fixtures.ts` is where a test's precondition/postcondition setup lives, instead of a `try`/`finally` in the test body: Playwright tears a fixture's setup down (the code after `use()`) even when the test fails, so no manual cleanup handling is needed in the test itself. It extends `fixtures/fixture.ts`'s own `test`, the same way `fixture.ts` extends `@playwright/test`'s.
@@ -97,6 +99,8 @@ A test can filter to just this tag the same way Cucumber does with `--tags`: `np
 
 - `SMOKE_TAG` (`"@smoke"`) marks the smokes. `existingOrganization` is the Cucumber step "an organization already exists": a public organization created through the API and recorded in `scenarioState`.
 - `TEAM_REPOSITORY_TAG` (`"@team-repository"`) pairs with `seededOrganizationWithTeamAndRepository`, the Cucumber hook of that tag: an organization with a `team-1` team and a `frontend` repository.
+
+- `E2E_TAG` (`"@e2e"`) marks the end-to-end scenario. `seededUsers` is the Cucumber suite's `createSeededUsers`: two users, "user 1" and "user 2", created through the admin API before the test and deleted after it, named per browser. It needs `GITEA_ADMIN_TOKEN`, one token shared by the three browsers, and the `ct.yml` job mints it.
 
 `cleanupCreatedOrganization` is an automatic fixture (`{ auto: true }`), so it needs no tag. A test that creates an organization records it in `scenarioState.organization`; after the test, whether it passed or failed, the fixture deletes the repositories the organization holds and then the organization, because Gitea refuses to delete an organization that still owns one. The visual specs rely on it.
 
