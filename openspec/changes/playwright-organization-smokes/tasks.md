@@ -1,7 +1,7 @@
 ## 1. Create an organization and its teams
 
-- [ ] 1.1 Port "Create Organization" and "Create teams for an existing organization", with the existing-organization fixture
-- [ ] 1.2 Run both on chrome, firefox and edge
+- [x] 1.1 Port "Create Organization" and "Create teams for an existing organization", with the existing-organization fixture
+- [x] 1.2 Run both on chrome, firefox and edge. "Create Organization" exposed one more difference: `getText` returned raw text nodes, so it now returns the rendered, trimmed text
 
 ## 2. Add a user to a team and create a repository
 

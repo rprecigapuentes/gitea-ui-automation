@@ -1,10 +1,14 @@
 import { test as base } from "./fixture";
 import { testDataName, uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.util";
 import type { SeededRepository } from "@gitea-automation/business-logic/state/scenario.entity";
+import type { Organization } from "@gitea-automation/business-logic/entities/organization.entity";
 
 /** Mirrors the Cucumber suite's own `@project-board` tag on `project-board.feature` — tag a test
  *  with this to pick up the `seededOrganizationWithRepositories` fixture below. */
 export const PROJECT_BOARD_TAG = "@project-board";
+
+/** Mirrors the Cucumber suite's own `@smoke` tag. */
+export const SMOKE_TAG = "@smoke";
 
 /** Tag of the organization end-to-end test; pairs with `cleanupOrganizationsBeforeRun`. */
 export const ORGANIZATION_TAG = "@organization";
@@ -21,6 +25,7 @@ interface SeededOrganizationWithRepositories {
 
 interface HooksFixtures {
   seededOrganizationWithRepositories: SeededOrganizationWithRepositories;
+  existingOrganization: Organization;
   cleanupCreatedOrganization: void;
   cleanupOrganizationsBeforeRun: void;
 }
@@ -64,6 +69,20 @@ export const test = base.extend<HooksFixtures>({
     },
     { auto: true },
   ],
+
+  // "An organization already exists" in the Cucumber smokes: created through the API and recorded
+  // in `scenarioState`, so `cleanupCreatedOrganization` removes it.
+  existingOrganization: async ({ clients, scenarioState }, use, testInfo) => {
+    const organization: Organization = {
+      name: `at-org-${testInfo.project.name}-${uniqueSuffix()}`,
+      visibility: "public",
+    };
+
+    await clients.organizations.createOrganization(organization.name, organization.visibility);
+    scenarioState.organization = organization;
+
+    await use(organization);
+  },
 
   seededOrganizationWithRepositories: async ({ clients }, use, testInfo) => {
     const organizationName = `at-board-${testInfo.project.name}-${uniqueSuffix()}`;
