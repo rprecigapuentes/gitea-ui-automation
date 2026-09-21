@@ -112,16 +112,21 @@ jobs:
           done
 
       # A dispatch records only when asked. The temporary push trigger records until the runner's
-      # baselines are committed, then compares.
+      # baselines are committed, then compares, and records again when the commit message says
+      # [record-baselines], which is how views added later get their baselines.
       - name: Decide whether to record or compare
         shell: bash
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
           baselines=services/playwright-native/tests/non-functional/visual/baselines
-          if [ "${{ github.event.inputs.record_baselines }}" = "true" ]             || { [ "${{ github.event_name }}" = "push" ] && ! ls "$baselines"/*/linux > /dev/null 2>&1; }; then
-            echo "VISUAL_RECORD=true" >> "$GITHUB_ENV"
-          else
-            echo "VISUAL_RECORD=false" >> "$GITHUB_ENV"
+          record=false
+          if [ "${{ github.event.inputs.record_baselines }}" = "true" ]; then record=true; fi
+          if [ "${{ github.event_name }}" = "push" ]; then
+            case "$COMMIT_MESSAGE" in *"[record-baselines]"*) record=true ;; esac
+            ls "$baselines"/*/linux > /dev/null 2>&1 || record=true
           fi
+          echo "VISUAL_RECORD=$record" >> "$GITHUB_ENV"
 
       - name: Compare the views against the committed baselines
         if: env.VISUAL_RECORD != 'true'
@@ -129,7 +134,7 @@ jobs:
 
       - name: Record this runner's baselines
         if: env.VISUAL_RECORD == 'true'
-        run: npm run test:visual:update -w @gitea-automation/playwright-native
+        run: npm run test:visual:ci:update -w @gitea-automation/playwright-native
 
       # The native report carries the expected, actual and diff images of a failing check.
       - name: Upload the Playwright report

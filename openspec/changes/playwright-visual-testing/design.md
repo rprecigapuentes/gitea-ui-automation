@@ -34,7 +34,9 @@ A visual mismatch says the page looks different, not that the flow is broken. Wi
 
 The projects are derived from the `browsers` list `playwright.config.ts` already builds the functional projects from, so adding a browser there adds its visual project. Chromium stays with the accessibility scans, where axe reads the DOM and one engine is enough; screenshots depend on the rendering engine, so the visual suite runs on the three engines the functional suite does.
 
-The functional suite reaches parallelism by launching one process per browser with `concurrently`, one worker each. That does not fit the native HTML report: every process writes to the same `playwright-report/` folder, so the last one to finish overwrites the others. The visual suite instead runs all its projects in one process with `fullyParallel` and the default worker count, which parallelises across browsers and specs and leaves one report. Two browsers never share a Gitea account, since each project signs in with `GITEA_OWNER_<BROWSER>`, so the projects do not interfere.
+The functional suite reaches parallelism by launching one process per browser with `--workers=1`: a browser's worker runs its specs one after another with its own account, and the browsers run side by side. The visual suite does the same, for the same reason. A project cannot be given its own worker inside one Playwright process, since the worker count is global and files of one project would spread over all of them, so two specs of one browser would sign in with the same account at once against one Gitea. A first attempt with a single process and the default workers put 21 tests on the local instance at once and timed out on navigation.
+
+`scripts/visual.mjs` launches one process per browser and each writes a blob report of its own, which the native report needs because three processes would otherwise overwrite one `playwright-report/` folder. The script then merges the blobs into one HTML report and opens it, whether the browsers passed or failed, and exits with a failure if any did. Recording baselines runs the same processes without the report. The workflow keeps a single process: the CI environment already sets one worker, which serialises everything, and one process leaves one report without merging.
 
 The name passed to a check carries its extension (`login-page.png`). Playwright numbers unnamed screenshots per test, which would rename a baseline whenever a check is added before it.
 
@@ -55,6 +57,16 @@ Clean-up is the opposite: it belongs in a hook, because it must run when a step 
 Gitea lists only the default branch's workflows in its Actions menu, so before this merges the workflow carries a temporary `push` trigger on the feature branch, as `accessibility.yml` did. A push records the runner's baselines while none are committed and compares once they are, so the first run needs no input. The trigger is removed before the merge.
 
 It stays manual for now, like accessibility. Nothing gates on it until baselines exist for the runner and the volatile regions have settled; a scheduled run before that would report noise. Promoting it to a scheduled job after the Playwright job in `ct.yml` is a later change.
+
+## The smoke catalog
+
+The specs are grouped by area under `tests/non-functional/visual/`: `authentication/`, `organizations/`, `issues/` and `project-board/`. They mirror the smoke scenarios of the Selenium suites, but each one checks how views look, not what the flow does. Three cover organizations (creating one through the form, creating a team, browsing its repositories and members) and three cover issues and the project board (the issue list and an issue, the issue form with its labels and milestones, the board). A step goes through the API when a client exists for it and through the interface when none does or when the interface state is the view being checked: the filled organization form, the new team form and the project template have no API equivalent worth using.
+
+Names of organizations, repositories, issues and labels are fixed per project, not random, so the same view renders the same text on every run. What still varies, the relative times Gitea prints, is left to `getVolatileRegions()` as the runs reveal it.
+
+The clean-up hook removes an organization's repositories before the organization, because Gitea refuses to delete an organization that still owns one. Baseline names carry the area as a prefix (`organization-`, `issue-`, `project-board-`) because every spec's baselines share one folder per project and platform.
+
+While the workflow lives on a branch, a push records baselines when its commit message says `[record-baselines]`, since a push carries no input and new views have no baseline on the runner yet.
 
 ## Credentials for the bundled Chromium
 

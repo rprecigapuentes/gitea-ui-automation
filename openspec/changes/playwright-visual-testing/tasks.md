@@ -46,3 +46,12 @@
 - [x] 9.3 Add `.gitea/workflows/visual.yml`, dispatch only, with the container, `gitea-test`, the three accounts and tokens, the branded browsers, a `record_baselines` input, and uploads of the native report and of the recorded baselines with `if: always()`; verify the workflow parses and `ct.yml` does not reference it.
 - [ ] 9.4 Dispatch the workflow once to record the runner's baselines, review the artifact and commit it under `linux/`; verify a second dispatch passes and publishes the native report.
 - [ ] 9.5 Remove the temporary `push` trigger from `.gitea/workflows/visual.yml`; verify the workflow is dispatch-only before the branch merges, so the suite never runs on a push again.
+
+## 10. Smoke catalog
+
+- [x] 10.1 Make the clean-up hook remove an organization's repositories before the organization, adding the organization-repositories query to `RepositoryClient`, and move the specs into per-area folders; verify the login spec still passes from `authentication/` and an organization holding a repository is gone after a run.
+- [x] 10.2 Add three organization smokes under `organizations/`: create an organization through the form, create a team, and browse the repositories and members of an organization; verify each checks its views on the three browsers and leaves nothing behind.
+- [x] 10.3 Add three smokes under `issues/` and `project-board/`: the issue list and an issue, the issue form with its labels and milestones, and the project board with cards; verify each checks its views on the three browsers and leaves nothing behind.
+- [x] 10.4 Record the win32 baselines of the new views; verify two consecutive local runs list only the views whose regions still vary.
+- [ ] 10.5 Let a push record baselines when its commit message says `[record-baselines]`, and record the runner's baselines of the new views; verify a push without the marker compares and passes on views without volatile regions.
+- [x] 10.6 Replace the single-process `test:visual` and `test:visual:update` with `scripts/visual.mjs`, which runs one process per browser with `--workers=1` and blob reports, merges them into one native report and opens it; make `test:visual:<browser>` single-worker; verify the browsers run in parallel while each browser's specs run one after another, and one report covers all three.

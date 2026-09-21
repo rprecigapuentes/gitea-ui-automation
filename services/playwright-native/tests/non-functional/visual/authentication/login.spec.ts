@@ -1,5 +1,5 @@
-import { resolveOwnerCredentials } from "../../../fixtures/credentials";
-import { expect, test } from "../../../fixtures/visual.fixture";
+import { resolveOwnerCredentials } from "../../../../fixtures/credentials";
+import { expect, test } from "../../../../fixtures/visual.fixture";
 
 test.describe("Visual Testing: Login Page", () => {
   test("Login page matches its baseline", async ({ pageObjects, page, visualTester }, testInfo) => {

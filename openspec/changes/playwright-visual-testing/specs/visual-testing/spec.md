@@ -61,6 +61,21 @@ A visual spec SHALL create the state a view needs through the API clients, in th
 - **WHEN** a step of a visual spec fails after it created data
 - **THEN** the data is still removed by the hook
 
+### Requirement: Visual specs are grouped by the area they cover and name their baselines by view
+
+A visual spec SHALL live in a folder named for the area of the application it covers, and the name of each baseline SHALL identify its view and be unique across the whole suite, because baselines of every spec share one folder per project and platform. A spec that leaves an organization behind SHALL record it so the clean-up hook removes it together with the repositories it holds.
+
+#### Scenario: A spec is added for an area
+
+- **WHEN** a visual spec is added
+- **THEN** it lives in the folder of the area it covers
+- **AND** its baseline names do not collide with those of any other spec
+
+#### Scenario: A spec creates repositories in its organization
+
+- **WHEN** a spec creates repositories inside an organization it recorded
+- **THEN** the clean-up hook removes those repositories and then the organization
+
 ### Requirement: A visual mismatch does not stop the test
 
 A screenshot check SHALL be a soft assertion. A mismatch SHALL be recorded and the test SHALL continue with the steps after it, and SHALL fail when it ends. The failure SHALL keep the expected, actual and diff images.
@@ -93,13 +108,14 @@ The visual specs SHALL run in projects of their own on `tests/non-functional/vis
 
 ### Requirement: The visual suite runs on every functional browser, in parallel
 
-The visual suite SHALL have one project per browser the functional suite runs on, derived from the same browser list so the two never diverge. A run of the whole suite SHALL execute those projects in parallel inside a single test process, and each project SHALL sign in with the account of its own browser.
+The visual suite SHALL have one project per browser the functional suite runs on, derived from the same browser list so the two never diverge. A run of the whole suite SHALL give each project its own worker and run the specs of one project one after another, so that a browser's account is never used by two specs at once, while the projects run in parallel with one another. Each project SHALL sign in with the account of its own browser.
 
 #### Scenario: The visual suite is run
 
 - **WHEN** the visual suite is run
 - **THEN** every browser the functional suite runs on has a visual project
-- **AND** those projects execute in parallel in one process
+- **AND** the projects execute in parallel with one another
+- **AND** the specs of one project execute one after another
 
 #### Scenario: The functional browser list changes
 
@@ -108,7 +124,7 @@ The visual suite SHALL have one project per browser the functional suite runs on
 
 ### Requirement: The visual suite has its own entry points that open one report
 
-The visual suite SHALL have an entry point that runs only the visual projects and SHALL open one native Playwright report covering every browser when the run ends, whether it passed or failed. A separate entry point SHALL record the baselines of every browser, and one entry point per browser SHALL run that browser alone. The default test entry point SHALL NOT run any of them.
+The visual suite SHALL have an entry point that runs only the visual projects and SHALL open one native Playwright report covering every browser when the run ends, even though each browser ran in a process of its own, whether it passed or failed. A separate entry point SHALL record the baselines of every browser, and one entry point per browser SHALL run that browser alone. The default test entry point SHALL NOT run any of them.
 
 #### Scenario: The visual suite is run
 
