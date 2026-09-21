@@ -96,8 +96,12 @@ export class IssuePage extends BasePage {
   }
 
   async getTitle(): Promise<string> {
+    // Both lookups are top level, because titleIndex is already qualified from #issue-title-display.
+    // Passing it as a locator scoped to the heading only works on Selenium, where a scoped find
+    // resolves the whole selector and keeps the matches under the element; Playwright chains the
+    // selector relative to the element instead, and looks for the heading inside the heading.
     const heading = await this.findElement(this.locators.title);
-    const index = await this.findElement(this.locators.titleIndex, heading);
+    const index = await this.findElement(this.locators.titleIndex);
 
     return (await heading.getText()).replace(await index.getText(), "").trim();
   }
