@@ -162,7 +162,7 @@ docker run -d --name gitea-test --network a11y-net \
   docker.gitea.com/gitea:1.27.3
 ```
 
-Register one owner account per browser project you intend to run, named `<browser>-owner`, as that workflow's seeding step does: `chromium-owner` for `test:a11y`, plus `chrome-owner`, `firefox-owner` and `edge-owner` for `test:a11y:all`. Register one throwaway account before them, since Gitea makes the first user of an instance an administrator. Then export `GITEA_BASE_URL` and the matching `GITEA_OWNER_*`/`GITEA_TOKEN_*` variables and run `test:a11y:update` inside `mcr.microsoft.com/playwright:v1.63.0-noble` on that network. Commit regenerated baselines on their own, never with code changes.
+Register one owner account per browser project you intend to run, named `<browser>-owner`, as that workflow's seeding step does: `chrome-owner` covers `test:a11y`, since the bundled Chromium project resolves to the Chrome account, and `firefox-owner` and `edge-owner` are needed on top for `test:a11y:all`. Register one throwaway account before them, since Gitea makes the first user of an instance an administrator. Then export `GITEA_BASE_URL` and the matching `GITEA_OWNER_*`/`GITEA_TOKEN_*` variables and run `test:a11y:update` inside `mcr.microsoft.com/playwright:v1.63.0-noble` on that network. Commit regenerated baselines on their own, never with code changes.
 
 ## Visual testing
 
