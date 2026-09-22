@@ -32,5 +32,5 @@
 
 ## Risks / Trade-offs
 
-- Only chrome's local baseline is recorded (per proposal's Out of Scope) → firefox/edge and CI (linux) baselines are missing until someone runs `test:visual:update` for those; the spec still runs, just without a baseline to compare against on first run (Playwright records a new baseline and passes, per its default `toHaveScreenshot` behavior).
+- Only the local (win32) baselines are recorded (per proposal's Out of Scope) → CI (linux) baselines are missing until someone runs the workflow's baseline job for this spec; the spec still runs, just without a baseline to compare against on first run (Playwright records a new baseline and passes, per its default `toHaveScreenshot` behavior).
 - A hand-picked viewport size is arbitrary and could drift from real devices over time → acceptable for a first phone-width check; revisit if a specific breakpoint needs covering.
