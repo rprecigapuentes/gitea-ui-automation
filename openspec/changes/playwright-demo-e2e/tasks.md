@@ -10,25 +10,26 @@
 ## 2. Port the scenario
 
 - [x] 2.1 Write `tests/demo-e2e.spec.ts` through the phase that adds a column to the board, through `pageObjects` only, and verify it passes on firefox with no assertion dropped against `demo-e2e.feature`
-- [ ] 2.2 Add the phases that drag the cards and delete the column they were dragged into, and verify they pass
+- [x] 2.2 Add the phases that drag the cards and delete the column they were dragged into, and verify they pass
 - [ ] 2.3 Add the phases that close and reopen the issue and read the milestone, and verify they pass
 - [ ] 2.4 Add the phase that signs in as the member, and verify it passes
 
-2.2 is the phase the first attempt at this port failed on, so it is split from the rest rather than written in one pass. It is written and failing, at `deleteColumn`, where the click waits on a delete item that is in the DOM and has no box.
+2.2 is the phase the first attempt at this port failed on, so it is split from the rest rather than written in one pass.
 
-What the probes measured, on firefox, against the board the scenario leaves behind:
+The failure was `deleteColumn` waiting out the test timeout on the delete item of the column the test had added, which is in the DOM and has no box because its menu never opened. What the probes measured, on firefox:
 
-- The column's dropdown is not open and does not open. Its trigger keeps `class="ui dropdown tw-p-1"` and its `.menu` stays `display: none`, where Fomantic marks an open dropdown `active visible` and its menu `visible transition`. The delete item under it reads `display: block` and `visibility: visible` but `getClientRects().length === 0`, which is why Playwright waits on it instead of failing: the item is only hidden by its closed ancestor.
-- It is the added column specifically. In the same run, at the same moment, one click on a template column's trigger opens that column's menu and one click on the added column's trigger does not.
-- Waiting does not fix it: three seconds before the delete fails the same way. Navigating does not fix it either: `openFor` before the delete fails the same way.
-- The count of drags that fell back to `dispatchDragEvents` does not predict it. Three consecutive runs failed, two of them with one fallback and one with two, and the Cucumber baseline that passes falls back on both of its drags.
-- One reproduction does open it: a `reload` followed by a direct click on the trigger, through the strategy rather than through `ProjectColumnFragment.openMenu`. That path differs from the failing one only in the guard `openMenu` reads first, so that guard is the next thing to measure.
+- The five columns are identical. Same `class="ui dropdown tw-p-1"`, one dropdown each, Fomantic bound on all five, `aria-expanded="false"` on all five. The locators were never wrong.
+- The added column is the fifth, and the board has to scroll to reach it: its trigger sits at x 1664 in a 1280 viewport, where the template columns need no scroll. That is the only difference between the column that fails and the ones that do not.
+- The first click on that trigger is swallowed and the second one opens the menu. Isolated: an extra click before the delete passes, scrolling the column into view and waiting a second before the delete fails, and neither waiting three seconds nor navigating first changes anything.
+- The count of drags that fell back to `dispatchDragEvents` does not predict it. Three consecutive runs failed, two with one fallback and one with two, and the Cucumber baseline that passes falls back on both of its drags.
 
-What the Cucumber baseline measures, firefox, `@demo-e2e`, 62 steps passed: the same page object deletes the same column after the same two drags without trouble, so nothing here is a page-object defect on its own.
+So `ProjectColumnFragment.openMenu` clicked the trigger once and never confirmed the menu opened: `findElement` polls for visibility on Selenium and returns a lazy locator on Playwright, where it waits for nothing. Task 2.5 replaces it with clicking until the menu is open, which is what the Selenium wait already amounted to.
 
-`PlaywrightInteractionStrategy` logs nothing when a locator never becomes visible, where the Selenium strategy logs `Locator never became visible` with the locator, the url and the reason. That asymmetry is what made this failure read as a bare click timeout, and closing it is a candidate task once the cause is known.
+`PlaywrightInteractionStrategy` logs nothing when a locator never becomes visible, where the Selenium strategy logs `Locator never became visible` with the locator, the url and the reason. That asymmetry is what made this read as a bare click timeout two calls below its cause, and closing it is worth its own change.
 
-Any point where `PlaywrightInteractionStrategy` or a page object turns out to disagree with what the Selenium steps assume gets its own task here, with the failure that found it, as the four ports before this one did.
+- [x] 2.5 Open the column menu by clicking until it is open, in `ProjectColumnFragment.openMenu`; verify the demo case passes three times running, the whole `playwright-native` suite passes, and the Cucumber `@project-board` and `@demo-e2e` scenarios still pass
+
+The demo case passed on three consecutive firefox runs, `playwright-native` passed 19 of 19 on firefox, and Cucumber passed 172 steps across `@project-board` and `@demo-e2e`.
 
 ## 3. Wrap up
 

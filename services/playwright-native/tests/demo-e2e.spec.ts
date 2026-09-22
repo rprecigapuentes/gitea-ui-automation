@@ -24,7 +24,7 @@ test.describe("Organization work item lifecycle", () => {
     seededUsers,
   }) => {
     const { organizationName, repositories } = seededOrganizationWithRepositories;
-    const [firstRepository] = repositories;
+    const [firstRepository, secondRepository] = repositories;
     const [userOne, userTwo] = seededUsers;
 
     await test.step("The owner opens the seeded organization", async () => {
@@ -161,6 +161,30 @@ test.describe("Organization work item lifecycle", () => {
       await pageObjects.projectBoardPage.openFor(organizationName, projectId);
 
       expect(await pageObjects.projectBoardPage.isColumnVisible(ADDED_COLUMN)).toBe(true);
+    });
+
+    await test.step("The board keeps each card where it was dragged", async () => {
+      await pageObjects.projectBoardPage.moveCard(firstRepository.issue.id, IN_PROGRESS_COLUMN);
+      await pageObjects.projectBoardPage.moveCard(secondRepository.issue.id, ADDED_COLUMN);
+
+      expect(await pageObjects.projectBoardPage.getColumnCardIssueIds(IN_PROGRESS_COLUMN)).toEqual([
+        firstRepository.issue.id,
+      ]);
+      expect(await pageObjects.projectBoardPage.getColumnCardIssueIds(ADDED_COLUMN)).toEqual([
+        secondRepository.issue.id,
+      ]);
+      expect(await pageObjects.projectBoardPage.getDefaultColumnIssueCount()).toBe(1);
+    });
+
+    await test.step("The default column takes in the cards of the deleted one", async () => {
+      await pageObjects.projectBoardPage.deleteColumn(ADDED_COLUMN);
+      await pageObjects.projectBoardPage.openFor(organizationName, projectId);
+
+      expect(await pageObjects.projectBoardPage.boardHidesColumn(ADDED_COLUMN)).toBe(true);
+      expect(
+        await pageObjects.projectBoardPage.defaultColumnHoldsIssue(secondRepository.issue.id),
+      ).toBe(true);
+      expect(await pageObjects.projectBoardPage.getDefaultColumnIssueCount()).toBe(2);
     });
   });
 });
