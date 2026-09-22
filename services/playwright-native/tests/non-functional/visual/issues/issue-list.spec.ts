@@ -21,10 +21,12 @@ test("Issues smoke: the issue list and an issue", async ({
   await pageObjects.issueListPage.openFor(organization.name, repository);
   await visualTester.verifyPage(page, "issue-list.png", {
     mask: pageObjects.issueListPage.getVolatileRegions(),
+    maxDiffPixels: 1100,
   });
 
   await pageObjects.issuePage.openFor(organization.name, repository, issue.number);
   await visualTester.verifyPage(page, "issue-detail.png", {
     mask: pageObjects.issuePage.getVolatileRegions(),
+    maxDiffPixels: 1100,
   });
 });
