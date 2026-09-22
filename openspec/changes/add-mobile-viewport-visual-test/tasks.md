@@ -1,0 +1,5 @@
+## 1. Phone-width main-view spec
+
+- [x] 1.1 Add `tests/non-functional/visual/authentication/main-view-mobile.spec.ts`, importing the same fixtures as `main-view.spec.ts`, with `test.use({ viewport: { width: 390, height: 844 } })` at the top of the file and one test that signs in as the owner, asserts `hasExpectedElementsDisplayed()`, and calls `visualTester.verifyPage(page, "main-mobile.png", { mask: pageObjects.mainPage.getVolatileRegions() })`; verify `npx playwright test --project=visual-chrome --list` lists the new spec once and `main-view.spec.ts` is unchanged.
+- [x] 1.2 Run the new spec against `visual-chrome` to record its baseline (`npx playwright test --project=visual-chrome tests/non-functional/visual/authentication/main-view-mobile.spec.ts --update-snapshots`); verify `baselines/visual-chrome/<platform>/main-mobile.png` is created and a second run without `--update-snapshots` passes.
+- [x] 1.3 Run `npx playwright test --project=visual-chrome --project=visual-firefox --project=visual-edge --list` and verify the desktop `main-view.spec.ts` test still lists with no viewport override (i.e. the mobile override did not leak into it).
