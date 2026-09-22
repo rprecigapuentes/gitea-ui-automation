@@ -1,4 +1,7 @@
-import { test as base } from "./fixture";
+// Chained onto the organization fixtures, not onto `fixture` directly, because the demo scenario
+// needs this file's seeded organization and that file's seeded users at once. Playwright resolves a
+// fixture only when a test asks for it, so a board spec runs none of the ones it gains here.
+import { test as base } from "./organizations-fixtures";
 import { testDataName, uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.util";
 import type { SeededRepository } from "@gitea-automation/business-logic/state/scenario.entity";
 
