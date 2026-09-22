@@ -32,29 +32,17 @@ The visual workflow SHALL publish the native Playwright report as an artifact wh
 - **WHEN** the suite passes
 - **THEN** the native report is still published
 
-### Requirement: The visual workflow takes the baselines its runner lacks and then compares against them
+### Requirement: The visual workflow compares against committed baselines and lets a person record new ones by hand
 
-The visual workflow SHALL run in two jobs. The first SHALL find the views that have no baseline for the platform it runs on and record them, and, when none is missing, SHALL run the suite against the committed baselines itself. The second SHALL run only when the first recorded something, SHALL receive what the first recorded, and SHALL run the suite against it. Nothing SHALL be committed, and no person SHALL need to download or push anything for the second job to run. A dispatch, or a commit that asks for it, SHALL make the first job record every baseline instead of only the missing ones.
+The visual workflow SHALL run in one job that compares the suite against the committed baselines by default. A dispatch, or a commit that asks for it, SHALL make it record every baseline instead of comparing. Whatever the run recorded SHALL be uploaded as an artifact for a person to download and commit; nothing is committed by the workflow itself.
 
-#### Scenario: Every view already has a baseline
+#### Scenario: A normal run
 
-- **WHEN** the workflow runs and no view lacks a baseline
-- **THEN** the first job runs the suite against the committed baselines and publishes its report
-- **AND** the second job does not run
+- **WHEN** the workflow runs without asking to record baselines
+- **THEN** the job compares the suite against the committed baselines and publishes its report
 
-#### Scenario: A view was added
-
-- **WHEN** the workflow runs and a view has no baseline for its platform
-- **THEN** the first job records that baseline and hands it on
-- **AND** the second job runs the suite against the committed baselines and the recorded one and publishes its report
-
-#### Scenario: A person asks to record everything
+#### Scenario: A person asks to record baselines
 
 - **WHEN** the workflow is dispatched to record baselines, or a commit asks for it
-- **THEN** the first job records every baseline
-- **AND** the second job compares against them
-
-#### Scenario: The first job finds a real mismatch
-
-- **WHEN** no baseline is missing and a view differs from its baseline
-- **THEN** the first job fails and publishes its report
+- **THEN** the job records every baseline instead of comparing
+- **AND** the recorded baselines are uploaded as an artifact for a person to commit
