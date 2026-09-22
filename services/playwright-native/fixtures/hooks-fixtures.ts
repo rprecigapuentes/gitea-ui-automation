@@ -19,8 +19,14 @@ interface SeededOrganizationWithRepositories {
   repositories: SeededRepository[];
 }
 
+interface KanbanProject {
+  id: number;
+  title: string;
+}
+
 interface HooksFixtures {
   seededOrganizationWithRepositories: SeededOrganizationWithRepositories;
+  kanbanProject: KanbanProject;
   cleanupCreatedOrganization: void;
   cleanupOrganizationsBeforeRun: void;
 }
@@ -86,6 +92,24 @@ export const test = base.extend<HooksFixtures>({
       await clients.repositories.deleteRepository(organizationName, repository.name);
     }
     await clients.organizations.deleteOrganization(organizationName);
+  },
+
+  // The rest of `project-board.feature`'s Background: the owner's session and the project the
+  // board scenarios open. Deleting the organization takes the project with it, so there is
+  // nothing to undo after `use()`.
+  kanbanProject: async (
+    { pageObjects, sessionManager, seededOrganizationWithRepositories },
+    use,
+  ) => {
+    const { organizationName } = seededOrganizationWithRepositories;
+    const title = testDataName("S2-SMK-ISS", "Project");
+
+    await sessionManager.loginAsOwner();
+    await pageObjects.createProjectPage.openFor(organizationName);
+    await pageObjects.createProjectPage.createFromBasicKanban(title);
+    await pageObjects.projectListPage.openFor(organizationName);
+
+    await use({ id: await pageObjects.projectListPage.getOnlyProjectId(), title });
   },
 });
 
