@@ -8,14 +8,14 @@ The create-organization visual smoke only covers the happy path. Nothing visuall
 - Five cases type a malformed value into the create-organization form and submit it (disallowed character, leading/trailing non-alphanumeric, consecutive non-alphanumeric, spaces).
 - One case types the signed-in owner's own username as the organization name (name/username collision).
 - One case creates an organization through the API first, with a name shared between the precondition and the typed value, then types that same name into the form (already-exists collision).
-- Each case checks the resulting page against its own baseline, using the page object's (currently empty) volatile-region mask, the same way every other visual spec does.
-- No baseline is recorded for any of the seven checks in this change, and no mask is added: the person asked for these to fail for now, until they hand over the mask selectors for the regions that legitimately vary (the flash error text's wording may carry dynamic content). The suite's own missing-baseline behavior ([pipeline] `revert-visual-workflow-manual-baselines`) is what will surface that failure in CI once this merges.
+- All seven cases check the resulting page against **the same one baseline** (`organization-create-form-invalid.png`), not one baseline each: the page's layout is expected to be identical across cases once the flash message and the typed name are masked, so one shared baseline is enough, the same way `main-view.spec.ts` checks two different accounts against one `main.png`.
+- No baseline is recorded for these checks in this change, and no mask is added yet: the person asked for these to fail for now, until they hand over the mask selectors for the regions that legitimately vary (the flash message and the typed name). The suite's own missing-baseline behavior ([pipeline] `revert-visual-workflow-manual-baselines`) is what will surface that failure in CI once this merges.
 
 ## Capabilities
 
 ### Modified Capabilities
 
-- `visual-testing`: adds the requirement that a visual spec may generate more than one test from a data table, one baseline per case, instead of only ever declaring a single test per file.
+- `visual-testing`: adds the requirement that a visual spec may generate more than one test from a data table, each checked against the same shared baseline when their difference is expected to be masked away, instead of only ever declaring a single test per file.
 
 ## Impact
 

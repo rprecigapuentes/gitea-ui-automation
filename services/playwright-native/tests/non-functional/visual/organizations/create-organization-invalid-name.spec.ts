@@ -1,37 +1,22 @@
 import { resolveOwnerCredentials } from "../../../../fixtures/credentials";
 import { test } from "../../../../fixtures/visual.fixture";
 
+const INVALID_NAME_BASELINE = "organization-create-form-invalid.png";
+
 interface InvalidNameCase {
   name: string;
   reason: string;
-  baselineSlug: string;
 }
 
 const invalidNameCases: InvalidNameCase[] = [
-  {
-    name: "test@org",
-    reason: "has a disallowed character",
-    baselineSlug: "disallowed-character",
-  },
-  {
-    name: "-test-org",
-    reason: "starts with a non-alphanumeric character",
-    baselineSlug: "leading-non-alphanumeric",
-  },
-  {
-    name: "test-org-",
-    reason: "ends with a non-alphanumeric character",
-    baselineSlug: "trailing-non-alphanumeric",
-  },
-  {
-    name: "test--org",
-    reason: "has consecutive non-alphanumeric characters",
-    baselineSlug: "consecutive-non-alphanumeric",
-  },
-  { name: "test org", reason: "has spaces", baselineSlug: "spaces" },
+  { name: "test@org", reason: "has a disallowed character" },
+  { name: "-test-org", reason: "starts with a non-alphanumeric character" },
+  { name: "test-org-", reason: "ends with a non-alphanumeric character" },
+  { name: "test--org", reason: "has consecutive non-alphanumeric characters" },
+  { name: "test org", reason: "has spaces" },
 ];
 
-for (const { name, reason, baselineSlug } of invalidNameCases) {
+for (const { name, reason } of invalidNameCases) {
   test(`Organizations smoke: create organization rejects a name that ${reason}`, async ({
     page,
     pageObjects,
@@ -45,7 +30,7 @@ for (const { name, reason, baselineSlug } of invalidNameCases) {
     await pageObjects.createOrganizationPage.clickCreateOrganizationButton();
     await pageObjects.createOrganizationPage.waitForElements();
 
-    await visualTester.verifyPage(page, `organization-create-form-invalid-${baselineSlug}.png`, {
+    await visualTester.verifyPage(page, INVALID_NAME_BASELINE, {
       mask: pageObjects.createOrganizationPage.getVolatileRegions(),
     });
   });
@@ -65,7 +50,7 @@ test("Organizations smoke: create organization rejects a name matching the usern
   await pageObjects.createOrganizationPage.clickCreateOrganizationButton();
   await pageObjects.createOrganizationPage.waitForElements();
 
-  await visualTester.verifyPage(page, "organization-create-form-invalid-matches-username.png", {
+  await visualTester.verifyPage(page, INVALID_NAME_BASELINE, {
     mask: pageObjects.createOrganizationPage.getVolatileRegions(),
   });
 });
@@ -88,7 +73,7 @@ test("Organizations smoke: create organization rejects a name that already exist
   await pageObjects.createOrganizationPage.clickCreateOrganizationButton();
   await pageObjects.createOrganizationPage.waitForElements();
 
-  await visualTester.verifyPage(page, "organization-create-form-invalid-already-exists.png", {
+  await visualTester.verifyPage(page, INVALID_NAME_BASELINE, {
     mask: pageObjects.createOrganizationPage.getVolatileRegions(),
   });
 });
