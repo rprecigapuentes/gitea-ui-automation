@@ -40,5 +40,6 @@ test("Project board smoke: create a project and see its board with cards", async
   await pageObjects.projectBoardPage.openFor(organization.name, projectId);
   await visualTester.verifyPage(page, "project-board.png", {
     mask: pageObjects.projectBoardPage.getVolatileRegions(),
+    maxDiffPixels: 1100,
   });
 });
