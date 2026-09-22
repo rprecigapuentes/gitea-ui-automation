@@ -75,7 +75,7 @@ or pass `--headed` directly to any single-browser script, e.g. `npm run test:chr
 
 `organization-smokes.spec.ts` replicates the five smokes of the Cucumber suite's `organizations.feature`, one test each and in the same order: create an organization, create a team, add a user to a team, create a repository, add a repository to a team. They call the same page-object methods and assert the same things through `pageObjects`. Where the feature adds a seeded user to the team, the test adds the browser's invited account, since the job has no admin token to seed users with.
 
-`organization-cucumber-e2e.spec.ts` replicates the `@e2e` scenario of the same feature, "Change team members permissions", step by step: the owner creates an organization, two teams, their members, a repository and files, then user 1 and user 2 write, read and lose access as the owner changes the teams. It takes about a minute, so `playwright.config.ts` sets a 120 second test timeout, the same the Vitest suite gives its organization test, instead of the test carrying one.
+`organization-cucumber-e2e.spec.ts` replicates the `@e2e` scenario of the same feature, "Change team members permissions", as a single `test.step` sequence: the owner creates an organization, two teams, their members, a repository and files, then user 1 and user 2 write, read and lose access as the owner changes the teams.
 
 ## Hooks fixtures
 

@@ -47,11 +47,5 @@ export function resolveOwnerToken(project: string): string {
 
 /** One token for every browser: only the users it creates have to be browser-unique. */
 export function resolveAdminToken(): string {
-  const token = process.env.GITEA_ADMIN_TOKEN;
-
-  if (!token) {
-    throw new Error("Missing admin API token (GITEA_ADMIN_TOKEN)");
-  }
-
-  return token;
+  return process.env.GITEA_ADMIN_TOKEN!;
 }
