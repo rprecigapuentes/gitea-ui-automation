@@ -1,13 +1,13 @@
 name: Visual
 
 # Dispatch only once merged: the volatile regions are still being found, so a scheduled run would
-# report noise. Two jobs: `baselines` records what the runner lacks, or runs the suite when nothing
-# is missing, and `visual` compares against what `baselines` recorded.
+# report noise. One run of the suite; a person reviews the report and, when the run recorded any
+# baselines, downloads and commits them by hand.
 on:
   workflow_dispatch:
     inputs:
       record_baselines:
-        description: Record every baseline again instead of only the missing ones
+        description: Record every baseline again instead of comparing against the committed ones
         type: boolean
         default: false
 
@@ -16,13 +16,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  baselines:
+  visual:
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     # The tag tracks the @playwright/test version in package-lock.json and is bumped with it.
     container: mcr.microsoft.com/playwright:v1.63.0-noble
-    outputs:
-      recorded: ${{ steps.detect.outputs.recorded }}
 
     services:
       gitea-test:
@@ -120,15 +118,14 @@ jobs:
             echo "token minted for ${!owner_user}"
           done
 
-      # By default only the baselines the runner lacks are recorded. A dispatch that asks, or a
-      # commit message carrying [record-baselines], rewrites every one, which is what an
-      # intentional change to the interface needs.
-      - name: Choose what to record
+      # By default the suite compares against the committed baselines. A dispatch that asks, or a
+      # commit message carrying [record-baselines], records every baseline instead.
+      - name: Choose what to run
         shell: bash
         env:
           COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
-          script=test:visual:ci:missing
+          script=test:visual:ci
           if [ "${{ github.event.inputs.record_baselines }}" = "true" ]; then
             script=test:visual:ci:update
           fi
@@ -136,161 +133,17 @@ jobs:
           echo "VISUAL_SCRIPT=$script" >> "$GITHUB_ENV"
           echo "running $script"
 
-      - name: Fingerprint the committed baselines
-        shell: bash
-        run: find "$BASELINES" -name '*.png' -exec sha256sum {} + | sort > /tmp/baselines-before.txt
-
-      # Playwright writes a baseline that is missing and fails the test that lacked it, so the
-      # exit code cannot say whether anything was recorded. It is kept for the last step.
       - name: Run the suite
-        shell: bash
-        run: |
-          set +e
-          npm run "$VISUAL_SCRIPT" -w @gitea-automation/playwright-native
-          echo "SUITE_EXIT=$?" >> "$GITHUB_ENV"
-          exit 0
+        run: npm run "$VISUAL_SCRIPT" -w @gitea-automation/playwright-native
 
-      - name: Detect what was recorded
-        id: detect
-        shell: bash
-        run: |
-          find "$BASELINES" -name '*.png' -exec sha256sum {} + | sort > /tmp/baselines-after.txt
-          if cmp -s /tmp/baselines-before.txt /tmp/baselines-after.txt; then
-            echo "recorded=false" >> "$GITHUB_OUTPUT"
-            echo "no baseline was recorded"
-          else
-            echo "recorded=true" >> "$GITHUB_OUTPUT"
-            diff /tmp/baselines-before.txt /tmp/baselines-after.txt | sed -n 's/^> .*baselines\//recorded: /p'
-          fi
-
-      # The second job downloads this, and a person can commit it to make it the reference.
+      # A person downloads this and commits it to make it the reference.
       - name: Upload the recorded baselines
-        if: steps.detect.outputs.recorded == 'true'
+        if: always()
         uses: actions/upload-artifact@v3
         with:
           name: visual-baselines-linux
           path: services/playwright-native/tests/non-functional/visual/baselines/**/linux/
           retention-days: 14
-
-      # With nothing recorded, this job's run is the verdict, so it publishes the report.
-      - name: Upload the Playwright report
-        if: always() && steps.detect.outputs.recorded != 'true'
-        uses: actions/upload-artifact@v3
-        with:
-          name: playwright-report-visual
-          path: services/playwright-native/playwright-report/
-          retention-days: 14
-
-      - name: Fail when the suite failed and nothing was recorded
-        if: steps.detect.outputs.recorded != 'true'
-        shell: bash
-        run: exit "${SUITE_EXIT:-1}"
-
-  visual:
-    needs: baselines
-    # Skipped when every view already had a baseline: the first job has run the suite.
-    if: needs.baselines.outputs.recorded == 'true'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 25
-    container: mcr.microsoft.com/playwright:v1.63.0-noble
-
-    services:
-      gitea-test:
-        image: docker.gitea.com/gitea:1.27.3
-        env:
-          USER_UID: "1000"
-          USER_GID: "1000"
-          GITEA__server__ROOT_URL: http://gitea-test:3000/
-          GITEA__server__HTTP_PORT: "3000"
-          GITEA__server__START_SSH_SERVER: "false"
-          GITEA__database__DB_TYPE: sqlite3
-          GITEA__security__INSTALL_LOCK: "true"
-          GITEA__security__SECRET_KEY: gitea-test-not-a-secret
-          GITEA__service__DISABLE_REGISTRATION: "false"
-          GITEA__service__REGISTER_EMAIL_CONFIRM: "false"
-
-    env:
-      GITEA_BASE_URL: http://gitea-test:3000
-      GITEA_OWNER_CHROME: chrome-owner
-      GITEA_OWNER_CHROME_PASSWORD: Qa-bot-not-a-secret-1
-      GITEA_OWNER_FIREFOX: firefox-owner
-      GITEA_OWNER_FIREFOX_PASSWORD: Qa-bot-not-a-secret-1
-      GITEA_OWNER_EDGE: edge-owner
-      GITEA_OWNER_EDGE_PASSWORD: Qa-bot-not-a-secret-1
-      GITEA_INV_CHROME: inv-chrome
-      GITEA_INV_CHROME_PASSWORD: Qa-bot2-not-a-secret-1
-      GITEA_INV_FIREFOX: inv-firefox
-      GITEA_INV_FIREFOX_PASSWORD: Qa-bot2-not-a-secret-1
-      GITEA_INV_EDGE: inv-edge
-      GITEA_INV_EDGE_PASSWORD: Qa-bot2-not-a-secret-1
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-
-      - run: npm ci
-
-      - name: Install the branded browsers
-        run: npx playwright install chrome msedge
-
-      - name: Wait for the application under test
-        run: |
-          for _ in $(seq 1 60); do
-            curl -fsS "$GITEA_BASE_URL/api/healthz" > /dev/null && exit 0
-            sleep 2
-          done
-          echo "gitea-test never became healthy"
-          exit 1
-
-      - name: Register the browser accounts and mint their API tokens
-        shell: bash
-        run: |
-          register() {
-            local jar="$1" user="$2" pass="$3"
-            csrf=$(curl -fsS -c "$jar" "$GITEA_BASE_URL/user/sign_up" \
-              | sed -n 's/.*name="_csrf" value="\([^"]*\)".*/\1/p' | head -1)
-            curl -fsS -b "$jar" -o /dev/null \
-              -X POST "$GITEA_BASE_URL/user/sign_up" \
-              --data-urlencode "_csrf=$csrf" \
-              --data-urlencode "user_name=$user" \
-              --data-urlencode "email=$user@example.com" \
-              --data-urlencode "password=$pass" \
-              --data-urlencode "retype=$pass"
-            curl -fsS -u "$user:$pass" "$GITEA_BASE_URL/api/v1/user" > /dev/null
-            echo "account $user is usable"
-          }
-
-          register "/tmp/gitea-visual-admin.jar" "visual-admin" "Qa-admin-not-a-secret-1"
-
-          for b in CHROME FIREFOX EDGE; do
-            owner_user="GITEA_OWNER_$b"; owner_pass="GITEA_OWNER_${b}_PASSWORD"
-            inv_user="GITEA_INV_$b"; inv_pass="GITEA_INV_${b}_PASSWORD"
-
-            register "/tmp/gitea-$b-owner.jar" "${!owner_user}" "${!owner_pass}"
-            register "/tmp/gitea-$b-inv.jar" "${!inv_user}" "${!inv_pass}"
-
-            token=$(curl -fsS -u "${!owner_user}:${!owner_pass}" \
-              -H "Content-Type: application/json" \
-              -X POST "$GITEA_BASE_URL/api/v1/users/${!owner_user}/tokens" \
-              -d '{"name":"visual","scopes":["write:user","write:repository","write:issue","write:organization"]}' \
-              | node -pe 'JSON.parse(require("fs").readFileSync(0, "utf8")).sha1')
-            echo "::add-mask::$token"
-            echo "GITEA_TOKEN_$b=$token" >> "$GITHUB_ENV"
-            echo "token minted for ${!owner_user}"
-          done
-
-      # What the first job recorded goes over the committed baselines.
-      - name: Download the recorded baselines
-        uses: actions/download-artifact@v3
-        with:
-          name: visual-baselines-linux
-          path: services/playwright-native/tests/non-functional/visual/baselines
-
-      - name: Compare the views against the baselines
-        run: npm run test:visual:ci -w @gitea-automation/playwright-native
 
       # The native report carries the expected, actual and diff images of a failing check.
       - name: Upload the Playwright report
