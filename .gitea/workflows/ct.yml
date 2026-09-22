@@ -233,6 +233,12 @@ jobs:
       GITEA_OWNER_FIREFOX_PASSWORD: Qa-bot-not-a-secret-1
       GITEA_OWNER_EDGE: edge-owner
       GITEA_OWNER_EDGE_PASSWORD: Qa-bot-not-a-secret-1
+      GITEA_INV_CHROME: inv-chrome
+      GITEA_INV_CHROME_PASSWORD: Qa-bot2-not-a-secret-1
+      GITEA_INV_FIREFOX: inv-firefox
+      GITEA_INV_FIREFOX_PASSWORD: Qa-bot2-not-a-secret-1
+      GITEA_INV_EDGE: inv-edge
+      GITEA_INV_EDGE_PASSWORD: Qa-bot2-not-a-secret-1
 
     steps:
       - uses: actions/checkout@v4
@@ -284,8 +290,10 @@ jobs:
 
           for b in CHROME FIREFOX EDGE; do
             owner_user="GITEA_OWNER_$b"; owner_pass="GITEA_OWNER_${b}_PASSWORD"
+            inv_user="GITEA_INV_$b"; inv_pass="GITEA_INV_${b}_PASSWORD"
 
             register "/tmp/gitea-$b-owner.jar" "${!owner_user}" "${!owner_pass}"
+            register "/tmp/gitea-$b-inv.jar" "${!inv_user}" "${!inv_pass}"
 
             token=$(curl -fsS -u "${!owner_user}:${!owner_pass}" \
               -H "Content-Type: application/json" \

@@ -185,7 +185,9 @@ export class SpecificTeamFragment extends BaseComponent {
   }
 
   async hasUserSearchResults(): Promise<boolean> {
-    return (await this.findElements(this.locators.userSearchResults)).length > 0;
+    return this.waitUntil(
+      async () => (await this.findElements(this.locators.userSearchResults)).length > 0,
+    );
   }
 
   // Keeps looking while the list settles. One read of it answers for whatever the search had
