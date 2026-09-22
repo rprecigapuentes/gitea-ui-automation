@@ -37,7 +37,8 @@ export class IssueListPage extends BasePage {
   async filterByLabel(labelId: number): Promise<void> {
     await this.click(this.locators.filterDropdown);
     await this.click(this.locators.filterItem(labelId));
-    await this.waitForUrl(`labels=${labelId}`, 10000);
+    // A regex, not a string: the two strategies match a string differently.
+    await this.waitForUrl(new RegExp(`labels=${labelId}(&|$)`), WAIT_TIMEOUT_MS);
   }
 
   async filterByMilestone(milestoneId: number): Promise<void> {

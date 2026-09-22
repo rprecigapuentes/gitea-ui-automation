@@ -15,11 +15,23 @@ async function poll(predicate: () => Promise<boolean>, timeoutMs: number): Promi
   return true;
 }
 
+// Like WebElement.getAttribute: the string property when the element carries one, the content
+// attribute otherwise. An input's typed value only lives in the property.
+async function readAttribute(locator: Locator, name: string): Promise<string> {
+  const value = await locator.evaluate((element, attribute) => {
+    const property = (element as unknown as Record<string, unknown>)[attribute];
+    return typeof property === "string" ? property : element.getAttribute(attribute);
+  }, name);
+
+  return value ?? "";
+}
+
 function toElementHandle(locator: Locator): IElementHandle {
   return {
     click: () => locator.click(),
-    getText: async () => (await locator.textContent()) ?? "",
-    getAttribute: async (name: string) => (await locator.getAttribute(name)) ?? "",
+    // Trimmed, like WebElement.getText. textContent returns the raw node content.
+    getText: async () => ((await locator.textContent()) ?? "").trim(),
+    getAttribute: (name: string) => readAttribute(locator, name),
     isSelected: () => locator.isChecked(),
     isDisplayed: () => locator.isVisible(),
     clear: () => locator.clear(),
