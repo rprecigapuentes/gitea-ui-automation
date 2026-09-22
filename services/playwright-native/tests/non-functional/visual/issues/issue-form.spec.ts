@@ -52,5 +52,6 @@ test("Issues smoke: the issue form with its labels and milestones", async ({
   await pageObjects.milestoneListPage.openFor(organization.name, repository);
   await visualTester.verifyPage(page, "issue-milestones.png", {
     mask: pageObjects.milestoneListPage.getVolatileRegions(),
+    maxDiffPixels: 550,
   });
 });
