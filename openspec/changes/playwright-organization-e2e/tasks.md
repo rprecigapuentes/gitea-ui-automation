@@ -4,7 +4,7 @@
 
 ## 2. Port the organization test
 
-- [x] 2.1 Write `tests/organization.spec.ts`, replicating the Vitest steps through `pageObjects`
+- [x] 2.1 Write `tests/organizations-e2e.spec.ts`, replicating the Vitest steps through `pageObjects`
 - [x] 2.2 Run it on chrome, firefox and edge, alone and with `test:parallel`
 
 ## 3. Align the Playwright strategy

@@ -83,7 +83,14 @@ or pass `--headed` directly to any single-browser script, e.g. `npm run test:chr
 
 Porting them turned up one race in `ProjectBoardPage.addColumn`, which returned while the request that creates the column was still in flight, so the next navigation aborted it. It now waits for the column to reach the board, the same way `moveCard` waits for the state the server kept. Selenium never saw it because a driver round trip is slower than the in-process call that replaced it.
 
-`organization.spec.ts` replicates `gitea-selenium-vitest`'s `organizations.test.ts` so the two runners can be compared on the same scenario: the owner creates an organization and two private teams, adds the invited user to the first, removes them and reviews the persisted Teams state. It calls the same page-object methods with the same assertions, only through `pageObjects` instead of one fixture per page, and `test.step` takes the place of Allure's `step`. It runs on the three browsers like every other spec.
+`organizations-e2e.spec.ts` holds the two end-to-end organization scenarios, each marked with a one-line comment naming which suite it replicates:
+
+- `// Vitest` — "should create an organization and add members" replicates `gitea-selenium-vitest`'s `organizations.test.ts`: the owner creates an organization and two private teams, adds the invited user to the first, removes them and reviews the persisted Teams state. It calls the same page-object methods with the same assertions, only through `pageObjects` instead of one fixture per page, and `test.step` takes the place of Allure's `step`.
+- `// Cucumber` — "Change team members permissions" replicates the `@e2e` scenario of `gitea-selenium-cucumber`'s `organizations.feature`: the owner creates an organization, two teams, their members, a repository and files, then user 1 and user 2 write, read and lose access as the owner changes the teams.
+
+Both run on the three browsers like every other spec.
+
+`organizations-smokes.spec.ts` replicates the five smokes of the same feature, one test each and in the same order: create an organization, create a team, add a user to a team, create a repository, add a repository to a team. They call the same page-object methods and assert the same things through `pageObjects`. Where the feature adds a seeded user to the team, the test adds the browser's invited account, since the job has no admin token to seed users with.
 
 `issue-metadata.spec.ts` and `scoped-labels.spec.ts` are the Playwright side of `AT-ISS-01` and `AT-ISS-02`, replicated from `gitea-selenium-vitest/tests/issue-metadata.test.ts` and `tests/issues.test.ts` for the week 3 comparison, with no assertion dropped. `AT-ISS-01` creates an issue carrying a Markdown description, a label, a milestone and an assignee, checks both list filters return it, and checks that closing it drives its milestone to 100 percent. `AT-ISS-02` creates three scoped labels through the UI and checks that a scoped label replaces the one of its own scope, coexists with another scope, and leaves the issue when removed.
 
@@ -111,6 +118,16 @@ test("...", async ({ seededOrganizationWithRepositories, kanbanProject }) => {
 ```
 
 A fixture's precondition runs only for a test that names it in its signature, and its postcondition runs even when that test fails, which is what replaces a `try`/`finally` in the test body. A seed that belongs to one area lives in that area's file and extends the one below it, the way `issues-fixtures.ts` does; `fixture.ts` stays the transversal one.
+
+## Organizations fixtures
+
+`fixtures/organizations-fixtures.ts` holds what the organization smokes and the `@e2e` scenario of `organizations.feature` start from, extending `fixtures/fixture.ts`:
+
+- `existingOrganization` — "an organization already exists" in the Cucumber smokes: a public organization created through the API and recorded in `scenarioState`, so `cleanupCreatedOrganization` removes it.
+- `seededUsers` — the Cucumber suite's `createSeededUsers`: two users, "user 1" and "user 2", created through the admin API before the test and deleted after it, named per browser so the three browsers never share one. It needs `GITEA_ADMIN_TOKEN`, one token shared by the three browsers, and the `ct.yml` job mints it.
+- `seededOrganizationWithTeamAndRepository` — one organization with a `team-1` team and a `frontend` repository, mirroring the Cucumber hook behind its own `@team-repository` tag. `cleanupCreatedOrganization` removes it.
+
+`SMOKE_TAG` (`"@smoke"`), `TEAM_REPOSITORY_TAG` (`"@team-repository"`) and `E2E_TAG` (`"@e2e"`) mirror the Cucumber suite's own tags of those names. `ORGANIZATION_TAG` and `ORGANIZATION_NAME_PREFIX` are read by `cleanupOrganizationsBeforeRun` below, so they live in `fixture.ts` next to it; this file re-exports them, so a spec still needs one import.
 
 ## Cleanup fixtures
 

@@ -30,6 +30,8 @@ const visual = {
 
 export default defineConfig({
   testDir: "./tests",
+  // The cucumber e2e's ~10 login switches and page loads don't fit the 30 second default.
+  timeout: 120_000,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

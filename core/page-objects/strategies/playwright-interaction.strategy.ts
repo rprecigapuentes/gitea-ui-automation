@@ -111,9 +111,10 @@ export class PlaywrightInteractionStrategy implements IInteractionStrategy {
     await simulateHtml5Drag(this.page.locator(sourceLocator), this.page.locator(targetLocator));
   }
 
+  // The rendered text, trimmed, like WebElement.getText, not the raw text nodes with their whitespace.
   async getText(locator: string, root?: IElementHandle, timeoutMs?: number): Promise<string> {
     if (root) return (await root.findElement(locator)).getText();
-    return (await this.page.locator(locator).textContent({ timeout: timeoutMs })) ?? "";
+    return ((await this.page.locator(locator).textContent({ timeout: timeoutMs })) ?? "").trim();
   }
 
   async getAttribute(
@@ -134,7 +135,7 @@ export class PlaywrightInteractionStrategy implements IInteractionStrategy {
   async isVisible(
     locators: string | string[],
     root?: IElementHandle,
-    timeoutMs?: number,
+    timeoutMs: number = DEFAULT_TIMEOUT_MS,
   ): Promise<boolean> {
     const list = Array.isArray(locators) ? locators : [locators];
     if (root) {

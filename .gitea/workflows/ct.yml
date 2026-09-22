@@ -227,6 +227,8 @@ jobs:
 
     env:
       GITEA_BASE_URL: http://gitea-test:3000
+      GITEA_ADMIN_USERNAME: pw-admin
+      GITEA_ADMIN_PASSWORD: Qa-admin-not-a-secret-1
       GITEA_OWNER_CHROME: chrome-owner
       GITEA_OWNER_CHROME_PASSWORD: Qa-bot-not-a-secret-1
       GITEA_OWNER_FIREFOX: firefox-owner
@@ -286,7 +288,7 @@ jobs:
 
           # Gitea makes the first user of a fresh instance an administrator, so this one
           # registers before the browser accounts and none of them inherits the privilege.
-          register "/tmp/gitea-pw-admin.jar" "pw-admin" "Qa-admin-not-a-secret-1"
+          register "/tmp/gitea-pw-admin.jar" "$GITEA_ADMIN_USERNAME" "$GITEA_ADMIN_PASSWORD"
 
           for b in CHROME FIREFOX EDGE; do
             owner_user="GITEA_OWNER_$b"; owner_pass="GITEA_OWNER_${b}_PASSWORD"
@@ -304,6 +306,26 @@ jobs:
             echo "GITEA_TOKEN_$b=$token" >> "$GITHUB_ENV"
             echo "token minted for ${!owner_user}"
           done
+
+          # One admin token for all three browsers: only the users it creates have to be
+          # browser-unique, and they already are.
+          admin_token=$(curl -fsS -u "$GITEA_ADMIN_USERNAME:$GITEA_ADMIN_PASSWORD" \
+            -H "Content-Type: application/json" \
+            -X POST "$GITEA_BASE_URL/api/v1/users/$GITEA_ADMIN_USERNAME/tokens" \
+            -d '{"name":"continuous-testing-admin","scopes":["write:admin"]}' \
+            | node -pe 'JSON.parse(require("fs").readFileSync(0, "utf8")).sha1')
+          echo "::add-mask::$admin_token"
+
+          # Gitea grants the scope to any account but honours it only for an administrator.
+          if ! curl -fsS -o /dev/null \
+            -H "Authorization: token $admin_token" \
+            "$GITEA_BASE_URL/api/v1/admin/users?limit=1"; then
+            echo "$GITEA_ADMIN_USERNAME holds no write:admin privilege, so no test could seed its users"
+            exit 1
+          fi
+
+          echo "GITEA_ADMIN_TOKEN=$admin_token" >> "$GITHUB_ENV"
+          echo "admin token minted for $GITEA_ADMIN_USERNAME"
 
       - name: Run the suite
         run: npm test -w @gitea-automation/${{ matrix.suite }}
