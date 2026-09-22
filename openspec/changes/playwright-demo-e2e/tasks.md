@@ -14,7 +14,19 @@
 - [ ] 2.3 Add the phases that close and reopen the issue and read the milestone, and verify they pass
 - [ ] 2.4 Add the phase that signs in as the member, and verify it passes
 
-2.2 is the phase the first attempt at this port failed on, so it is split from the rest rather than written in one pass. What the Cucumber baseline measures, on firefox, `@demo-e2e`, 62 steps passed: the drag falls back to `dispatchDragEvents` on both cards there too, and the column delete that follows still opens its menu. So the synthetic drag is not what breaks, and the failure is specific to the Playwright path.
+2.2 is the phase the first attempt at this port failed on, so it is split from the rest rather than written in one pass. It is written and failing, at `deleteColumn`, where the click waits on a delete item that is in the DOM and has no box.
+
+What the probes measured, on firefox, against the board the scenario leaves behind:
+
+- The column's dropdown is not open and does not open. Its trigger keeps `class="ui dropdown tw-p-1"` and its `.menu` stays `display: none`, where Fomantic marks an open dropdown `active visible` and its menu `visible transition`. The delete item under it reads `display: block` and `visibility: visible` but `getClientRects().length === 0`, which is why Playwright waits on it instead of failing: the item is only hidden by its closed ancestor.
+- It is the added column specifically. In the same run, at the same moment, one click on a template column's trigger opens that column's menu and one click on the added column's trigger does not.
+- Waiting does not fix it: three seconds before the delete fails the same way. Navigating does not fix it either: `openFor` before the delete fails the same way.
+- The count of drags that fell back to `dispatchDragEvents` does not predict it. Three consecutive runs failed, two of them with one fallback and one with two, and the Cucumber baseline that passes falls back on both of its drags.
+- One reproduction does open it: a `reload` followed by a direct click on the trigger, through the strategy rather than through `ProjectColumnFragment.openMenu`. That path differs from the failing one only in the guard `openMenu` reads first, so that guard is the next thing to measure.
+
+What the Cucumber baseline measures, firefox, `@demo-e2e`, 62 steps passed: the same page object deletes the same column after the same two drags without trouble, so nothing here is a page-object defect on its own.
+
+`PlaywrightInteractionStrategy` logs nothing when a locator never becomes visible, where the Selenium strategy logs `Locator never became visible` with the locator, the url and the reason. That asymmetry is what made this failure read as a bare click timeout, and closing it is a candidate task once the cause is known.
 
 Any point where `PlaywrightInteractionStrategy` or a page object turns out to disagree with what the Selenium steps assume gets its own task here, with the failure that found it, as the four ports before this one did.
 
