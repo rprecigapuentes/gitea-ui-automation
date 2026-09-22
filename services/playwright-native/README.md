@@ -71,6 +71,18 @@ or pass `--headed` directly to any single-browser script, e.g. `npm run test:chr
 
 `project-board-drag-and-drop.spec.ts` replicates the Cucumber suite's project-board drag-and-drop smoke (`project-board.feature`'s "A card dragged onto another column is kept there by the board"): it creates a Basic Kanban project and assigns both seeded issues to it through `pageObjects`, then moves the first card into "In Progress" with `pageObjects.projectBoardPage.moveCard(issueId, columnTitle)` — the same, unmodified method the Selenium suites use. It passes on all three browsers: the manual mouse drag lands directly on chrome and edge, and `moveCard`'s own fallback to `dispatchDragEvents` (now a real native-event-dispatch implementation, see the core-page-objects README's "Playwright strategy notes") reliably recovers it on firefox.
 
+`project-board.spec.ts` replicates the four remaining scenarios of that same feature file, so the board smoke (`S2-SMK-ISS`) now runs whole on both runners:
+
+| `project-board.feature` scenario                                             | Playwright spec                       |
+| ---------------------------------------------------------------------------- | ------------------------------------- |
+| The Basic Kanban template lays the board out                                 | `project-board.spec.ts`               |
+| An issue added to the project lands in the default column                    | `project-board.spec.ts`               |
+| A column added from the board appears on it                                  | `project-board.spec.ts`               |
+| A card dragged onto another column is kept there by the board                | `project-board-drag-and-drop.spec.ts` |
+| The default column cannot be deleted and takes in the cards of a deleted one | `project-board.spec.ts`               |
+
+Porting them turned up one race in `ProjectBoardPage.addColumn`, which returned while the request that creates the column was still in flight, so the next navigation aborted it. It now waits for the column to reach the board, the same way `moveCard` waits for the state the server kept. Selenium never saw it because a driver round trip is slower than the in-process call that replaced it.
+
 `organization.spec.ts` replicates `gitea-selenium-vitest`'s `organizations.test.ts` so the two runners can be compared on the same scenario: the owner creates an organization and two private teams, adds the invited user to the first, removes them and reviews the persisted Teams state. It calls the same page-object methods with the same assertions, only through `pageObjects` instead of one fixture per page, and `test.step` takes the place of Allure's `step`. It runs on the three browsers like every other spec.
 
 `issue-metadata.spec.ts` and `scoped-labels.spec.ts` are the Playwright side of `AT-ISS-01` and `AT-ISS-02`, replicated from `gitea-selenium-vitest/tests/issue-metadata.test.ts` and `tests/issues.test.ts` for the week 3 comparison, with no assertion dropped. `AT-ISS-01` creates an issue carrying a Markdown description, a label, a milestone and an assignee, checks both list filters return it, and checks that closing it drives its milestone to 100 percent. `AT-ISS-02` creates three scoped labels through the UI and checks that a scoped label replaces the one of its own scope, coexists with another scope, and leaves the issue when removed.
@@ -90,6 +102,7 @@ Two differences from their Vitest originals, both forced by the runner rather th
 Each fixture here is paired with a tag a test opts into with `{ tag }` — the same idea as the Cucumber suite's own `Before({ tags: ... })` hooks in `hooks.ts`, so a fixture's precondition only runs for a test that actually declared it needs it:
 
 - `PROJECT_BOARD_TAG` (`"@project-board"`, mirroring `project-board.feature`'s own tag) pairs with the `seededOrganizationWithRepositories` fixture — one organization, two repositories, one issue in each, torn down after the test.
+- `kanbanProject` is the rest of that feature's `Background`: it signs the owner in and creates the project from the Basic Kanban template, handing the test its id and title. It depends on `seededOrganizationWithRepositories`, so a test that asks for it gets both, and it undoes nothing after `use()` because deleting the organization takes the project with it.
 
 ```ts
 import { test, expect, PROJECT_BOARD_TAG } from "../fixtures/hooks-fixtures";
