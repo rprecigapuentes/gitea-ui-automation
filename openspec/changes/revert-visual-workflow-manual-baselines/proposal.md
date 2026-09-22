@@ -5,7 +5,8 @@
 ## What Changes
 
 - Collapse `.gitea/workflows/visual.yml` back to one job: run the suite once (comparing by default, or recording every baseline when `record_baselines` is set or the commit message carries `[record-baselines]`), then upload both the native Playwright report and the recorded baselines (when any exist) with `if: always()`.
-- Remove the "detect what was recorded" fingerprinting step and the second `visual` job entirely — there is no automatic follow-up comparison run.
+- Remove the second `visual` job entirely — there is no automatic follow-up comparison run.
+- Keep a "detect what was recorded" fingerprint step, but repurpose it: when the run compares (not recording) and it detects that a baseline got auto-created because it was missing, fail the job explicitly — even though Playwright itself reports that check as passed — naming which baseline(s) were created, so a missing/uncommitted baseline can't silently look green. A run that asks to record baselines is unaffected: recording is its whole point.
 - This supersedes tasks 12.1 and 12.2 of `openspec/changes/playwright-visual-testing`, which are not un-marked here (that change is left as a historical record of what was tried) but no longer reflect the workflow's actual shape.
 
 ## Capabilities
@@ -16,7 +17,7 @@
 
 ### Modified Capabilities
 
-(none — the two-job flow this reverts was never synced into `openspec/specs/pipeline`, so no archived requirement describes it)
+- `pipeline`: the "visual workflow compares against committed baselines and lets a person record new ones by hand" requirement (archived from `playwright-visual-testing`) gains the fail-until-committed scenario described above; the two-job flow itself was never synced, so nothing else in that requirement changes.
 
 ## Impact
 

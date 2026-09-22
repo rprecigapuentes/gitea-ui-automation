@@ -126,15 +126,49 @@ jobs:
           COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
           script=test:visual:ci
+          recording=false
           if [ "${{ github.event.inputs.record_baselines }}" = "true" ]; then
             script=test:visual:ci:update
+            recording=true
           fi
-          case "$COMMIT_MESSAGE" in *"[record-baselines]"*) script=test:visual:ci:update ;; esac
+          case "$COMMIT_MESSAGE" in *"[record-baselines]"*) script=test:visual:ci:update; recording=true ;; esac
           echo "VISUAL_SCRIPT=$script" >> "$GITHUB_ENV"
+          echo "RECORDING=$recording" >> "$GITHUB_ENV"
           echo "running $script"
 
+      - name: Fingerprint the committed baselines
+        shell: bash
+        run: find "$BASELINES" -name '*.png' -exec sha256sum {} + | sort > /tmp/baselines-before.txt
+
+      # A missing baseline makes Playwright write one and report that check as passed, so the exit
+      # code alone can't say a baseline was missing. Kept for the next step.
       - name: Run the suite
-        run: npm run "$VISUAL_SCRIPT" -w @gitea-automation/playwright-native
+        shell: bash
+        run: |
+          set +e
+          npm run "$VISUAL_SCRIPT" -w @gitea-automation/playwright-native
+          echo "SUITE_EXIT=$?" >> "$GITHUB_ENV"
+          exit 0
+
+      - name: Fail on a baseline that was missing
+        shell: bash
+        run: |
+          find "$BASELINES" -name '*.png' -exec sha256sum {} + | sort > /tmp/baselines-after.txt
+          if cmp -s /tmp/baselines-before.txt /tmp/baselines-after.txt; then
+            echo "no baseline was recorded"
+            exit "${SUITE_EXIT:-1}"
+          fi
+
+          recorded=$(comm -13 /tmp/baselines-before.txt /tmp/baselines-after.txt | sed -n 's/^[^ ]* .*baselines\//recorded: /p')
+
+          if [ "$RECORDING" = "true" ]; then
+            echo "$recorded"
+            exit "${SUITE_EXIT:-1}"
+          fi
+
+          echo "A baseline was missing and got auto-created; download the visual-baselines-linux artifact and commit it, then re-run:"
+          echo "$recorded"
+          exit 1
 
       # A person downloads this and commits it to make it the reference.
       - name: Upload the recorded baselines
