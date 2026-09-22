@@ -9,7 +9,7 @@
 
 ## 3. The scenario
 
-- [x] 3.1 Port "Change team members permissions" to `tests/organization-cucumber-e2e.spec.ts`
+- [x] 3.1 Port "Change team members permissions" to `tests/organizations-e2e.spec.ts`
 - [x] 3.2 Run it on chrome, firefox and edge, alone and with `test:parallel`. It exposed that `isVisible` had no default timeout and waited for the test's own; it now waits 5 seconds like Selenium
 
 ## 4. Review fixes
@@ -22,3 +22,9 @@
 
 - [x] 5.1 Document the spec and the fixture in the README
 - [x] 5.2 Verify `npm run format`, `npm run lint` and `npm run typecheck` are green
+
+## 6. Rename and merge
+
+- [x] 6.1 Merge this test into `organization.spec.ts` (the Vitest one), rename the result to `tests/organizations-e2e.spec.ts`, and rename `organization-smokes.spec.ts` to `organizations-smokes.spec.ts` — matching the plural `organizations` the Vitest and Cucumber suites already use. Each test in the merged file carries a one-line `// Vitest`/`// Cucumber` comment naming which suite it replicates
+- [x] 6.2 Update the README and the three proposals' file references
+- [x] 6.3 Re-run `npm run lint`, `npm run typecheck` and the full functional suite on chrome, firefox and edge
