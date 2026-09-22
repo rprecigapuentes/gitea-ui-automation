@@ -140,30 +140,28 @@ jobs:
         shell: bash
         run: find "$BASELINES" -name '*.png' -exec sha256sum {} + | sort > /tmp/baselines-before.txt
 
-      # A missing baseline makes Playwright write one and report that check as passed, so the exit
-      # code alone can't say a baseline was missing. Kept for the next step.
       - name: Run the suite
-        shell: bash
-        run: |
-          set +e
-          npm run "$VISUAL_SCRIPT" -w @gitea-automation/playwright-native
-          echo "SUITE_EXIT=$?" >> "$GITHUB_ENV"
-          exit 0
+        run: npm run "$VISUAL_SCRIPT" -w @gitea-automation/playwright-native
 
+      # Runs whether the suite step above passed or failed, so a missing baseline is caught even
+      # when it's the only thing wrong. A missing baseline makes Playwright write one and report
+      # that check as passed, so this is the only way to catch it; a real mismatch already failed
+      # the step above on its own.
       - name: Fail on a baseline that was missing
+        if: always()
         shell: bash
         run: |
           find "$BASELINES" -name '*.png' -exec sha256sum {} + | sort > /tmp/baselines-after.txt
           if cmp -s /tmp/baselines-before.txt /tmp/baselines-after.txt; then
             echo "no baseline was recorded"
-            exit "${SUITE_EXIT:-1}"
+            exit 0
           fi
 
           recorded=$(comm -13 /tmp/baselines-before.txt /tmp/baselines-after.txt | sed -n 's/^[^ ]* .*baselines\//recorded: /p')
 
           if [ "$RECORDING" = "true" ]; then
             echo "$recorded"
-            exit "${SUITE_EXIT:-1}"
+            exit 0
           fi
 
           echo "A baseline was missing and got auto-created; download the visual-baselines-linux artifact and commit it, then re-run:"
