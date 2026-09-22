@@ -1,6 +1,10 @@
 name: CT
 
 on:
+  # Temporary: Gitea lists only the workflows of the default branch, so until this merges the
+  # only way to run it is a push. Remove it before the branch merges.
+  push:
+    branches: [104-port-demo-e2e-scenario]
   schedule:
     - cron: "0 11 * * *"
   workflow_dispatch:
