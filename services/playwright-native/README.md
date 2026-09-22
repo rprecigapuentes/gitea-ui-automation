@@ -102,7 +102,7 @@ Two differences from their Vitest originals, both forced by the runner rather th
 Each fixture here is paired with a tag a test opts into with `{ tag }` — the same idea as the Cucumber suite's own `Before({ tags: ... })` hooks in `hooks.ts`, so a fixture's precondition only runs for a test that actually declared it needs it:
 
 - `PROJECT_BOARD_TAG` (`"@project-board"`, mirroring `project-board.feature`'s own tag) pairs with the `seededOrganizationWithRepositories` fixture — one organization, two repositories, one issue in each, torn down after the test.
-- `kanbanProject` is the rest of that feature's `Background`: it signs the owner in and creates the project from the Basic Kanban template, handing the test its id and title. It depends on `seededOrganizationWithRepositories`, so a test that asks for it gets both, and it undoes nothing after `use()` because deleting the organization takes the project with it.
+  `fixtures/project-board-fixtures.ts` extends that file with `kanbanProject`, the rest of the same feature's `Background`: it signs the owner in and creates the project from the Basic Kanban template, handing the test its id and title. It depends on `seededOrganizationWithRepositories`, so a test that asks for it gets both, and it undoes nothing after `use()` because deleting the organization takes the project with it. A seed that belongs to one area lives in that area's file and extends the one below it, the way `issues-fixtures.ts` does.
 
 ```ts
 import { test, expect, PROJECT_BOARD_TAG } from "../fixtures/hooks-fixtures";

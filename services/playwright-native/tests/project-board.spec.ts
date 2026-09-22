@@ -1,4 +1,4 @@
-import { test, expect, PROJECT_BOARD_TAG } from "../fixtures/hooks-fixtures";
+import { test, expect, PROJECT_BOARD_TAG } from "../fixtures/project-board-fixtures";
 import type { PageFactory } from "@gitea-automation/business-logic/pages/page.factory";
 import type { SeededRepository } from "@gitea-automation/business-logic/state/scenario.entity";
 

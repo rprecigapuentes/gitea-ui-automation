@@ -9,7 +9,7 @@
   - an issue added to the project lands in the default column, which then counts one;
   - a column added from the board appears on it;
   - the default column does not offer to be deleted, the column that does is deleted, and its card is taken in by the new default.
-- Add a `kanbanProject` fixture to `fixtures/hooks-fixtures.ts`, the Playwright form of the feature's `Background`. It depends on `seededOrganizationWithRepositories` and on `sessionManager`, creates the project from the template before `use()`, and hands the test its id and title. Deleting the organization already removes the project, so it needs no postcondition of its own.
+- Add a `kanbanProject` fixture in a new `fixtures/project-board-fixtures.ts` that extends `hooks-fixtures.ts`, the Playwright form of the feature's `Background`. It depends on `seededOrganizationWithRepositories` and on `sessionManager`, creates the project from the template before `use()`, and hands the test its id and title. Deleting the organization already removes the project, so it needs no postcondition of its own.
 - Tag each test with the existing `PROJECT_BOARD_TAG`, as the drag-and-drop spec does, so `--grep "@project-board"` selects the board smoke on either runner.
 - Document the spec and the fixture in the `playwright-native` README.
 
@@ -25,7 +25,7 @@ None. Four existing scenarios are ported to a runner that already has its fixtur
 
 ## Impact
 
-New: `services/playwright-native/tests/project-board.spec.ts`. Modified: `services/playwright-native/fixtures/hooks-fixtures.ts`, `services/playwright-native/README.md`, and `business-logic/pages/projects/project-board.page.ts`, whose `addColumn` returned before the column reached the server. That page object is shared with the Selenium suites, so both run again. No pipeline change: the `playwright-native` job already runs everything under `tests/`, on the credentials it has.
+New: `services/playwright-native/tests/project-board.spec.ts`, `services/playwright-native/fixtures/project-board-fixtures.ts`. Modified: `services/playwright-native/README.md`, and `business-logic/pages/projects/project-board.page.ts` with its column fragment, whose three menu actions returned before the board had answered. That page object is shared with the Selenium suites, so both run again. No pipeline change: the `playwright-native` job already runs everything under `tests/`, on the credentials it has.
 
 ## Out of Scope
 
