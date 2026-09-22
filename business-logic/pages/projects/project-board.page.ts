@@ -92,12 +92,16 @@ export class ProjectBoardPage extends BasePage {
 
   async makeColumnDefault(title: string): Promise<void> {
     await this.column(title).clickSetAsDefault();
-    await this.click(this.locators.confirmButton);
+    // Gitea answers the confirmation and reloads the board, and that reload aborts whatever
+    // navigation the caller starts next, so the column being default is what says it landed.
+    await this.clickAndWaitUntil(this.locators.confirmButton, () =>
+      this.column(title).isDefaultNow(),
+    );
   }
 
   async deleteColumn(title: string): Promise<void> {
     await this.column(title).clickDelete();
-    await this.click(this.locators.confirmButton);
+    await this.clickAndWaitUntil(this.locators.confirmButton, () => this.boardHidesColumn(title));
   }
 
   /**
