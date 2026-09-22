@@ -40,3 +40,7 @@
 ## 8. Documentation
 
 - [x] 8.1 Document the scans, the `test:a11y` script, how a baseline is re-approved and the new workflow in the root and `services/playwright-native` READMEs; verify no README still describes `playwright-native` as functional-only.
+
+## 9. Read the findings against the standard
+
+- [x] 9.1 Map each violated rule to its WCAG success criteria and conformance level from the tags axe already returns, name them on every rule card and count the failed criteria in a tile; verify the summary names 1.3.1, 1.4.3 and 4.1.2 for the three known rules.

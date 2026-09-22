@@ -133,7 +133,7 @@ Everything below is git-ignored and uploaded as the `accessibility-scans` artifa
 
 In `reports/accessibility/`:
 
-- `summary.html`, one self-contained page: the counts per `impact`, then a card per rule with its offending elements. `report:a11y` writes it and prints the same counts for a pull request description.
+- `summary.html`, one self-contained page: the counts per `impact`, then a card per rule with its WCAG success criteria and its offending elements. `report:a11y` writes it and prints the same counts for a pull request description.
 - `<page>-<browser>.json`, the full axe result, also attached to the test so Allure carries it.
 
 In `test-results/`, only for a scan that failed:
@@ -154,11 +154,17 @@ Every report below describes the same run. They answer different questions, whic
 
 | Report                               | Answers                                                                      | Shape              |
 | ------------------------------------ | ---------------------------------------------------------------------------- | ------------------ |
-| `reports/accessibility/summary.html` | How many violations, at what `impact`, on which page                         | One page, ~20 KB   |
+| `reports/accessibility/summary.html` | How many violations, at what `impact`, against which WCAG criterion          | One page, ~20 KB   |
 | `allure-report/index.html`           | Did the suite pass, which step failed, grouped by suite and kept across runs | One page, ~11 MB   |
 | `playwright-report/index.html`       | The same verdict, with the trace viewer bundled for offline use              | A folder, 28 files |
 
 Only `summary.html` answers the severity question, because only it reads inside the axe result. Allure's own `severity` is a label on a test, one per page, while `impact` belongs to each violation.
+
+### The WCAG reading
+
+Each axe rule declares the success criteria it tests as tags, so every card names them with their conformance level (`WCAG 4.1.2 · Level A`) instead of the rule id alone, and one tile counts the criteria that failed.
+
+That is a reading of the findings against the standard, never a conformance claim: the criteria no rule reaches are unevaluated rather than met, and most of them are the ones only a person can decide. A conformance claim is written by hand, in the [WCAG-EM Report Tool](https://www.w3.org/WAI/eval/report-tool/).
 
 ### Baselines
 
