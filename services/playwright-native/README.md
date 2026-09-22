@@ -71,6 +71,18 @@ or pass `--headed` directly to any single-browser script, e.g. `npm run test:chr
 
 `project-board-drag-and-drop.spec.ts` replicates the Cucumber suite's project-board drag-and-drop smoke (`project-board.feature`'s "A card dragged onto another column is kept there by the board"): it creates a Basic Kanban project and assigns both seeded issues to it through `pageObjects`, then moves the first card into "In Progress" with `pageObjects.projectBoardPage.moveCard(issueId, columnTitle)` — the same, unmodified method the Selenium suites use. It passes on all three browsers: the manual mouse drag lands directly on chrome and edge, and `moveCard`'s own fallback to `dispatchDragEvents` (now a real native-event-dispatch implementation, see the core-page-objects README's "Playwright strategy notes") reliably recovers it on firefox.
 
+`project-board.spec.ts` replicates the four remaining scenarios of that same feature file, so the board smoke (`S2-SMK-ISS`) now runs whole on both runners:
+
+| `project-board.feature` scenario                                             | Playwright spec                       |
+| ---------------------------------------------------------------------------- | ------------------------------------- |
+| The Basic Kanban template lays the board out                                 | `project-board.spec.ts`               |
+| An issue added to the project lands in the default column                    | `project-board.spec.ts`               |
+| A column added from the board appears on it                                  | `project-board.spec.ts`               |
+| A card dragged onto another column is kept there by the board                | `project-board-drag-and-drop.spec.ts` |
+| The default column cannot be deleted and takes in the cards of a deleted one | `project-board.spec.ts`               |
+
+Porting them turned up one race in `ProjectBoardPage.addColumn`, which returned while the request that creates the column was still in flight, so the next navigation aborted it. It now waits for the column to reach the board, the same way `moveCard` waits for the state the server kept. Selenium never saw it because a driver round trip is slower than the in-process call that replaced it.
+
 `organization.spec.ts` replicates `gitea-selenium-vitest`'s `organizations.test.ts` so the two runners can be compared on the same scenario: the owner creates an organization and two private teams, adds the invited user to the first, removes them and reviews the persisted Teams state. It calls the same page-object methods with the same assertions, only through `pageObjects` instead of one fixture per page, and `test.step` takes the place of Allure's `step`. It runs on the three browsers like every other spec.
 
 `issue-metadata.spec.ts` and `scoped-labels.spec.ts` are the Playwright side of `AT-ISS-01` and `AT-ISS-02`, replicated from `gitea-selenium-vitest/tests/issue-metadata.test.ts` and `tests/issues.test.ts` for the week 3 comparison, with no assertion dropped. `AT-ISS-01` creates an issue carrying a Markdown description, a label, a milestone and an assignee, checks both list filters return it, and checks that closing it drives its milestone to 100 percent. `AT-ISS-02` creates three scoped labels through the UI and checks that a scoped label replaces the one of its own scope, coexists with another scope, and leaves the issue when removed.
@@ -83,27 +95,29 @@ Two differences from their Vitest originals, both forced by the runner rather th
 
 `owner` and `repository` derive the browser from `testInfo.project.name`, where the Vitest fixtures read `process.env.BROWSER`: accounts are per browser, and the project name is what a Playwright fixture has.
 
-## Hooks fixtures
+## Project board fixtures
 
-`fixtures/hooks-fixtures.ts` is where a test's precondition/postcondition setup lives, instead of a `try`/`finally` in the test body: Playwright tears a fixture's setup down (the code after `use()`) even when the test fails, so no manual cleanup handling is needed in the test itself. It extends `fixtures/fixture.ts`'s own `test`, the same way `fixture.ts` extends `@playwright/test`'s.
+`fixtures/project-board-fixtures.ts` holds what `project-board.feature`'s `Background` gives its scenarios, as two fixtures that extend `fixtures/fixture.ts`:
 
-Each fixture here is paired with a tag a test opts into with `{ tag }` — the same idea as the Cucumber suite's own `Before({ tags: ... })` hooks in `hooks.ts`, so a fixture's precondition only runs for a test that actually declared it needs it:
-
-- `PROJECT_BOARD_TAG` (`"@project-board"`, mirroring `project-board.feature`'s own tag) pairs with the `seededOrganizationWithRepositories` fixture — one organization, two repositories, one issue in each, torn down after the test.
+- `seededOrganizationWithRepositories` — one organization, two repositories, one issue in each, all torn down after the test.
+- `kanbanProject` — the owner's session and the project created from the Basic Kanban template, handed to the test as its id and title. It asks for the fixture above, so a test that wants the project gets the organization too, and it undoes nothing itself because deleting the organization takes the project with it.
 
 ```ts
-import { test, expect, PROJECT_BOARD_TAG } from "../fixtures/hooks-fixtures";
+import { test, expect } from "../fixtures/project-board-fixtures";
 
-test("...", { tag: PROJECT_BOARD_TAG }, async ({ seededOrganizationWithRepositories }) => {
+test("...", async ({ seededOrganizationWithRepositories, kanbanProject }) => {
   const { organizationName, repositories } = seededOrganizationWithRepositories;
 });
 ```
 
-A test can filter to just this tag the same way Cucumber does with `--tags`: `npx playwright test --grep "@project-board"`.
+A fixture's precondition runs only for a test that names it in its signature, and its postcondition runs even when that test fails, which is what replaces a `try`/`finally` in the test body. A seed that belongs to one area lives in that area's file and extends the one below it, the way `issues-fixtures.ts` does; `fixture.ts` stays the transversal one.
 
-- `ORGANIZATION_TAG` (`"@organization"`) pairs with `cleanupOrganizationsBeforeRun`, the counterpart of the Vitest suite's fixture of that name: an automatic fixture that, for a test carrying the tag, removes the organizations a crashed run left behind. It only removes those named with `ORGANIZATION_NAME_PREFIX`, so a parallel worker's organizations are never touched, where the Vitest one clears every organization of the account.
+## Cleanup fixtures
 
-`cleanupCreatedOrganization` is an automatic fixture (`{ auto: true }`), so it needs no tag. A test that creates an organization records it in `scenarioState.organization`; after the test, whether it passed or failed, the fixture deletes the repositories the organization holds and then the organization, because Gitea refuses to delete an organization that still owns one. The visual specs rely on it.
+The two cleanups are automatic (`{ auto: true }`) and live in `fixtures/fixture.ts`, because they apply to any test that creates an organization rather than to one area:
+
+- `cleanupCreatedOrganization` — a test that creates an organization records it in `scenarioState.organization`; afterwards, whether it passed or failed, the fixture deletes the repositories the organization holds and then the organization, because Gitea refuses to delete one that still owns a repository. The visual specs rely on it.
+- `cleanupOrganizationsBeforeRun` — the counterpart of the Vitest suite's fixture of that name: for a test carrying `ORGANIZATION_TAG`, it removes the organizations a crashed run left behind. Being automatic, it runs for every test, so the tag is how it picks the ones it applies to; it only removes names under `ORGANIZATION_NAME_PREFIX`, so a parallel worker's organizations are never touched, where the Vitest one clears every organization of the account.
 
 ## Accessibility scans
 
@@ -199,7 +213,7 @@ tests/non-functional/visual/
 
 ### The visual tester
 
-`VisualTester` lives in [`@gitea-automation/core-playwright`](../../core/playwright/README.md), outside the page-object layer: a screenshot comparison has no Selenium equivalent, so it is not something a page object can own. `fixtures/visual.fixture.ts` extends `fixtures/hooks-fixtures.ts` and hands a spec a `visualTester`:
+`VisualTester` lives in [`@gitea-automation/core-playwright`](../../core/playwright/README.md), outside the page-object layer: a screenshot comparison has no Selenium equivalent, so it is not something a page object can own. `fixtures/visual.fixture.ts` extends `fixtures/fixture.ts` and hands a spec a `visualTester`:
 
 ```ts
 import { test } from "../../../../fixtures/visual.fixture";

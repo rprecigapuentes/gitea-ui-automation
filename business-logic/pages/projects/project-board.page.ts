@@ -84,17 +84,24 @@ export class ProjectBoardPage extends BasePage {
     await this.click(this.locators.newColumnButton);
     // The modal is shared with column editing, so it can arrive holding another title.
     await this.clearAndType(this.locators.columnModalTitle, title);
-    await this.click(this.locators.columnModalSave);
+    // The board renders the column once the server answers, so the click alone is not the effect.
+    await this.clickAndWaitUntil(this.locators.columnModalSave, () =>
+      this.column(title).isVisibleOnBoardNow(),
+    );
   }
 
   async makeColumnDefault(title: string): Promise<void> {
     await this.column(title).clickSetAsDefault();
-    await this.click(this.locators.confirmButton);
+    // Gitea answers the confirmation and reloads the board, and that reload aborts whatever
+    // navigation the caller starts next, so the column being default is what says it landed.
+    await this.clickAndWaitUntil(this.locators.confirmButton, () =>
+      this.column(title).isDefaultNow(),
+    );
   }
 
   async deleteColumn(title: string): Promise<void> {
     await this.column(title).clickDelete();
-    await this.click(this.locators.confirmButton);
+    await this.clickAndWaitUntil(this.locators.confirmButton, () => this.boardHidesColumn(title));
   }
 
   /**

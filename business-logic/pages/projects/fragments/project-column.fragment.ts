@@ -7,6 +7,7 @@ export class ProjectColumnFragment extends BaseComponent {
   private readonly locators: {
     column: string;
     title: string;
+    defaultTitle: string;
     issueCount: string;
     menuTrigger: string;
     editItem: string;
@@ -22,6 +23,7 @@ export class ProjectColumnFragment extends BaseComponent {
     this.locators = {
       column: root,
       title: `${root} .project-column-title-text`,
+      defaultTitle: `${root} .project-column-title-text[data-tooltip-content]`,
       issueCount: `${root} .project-column-issue-count`,
       menuTrigger: `${root} .project-column-header .ui.dropdown`,
       editItem: `${root} .menu a.item.show-project-column-modal-edit`,
@@ -58,6 +60,11 @@ export class ProjectColumnFragment extends BaseComponent {
   /** Instant check, for a caller that has already confirmed the board. */
   async isVisibleOnBoardNow(): Promise<boolean> {
     return this.isVisible(this.locators.column, undefined, INSTANT);
+  }
+
+  /** Instant check, for a caller waiting on a board that is reloading itself. */
+  async isDefaultNow(): Promise<boolean> {
+    return this.isVisible(this.locators.defaultTitle, undefined, INSTANT);
   }
 
   async getTitle(): Promise<string> {
