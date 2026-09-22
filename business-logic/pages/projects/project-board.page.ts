@@ -84,7 +84,10 @@ export class ProjectBoardPage extends BasePage {
     await this.click(this.locators.newColumnButton);
     // The modal is shared with column editing, so it can arrive holding another title.
     await this.clearAndType(this.locators.columnModalTitle, title);
-    await this.click(this.locators.columnModalSave);
+    // The board renders the column once the server answers, so the click alone is not the effect.
+    await this.clickAndWaitUntil(this.locators.columnModalSave, () =>
+      this.column(title).isVisibleOnBoardNow(),
+    );
   }
 
   async makeColumnDefault(title: string): Promise<void> {
