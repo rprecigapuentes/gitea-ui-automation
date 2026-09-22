@@ -52,13 +52,14 @@ export class PlaywrightInteractionStrategy implements IInteractionStrategy {
     await this.page.locator(locator).click({ timeout: timeoutMs });
   }
 
+  // Appends keystrokes like WebElement.sendKeys, where fill() would replace the field's value.
   async type(
     locator: string,
     text: string,
     root?: IElementHandle,
     timeoutMs?: number,
   ): Promise<void> {
-    await this.page.locator(locator).fill(text, { timeout: timeoutMs });
+    await this.page.locator(locator).pressSequentially(text, { timeout: timeoutMs });
   }
 
   async clearAndType(
@@ -110,6 +111,9 @@ export class PlaywrightInteractionStrategy implements IInteractionStrategy {
     timeoutMs?: number,
   ): Promise<string> {
     if (root) return (await root.findElement(locator)).getAttribute(attributeName);
+    // The attribute holds the initial value; what was typed is only in the property.
+    if (attributeName === "value")
+      return this.page.locator(locator).inputValue({ timeout: timeoutMs });
     return (
       (await this.page.locator(locator).getAttribute(attributeName, { timeout: timeoutMs })) ?? ""
     );
@@ -121,6 +125,12 @@ export class PlaywrightInteractionStrategy implements IInteractionStrategy {
     timeoutMs?: number,
   ): Promise<boolean> {
     const list = Array.isArray(locators) ? locators : [locators];
+    if (root) {
+      const visible = await Promise.all(
+        list.map(async (locator) => (await root.findElement(locator)).isDisplayed()),
+      );
+      return visible.every(Boolean);
+    }
     // Playwright treats a `timeout` of 0 as "no timeout" (wait forever), the opposite of the
     // callers here that pass 0 meaning "check right now" — so that case skips waitFor entirely.
     const results = await Promise.all(
