@@ -4,10 +4,6 @@ name: Visual
 # report noise. Two jobs: `baselines` records what the runner lacks, or runs the suite when nothing
 # is missing, and `visual` compares against what `baselines` recorded.
 on:
-  # Temporary: Gitea lists only the workflows of the default branch, so until this merges the
-  # only way to run it is a push. Remove it before the branch merges.
-  push:
-    branches: [rene/106-visual-testing]
   workflow_dispatch:
     inputs:
       record_baselines:
