@@ -2,6 +2,7 @@ import { BaseComponent } from "@gitea-automation/core-page-objects/base-componen
 import { IInteractionStrategy } from "@gitea-automation/core-page-objects/interaction-strategy.interface";
 
 const INSTANT = 0;
+const MENU_TIMEOUT_MS = 5000;
 
 export class ProjectColumnFragment extends BaseComponent {
   private readonly locators: {
@@ -118,7 +119,16 @@ export class ProjectColumnFragment extends BaseComponent {
     // Clicking the trigger of an open menu would close it.
     if (await this.isVisible(this.locators.editItem, undefined, INSTANT)) return;
 
-    await this.click(this.locators.menuTrigger);
-    await this.findElement(this.locators.editItem);
+    // A column the board had to scroll into view swallows the first click on its trigger: the menu
+    // stays closed while its items stay in the DOM without a box, so a later click on one waits on
+    // an invisible element instead of failing. The menu being open is what says the click landed.
+    await this.waitFor(
+      async () => {
+        await this.click(this.locators.menuTrigger);
+        return this.isVisible(this.locators.editItem, undefined, INSTANT);
+      },
+      MENU_TIMEOUT_MS,
+      "The column menu never opened",
+    );
   }
 }
