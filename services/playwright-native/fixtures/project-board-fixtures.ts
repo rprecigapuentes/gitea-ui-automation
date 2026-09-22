@@ -1,5 +1,16 @@
-import { test as base } from "./hooks-fixtures";
-import { testDataName } from "@gitea-automation/core-data-handler/data-handler.util";
+import { test as base } from "./fixture";
+import { testDataName, uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.util";
+import type { SeededRepository } from "@gitea-automation/business-logic/state/scenario.entity";
+
+/** The tag `project-board.feature` carries, kept so a run can select the board smoke by it. */
+export const PROJECT_BOARD_TAG = "@project-board";
+
+const PROJECT_BOARD_REPOSITORY_COUNT = 2;
+
+export interface SeededOrganizationWithRepositories {
+  organizationName: string;
+  repositories: SeededRepository[];
+}
 
 interface KanbanProject {
   id: number;
@@ -7,15 +18,40 @@ interface KanbanProject {
 }
 
 interface ProjectBoardFixtures {
+  seededOrganizationWithRepositories: SeededOrganizationWithRepositories;
   kanbanProject: KanbanProject;
 }
 
 /**
- * The rest of `project-board.feature`'s Background, on top of the organization and repositories
- * `hooks-fixtures.ts` seeds: the owner's session and the project the board scenarios open.
- * Deleting the organization takes the project with it, so there is nothing to undo after `use()`.
+ * `project-board.feature`'s `Background`, as the two fixtures the scenarios ask for: the seeded
+ * organization, and the project opened on top of it. The precondition runs before `use()` and the
+ * postcondition after, which Playwright runs even when the test fails.
  */
 export const test = base.extend<ProjectBoardFixtures>({
+  seededOrganizationWithRepositories: async ({ clients }, use, testInfo) => {
+    const organizationName = `at-board-${testInfo.project.name}-${uniqueSuffix()}`;
+    await clients.organizations.createOrganization(organizationName);
+
+    const repositories: SeededRepository[] = [];
+    for (let index = 1; index <= PROJECT_BOARD_REPOSITORY_COUNT; index += 1) {
+      const repositoryName = `at-repo-${index}-${testInfo.project.name}-${uniqueSuffix()}`;
+      await clients.repositories.createOrganizationRepository(organizationName, repositoryName);
+
+      const title = testDataName("S2-SMK-DND", `Issue-${index}`);
+      const issue = await clients.issues.createIssue(organizationName, repositoryName, title);
+
+      repositories.push({ name: repositoryName, issue });
+    }
+
+    await use({ organizationName, repositories });
+
+    for (const repository of repositories) {
+      await clients.repositories.deleteRepository(organizationName, repository.name);
+    }
+    await clients.organizations.deleteOrganization(organizationName);
+  },
+
+  // Deleting the organization takes the project with it, so there is nothing to undo here.
   kanbanProject: async (
     { pageObjects, sessionManager, seededOrganizationWithRepositories },
     use,
@@ -32,5 +68,4 @@ export const test = base.extend<ProjectBoardFixtures>({
   },
 });
 
-export { PROJECT_BOARD_TAG } from "./hooks-fixtures";
 export { expect } from "@playwright/test";

@@ -23,11 +23,15 @@ Found by CT run 425, where the two menu actions failed the same way on chrome (3
 
 This machine carries no system browser for Selenium to drive, so `test:cucumber` cannot run here. CT run 428 is the verification for both tasks: selenium and playwright green, 100 percent.
 
-## 4. Keep the board's own seeding in the board's own file
+## 4. Retire the hooks-shaped fixture file
 
-`hooks-fixtures.ts` is named after the Cucumber hooks it replaced, and the author does not want that shape fed further. Moving the whole file is a conversation to have with its author; moving out the fixture written here is not.
+`hooks-fixtures.ts` was named and organized after the Cucumber `Before`/`After` hooks it replaced, which is a Selenium primitive rather than a Playwright one. Its author agreed to retire it, so the fixtures move to where they belong: what is transversal goes to `fixture.ts`, what belongs to the board goes to the board's own file, the way `issues-fixtures.ts` already works.
 
-- [x] 4.1 `kanbanProject` moves to a new `fixtures/project-board-fixtures.ts` that extends `hooks-fixtures.ts`, and `project-board.spec.ts` imports from it; verify the board specs, the drag-and-drop one included, still pass
+- [x] 4.1 `kanbanProject` and `seededOrganizationWithRepositories` move to `fixtures/project-board-fixtures.ts`; verify the board specs, the drag-and-drop one included, still pass
+- [x] 4.2 The two automatic cleanups, with `ORGANIZATION_TAG` and `ORGANIZATION_NAME_PREFIX`, move to `fixtures/fixture.ts`, and `hooks-fixtures.ts` is deleted; verify `organization.spec.ts` and the visual fixture, its other two dependants, still resolve
+- [x] 4.3 Drop the tag from `project-board.spec.ts`: a non-automatic fixture is opted into by naming it in the signature, and the runner already selects tests by file and by project
+
+`PROJECT_BOARD_TAG` stays for the drag-and-drop spec, which carries it.
 
 ## 5. Wrap up
 

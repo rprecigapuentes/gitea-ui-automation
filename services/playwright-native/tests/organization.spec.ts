@@ -1,9 +1,4 @@
-import {
-  test,
-  expect,
-  ORGANIZATION_NAME_PREFIX,
-  ORGANIZATION_TAG,
-} from "../fixtures/hooks-fixtures";
+import { test, expect, ORGANIZATION_NAME_PREFIX, ORGANIZATION_TAG } from "../fixtures/fixture";
 import { resolveInvitedCredentials, resolveOwnerCredentials } from "../fixtures/credentials";
 import { OrgTab } from "@gitea-automation/business-logic/pages/organizations/fragments/org-navigation.fragment";
 import type { Organization } from "@gitea-automation/business-logic/entities/organization.entity";
