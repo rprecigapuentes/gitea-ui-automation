@@ -14,6 +14,7 @@ const TEMPLATE_COLUMNS = ["Backlog", "To Do", "In Progress", "Done"];
 const DEFAULT_COLUMN = "Backlog";
 const ADDED_COLUMN = "Review";
 const IN_PROGRESS_COLUMN = "In Progress";
+const DONE_COLUMN = "Done";
 
 test.describe("Organization work item lifecycle", () => {
   test("a work item travels from the team that may be assigned it to the board that tracks it", async ({
@@ -185,6 +186,53 @@ test.describe("Organization work item lifecycle", () => {
         await pageObjects.projectBoardPage.defaultColumnHoldsIssue(secondRepository.issue.id),
       ).toBe(true);
       expect(await pageObjects.projectBoardPage.getDefaultColumnIssueCount()).toBe(2);
+    });
+
+    await test.step("Closing the issue drives its milestone to complete", async () => {
+      await pageObjects.issuePage.openFor(organizationName, firstRepository.name, issueNumber);
+      await pageObjects.issuePage.close();
+      expect(await pageObjects.issuePage.getState()).toBe("Closed");
+
+      await pageObjects.milestoneListPage.openFor(organizationName, firstRepository.name);
+      const row = await pageObjects.milestoneListPage.waitForRow(seededMilestone.title);
+      expect(row.openIssues).toBe(0);
+      expect(row.closedIssues).toBe(1);
+      expect(row.completeness).toBe(100);
+
+      await pageObjects.projectBoardPage.openFor(organizationName, projectId);
+      expect(await pageObjects.projectBoardPage.getDefaultColumnIssueCount()).toBe(2);
+      expect(await pageObjects.projectBoardPage.getColumnIssueCount(DONE_COLUMN)).toBe(0);
+    });
+
+    await test.step("Reopening it takes the milestone back", async () => {
+      await pageObjects.issuePage.openFor(organizationName, firstRepository.name, issueNumber);
+      await pageObjects.issuePage.reopen();
+      expect(await pageObjects.issuePage.getState()).toBe("Open");
+
+      await pageObjects.milestoneListPage.openFor(organizationName, firstRepository.name);
+      const row = await pageObjects.milestoneListPage.waitForRow(seededMilestone.title);
+      expect(row.openIssues).toBe(1);
+      expect(row.closedIssues).toBe(0);
+      expect(row.completeness).toBe(0);
+    });
+
+    await test.step("The member sees the same work without the owner's actions", async () => {
+      await sessionManager.logout();
+      await sessionManager.loginAs(userOne.username, userOne.password);
+      // The Cucumber step signs in through the form and asserts the dashboard. Asserting it here
+      // too is what tells a session that never landed from a page that never answers.
+      await pageObjects.mainPage.open();
+      expect(await pageObjects.mainPage.hasExpectedElementsDisplayed()).toBe(true);
+
+      await pageObjects.orgFacade.open();
+      await pageObjects.orgFacade.waitForElements();
+      expect(await pageObjects.orgRepositories.areMemberElementsVisible()).toBe(true);
+
+      await pageObjects.orgFacade.navigateToTeamsTab();
+      expect(await pageObjects.orgTeams.doesNotHaveAddTeamMemberLink(TEAM)).toBe(true);
+
+      await pageObjects.issuePage.openFor(organizationName, firstRepository.name, issueNumber);
+      expect(await pageObjects.issuePage.getAssigneeNames()).toEqual([userOne.username]);
     });
   });
 });
