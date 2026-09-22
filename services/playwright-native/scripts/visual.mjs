@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
-import { rmSync } from "node:fs";
+import { rmSync, mkdirSync, readdirSync, copyFileSync } from "node:fs";
+import path from "node:path";
 
 /* One process per browser, one worker each: a browser's specs run one after another with its own
    account while the browsers run side by side, as `test:parallel` does for the functional suite.
@@ -7,6 +8,8 @@ import { rmSync } from "node:fs";
 const browsers = ["chrome", "firefox", "edge"];
 const extraArgs = process.argv.slice(2);
 const recording = extraArgs.includes("--update-snapshots");
+const rawReportDir = "blob-report-raw";
+const mergedReportDir = "blob-report";
 
 function run(args, env = {}) {
   return new Promise((resolve) => {
@@ -19,7 +22,8 @@ function run(args, env = {}) {
   });
 }
 
-rmSync("blob-report", { recursive: true, force: true });
+rmSync(rawReportDir, { recursive: true, force: true });
+rmSync(mergedReportDir, { recursive: true, force: true });
 
 const codes = await Promise.all(
   browsers.map((browser) =>
@@ -32,13 +36,21 @@ const codes = await Promise.all(
         "--reporter=list,blob",
         ...extraArgs,
       ],
-      { PLAYWRIGHT_BLOB_OUTPUT_FILE_NAME: `${browser}.zip` },
+      { PLAYWRIGHT_BLOB_OUTPUT_DIR: `${rawReportDir}/${browser}` },
     ),
   ),
 );
 
 if (!recording) {
-  await run(["playwright", "merge-reports", "--reporter=html", "./blob-report"], {
+  mkdirSync(mergedReportDir, { recursive: true });
+  for (const browser of browsers) {
+    const dir = path.join(rawReportDir, browser);
+    for (const file of readdirSync(dir)) {
+      copyFileSync(path.join(dir, file), path.join(mergedReportDir, `${browser}-${file}`));
+    }
+  }
+
+  await run(["playwright", "merge-reports", "--reporter=html", `./${mergedReportDir}`], {
     PLAYWRIGHT_HTML_OPEN: process.env.PLAYWRIGHT_HTML_OPEN ?? "always",
   });
 }
