@@ -96,6 +96,10 @@ Both run on the three browsers like every other spec.
 
 Two differences from their Vitest originals, both forced by the runner rather than chosen. Where the Vitest tests navigate with `driver.get(page.getUrl(...))`, these call the page object's own `openFor(...)`, which also waits for that view's ready locators. And both sign in with an explicit `sessionManager.loginAsOwner()`, because the Vitest suite logs in through an automatic `loggedInSession` fixture that this service has no counterpart to.
 
+`demo-e2e.spec.ts` replicates the `@e2e` scenario of `gitea-selenium-cucumber`'s `demo-e2e.feature`, the one case that crosses every area at once. It is one test with a `test.step` per phase of the feature file, because every phase depends on the state the last one left: the owner creates a team, a repository joins it and nobody can be assigned from it yet, a user joins and the assignee list answers, a scoped label and an issue carrying its metadata are created, a Basic Kanban project takes in the three issues, a column is added, the cards are dragged, the column is deleted and its cards fall back to the default one, the issue is closed and reopened against its milestone, and the member signs in to the same work without the owner's actions. The Kanban project is created in the test where the feature file creates it, halfway through, rather than through the `kanbanProject` fixture, because a fixture runs before the body and the order is part of what the scenario asserts.
+
+Porting it turned up one disagreement between the two strategies, in `ProjectColumnFragment.openMenu`. It clicked a column's dropdown trigger once and confirmed nothing, which held on Selenium, where `findElement` polls for visibility, and did not on Playwright, where it returns a lazy locator and waits for nothing. The column the test adds is the fifth and sits outside the viewport, and the first click on a trigger the board had to scroll into view is swallowed: the menu stayed closed while its items stayed in the DOM without a box, so the later click on the delete item waited out the whole test timeout, two calls below the cause. It now clicks until the menu is open.
+
 ## Seed fixtures
 
 `fixtures/issues-fixtures.ts` holds the API-seeded state those two specs start from, the Playwright form of the Vitest fixtures of the same names: `owner`, `repository`, `issue`, `maintainer`, `classificationLabel` and `milestone`. They build on the `clients` fixture rather than on their own HTTP, and only `repository` cleans up, because deleting it takes its issues, labels and milestones with it.
@@ -104,9 +108,10 @@ Two differences from their Vitest originals, both forced by the runner rather th
 
 ## Project board fixtures
 
-`fixtures/project-board-fixtures.ts` holds what `project-board.feature`'s `Background` gives its scenarios, as two fixtures that extend `fixtures/fixture.ts`:
+`fixtures/project-board-fixtures.ts` holds what `project-board.feature`'s `Background` gives its scenarios, as three fixtures that extend `fixtures/organizations-fixtures.ts`:
 
 - `seededOrganizationWithRepositories` — one organization, two repositories, one issue in each, all torn down after the test.
+- `seededMilestone` — `demo-e2e.feature`'s own `Before` hook: a milestone on the seeded organization's first repository, due in seven days, which the demo case closes an issue against. Deleting the repository takes it with it.
 - `kanbanProject` — the owner's session and the project created from the Basic Kanban template, handed to the test as its id and title. It asks for the fixture above, so a test that wants the project gets the organization too, and it undoes nothing itself because deleting the organization takes the project with it.
 
 ```ts

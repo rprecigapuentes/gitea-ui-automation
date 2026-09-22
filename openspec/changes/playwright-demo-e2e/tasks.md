@@ -11,8 +11,8 @@
 
 - [x] 2.1 Write `tests/demo-e2e.spec.ts` through the phase that adds a column to the board, through `pageObjects` only, and verify it passes on firefox with no assertion dropped against `demo-e2e.feature`
 - [x] 2.2 Add the phases that drag the cards and delete the column they were dragged into, and verify they pass
-- [ ] 2.3 Add the phases that close and reopen the issue and read the milestone, and verify they pass
-- [ ] 2.4 Add the phase that signs in as the member, and verify it passes
+- [x] 2.3 Add the phases that close and reopen the issue and read the milestone, and verify they pass
+- [x] 2.4 Add the phase that signs in as the member, and verify it passes
 
 2.2 is the phase the first attempt at this port failed on, so it is split from the rest rather than written in one pass.
 
@@ -33,7 +33,9 @@ The demo case passed on three consecutive firefox runs, `playwright-native` pass
 
 ## 3. Wrap up
 
-- [ ] 3.1 Run the spec on chrome, firefox and edge, alone and with `test:parallel`, and verify the run is green on each
-- [ ] 3.2 Verify `npm run format`, `npm run lint` and `npm run typecheck` are green
-- [ ] 3.3 Run the whole `playwright-native` suite and verify the fixture changes leave the existing specs passing
-- [ ] 3.4 Document the spec and the new fixture in the `playwright-native` README
+- [x] 3.1 Run the spec on chrome, firefox and edge, alone and with `test:parallel`, and verify the run is green on each
+- [x] 3.2 Verify `npm run format`, `npm run lint` and `npm run typecheck` are green
+- [x] 3.3 Run the whole `playwright-native` suite and verify the fixture changes leave the existing specs passing
+- [x] 3.4 Document the spec and the new fixture in the `playwright-native` README
+
+The whole suite passed 19 of 19 on chrome, firefox and edge, alone and under `test:parallel`. The case takes 33 seconds, well inside the 120 seconds the suite declares globally, so it needs no timeout of its own.
