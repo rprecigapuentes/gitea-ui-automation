@@ -37,6 +37,8 @@ The demo case passed on three consecutive firefox runs, `playwright-native` pass
 - [x] 3.2 Verify `npm run format`, `npm run lint` and `npm run typecheck` are green
 - [x] 3.3 Run the whole `playwright-native` suite and verify the fixture changes leave the existing specs passing
 - [x] 3.4 Document the spec and the new fixture in the `playwright-native` README
-- [ ] 3.5 Remove the temporary push trigger from `ct.yml` before the branch merges
+- [x] 3.5 Remove the temporary push trigger from `ct.yml` before the branch merges
 
 The whole suite passed 19 of 19 on chrome, firefox and edge, alone and under `test:parallel`. The case takes 33 seconds, well inside the 120 seconds the suite declares globally, so it needs no timeout of its own.
+
+CT run 468 passed both jobs from a push on this branch, 16 minutes 31 seconds, which is what says the admin token the case seeds its users with is minted there and not only on this workstation.
