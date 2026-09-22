@@ -2,7 +2,7 @@
 
 - [x] 1.1 Give `SeededUser` the `id` `UserClient.createUser` already returns, in `fixtures/organizations-fixtures.ts`; verify the organization specs that read the fixture are unaffected
 - [x] 1.2 Chain `fixtures/project-board-fixtures.ts` onto `fixtures/organizations-fixtures.ts`; verify the two board specs pass unchanged, which is what says the added fixtures never run for a test that does not ask for them
-- [ ] 1.3 Add `seededMilestone` to `fixtures/project-board-fixtures.ts`, on the seeded organization's first repository, due in seven days as the Cucumber hook sets it; verify the board specs are unaffected
+- [x] 1.3 Add `seededMilestone` to `fixtures/project-board-fixtures.ts`, on the seeded organization's first repository, due in seven days as the Cucumber hook sets it; verify the board specs are unaffected
 - [ ] 1.4 Record the organization in `scenarioState` from `seededOrganizationWithRepositories`, and clear it before deleting
 
 `PageFactory` throws `organization is not set in scenarioState` when it is missing, so the facade cannot be opened without 1.4. Clearing it in the fixture's own teardown is what keeps `cleanupCreatedOrganization`, which tears down after it, from deleting an organization that is already gone.

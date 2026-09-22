@@ -4,11 +4,16 @@
 import { test as base } from "./organizations-fixtures";
 import { testDataName, uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.util";
 import type { SeededRepository } from "@gitea-automation/business-logic/state/scenario.entity";
+import type { SeededMilestone } from "@gitea-automation/business-logic/entities/milestone.entity";
+import { logger } from "@gitea-automation/core-logger/pino.logger";
 
 /** The tag `project-board.feature` carries, kept so a run can select the board smoke by it. */
 export const PROJECT_BOARD_TAG = "@project-board";
 
 const PROJECT_BOARD_REPOSITORY_COUNT = 2;
+const SEEDED_MILESTONE_DUE_DAYS = 7;
+const SEEDED_MILESTONE_DESCRIPTION = "Demo end to end";
+const MS_PER_DAY = 86_400_000;
 
 export interface SeededOrganizationWithRepositories {
   organizationName: string;
@@ -23,6 +28,7 @@ interface KanbanProject {
 interface ProjectBoardFixtures {
   seededOrganizationWithRepositories: SeededOrganizationWithRepositories;
   kanbanProject: KanbanProject;
+  seededMilestone: SeededMilestone;
 }
 
 /**
@@ -52,6 +58,32 @@ export const test = base.extend<ProjectBoardFixtures>({
       await clients.repositories.deleteRepository(organizationName, repository.name);
     }
     await clients.organizations.deleteOrganization(organizationName);
+  },
+
+  // `demo-e2e.feature`'s own `Before` hook: the milestone on the first seeded repository that the
+  // scenario closes an issue against. Deleting the repository takes it with it.
+  seededMilestone: async ({ clients, seededOrganizationWithRepositories }, use) => {
+    const { organizationName, repositories } = seededOrganizationWithRepositories;
+    const [firstRepository] = repositories;
+    const dueDate = new Date(Date.now() + SEEDED_MILESTONE_DUE_DAYS * MS_PER_DAY);
+    const title = testDataName("S2-DEMO-MS", "Release");
+
+    const { id } = await clients.milestones.createMilestone(
+      organizationName,
+      firstRepository.name,
+      {
+        title,
+        description: SEEDED_MILESTONE_DESCRIPTION,
+        due_on: dueDate.toISOString(),
+      },
+    );
+
+    logger.debug(
+      { id, title, repository: firstRepository.name, dueOn: dueDate.toISOString() },
+      "Seeded the milestone the scenario closes an issue against",
+    );
+
+    await use({ id, title, description: SEEDED_MILESTONE_DESCRIPTION, dueDate });
   },
 
   // Deleting the organization takes the project with it, so there is nothing to undo here.
