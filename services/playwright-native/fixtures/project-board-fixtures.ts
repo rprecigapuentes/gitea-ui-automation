@@ -37,9 +37,12 @@ interface ProjectBoardFixtures {
  * postcondition after, which Playwright runs even when the test fails.
  */
 export const test = base.extend<ProjectBoardFixtures>({
-  seededOrganizationWithRepositories: async ({ clients }, use, testInfo) => {
+  seededOrganizationWithRepositories: async ({ clients, scenarioState }, use, testInfo) => {
     const organizationName = `at-board-${testInfo.project.name}-${uniqueSuffix()}`;
     await clients.organizations.createOrganization(organizationName);
+    // `PageFactory` builds the organization pages from here, so the facade cannot be opened until
+    // this is recorded. The Cucumber hook records the same visibility.
+    scenarioState.organization = { name: organizationName, visibility: "private" };
 
     const repositories: SeededRepository[] = [];
     for (let index = 1; index <= PROJECT_BOARD_REPOSITORY_COUNT; index += 1) {
@@ -53,6 +56,10 @@ export const test = base.extend<ProjectBoardFixtures>({
     }
 
     await use({ organizationName, repositories });
+
+    // Cleared before the deletes below, so `cleanupCreatedOrganization`, which tears down after
+    // this fixture, does not try to remove an organization that is already gone.
+    scenarioState.organization = undefined;
 
     for (const repository of repositories) {
       await clients.repositories.deleteRepository(organizationName, repository.name);
