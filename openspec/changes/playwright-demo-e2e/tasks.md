@@ -9,7 +9,7 @@
 
 ## 2. Port the scenario
 
-- [ ] 2.1 Write `tests/demo-e2e.spec.ts` through the phase that adds a column to the board, through `pageObjects` only, and verify it passes on firefox with no assertion dropped against `demo-e2e.feature`
+- [x] 2.1 Write `tests/demo-e2e.spec.ts` through the phase that adds a column to the board, through `pageObjects` only, and verify it passes on firefox with no assertion dropped against `demo-e2e.feature`
 - [ ] 2.2 Add the phases that drag the cards and delete the column they were dragged into, and verify they pass
 - [ ] 2.3 Add the phases that close and reopen the issue and read the milestone, and verify they pass
 - [ ] 2.4 Add the phase that signs in as the member, and verify it passes
