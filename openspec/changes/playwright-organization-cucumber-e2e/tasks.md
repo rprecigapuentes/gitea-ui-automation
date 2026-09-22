@@ -28,3 +28,13 @@
 - [x] 6.1 Merge this test into `organization.spec.ts` (the Vitest one), rename the result to `tests/organizations-e2e.spec.ts`, and rename `organization-smokes.spec.ts` to `organizations-smokes.spec.ts` — matching the plural `organizations` the Vitest and Cucumber suites already use. Each test in the merged file carries a one-line `// Vitest`/`// Cucumber` comment naming which suite it replicates
 - [x] 6.2 Update the README and the three proposals' file references
 - [x] 6.3 Re-run `npm run lint`, `npm run typecheck` and the full functional suite on chrome, firefox and edge
+
+## 7. Merge with the hooks-fixtures retirement
+
+`playwright-project-board-smoke` retired `fixtures/hooks-fixtures.ts` (task 4 there): the two automatic cleanups moved to `fixture.ts`, the board seed to `project-board-fixtures.ts`. Its author only knew of `organization.spec.ts`, not the smokes and this scenario added afterwards, so their org-domain fixtures had no home in that split.
+
+- [x] 7.1 Add `fixtures/organizations-fixtures.ts`, extending `fixture.ts`: `existingOrganization`, `seededUsers`, `seededOrganizationWithTeamAndRepository`, and `SMOKE_TAG`/`TEAM_REPOSITORY_TAG`/`E2E_TAG`. It re-exports `ORGANIZATION_TAG`/`ORGANIZATION_NAME_PREFIX` from `fixture.ts` so a spec still needs one import
+- [x] 7.2 Point `organizations-e2e.spec.ts` and `organizations-smokes.spec.ts` at it; document it in the README next to `project-board-fixtures.ts`
+- [x] 7.3 Verify `npm run format`, `npm run lint` and `npm run typecheck` are green, and the full `playwright-native` suite passes on chrome, firefox and edge
+
+7.3's first run found `getText`'s scoped path (`toElementHandle`, resolving the conflict this merge had on it) had picked `Locator.innerText().trim()` over `main`'s `Locator.textContent().trim()`. Both sides fixed the same whitespace bug for a different caller — `getDropdownOrganizationsList()` here, `IssuePage.getDueDate()` on `main` — and `innerText` failed the second: `.due-date` returned empty text at the moment it read, something `textContent` doesn't require a completed layout for. Re-ran `organizations-e2e.spec.ts` with `textContent` to confirm no regression, then made the top-level `getText` match it too, for one behaviour instead of two. 18/18 on all three browsers, twice.

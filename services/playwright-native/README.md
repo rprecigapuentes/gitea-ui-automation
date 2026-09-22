@@ -71,6 +71,18 @@ or pass `--headed` directly to any single-browser script, e.g. `npm run test:chr
 
 `project-board-drag-and-drop.spec.ts` replicates the Cucumber suite's project-board drag-and-drop smoke (`project-board.feature`'s "A card dragged onto another column is kept there by the board"): it creates a Basic Kanban project and assigns both seeded issues to it through `pageObjects`, then moves the first card into "In Progress" with `pageObjects.projectBoardPage.moveCard(issueId, columnTitle)` — the same, unmodified method the Selenium suites use. It passes on all three browsers: the manual mouse drag lands directly on chrome and edge, and `moveCard`'s own fallback to `dispatchDragEvents` (now a real native-event-dispatch implementation, see the core-page-objects README's "Playwright strategy notes") reliably recovers it on firefox.
 
+`project-board.spec.ts` replicates the four remaining scenarios of that same feature file, so the board smoke (`S2-SMK-ISS`) now runs whole on both runners:
+
+| `project-board.feature` scenario                                             | Playwright spec                       |
+| ---------------------------------------------------------------------------- | ------------------------------------- |
+| The Basic Kanban template lays the board out                                 | `project-board.spec.ts`               |
+| An issue added to the project lands in the default column                    | `project-board.spec.ts`               |
+| A column added from the board appears on it                                  | `project-board.spec.ts`               |
+| A card dragged onto another column is kept there by the board                | `project-board-drag-and-drop.spec.ts` |
+| The default column cannot be deleted and takes in the cards of a deleted one | `project-board.spec.ts`               |
+
+Porting them turned up one race in `ProjectBoardPage.addColumn`, which returned while the request that creates the column was still in flight, so the next navigation aborted it. It now waits for the column to reach the board, the same way `moveCard` waits for the state the server kept. Selenium never saw it because a driver round trip is slower than the in-process call that replaced it.
+
 `organizations-e2e.spec.ts` holds the two end-to-end organization scenarios, each marked with a one-line comment naming which suite it replicates:
 
 - `// Vitest` — "should create an organization and add members" replicates `gitea-selenium-vitest`'s `organizations.test.ts`: the owner creates an organization and two private teams, adds the invited user to the first, removes them and reviews the persisted Teams state. It calls the same page-object methods with the same assertions, only through `pageObjects` instead of one fixture per page, and `test.step` takes the place of Allure's `step`.
@@ -80,32 +92,49 @@ Both run on the three browsers like every other spec.
 
 `organizations-smokes.spec.ts` replicates the five smokes of the same feature, one test each and in the same order: create an organization, create a team, add a user to a team, create a repository, add a repository to a team. They call the same page-object methods and assert the same things through `pageObjects`. Where the feature adds a seeded user to the team, the test adds the browser's invited account, since the job has no admin token to seed users with.
 
-## Hooks fixtures
+`issue-metadata.spec.ts` and `scoped-labels.spec.ts` are the Playwright side of `AT-ISS-01` and `AT-ISS-02`, replicated from `gitea-selenium-vitest/tests/issue-metadata.test.ts` and `tests/issues.test.ts` for the week 3 comparison, with no assertion dropped. `AT-ISS-01` creates an issue carrying a Markdown description, a label, a milestone and an assignee, checks both list filters return it, and checks that closing it drives its milestone to 100 percent. `AT-ISS-02` creates three scoped labels through the UI and checks that a scoped label replaces the one of its own scope, coexists with another scope, and leaves the issue when removed.
 
-`fixtures/hooks-fixtures.ts` is where a test's precondition/postcondition setup lives, instead of a `try`/`finally` in the test body: Playwright tears a fixture's setup down (the code after `use()`) even when the test fails, so no manual cleanup handling is needed in the test itself. It extends `fixtures/fixture.ts`'s own `test`, the same way `fixture.ts` extends `@playwright/test`'s.
+Two differences from their Vitest originals, both forced by the runner rather than chosen. Where the Vitest tests navigate with `driver.get(page.getUrl(...))`, these call the page object's own `openFor(...)`, which also waits for that view's ready locators. And both sign in with an explicit `sessionManager.loginAsOwner()`, because the Vitest suite logs in through an automatic `loggedInSession` fixture that this service has no counterpart to.
 
-Each fixture here is paired with a tag a test opts into with `{ tag }` — the same idea as the Cucumber suite's own `Before({ tags: ... })` hooks in `hooks.ts`, so a fixture's precondition only runs for a test that actually declared it needs it:
+## Seed fixtures
 
-- `PROJECT_BOARD_TAG` (`"@project-board"`, mirroring `project-board.feature`'s own tag) pairs with the `seededOrganizationWithRepositories` fixture — one organization, two repositories, one issue in each, torn down after the test.
+`fixtures/issues-fixtures.ts` holds the API-seeded state those two specs start from, the Playwright form of the Vitest fixtures of the same names: `owner`, `repository`, `issue`, `maintainer`, `classificationLabel` and `milestone`. They build on the `clients` fixture rather than on their own HTTP, and only `repository` cleans up, because deleting it takes its issues, labels and milestones with it.
+
+`owner` and `repository` derive the browser from `testInfo.project.name`, where the Vitest fixtures read `process.env.BROWSER`: accounts are per browser, and the project name is what a Playwright fixture has.
+
+## Project board fixtures
+
+`fixtures/project-board-fixtures.ts` holds what `project-board.feature`'s `Background` gives its scenarios, as two fixtures that extend `fixtures/fixture.ts`:
+
+- `seededOrganizationWithRepositories` — one organization, two repositories, one issue in each, all torn down after the test.
+- `kanbanProject` — the owner's session and the project created from the Basic Kanban template, handed to the test as its id and title. It asks for the fixture above, so a test that wants the project gets the organization too, and it undoes nothing itself because deleting the organization takes the project with it.
 
 ```ts
-import { test, expect, PROJECT_BOARD_TAG } from "../fixtures/hooks-fixtures";
+import { test, expect } from "../fixtures/project-board-fixtures";
 
-test("...", { tag: PROJECT_BOARD_TAG }, async ({ seededOrganizationWithRepositories }) => {
+test("...", async ({ seededOrganizationWithRepositories, kanbanProject }) => {
   const { organizationName, repositories } = seededOrganizationWithRepositories;
 });
 ```
 
-A test can filter to just this tag the same way Cucumber does with `--tags`: `npx playwright test --grep "@project-board"`.
+A fixture's precondition runs only for a test that names it in its signature, and its postcondition runs even when that test fails, which is what replaces a `try`/`finally` in the test body. A seed that belongs to one area lives in that area's file and extends the one below it, the way `issues-fixtures.ts` does; `fixture.ts` stays the transversal one.
 
-- `ORGANIZATION_TAG` (`"@organization"`) pairs with `cleanupOrganizationsBeforeRun`, the counterpart of the Vitest suite's fixture of that name: an automatic fixture that, for a test carrying the tag, removes the organizations a crashed run left behind. It only removes those named with `ORGANIZATION_NAME_PREFIX`, so a parallel worker's organizations are never touched, where the Vitest one clears every organization of the account.
+## Organizations fixtures
 
-- `SMOKE_TAG` (`"@smoke"`) marks the smokes. `existingOrganization` is the Cucumber step "an organization already exists": a public organization created through the API and recorded in `scenarioState`.
-- `TEAM_REPOSITORY_TAG` (`"@team-repository"`) pairs with `seededOrganizationWithTeamAndRepository`, the Cucumber hook of that tag: an organization with a `team-1` team and a `frontend` repository.
+`fixtures/organizations-fixtures.ts` holds what the organization smokes and the `@e2e` scenario of `organizations.feature` start from, extending `fixtures/fixture.ts`:
 
-- `E2E_TAG` (`"@e2e"`) marks the end-to-end scenario. `seededUsers` is the Cucumber suite's `createSeededUsers`: two users, "user 1" and "user 2", created through the admin API before the test and deleted after it, named per browser. It needs `GITEA_ADMIN_TOKEN`, one token shared by the three browsers, and the `ct.yml` job mints it.
+- `existingOrganization` — "an organization already exists" in the Cucumber smokes: a public organization created through the API and recorded in `scenarioState`, so `cleanupCreatedOrganization` removes it.
+- `seededUsers` — the Cucumber suite's `createSeededUsers`: two users, "user 1" and "user 2", created through the admin API before the test and deleted after it, named per browser so the three browsers never share one. It needs `GITEA_ADMIN_TOKEN`, one token shared by the three browsers, and the `ct.yml` job mints it.
+- `seededOrganizationWithTeamAndRepository` — one organization with a `team-1` team and a `frontend` repository, mirroring the Cucumber hook behind its own `@team-repository` tag. `cleanupCreatedOrganization` removes it.
 
-`cleanupCreatedOrganization` is an automatic fixture (`{ auto: true }`), so it needs no tag. A test that creates an organization records it in `scenarioState.organization`; after the test, whether it passed or failed, the fixture deletes the repositories the organization holds and then the organization, because Gitea refuses to delete an organization that still owns one. The visual specs rely on it.
+`SMOKE_TAG` (`"@smoke"`), `TEAM_REPOSITORY_TAG` (`"@team-repository"`) and `E2E_TAG` (`"@e2e"`) mirror the Cucumber suite's own tags of those names. `ORGANIZATION_TAG` and `ORGANIZATION_NAME_PREFIX` are read by `cleanupOrganizationsBeforeRun` below, so they live in `fixture.ts` next to it; this file re-exports them, so a spec still needs one import.
+
+## Cleanup fixtures
+
+The two cleanups are automatic (`{ auto: true }`) and live in `fixtures/fixture.ts`, because they apply to any test that creates an organization rather than to one area:
+
+- `cleanupCreatedOrganization` — a test that creates an organization records it in `scenarioState.organization`; afterwards, whether it passed or failed, the fixture deletes the repositories the organization holds and then the organization, because Gitea refuses to delete one that still owns a repository. The visual specs rely on it.
+- `cleanupOrganizationsBeforeRun` — the counterpart of the Vitest suite's fixture of that name: for a test carrying `ORGANIZATION_TAG`, it removes the organizations a crashed run left behind. Being automatic, it runs for every test, so the tag is how it picks the ones it applies to; it only removes names under `ORGANIZATION_NAME_PREFIX`, so a parallel worker's organizations are never touched, where the Vitest one clears every organization of the account.
 
 ## Accessibility scans
 
@@ -135,7 +164,7 @@ Everything below is git-ignored and uploaded as the `accessibility-scans` artifa
 
 In `reports/accessibility/`:
 
-- `summary.html`, one self-contained page: the counts per `impact`, then a card per rule with its offending elements. `report:a11y` writes it and prints the same counts for a pull request description.
+- `summary.html`, one self-contained page: the counts per `impact`, then a card per rule with its WCAG success criteria and its offending elements. `report:a11y` writes it and prints the same counts for a pull request description.
 - `<page>-<browser>.json`, the full axe result, also attached to the test so Allure carries it.
 
 In `test-results/`, only for a scan that failed:
@@ -156,11 +185,17 @@ Every report below describes the same run. They answer different questions, whic
 
 | Report                               | Answers                                                                      | Shape              |
 | ------------------------------------ | ---------------------------------------------------------------------------- | ------------------ |
-| `reports/accessibility/summary.html` | How many violations, at what `impact`, on which page                         | One page, ~20 KB   |
+| `reports/accessibility/summary.html` | How many violations, at what `impact`, against which WCAG criterion          | One page, ~20 KB   |
 | `allure-report/index.html`           | Did the suite pass, which step failed, grouped by suite and kept across runs | One page, ~11 MB   |
 | `playwright-report/index.html`       | The same verdict, with the trace viewer bundled for offline use              | A folder, 28 files |
 
 Only `summary.html` answers the severity question, because only it reads inside the axe result. Allure's own `severity` is a label on a test, one per page, while `impact` belongs to each violation.
+
+### The WCAG reading
+
+Each axe rule declares the success criteria it tests as tags, so every card names them with their conformance level (`WCAG 4.1.2 · Level A`) instead of the rule id alone, and one tile counts the criteria that failed.
+
+That is a reading of the findings against the standard, never a conformance claim: the criteria no rule reaches are unevaluated rather than met, and most of them are the ones only a person can decide. A conformance claim is written by hand, in the [WCAG-EM Report Tool](https://www.w3.org/WAI/eval/report-tool/).
 
 ### Baselines
 
@@ -195,7 +230,7 @@ tests/non-functional/visual/
 
 ### The visual tester
 
-`VisualTester` lives in [`@gitea-automation/core-playwright`](../../core/playwright/README.md), outside the page-object layer: a screenshot comparison has no Selenium equivalent, so it is not something a page object can own. `fixtures/visual.fixture.ts` extends `fixtures/hooks-fixtures.ts` and hands a spec a `visualTester`:
+`VisualTester` lives in [`@gitea-automation/core-playwright`](../../core/playwright/README.md), outside the page-object layer: a screenshot comparison has no Selenium equivalent, so it is not something a page object can own. `fixtures/visual.fixture.ts` extends `fixtures/fixture.ts` and hands a spec a `visualTester`:
 
 ```ts
 import { test } from "../../../../fixtures/visual.fixture";

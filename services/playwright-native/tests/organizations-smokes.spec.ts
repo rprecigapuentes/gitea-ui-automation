@@ -1,4 +1,4 @@
-import { test, expect, SMOKE_TAG, TEAM_REPOSITORY_TAG } from "../fixtures/hooks-fixtures";
+import { test, expect, SMOKE_TAG, TEAM_REPOSITORY_TAG } from "../fixtures/organizations-fixtures";
 import { resolveInvitedCredentials } from "../fixtures/credentials";
 import type { PageFactory } from "@gitea-automation/business-logic/pages/page.factory";
 import type { Organization } from "@gitea-automation/business-logic/entities/organization.entity";

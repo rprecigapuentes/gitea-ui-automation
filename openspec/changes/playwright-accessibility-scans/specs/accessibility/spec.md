@@ -71,3 +71,22 @@ Every scan SHALL publish its full result, whether it passed or failed, both atta
 
 - **WHEN** a published result is read
 - **THEN** every violation carries its rule, its impact and the elements it fired on
+
+### Requirement: A published violation names the standard it failed
+
+Every violation the report presents SHALL carry the WCAG success criteria its rule maps to and the conformance level those criteria sit at, so that a finding is read against the standard rather than against the vocabulary of the tool.
+
+#### Scenario: A rule maps to a success criterion
+
+- **WHEN** a violated rule declares WCAG success criteria
+- **THEN** the report names those criteria and their conformance level beside the rule
+
+#### Scenario: A rule maps to no success criterion
+
+- **WHEN** a violated rule declares no WCAG success criterion
+- **THEN** the report presents the rule without inventing one
+
+#### Scenario: A reader counts the criteria at stake
+
+- **WHEN** the report is read
+- **THEN** it states how many distinct success criteria the run failed

@@ -4,7 +4,7 @@ import {
   ORGANIZATION_NAME_PREFIX,
   ORGANIZATION_TAG,
   E2E_TAG,
-} from "../fixtures/hooks-fixtures";
+} from "../fixtures/organizations-fixtures";
 import { resolveInvitedCredentials, resolveOwnerCredentials } from "../fixtures/credentials";
 import { OrgTab } from "@gitea-automation/business-logic/pages/organizations/fragments/org-navigation.fragment";
 import type { Organization } from "@gitea-automation/business-logic/entities/organization.entity";

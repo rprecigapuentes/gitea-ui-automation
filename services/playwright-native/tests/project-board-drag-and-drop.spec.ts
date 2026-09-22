@@ -1,4 +1,4 @@
-import { test, expect, PROJECT_BOARD_TAG } from "../fixtures/hooks-fixtures";
+import { test, expect, PROJECT_BOARD_TAG } from "../fixtures/project-board-fixtures";
 import { testDataName } from "@gitea-automation/core-data-handler/data-handler.util";
 
 const TARGET_COLUMN = "In Progress";

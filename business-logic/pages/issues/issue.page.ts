@@ -96,8 +96,10 @@ export class IssuePage extends BasePage {
   }
 
   async getTitle(): Promise<string> {
+    // titleIndex is already qualified, so it is looked up at top level: a scoped find chains the
+    // selector relative to the element on Playwright, and would search the heading for itself.
     const heading = await this.findElement(this.locators.title);
-    const index = await this.findElement(this.locators.titleIndex, heading);
+    const index = await this.findElement(this.locators.titleIndex);
 
     return (await heading.getText()).replace(await index.getText(), "").trim();
   }

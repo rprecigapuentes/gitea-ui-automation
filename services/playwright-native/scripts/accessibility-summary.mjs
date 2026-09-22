@@ -7,6 +7,31 @@ const DIRECTORY = path.join(process.cwd(), "reports", "accessibility");
 const IMPACT_ORDER = ["critical", "serious", "moderate", "minor"];
 const SAMPLE_ELEMENTS = 8;
 
+/* A tag is either a conformance level (wcag2aa, wcag21a) or a success criterion (wcag143). */
+const LEVEL_TAG = /^wcag2\d*(a{1,3})$/;
+const CRITERION_TAG = /^wcag(\d)(\d)(\d+)$/;
+
+/** The criterion digits read as principle, guideline, then the rest, so wcag1410 is 1.4.10.
+ *  A rule at more than one level is reported at the lowest, which is the one that binds. */
+function wcagOf(tags) {
+  const levels = tags.flatMap((tag) => LEVEL_TAG.exec(tag)?.[1] ?? []).sort();
+  const criteria = tags.flatMap((tag) => {
+    const parts = CRITERION_TAG.exec(tag);
+    return parts ? `${parts[1]}.${parts[2]}.${parts[3]}` : [];
+  });
+
+  return { criteria, level: levels[0]?.toUpperCase() };
+}
+
+function criteriaIn(all, bucket) {
+  const found = new Set();
+
+  for (const { result } of all)
+    for (const rule of result[bucket]) for (const id of wcagOf(rule.tags).criteria) found.add(id);
+
+  return found;
+}
+
 function scans() {
   return readdirSync(DIRECTORY)
     .filter((file) => file.endsWith(".json"))
@@ -34,6 +59,7 @@ function rules(all) {
         help: violation.help,
         description: violation.description,
         helpUrl: violation.helpUrl,
+        wcag: wcagOf(violation.tags),
         pages: new Map(),
         worst: violation,
       };
@@ -62,18 +88,26 @@ function truncate(text, limit) {
   return text.length > limit ? `${text.slice(0, limit)}…` : text;
 }
 
+function reasonOf(node) {
+  return (node.failureSummary ?? "")
+    .split("\n")
+    .slice(1)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join(" ");
+}
+
+/** One reason across every sample means the rule says the same thing on each, so it is stated
+ *  once above them instead of repeated under each element. */
 function elementSamples(violation) {
   const shown = violation.nodes.slice(0, SAMPLE_ELEMENTS);
   const rest = violation.nodes.length - shown.length;
+  const reasons = new Set(shown.map(reasonOf).filter(Boolean));
+  const shared = reasons.size === 1 ? [...reasons][0] : "";
 
   const items = shown
     .map((node) => {
-      const reason = (node.failureSummary ?? "")
-        .split("\n")
-        .slice(1)
-        .map((line) => line.trim())
-        .filter(Boolean)
-        .join(" ");
+      const reason = shared ? "" : reasonOf(node);
       return `<li>
         <code class="target">${escape(node.target.flat().join(" "))}</code>
         <pre>${escape(truncate(node.html, 400))}</pre>
@@ -82,8 +116,9 @@ function elementSamples(violation) {
     })
     .join("");
 
+  const heading = shared ? `<p class="reason shared">${escape(truncate(shared, 300))}</p>` : "";
   const more = rest > 0 ? `<p class="more">and ${rest} more, in the raw result</p>` : "";
-  return `<ul class="elements">${items}</ul>${more}`;
+  return `${heading}<ul class="elements">${items}</ul>${more}`;
 }
 
 function ruleCard(rule) {
@@ -92,12 +127,17 @@ function ruleCard(rule) {
     .map(([page, count]) => `<span class="pill">${escape(page)} <b>${count}</b></span>`)
     .join("");
   const elements = rule.worst.nodes.length;
+  const { criteria, level } = rule.wcag;
+  const wcag = criteria.length
+    ? `<span class="sc">WCAG ${criteria.join(", ")}${level ? ` · Level ${level}` : ""}</span>`
+    : "";
 
   return `<details class="rule">
     <summary>
       <span class="impact ${rule.impact}">${rule.impact}</span>
       <code class="rule-id">${escape(rule.id)}</code>
       <span class="help">${escape(rule.help)}</span>
+      ${wcag}
       <span class="count">${elements} element${elements === 1 ? "" : "s"}</span>
     </summary>
     <div class="rule-body">
@@ -164,7 +204,7 @@ main { max-width: 68rem; margin: 0 auto; }
 h1 { font-size: 1.5rem; margin: 0 0 .35rem; }
 h2 { font-size: .95rem; margin: 2.5rem 0 .75rem; text-transform: uppercase;
      letter-spacing: .07em; color: var(--muted); }
-.lede { color: var(--muted); margin: 0 0 1.75rem; max-width: 52rem; }
+.lede { color: var(--muted); margin: 0 0 1.75rem; }
 code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 a { color: var(--link); }
 
@@ -190,6 +230,8 @@ a { color: var(--link); }
 .impact.minor { color: var(--minor); }
 .rule-id { font-weight: 600; }
 .help { color: var(--muted); flex: 1 1 14rem; }
+.sc { font-size: .78rem; background: var(--code); border-radius: .3rem; padding: .1rem .45rem;
+      color: var(--muted); white-space: nowrap; }
 .count { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .rule-body { padding: 1rem; }
 .description { margin-top: 0; }
@@ -201,6 +243,7 @@ a { color: var(--link); }
 .elements pre { background: var(--code); border-radius: .35rem; padding: .6rem .7rem;
                 margin: .35rem 0; overflow-x: auto; font-size: .82rem; }
 .reason { margin: .25rem 0 0; font-size: .87rem; }
+.reason.shared { margin: .9rem 0 0; color: var(--ink); }
 .more { color: var(--muted); font-size: .87rem; }
 
 table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
@@ -212,10 +255,10 @@ td.moderate { color: var(--moderate); font-weight: 600; }
 td.zero, td.incomplete { color: var(--muted); }
 
 .raw { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .82rem; }
-.note { color: var(--muted); font-size: .87rem; max-width: 48rem; }
+.note { color: var(--muted); font-size: .87rem; }
 
 footer { margin-top: 3rem; color: var(--muted); font-size: .87rem; }
-footer p { max-width: 48rem; }
+footer p { margin: .6rem 0; }
 
 @media (max-width: 40rem) {
   body { padding: 1.25rem 1rem 3rem; }
@@ -233,11 +276,11 @@ if (all.length === 0) {
 const distinct = rules(all);
 const critical = distinct.filter((rule) => rule.impact === "critical").length;
 const serious = distinct.filter((rule) => rule.impact === "serious").length;
-const review = Math.max(...all.map((scan) => scan.result.incomplete.length));
+const failedCriteria = criteriaIn(all, "violations");
 const tags = all[0].result.toolOptions?.runOnly?.values ?? [];
 const recorded = new Date().toISOString().slice(0, 10);
 const pages = new Set(all.map((scan) => scan.page)).size;
-const browsers = new Set(all.map((scan) => scan.browser)).size;
+const browsers = [...new Set(all.map((scan) => scan.browser))];
 
 const html = `<!doctype html>
 <html lang="en">
@@ -251,16 +294,15 @@ const html = `<!doctype html>
 <main>
   <h1>Accessibility scans</h1>
   <p class="lede">
-    ${all.length} scans of ${pages} pages on ${browsers} browsers, recorded ${recorded} against
-    <code>${escape(all[0].result.url)}</code>, on rule tags
-    ${tags.map((tag) => `<code>${escape(tag)}</code>`).join(", ")}.
+    ${pages} pages on ${escape(browsers.join(", "))}, ${recorded}, against
+    <code>${escape(all[0].result.url)}</code>. Rule tags
+    ${tags.map((tag) => `<code>${escape(tag)}</code>`).join(" ")}.
   </p>
 
   <div class="tiles">
-    ${statTile(distinct.length, "distinct rules")}
     ${statTile(critical, "critical", "critical")}
     ${statTile(serious, "serious", "serious")}
-    ${statTile(review, "needs review")}
+    ${statTile(failedCriteria.size, "WCAG criteria failed")}
   </div>
 
   <h2>Findings</h2>
@@ -268,24 +310,11 @@ const html = `<!doctype html>
 
   <h2>Per scan</h2>
   ${scanTable(all)}
-  <p class="note">
-    The full results are the files beside this page, so those links open only where the two sit
-    together: in the extracted artifact, or in <code>reports/accessibility/</code> after a local
-    run. Opening this page on its own leaves them with nowhere to go.
-  </p>
 
   <footer>
     <p>
-      One row per distinct rule, because the rule is the unit a bug report is written against:
-      a rule firing on many elements is one defect repeated, not many defects. The elements
-      under each rule are samples from the page where it fired most.
-    </p>
-    <p>
-      <b>Needs review</b> counts the checks axe could not decide by itself. They are not
-      violations; they are the engine naming what a person has to look at. Automated scanning
-      covers the machine-checkable part of WCAG and no more: whether alt text describes its
-      image, whether focus order matches reading order, whether a screen reader announces a
-      live region usefully, none of that is in these numbers.
+      <b>Needs review</b> is axe's own bucket for the checks it could not decide by itself. They
+      are not violations: they are what a person has to look at.
     </p>
   </footer>
 </main>
@@ -304,6 +333,11 @@ for (const scan of all) {
   );
 }
 for (const rule of distinct) {
-  console.log(`  [${rule.impact}] ${rule.id}, up to ${rule.worst.nodes.length} elements`);
+  const { criteria, level } = rule.wcag;
+  const wcag = criteria.length ? `, WCAG ${criteria.join(", ")}${level ? ` (${level})` : ""}` : "";
+  console.log(`  [${rule.impact}] ${rule.id}, up to ${rule.worst.nodes.length} elements${wcag}`);
 }
+console.log(
+  `\n${failedCriteria.size} WCAG criteria failed, ${criteriaIn(all, "incomplete").size} undecided`,
+);
 console.log(`\nWritten to ${path.join(DIRECTORY, "summary.html")}`);
