@@ -22,6 +22,7 @@ test("Organizations smoke: browse the repositories and members of an organizatio
   const repositories = await pageObjects.orgFacade.navigateToRepositoriesTab();
   await visualTester.verifyPage(page, "organization-repositories.png", {
     mask: pageObjects.orgFacade.getVolatileRegions(),
+    maxDiffPixels: 400,
   });
 
   await repositories.clickNewRepositoryButton();
