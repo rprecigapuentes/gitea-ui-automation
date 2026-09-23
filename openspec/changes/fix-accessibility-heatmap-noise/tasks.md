@@ -11,5 +11,5 @@
 
 ## 3. Confirm it on the runner
 
-- [ ] 3.1 Add the on-push trigger to `.gitea/workflows/accessibility.yml`, push, and verify the job ends green with the dashboard scan passing against the re-recorded baseline.
-- [ ] 3.2 Remove the on-push trigger in its own commit, and verify that commit touches only the workflow.
+- [x] 3.1 Add the on-push trigger to `.gitea/workflows/accessibility.yml`, push, and verify the job ends green with the dashboard scan passing against the re-recorded baseline.
+- [ ] 3.2 Remove the on-push trigger in its own commit once every change on this branch has been confirmed on the runner, and verify that commit touches only the workflow.
