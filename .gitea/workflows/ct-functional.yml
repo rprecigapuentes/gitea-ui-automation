@@ -19,12 +19,11 @@ on:
           - gitea-selenium-cucumber
           - playwright-native
 
-# Shared with CT-non-functional: one suite occupies the VPS at a time, and the measuring
-# job reports whatever else runs beside it as the page's own cost. Queued rather than
-# cancelled, because neither workflow gates anything and a dropped run is a hole in the trend.
+# A group of its own. Sharing one with CT-non-functional cancelled the queued run instead of
+# holding it, and a cancelled run is a hole in the execution trend.
 concurrency:
-  group: ct
-  cancel-in-progress: false
+  group: ct-functional
+  cancel-in-progress: true
 
 jobs:
   selenium:

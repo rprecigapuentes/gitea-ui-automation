@@ -351,4 +351,4 @@ A page with no band has one written by the run and the run fails, so a missing b
 
 ### Workflow
 
-The `performance` job of `.gitea/workflows/ct-non-functional.yml` runs the suite against a disposable Gitea and publishes `performance-metrics`: the JSON, the recordings and the Allure report, whether the run held its bands or left them. It is the last job in the chain, so nothing else occupies the runner while it measures, and the workflow shares one concurrency group with `ct-functional.yml` for the same reason: two measurements on one machine are not measurements.
+The `performance` job of `.gitea/workflows/ct-non-functional.yml` runs the suite against a disposable Gitea and publishes `performance-metrics`: the JSON, the recordings and the Allure report, whether the run held its bands or left them. It is the last job in the chain, so nothing else on that workflow occupies the runner while it measures. Nothing stops `ct-functional.yml` from running at the same time, so dispatch this workflow away from that one's 11:00 cron: two measurements on one machine are not measurements.

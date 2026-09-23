@@ -24,21 +24,20 @@ Every non-functional suite SHALL run as a job of its own on one workflow that ca
 - **THEN** the other non-functional jobs still run
 - **AND** no merge is blocked by the failure
 
-### Requirement: No two suites run against one runner at a time
+### Requirement: No two suites of one workflow run against a runner at a time
 
-The workflows that run suites SHALL be arranged so that at most one suite occupies a runner at any moment, whether the suites belong to the same workflow or to different ones. A run that would overlap another SHALL wait rather than proceed beside it, because a suite that measures the application under test reports the work running next to it as if it were the application's own.
+A workflow that carries more than one suite SHALL run them one after another, never side by side, because a suite that measures the application under test reports the work running next to it as if it were the application's own. One suite's outcome SHALL NOT cancel the suites that follow it. The suite that measures SHALL run last, so that nothing else occupies the runner while it does.
 
-#### Scenario: Two jobs of one workflow could overlap
+#### Scenario: A workflow carries more than one suite
 
-- **WHEN** a workflow carries more than one suite
-- **THEN** its jobs run one after another
-- **AND** a job's outcome does not cancel the jobs that follow it
+- **WHEN** that workflow runs
+- **THEN** its suites run one after another
+- **AND** a suite's outcome does not cancel the suites that follow it
 
-#### Scenario: Two workflows are started close together
+#### Scenario: The measuring suite's turn comes
 
-- **WHEN** the functional and the non-functional workflows are both triggered
-- **THEN** one waits until the other has finished
-- **AND** neither run is dropped
+- **WHEN** the suite that measures the application under test runs
+- **THEN** every other suite on that workflow has already finished
 
 ## REMOVED Requirements
 

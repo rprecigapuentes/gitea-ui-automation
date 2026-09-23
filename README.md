@@ -70,4 +70,4 @@ The `selenium` job's matrix is hardcoded to `gitea-selenium-vitest` and `gitea-s
 
 The cron run covers all of them. A manual dispatch takes a `suite` input to run exactly one; leaving it at `all` runs the lot. Suites run one at a time, and the `playwright` job waits on the `selenium` job so a single VPS never hosts two applications under test at once — but it runs whatever that job's outcome was. A failing suite does not cancel the others, so a red Cucumber run still leaves you the vitest report. Each publishes its own artifact, named `allure-report-<suite>`.
 
-Both `ct-functional.yml` and `ct-non-functional.yml` are scheduled or dispatched, never a merge gate, and they share one concurrency group so neither ever runs beside the other; `ci.yml` stays lint, format and typecheck.
+Both `ct-functional.yml` and `ct-non-functional.yml` are scheduled or dispatched, never a merge gate; `ci.yml` stays lint, format and typecheck. Each keeps a concurrency group of its own, so dispatch `ct-non-functional.yml` away from the 11:00 cron: its `performance` job charges the page it measures for anything else running on the VPS.
