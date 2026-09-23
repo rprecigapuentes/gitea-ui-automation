@@ -54,7 +54,7 @@ Suites SHALL be independent: a failing suite MUST NOT prevent another suite from
 
 ### Requirement: Each suite publishes its own report
 
-Every suite SHALL produce a test report and publish it under a name that identifies the suite, whether the suite passed or failed.
+Every suite SHALL produce a test report and publish it under a name that identifies the suite, whether the suite passed or failed. A functional suite SHALL also produce a machine-readable result file, in a format shared by every functional suite, so that one reader can take the outcome of all of them. When a suite runs its browsers as separate processes, each process SHALL write that file under a name of its own, so that no process overwrites another's results.
 
 #### Scenario: Two suites run in one workflow
 
@@ -66,6 +66,18 @@ Every suite SHALL produce a test report and publish it under a name that identif
 
 - **WHEN** a suite's tests fail
 - **THEN** its report is still generated and published
+
+#### Scenario: A functional suite finishes
+
+- **WHEN** a functional suite ends, whether it passed or failed
+- **THEN** it has written a machine-readable result file
+- **AND** that file is published with the suite's report
+
+#### Scenario: A suite runs one process per browser
+
+- **WHEN** a functional suite runs its browsers as concurrent processes
+- **THEN** each process writes its own result file
+- **AND** every browser's results survive the run
 
 ### Requirement: A suite's test entry point drives every browser the framework supports
 
@@ -103,21 +115,6 @@ A suite whose framework drives a remote browser SHALL address the Selenium serve
 - **WHEN** a locator fails to match any element
 - **THEN** the test fails on that locator
 - **AND** no substitute element is resolved on its behalf
-
-### Requirement: The visual suite runs on its own manually dispatched workflow
-
-The visual suite SHALL run from a workflow of its own, started by hand, and SHALL NOT be reachable from any workspace default `test` entry point or from the continuous-testing workflow, so that neither its duration nor its outcome sits in the path of the functional suites. The workflow SHALL start its own application under test and SHALL sign in with one account per browser it runs.
-
-#### Scenario: The continuous-testing workflow runs
-
-- **WHEN** the continuous-testing workflow runs a workspace `test` script
-- **THEN** no visual spec executes
-
-#### Scenario: The visual workflow is dispatched
-
-- **WHEN** its own workflow is dispatched by hand
-- **THEN** only the visual suite runs, on every browser it defines
-- **AND** each browser signs in with an account of its own
 
 ### Requirement: The visual workflow publishes the native report whether it passed or failed
 
@@ -235,3 +232,59 @@ A suite whose framework launches browsers inside the job SHALL run in an environ
 - **WHEN** a browser the matrix names cannot be installed or launched in the job
 - **THEN** the job fails before any test executes
 - **AND** the failure names the browser that is missing
+
+### Requirement: A failing functional test leaves a recording and a trace
+
+A functional suite SHALL retain a recording of the browser and a trace for a test that failed, and SHALL publish both with that run's artifacts. A test that passed SHALL leave neither, so that a run in which nothing failed carries no recording cost. A suite that measures the application under test SHALL retain neither, because recording changes what the measurement reports.
+
+#### Scenario: A functional test fails
+
+- **WHEN** a functional test fails
+- **THEN** a recording and a trace of that test are published with the run's artifacts
+
+#### Scenario: Every functional test passes
+
+- **WHEN** a functional run ends with no failure
+- **THEN** no recording and no trace are retained
+
+#### Scenario: A measuring suite runs
+
+- **WHEN** the suite that measures the application under test runs
+- **THEN** it records neither a video nor a trace, whatever its outcome
+
+### Requirement: A non-functional suite runs as its own job on the workflow reserved for them
+
+Every non-functional suite SHALL run as a job of its own on one workflow that carries only non-functional suites. That workflow SHALL NOT be reachable from the functional suites' run, so neither its duration nor its outcome sits in their path, and SHALL gate no merge. Each job SHALL start its own application under test and publish its own evidence under a name that identifies the suite, whether it passed or failed.
+
+#### Scenario: The functional workflow runs
+
+- **WHEN** the workflow carrying the functional suites runs
+- **THEN** no non-functional suite executes
+- **AND** its duration is unaffected by them
+
+#### Scenario: The non-functional workflow runs
+
+- **WHEN** the workflow carrying the non-functional suites runs
+- **THEN** one job runs per non-functional suite
+- **AND** each publishes its evidence under a name of its own
+
+#### Scenario: A non-functional suite fails
+
+- **WHEN** one non-functional job fails
+- **THEN** the other non-functional jobs still run
+- **AND** no merge is blocked by the failure
+
+### Requirement: No two suites of one workflow run against a runner at a time
+
+A workflow that carries more than one suite SHALL run them one after another, never side by side, because a suite that measures the application under test reports the work running next to it as if it were the application's own. One suite's outcome SHALL NOT cancel the suites that follow it. The suite that measures SHALL run last, so that nothing else occupies the runner while it does.
+
+#### Scenario: A workflow carries more than one suite
+
+- **WHEN** that workflow runs
+- **THEN** its suites run one after another
+- **AND** a suite's outcome does not cancel the suites that follow it
+
+#### Scenario: The measuring suite's turn comes
+
+- **WHEN** the suite that measures the application under test runs
+- **THEN** every other suite on that workflow has already finished
