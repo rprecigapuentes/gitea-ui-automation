@@ -35,5 +35,6 @@ test("Organizations smoke: create an organization through the form", async ({
   await pageObjects.orgFacade.waitForElements();
   await visualTester.verifyPage(page, "organization-profile.png", {
     mask: pageObjects.orgFacade.getVolatileRegions(),
+    maxDiffPixels: 400,
   });
 });

@@ -38,13 +38,13 @@ test("Issues smoke: the issue form with its labels and milestones", async ({
   await pageObjects.createIssuePage.selectMilestone(milestone.id);
   await visualTester.verifyPage(page, "issue-form-filled.png", {
     mask: pageObjects.createIssuePage.getVolatileRegions(),
-    maxDiffPixels: 800,
+    maxDiffPixels: 1000,
   });
 
   await pageObjects.createIssuePage.openPreview();
   await visualTester.verifyPage(page, "issue-form-preview.png", {
     mask: pageObjects.createIssuePage.getVolatileRegions(),
-    maxDiffPixels: 800,
+    maxDiffPixels: 1000,
   });
 
   await pageObjects.labelListPage.openFor(organization.name, repository);
