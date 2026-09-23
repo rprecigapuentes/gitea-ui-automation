@@ -11,15 +11,11 @@ test("Organizations smoke: create an organization through the form", async ({
   await sessionManager.loginAsOwner();
 
   await pageObjects.createOrganizationPage.open();
-  await visualTester.verifyPage(page, "organization-create-form.png", {
-    mask: pageObjects.createOrganizationPage.getVolatileRegions(),
-  });
+  await visualTester.verifyPage(page, "organization-create-form.png");
 
   await pageObjects.createOrganizationPage.enterOrganizationName(name);
   await pageObjects.createOrganizationPage.selectVisibility("private");
-  await visualTester.verifyPage(page, "organization-create-form-filled.png", {
-    mask: pageObjects.createOrganizationPage.getVolatileRegions(),
-  });
+  await visualTester.verifyPage(page, "organization-create-form-filled.png");
 
   await pageObjects.createOrganizationPage.clickCreateOrganizationButton();
   const organization = { name, visibility: "private" as const };
