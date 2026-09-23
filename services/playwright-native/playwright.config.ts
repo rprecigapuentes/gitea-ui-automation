@@ -46,7 +46,7 @@ const performance = {
 export default defineConfig({
   testDir: "./tests",
   // The cucumber e2e's ~10 login switches and page loads don't fit the 30 second default.
-  timeout: 120_000,
+  timeout: 600_000,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
@@ -73,7 +73,7 @@ export default defineConfig({
     ...browsers.map((browser) => ({
       ...browser,
       testIgnore: "**/non-functional/**",
-      use: { ...browser.use, video: "on-first-retry" as const },
+      use: { ...browser.use, video: "on" as const, launchOptions: { slowMo: 600 } },
     })),
 
     ...scanBrowsers.map((browser) => ({
