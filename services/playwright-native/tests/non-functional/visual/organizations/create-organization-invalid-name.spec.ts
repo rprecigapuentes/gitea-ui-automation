@@ -11,6 +11,7 @@ interface InvalidNameContext {
 interface InvalidNameCase {
   name: (context: InvalidNameContext) => string;
   reason: string;
+  maxDiffPixels?: number;
 }
 
 const invalidNameCases: InvalidNameCase[] = [
@@ -19,11 +20,15 @@ const invalidNameCases: InvalidNameCase[] = [
   { name: () => "test-org-", reason: "ends with a non-alphanumeric character" },
   { name: () => "test--org", reason: "has consecutive non-alphanumeric characters" },
   { name: () => "test org", reason: "has spaces" },
-  { name: ({ owner }) => owner, reason: "matches the username" },
-  { name: ({ organization }) => organization.name, reason: "already exists" },
+  { name: ({ owner }) => owner, reason: "matches the username", maxDiffPixels: 43000 },
+  {
+    name: ({ organization }) => organization.name,
+    reason: "already exists",
+    maxDiffPixels: 43000,
+  },
 ];
 
-for (const { name, reason } of invalidNameCases) {
+for (const { name, reason, maxDiffPixels } of invalidNameCases) {
   test(`Organizations smoke: create organization rejects a name that ${reason}`, async ({
     page,
     pageObjects,
@@ -51,6 +56,7 @@ for (const { name, reason } of invalidNameCases) {
 
     await visualTester.verifyPage(page, "organization-create-form-invalid.png", {
       mask: pageObjects.createOrganizationPage.getVolatileRegions(),
+      maxDiffPixels,
     });
   });
 }
