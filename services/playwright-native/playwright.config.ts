@@ -28,6 +28,16 @@ const visual = {
   retries: 0,
 };
 
+/* A measurement is taken alone. A retry would republish a warm load as the cold one, a trace
+   charges the page for the collector's own overhead, and a second worker puts another browser on
+   the machine being measured. */
+const performance = {
+  testDir: "./tests/non-functional/performance",
+  retries: 0,
+  workers: 1,
+  use: { trace: "off" as const },
+};
+
 export default defineConfig({
   testDir: "./tests",
   // The cucumber e2e's ~10 login switches and page loads don't fit the 30 second default.
@@ -61,5 +71,13 @@ export default defineConfig({
     })),
 
     ...browsers.map((browser) => ({ ...browser, ...visual, name: `visual-${browser.name}` })),
+
+    /* Chromium alone: the engine counters come from a protocol no other browser speaks, and the
+       name resolves to the Chrome account the workflows already seed. */
+    {
+      ...performance,
+      name: "performance-chromium",
+      use: { ...devices["Desktop Chrome"], ...performance.use },
+    },
   ],
 });
