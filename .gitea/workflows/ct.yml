@@ -179,7 +179,7 @@ jobs:
         continue-on-error: true
         run: npm run report -w @gitea-automation/${{ matrix.suite }}
 
-      # junit.xml is the vitest suite's only; absent for Cucumber, upload warns.
+      # Both suites run one process per browser, so each leaves a junit file of its own.
       - name: Upload the report
         if: always()
         uses: actions/upload-artifact@v3
@@ -187,7 +187,7 @@ jobs:
           name: allure-report-${{ matrix.suite }}
           path: |
             services/${{ matrix.suite }}/allure-report/
-            services/${{ matrix.suite }}/reports/junit.xml
+            services/${{ matrix.suite }}/reports/junit*.xml
           retention-days: 14
 
   # Playwright launches its browsers inside the job, so this one carries them in its image.
@@ -335,10 +335,15 @@ jobs:
         continue-on-error: true
         run: npm run report -w @gitea-automation/${{ matrix.suite }}
 
+      # test-results/ is where the retry of a failed test leaves its video and its trace; it is
+      # empty when nothing failed, and the upload warns rather than fails on that.
       - name: Upload the report
         if: always()
         uses: actions/upload-artifact@v3
         with:
           name: allure-report-${{ matrix.suite }}
-          path: services/${{ matrix.suite }}/allure-report/
+          path: |
+            services/${{ matrix.suite }}/allure-report/
+            services/${{ matrix.suite }}/reports/junit*.xml
+            services/${{ matrix.suite }}/test-results/
           retention-days: 14

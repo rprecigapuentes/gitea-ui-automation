@@ -177,11 +177,14 @@ jobs:
           path: services/playwright-native/tests/non-functional/visual/baselines/**/linux/
           retention-days: 14
 
-      # The native report carries the expected, actual and diff images of a failing check.
+      # The native report carries the expected, actual and diff images of a failing check, and
+      # test-results/ the trace of it under a name playwright show-trace can be pointed at.
       - name: Upload the Playwright report
         if: always()
         uses: actions/upload-artifact@v3
         with:
           name: playwright-report-visual
-          path: services/playwright-native/playwright-report/
+          path: |
+            services/playwright-native/playwright-report/
+            services/playwright-native/test-results/
           retention-days: 14
