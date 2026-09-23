@@ -69,4 +69,12 @@ export class MainPage extends BasePage {
       return false;
     }
   }
+
+  getVolatileRegions(): string[] {
+    return [
+      ".secondary-nav .ui.floating.dropdown.jump span.text img.ui.avatar",
+      ".secondary-nav .text span.gt-ellipsis",
+      "[data-tooltip-content='Profile and Settings…'] img.ui.avatar",
+    ];
+  }
 }

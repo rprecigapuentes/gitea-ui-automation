@@ -1,0 +1,4 @@
+## 1. Fix the parallel blob-report merge
+
+- [x] 1.1 In `scripts/visual.mjs`, give each browser process its own `PLAYWRIGHT_BLOB_OUTPUT_DIR` (e.g. `blob-report-raw/<browser>`) instead of the wrong `PLAYWRIGHT_BLOB_OUTPUT_FILE_NAME` env var, so no process's startup cleanup can delete another's output; verify `npx playwright test --project=visual-chrome --project=visual-firefox --project=visual-edge` run independently each still produce a zip in their own directory.
+- [x] 1.2 After all three processes finish, copy each browser's zip file into one shared `blob-report` directory under a name that includes the browser, then merge that directory; verify `node scripts/visual.mjs tests/non-functional/visual/authentication/main-view-mobile.spec.ts` produces a merged HTML report listing all three of `visual-chrome`, `visual-firefox` and `visual-edge`.

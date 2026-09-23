@@ -1,0 +1,5 @@
+## 1. Collapse the workflow back to one job
+
+- [x] 1.1 In `.gitea/workflows/visual.yml`, remove the `visual` job and the `baselines` job's fingerprint/detect-what-was-recorded steps and `outputs`, keeping one job that runs the suite (choosing the same `test:visual:ci`/`test:visual:ci:missing`/`test:visual:ci:update` script selection logic) and fails on the suite's own exit code; verify the file still parses as valid YAML (`node -e "require('yaml').parse(require('fs').readFileSync('.gitea/workflows/visual.yml','utf8'))"` or equivalent) and only one job remains.
+- [x] 1.2 Upload both the native Playwright report and the recorded baselines (when any exist) with `if: always()` from the single job, so a person downloads and commits the baselines by hand; verify the artifact upload steps no longer have an `if: steps.detect...` condition.
+- [x] 1.3 Fail the job when comparing (not recording) and a baseline was auto-created because it was missing, printing which one(s); verify a compare run against a baseline-less spec fails with that message, and a record run (`record_baselines` or `[record-baselines]`) still passes.

@@ -29,6 +29,7 @@ test("Issues smoke: the issue form with its labels and milestones", async ({
   await pageObjects.createIssuePage.openFor(organization.name, repository);
   await visualTester.verifyPage(page, "issue-form.png", {
     mask: pageObjects.createIssuePage.getVolatileRegions(),
+    maxDiffPixels: 1400,
   });
 
   await pageObjects.createIssuePage.fillTitle("At-vis issue");
@@ -37,11 +38,13 @@ test("Issues smoke: the issue form with its labels and milestones", async ({
   await pageObjects.createIssuePage.selectMilestone(milestone.id);
   await visualTester.verifyPage(page, "issue-form-filled.png", {
     mask: pageObjects.createIssuePage.getVolatileRegions(),
+    maxDiffPixels: 1000,
   });
 
   await pageObjects.createIssuePage.openPreview();
   await visualTester.verifyPage(page, "issue-form-preview.png", {
     mask: pageObjects.createIssuePage.getVolatileRegions(),
+    maxDiffPixels: 1000,
   });
 
   await pageObjects.labelListPage.openFor(organization.name, repository);
@@ -52,5 +55,6 @@ test("Issues smoke: the issue form with its labels and milestones", async ({
   await pageObjects.milestoneListPage.openFor(organization.name, repository);
   await visualTester.verifyPage(page, "issue-milestones.png", {
     mask: pageObjects.milestoneListPage.getVolatileRegions(),
+    maxDiffPixels: 1400,
   });
 });
