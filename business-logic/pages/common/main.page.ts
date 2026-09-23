@@ -77,4 +77,10 @@ export class MainPage extends BasePage {
       "[data-tooltip-content='Profile and Settings…'] img.ui.avatar",
     ];
   }
+
+  // The contribution heatmap's last column is the week in progress, so the cell count follows the
+  // calendar and a scan of them records a different set of violations every day.
+  getScanExclusions(): string[] {
+    return [".heatmap-day"];
+  }
 }
