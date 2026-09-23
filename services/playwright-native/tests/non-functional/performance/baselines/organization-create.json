@@ -1,0 +1,18 @@
+{
+  "cold": {
+    "requests": 13,
+    "transferredBytes": 384455,
+    "ttfb": 50,
+    "domContentLoaded": 526,
+    "load": 526,
+    "firstContentfulPaint": 280
+  },
+  "warm": {
+    "requests": 13,
+    "transferredBytes": 22383,
+    "ttfb": 50,
+    "domContentLoaded": 376,
+    "load": 376,
+    "firstContentfulPaint": 256
+  }
+}
