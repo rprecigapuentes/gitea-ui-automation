@@ -147,12 +147,13 @@ The two cleanups are automatic (`{ auto: true }`) and live in `fixtures/fixture.
 
 They are not part of `npm test`. Each non-functional area gets its own projects, derived in `playwright.config.ts` from the same browser list the functional ones use:
 
-| Project                                     | Runs                                                        |
-| ------------------------------------------- | ----------------------------------------------------------- |
-| `chrome`, `firefox`, `edge`                 | everything but `tests/non-functional/`                      |
-| `accessibility-chromium`                    | `tests/non-functional/accessibility/` only, without retries |
-| `accessibility-chrome`, `-firefox`, `-edge` | the same scans, on demand                                   |
-| `visual-chrome`, `-firefox`, `-edge`        | `tests/non-functional/visual/` only, without retries        |
+| Project                                     | Runs                                                           |
+| ------------------------------------------- | -------------------------------------------------------------- |
+| `chrome`, `firefox`, `edge`                 | everything but `tests/non-functional/`                         |
+| `accessibility-chromium`                    | `tests/non-functional/accessibility/` only, without retries    |
+| `accessibility-chrome`, `-firefox`, `-edge` | the same scans, on demand                                      |
+| `visual-chrome`, `-firefox`, `-edge`        | `tests/non-functional/visual/` only, without retries           |
+| `performance-chromium`                      | `tests/non-functional/performance/` only, one worker, no trace |
 
 A scan runs on bundled Chromium, which every Playwright install carries, so the accessibility workflow installs no browser. The branded projects are defined for the same scans and share the same baselines: axe evaluates the DOM, so all four agree, and a divergence is worth seeing rather than worth assuming.
 
@@ -289,3 +290,65 @@ A screenshot is pixel-exact for one browser on one platform, so baselines are st
 A dispatch with `record_baselines`, or a commit message carrying `[record-baselines]`, rewrites every baseline, which is what an intentional change to the interface needs.
 
 The workflow commits nothing. A view whose baseline was recorded in a run is compared with that same recording, which shows it renders stably but not that it has not regressed; regressions are caught once a person commits `visual-baselines-linux`. While the branch is unmerged the workflow also carries a temporary `push` trigger, since Gitea lists only the default branch's workflows; it is removed before the merge. Like the accessibility scans it is never part of `ct.yml`.
+
+## Performance metrics
+
+`tests/non-functional/performance/` measures what it costs to arrive at a page the suite already automates: the phases of the navigation, the first and largest contentful paint, the count and transferred weight of the resources, and the engine's own script, layout and style time. It answers how long one page takes for one user, not how many users the application holds; there is no load testing here and no separate tool.
+
+`fixtures/performance.fixture.ts` exposes three fixtures and extends `fixtures/fixture.ts`, so a measurement signs in through `sessionManager` and navigates through the page objects the functional tests use.
+
+### Writing a spec
+
+```ts
+const measurement = await performanceCollector.measure("dashboard", () =>
+  pageObjects.mainPage.open(),
+);
+expect(await pageObjects.mainPage.hasExpectedElementsDisplayed()).toBe(true);
+
+await publishMeasurement(measurement);
+await verifyAgainstBaseline(measurement);
+```
+
+Three rules, all of which the shape above already follows:
+
+1. **The navigation is the page object's own `open`, passed as a callback.** The collector loads the page several times and must not reach past the page object to do it, so it is handed the navigation rather than a URL. Every load then waits for that view's ready locators, which is the point the framework already treats as the page being ready.
+2. **The measurement is taken after the session, never during it.** `sessionManager.loginAsOwner()` ends by navigating to the base URL. A figure read before the page object opens the page describes that navigation, not the page under test, and would be identical for every signed-in page.
+3. **The spec is named for its page.** The two artifacts of a run are named from the spec's file name, because the network recording starts before the test says which page it measures.
+
+### What one run produces
+
+A page is loaded `LOADS` times, five today, and each load is measured twice: once with the browser cache cleared and once straight after, so a cold arrival and a warm reload stay separate figures. Every metric is published as a median with the minimum, maximum and the samples behind it: on a shared machine the spread is what says whether the median means anything.
+
+Two files per page land in `reports/performance/`, both named `<page>-<browser>`:
+
+- `<page>-<browser>.json` — every metric, cold and warm, with its spread. Also attached to the test result, so Allure carries it.
+- `<page>-<browser>.har` — the network exchange, recorded without response bodies. Drag it into a browser's network panel for the waterfall, the status codes and the cache and compression headers, none of which the resource timings report.
+
+They are written to `reports/` rather than the test's output directory because Playwright removes that directory when a test passes, after the context has written the HAR into it.
+
+`report:perf` turns both into `summary.html` beside them, one self-contained page of about 8 KB that opens without a network. It carries three things, in the order they are asked about:
+
+1. **Tiles** — the slowest page, the heaviest page, and how many requests returned an error, never completed, or came back uncompressed.
+2. **Findings** — a card per kind of defect the recording exposes, across every page that shows it, because a kind is the unit a bug report is written against. One page's instance of it is an example, not a finding. This is the part the timings cannot produce at all.
+3. **Per page** — one row per page, so they can be compared side by side, carrying the eight figures worth acting on. A figure past its band is amber, and every one names its band on hover. The metrics left out stay in the JSON: DNS and connection are zero against a local instance, and layout is under two milliseconds.
+
+The waterfall itself stays in the `.har`; the summary reads its facts, not its timeline.
+
+Allure and the stock Playwright report also run, as they do for every suite, but neither renders the figures: they report pass or fail per page and carry the JSON as an attachment.
+
+```bash
+npm run test:perf -w @gitea-automation/playwright-native
+npm run report:perf -w @gitea-automation/playwright-native   # read the result
+```
+
+### Bands
+
+A timing differs on every run, so a measurement is judged against a band rather than an exact figure. `tests/non-functional/performance/baselines/<page>.json` records an upper bound per metric, taken as a multiple of the median observed when it was recorded and never below a floor: doubling a 2 ms time to first byte is noise on a busy machine, and a band of 4 ms would report it as a regression. Request count and transferred weight get a tight multiple, since they do not drift; the engine counters and the largest paint get no band at all, because they explain a figure rather than decide it.
+
+A page with no band has one written by the run and the run fails, so a missing band is never a silent pass. Delete the file and run again to re-approve one.
+
+**A band belongs to the machine that recorded it.** A workstation is faster than the workflow's runner, so a band recorded here sits below what the runner reaches and fails every run. The committed bands are the runner's: a run that recorded one publishes it as `performance-baselines-linux`, and a person downloads that artifact into `tests/non-functional/performance/baselines/` and commits it after reading it.
+
+### Workflow
+
+`.gitea/workflows/performance.yml` runs the suite against a disposable Gitea, dispatched by hand, and publishes `performance-metrics`: the JSON, the recordings and the Allure report, whether the run held its bands or left them. Its concurrency group cancels a run still in progress, because two measurements on one machine are not measurements. Like the other two non-functional suites it is never part of `ct.yml`.

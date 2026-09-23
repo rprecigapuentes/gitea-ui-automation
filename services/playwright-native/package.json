@@ -41,6 +41,9 @@
     "test:visual:ci:missing": "cross-env PLAYWRIGHT_HTML_OPEN=never playwright test --project=visual-chrome --project=visual-firefox --project=visual-edge --reporter=list,html --update-snapshots=missing",
     "test:visual:ci:update": "playwright test --project=visual-chrome --project=visual-firefox --project=visual-edge --update-snapshots",
     "test:visual:update": "node scripts/visual.mjs --update-snapshots",
+    "pretest:perf": "node -e \"for (const d of ['allure-results', 'reports/performance']) require('fs').rmSync(d, { recursive: true, force: true })\"",
+    "test:perf": "playwright test --project=performance-chromium --workers=1",
+    "report:perf": "node scripts/performance-summary.mjs",
     "typecheck": "tsc --noEmit",
     "report": "allure generate ./allure-results",
     "report:open": "allure open ./allure-report/"
