@@ -3,10 +3,6 @@ name: CT-non-functional
 # The three suites produce evidence a person reads; none of them gates a merge. Kept off
 # CT-functional so their duration never lands in the functional suites' path.
 on:
-  # Temporary: Gitea lists only the workflows of the default branch, so until this merges the
-  # only way to run it is a push. Remove it before the branch merges.
-  push:
-    branches: [108-wire-non-functional-suites-into-ct]
   workflow_dispatch:
     inputs:
       record_baselines:
