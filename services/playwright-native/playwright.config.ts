@@ -1,6 +1,9 @@
 import "dotenv/config";
 import { defineConfig, devices } from "@playwright/test";
 
+/* Set by test:chrome/test:firefox/test:edge, unset by the scripts that run the three at once. */
+const singleBrowser = process.env.BROWSER;
+
 /* Without a channel, Desktop Chrome and Desktop Edge both run the bundled Chromium. */
 const browsers = [
   { name: "chrome", use: { ...devices["Desktop Chrome"], channel: "chrome" } },
@@ -26,6 +29,9 @@ const visual = {
   testDir: "./tests/non-functional/visual",
   snapshotPathTemplate: "{testDir}/baselines/{projectName}/{platform}/{arg}{ext}",
   retries: 0,
+  /* Same reason as the scans above: with no retry the global on-first-retry never fires, so a
+     mismatch left no trace at all. */
+  use: { trace: "retain-on-failure" as const },
 };
 
 /* A measurement is taken alone. A retry would republish a warm load as the cold one, a trace
@@ -51,6 +57,12 @@ export default defineConfig({
     /* open: never, or the run ends by launching a browser and CI hangs on it. */
     ["html", { outputFolder: "playwright-report", open: "never" }],
     ["allure-playwright", { resultsDir: "allure-results" }],
+    /* Named after the browser when one process runs one of them, because test:parallel starts
+       three that would otherwise write over each other. */
+    [
+      "junit",
+      { outputFile: singleBrowser ? `reports/junit-${singleBrowser}.xml` : "reports/junit.xml" },
+    ],
   ],
   use: {
     baseURL: process.env.GITEA_BASE_URL ?? "http://localhost:3000",
@@ -60,7 +72,13 @@ export default defineConfig({
   },
 
   projects: [
-    ...browsers.map((browser) => ({ ...browser, testIgnore: "**/non-functional/**" })),
+    ...browsers.map((browser) => ({
+      ...browser,
+      testIgnore: "**/non-functional/**",
+      /* A recording costs nothing on a green run: the retry that keeps one only happens after a
+         failure, which is when the trace is kept too. */
+      use: { ...browser.use, video: "on-first-retry" as const },
+    })),
 
     ...scanBrowsers.map((browser) => ({
       ...browser,
@@ -70,7 +88,13 @@ export default defineConfig({
       use: { ...browser.use, ...nonFunctional.use },
     })),
 
-    ...browsers.map((browser) => ({ ...browser, ...visual, name: `visual-${browser.name}` })),
+    ...browsers.map((browser) => ({
+      ...browser,
+      ...visual,
+      name: `visual-${browser.name}`,
+      /* Merged, not spread: visual's use would otherwise drop the browser's channel. */
+      use: { ...browser.use, ...visual.use },
+    })),
 
     /* Chromium alone: the engine counters come from a protocol no other browser speaks, and the
        name resolves to the Chrome account the workflows already seed. */
