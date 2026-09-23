@@ -3,6 +3,7 @@ import { resolveAdminToken } from "./credentials";
 import { UserClient } from "@gitea-automation/business-logic/clients/user.client";
 import { RequestStrategyFactory } from "@gitea-automation/core-api-client/request-strategy.factory";
 import { uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.util";
+import { logger } from "@gitea-automation/core-logger/pino.logger";
 import type { Organization } from "@gitea-automation/business-logic/entities/organization.entity";
 
 export { ORGANIZATION_TAG, ORGANIZATION_NAME_PREFIX };
@@ -29,6 +30,7 @@ interface SeededOrganizationWithTeamAndRepository {
 }
 
 export interface SeededUser {
+  id: number;
   username: string;
   password: string;
 }
@@ -68,9 +70,19 @@ export const test = base.extend<OrganizationsFixtures>({
 
     for (let index = 1; index <= SEEDED_USER_COUNT; index += 1) {
       const username = `at-user-${index}-${testInfo.project.name}-${uniqueSuffix()}`;
-      await users.createUser(username, `${username}@example.com`, SEEDED_USER_PASSWORD);
-      seeded.push({ username, password: SEEDED_USER_PASSWORD });
+      // The assignee list is read by id, so the created user is kept rather than only its name.
+      const { id } = await users.createUser(
+        username,
+        `${username}@example.com`,
+        SEEDED_USER_PASSWORD,
+      );
+      seeded.push({ id, username, password: SEEDED_USER_PASSWORD });
     }
+
+    logger.debug(
+      { users: seeded.map(({ id, username }) => ({ id, username })) },
+      "Seeded the users the scenario signs in and assigns work to",
+    );
 
     await use(seeded);
 
