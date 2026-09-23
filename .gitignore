@@ -10,3 +10,7 @@ local.log
 
 # Claude Code
 .claude/
+
+# Workflow run artifacts downloaded for a local read
+/*.zip
+*:Zone.Identifier
