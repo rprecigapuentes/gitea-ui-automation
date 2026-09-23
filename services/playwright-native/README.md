@@ -326,8 +326,13 @@ Two files per page land in `reports/performance/`, both named `<page>-<browser>`
 
 They are written to `reports/` rather than the test's output directory because Playwright removes that directory when a test passes, after the context has written the HAR into it.
 
+`report:perf` turns both into `summary.html` beside them: a table per page of every metric with its cold median, warm median, the spread behind each and the band it was judged against, then what the recording says that the timings cannot — how many responses ship without compression and how much they weigh, which never completed, what `cache-control` the application sends, and the heaviest responses. One self-contained page of about 20 KB, no network needed to open it. The waterfall itself stays in the `.har`; the summary reads its facts, not its timeline.
+
+Allure and the stock Playwright report also run, as they do for every suite, but neither renders the figures: they report pass or fail per page and carry the JSON as an attachment.
+
 ```bash
 npm run test:perf -w @gitea-automation/playwright-native
+npm run report:perf -w @gitea-automation/playwright-native   # read the result
 ```
 
 ### Bands

@@ -26,6 +26,8 @@
 
 - [x] 5.1 Write the full figures to `reports/performance/<page>-<browser>.json` and attach them to the test result, on pass and on fail; verify Allure shows the attachment and a failed measurement still leaves its file.
 
+- [x] 5.2 Add `scripts/performance-summary.mjs` and the `report:perf` script, writing `reports/performance/summary.html` as one self-contained page with a table per page and what the recording says about compression, completion and caching, and run it from the workflow with `if: always()`; verify the artifact answers what each page costs on opening, without a raw file and without a network connection.
+
 ## 6. Decide the outcome against a band
 
 - [x] 6.1 Judge each metric against a tolerance band committed under `tests/non-functional/performance/baselines/`, recording one for a page that has none rather than passing silently; verify a re-run inside the band passes, a deliberately slowed page fails naming the metric, the recorded band and the observed value, and a page with no band records one.

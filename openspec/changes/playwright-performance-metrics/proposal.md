@@ -12,7 +12,8 @@ Performance is a third non-functional area, beyond the two the module requires, 
 - Load each page several times and report the median with its spread, keeping a cold context and a warm reload as two numbers. One measurement on a shared runner carries more variance than the regression it would detect.
 - Give the area one project, `performance-chromium`, on `tests/non-functional/performance/`, with one worker, no retries and tracing off: a retry republishes a warm number as a cold one, and a trace charges the measurement for its own overhead. Chromium alone, because the protocol exists on no other engine.
 - Write the metrics to `reports/performance/` as JSON per page, and decide the outcome against a baseline committed under the suite that states tolerances rather than exact figures.
-- Add `test:perf` with its `pretest:perf` cleanup, and `.gitea/workflows/performance.yml`, dispatched by hand like the other two.
+- Summarise a run as one self-contained page, reading the figures for the table and the recording for what the timings cannot report: the responses shipped without compression, those that never completed, and what the application asks the browser to cache.
+- Add `test:perf` with its `pretest:perf` cleanup, `report:perf`, and `.gitea/workflows/performance.yml`, dispatched by hand like the other two.
 
 ## Capabilities
 
@@ -33,5 +34,4 @@ Performance is a third non-functional area, beyond the two the module requires, 
 - Load testing: Gitea runs beside the runner, so it would measure the runner.
 - Lighthouse: its score moves with runner noise, and its accessibility audit is the axe run already published.
 - `performance.mark` around interactions, which would reach into the page objects; drag-and-drop is therefore not measured.
-- An HTML summary: the JSON and the pull request carry the reading.
 - Wiring into `ct.yml`, which is Gitea issue 108, and any threshold that gates a merge.

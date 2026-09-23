@@ -99,6 +99,11 @@ jobs:
       - name: Measure the pages
         run: npm run test:perf -w @gitea-automation/playwright-native
 
+      # A run that left a band is the one most worth summarising.
+      - name: Summarise the figures
+        if: always()
+        run: npm run report:perf -w @gitea-automation/playwright-native
+
       - name: Generate the Allure report
         if: always()
         continue-on-error: true
