@@ -34,13 +34,13 @@
 
 ## 7. Run it from its own workflow
 
-- [ ] 7.1 Add `.gitea/workflows/performance.yml`, dispatch-only and in a concurrency group of its own, carrying the container, the `gitea-test` service and the account seeding of the accessibility workflow, running `test:perf` and uploading `reports/performance/` and the network recordings with `if: always()`; verify one dispatched run is green end to end, both artifacts download, and a second dispatch while the first runs does not measure alongside it.
+- [x] 7.1 Add `.gitea/workflows/performance.yml`, dispatch-only and in a concurrency group of its own, carrying the container, the `gitea-test` service and the account seeding of the accessibility workflow, running `test:perf` and uploading `reports/performance/` and the network recordings with `if: always()`; verify one dispatched run is green end to end, both artifacts download, and a second dispatch while the first runs does not measure alongside it.
 
-- [ ] 7.2 Record the runner's bands from a dispatched run and commit them; verify a second dispatched run passes against them without recording anything new.
+- [x] 7.2 Record the runner's bands from a dispatched run and commit them; verify a second dispatched run passes against them without recording anything new.
 
 ## 8. Read the numbers
 
-- [ ] 8.1 Read the published figures and record in the pull request what each page costs cold and warm, with its request count and transferred weight, and what the network recording shows about caching and compression; verify every page measured is accounted for in that reading.
+- [x] 8.1 Read the published figures and record in the pull request what each page costs cold and warm, with its request count and transferred weight, and what the network recording shows about caching and compression; verify every page measured is accounted for in that reading.
 
 ## 9. Documentation
 
