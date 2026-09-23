@@ -7,9 +7,9 @@
 ## 2. Confirm it on the runner
 
 - [x] 2.1 Add the temporary on-push trigger to `.gitea/workflows/ct-functional.yml`, push, and verify the `selenium` job ends green.
-- [ ] 2.2 Verify `allure-report-gitea-selenium-vitest` now carries `junit-chrome.xml`, `junit-firefox.xml` and `junit-edge.xml` instead of one `junit.xml`.
-- [ ] 2.3 Compare the `selenium` job's duration against run #514's, and record it: three browsers still run at once, so a suite that got slower means the workers were doing something the processes are not.
-- [ ] 2.4 Remove the temporary trigger in its own commit, and verify that commit touches only the workflow.
+- [x] 2.2 Verify `allure-report-gitea-selenium-vitest` now carries `junit-chrome.xml`, `junit-firefox.xml` and `junit-edge.xml` instead of one `junit.xml`.
+- [x] 2.3 Compare the `selenium` job's duration against run #514's, and record it: three browsers still run at once, so a suite that got slower means the workers were doing something the processes are not.
+- [x] 2.4 Remove the temporary trigger in its own commit, and verify that commit touches only the workflow.
 
 ## 3. Document the entry point
 
