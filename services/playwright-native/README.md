@@ -351,4 +351,4 @@ A page with no band has one written by the run and the run fails, so a missing b
 
 ### Workflow
 
-`.gitea/workflows/performance.yml` runs the suite against a disposable Gitea, dispatched by hand, and publishes `performance-metrics`: the JSON, the recordings and the Allure report, whether the run held its bands or left them. Its concurrency group cancels a run still in progress, because two measurements on one machine are not measurements. Like the other two non-functional suites it is never part of `ct.yml`.
+`.gitea/workflows/performance.yml` runs the suite against a disposable Gitea, on a push to this branch until it merges and dispatched by hand after that, and publishes `performance-metrics`: the JSON, the recordings and the Allure report, whether the run held its bands or left them. Its concurrency group cancels a run still in progress, because two measurements on one machine are not measurements. Like the other two non-functional suites it is never part of `ct.yml`.
