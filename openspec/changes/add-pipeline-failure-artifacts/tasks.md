@@ -17,4 +17,4 @@
 ## 4. Confirm it on the runner
 
 - [x] 4.1 Run the three gates, `npm run format`, `npm run lint` and `npm run typecheck`, and verify all three pass.
-- [ ] 4.2 Push and verify on the runner that a green functional run publishes a `junit` file per browser and no recording, so the cost of the change on a passing run is nothing.
+- [x] 4.2 Push and verify on the runner that a green functional run publishes a `junit` file per browser and no recording, so the cost of the change on a passing run is nothing.

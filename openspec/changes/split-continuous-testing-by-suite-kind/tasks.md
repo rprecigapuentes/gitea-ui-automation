@@ -13,9 +13,9 @@
 ## 3. Confirm it on the runner
 
 - [x] 3.1 Add the temporary on-push trigger to both new workflows, push, and verify each starts.
-- [ ] 3.2 Verify `CT-non-functional` runs its three jobs one after another, never two at once, and that each publishes its artifact under the name it published before.
-- [ ] 3.3 Verify `CT-functional` publishes a `junit` file per browser and no recording on a green run, which is task 4.2 of `add-pipeline-failure-artifacts`.
-- [ ] 3.4 Remove the temporary triggers in one commit, and verify that commit touches only the two workflows.
+- [x] 3.2 Verify `CT-non-functional` runs its three jobs one after another, never two at once, and that each publishes its artifact under the name it published before.
+- [x] 3.3 Verify `CT-functional` publishes a `junit` file per browser and no recording on a green run, which is task 4.2 of `add-pipeline-failure-artifacts`.
+- [x] 3.4 Remove the temporary triggers in one commit, and verify that commit touches only the two workflows.
 
 ## 4. Document the two workflows
 
