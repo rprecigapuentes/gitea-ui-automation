@@ -4,10 +4,11 @@ The create-organization visual smoke only covers the happy path. Nothing visuall
 
 ## What Changes
 
-- Add a data-driven visual spec: one Playwright `test()` per invalid-name case, generated from an array of `{ name, reason }` at module scope — the first spec in this suite to generate tests from data instead of writing one test per file.
+- Add a data-driven visual spec: a single Playwright `test()` definition, called once per row of a seven-entry case table at module scope — the first spec in this suite to generate tests from data instead of writing one test per file.
 - Five cases type a malformed value into the create-organization form and submit it (disallowed character, leading/trailing non-alphanumeric, consecutive non-alphanumeric, spaces).
 - One case types the signed-in owner's own username as the organization name (name/username collision).
 - One case creates an organization through the API first, with a name shared between the precondition and the typed value, then types that same name into the form (already-exists collision).
+- All seven rows share the same test body: a case only says how to arrive at the name to type (a literal value, the owner's username, or an API-created organization's name); the body that opens the form, types it, submits and checks the screenshot never repeats.
 - All seven cases check the resulting page against **the same one baseline** (`organization-create-form-invalid.png`), not one baseline each: the page's layout is expected to be identical across cases once the flash message and the typed name are masked, so one shared baseline is enough, the same way `main-view.spec.ts` checks two different accounts against one `main.png`.
 - No baseline is recorded for these checks in this change, and no mask is added yet: the person asked for these to fail for now, until they hand over the mask selectors for the regions that legitimately vary (the flash message and the typed name). The suite's own missing-baseline behavior ([pipeline] `revert-visual-workflow-manual-baselines`) is what will surface that failure in CI once this merges.
 
