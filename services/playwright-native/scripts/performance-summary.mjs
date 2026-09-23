@@ -10,8 +10,7 @@ const SAMPLE_RESPONSES = 6;
 /** A spread is worth showing once it is this wide relative to its median. */
 const WIDE_SPREAD = 0.1;
 
-/** The columns of the comparison. Every other metric the collector records stays in the JSON:
- *  DNS and connection are zero against a local instance, and layout is under two milliseconds. */
+/** Every other metric the collector records stays in the JSON rather than this table. */
 const COLUMNS = [
   ["load", "cold", "Load", "ms"],
   ["load", "warm", "Load warm", "ms"],
@@ -84,35 +83,63 @@ function measurements() {
     .sort((first, second) => first.page.localeCompare(second.page));
 }
 
-/** A finding is a kind of defect across every page that shows it, because that is the unit a
- *  bug report is written against. One page's instance of it is an example, not a finding. */
+/** A finding is one kind of defect across every page that shows it; one page's instance of it is
+ *  an example, not a finding. */
 function findings(all) {
   const uncompressed = [];
   const incomplete = [];
   const uncached = [];
+  const failed = [];
+  const redirected = [];
 
   for (const { page, requests } of all) {
     for (const entry of requests) {
-      const example = { page, url: path_(entry.request.url), size: entry.response.content.size };
-      if (entry.response.status < 100) incomplete.push(example);
+      const { status } = entry.response;
+      const example = {
+        page,
+        url: path_(entry.request.url),
+        size: entry.response.content.size,
+        status,
+      };
+
+      if (status < 100) incomplete.push(example);
       else if (!headerOf(entry, "content-encoding")) uncompressed.push(example);
-      if (entry.response.status >= 100 && !headerOf(entry, "cache-control")) uncached.push(example);
+      if (status >= 100 && !headerOf(entry, "cache-control")) uncached.push(example);
+      if (status >= 300 && status < 400) redirected.push(example);
+      else if (status >= 400) failed.push(example);
     }
   }
 
+  const statusOf = (example) => example.status;
+
   return [
     {
-      id: "uncompressed",
-      title: "Responses served without compression",
-      why: "Every byte of them crosses the network as written.",
-      examples: uncompressed,
-      weigh: true,
+      id: "failed",
+      title: "Requests that returned an error",
+      why: "The page asked for something the server did not return.",
+      examples: failed,
+      detail: statusOf,
     },
     {
       id: "incomplete",
       title: "Requests that never completed",
       why: "The recording carries no response for them, so the page waited on nothing.",
       examples: incomplete,
+    },
+    {
+      id: "redirected",
+      title: "Requests answered with a redirect",
+      why: "Each one costs a round trip before the resource is reached.",
+      examples: redirected,
+      detail: statusOf,
+    },
+    {
+      id: "uncompressed",
+      title: "Responses served without compression",
+      why: "Every byte of them crosses the network as written.",
+      examples: uncompressed,
+      weigh: true,
+      detail: (example) => format(example.size, "bytes"),
     },
     {
       id: "uncached",
@@ -142,7 +169,7 @@ function findingCard(finding) {
       ${shown
         .map(
           (example) =>
-            `<li><code>${escape(example.url)}</code> <span class="muted">${escape(example.page)}${finding.weigh ? `, ${format(example.size, "bytes")}` : ""}</span></li>`,
+            `<li><code>${escape(example.url)}</code> <span class="muted">${escape(example.page)}${finding.detail ? `, ${finding.detail(example)}` : ""}</span></li>`,
         )
         .join("")}
       ${finding.examples.length > shown.length ? `<li class="muted">and ${finding.examples.length - shown.length} more</li>` : ""}
@@ -154,8 +181,8 @@ function cell(entry, [metric, phase, , unit]) {
   const summary = entry.measurement[phase][metric];
   if (!summary) return `<td>&ndash;</td>`;
 
-  /* Only a figure past its bound is marked. A tight band sits just above the median that
-     recorded it, so anything short of that would colour those columns on every run. */
+  /* A band sits just above the median that recorded it, so only a figure past its bound is
+     marked; anything short of that would colour these columns on every run. */
   const bound = entry.band?.[phase]?.[metric];
   const over = bound !== undefined && summary.median > bound;
   const half = (summary.max - summary.min) / 2;
@@ -281,8 +308,9 @@ const html = `<!doctype html>
   <div class="tiles">
     ${statTile(format(slowest.measurement.cold.load?.median, "ms"), `slowest, ${slowest.page}`)}
     ${statTile(format(heaviest.measurement.cold.transferredBytes?.median, "bytes"), `heaviest, ${heaviest.page}`)}
-    ${statTile(countOf("uncompressed"), "uncompressed", countOf("uncompressed") ? "warn" : "")}
+    ${statTile(countOf("failed"), "errors", countOf("failed") ? "warn" : "")}
     ${statTile(countOf("incomplete"), "never completed", countOf("incomplete") ? "warn" : "")}
+    ${statTile(countOf("uncompressed"), "uncompressed", countOf("uncompressed") ? "warn" : "")}
   </div>
 
   ${found.length ? `<h2>Findings</h2>${found.map(findingCard).join("")}` : ""}
