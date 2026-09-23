@@ -1,5 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import type { TestInfo } from "@playwright/test";
 import {
   PerformanceCollector,
   type PageMeasurement,
@@ -14,14 +15,40 @@ interface PerformanceFixtures {
   publishMeasurement: (measurement: PageMeasurement) => Promise<void>;
 }
 
+/** Both artifacts of a run land here: `reports/` is what the workflow uploads, and unlike the
+ *  test's own output directory it is not removed when the test passes. */
+function reportsDirectory(testInfo: TestInfo): string {
+  // Not config.rootDir, which is the common ancestor of every project's testDir.
+  const workspace = testInfo.config.configFile
+    ? path.dirname(testInfo.config.configFile)
+    : process.cwd();
+
+  return path.join(workspace, "reports", "performance");
+}
+
+/** `<page>-<browser>`, the name both artifacts of one measurement carry. The page comes from the
+ *  spec file, which is named for it, because the recording starts before the test names it. */
+function artifactName(testInfo: TestInfo): string {
+  const page = path.basename(testInfo.file).replace(/\.spec\.ts$/, "");
+  const browser = testInfo.project.name.slice(testInfo.project.name.lastIndexOf("-") + 1);
+
+  return `${page}-${browser}`;
+}
+
 /** Extends the suite's fixture, not Playwright's, so a measurement signs in through
  *  `sessionManager` and navigates through the page objects the functional tests use. */
 export const test = base.extend<PerformanceFixtures>({
   /* Each test records its own exchange; a path fixed in the config would have them overwrite it. */
   contextOptions: async ({ contextOptions }, use, testInfo) => {
+    await mkdir(reportsDirectory(testInfo), { recursive: true });
+
     await use({
       ...contextOptions,
-      recordHar: { path: testInfo.outputPath("network.har"), content: "omit", mode: "full" },
+      recordHar: {
+        path: path.join(reportsDirectory(testInfo), `${artifactName(testInfo)}.har`),
+        content: "omit",
+        mode: "full",
+      },
     });
   },
 
@@ -38,21 +65,18 @@ export const test = base.extend<PerformanceFixtures>({
   publishMeasurement: async ({}, use, testInfo) => {
     await use(async (measurement) => {
       const body = JSON.stringify(measurement, null, 2);
-      const browser = testInfo.project.name.slice(testInfo.project.name.lastIndexOf("-") + 1);
 
       await testInfo.attach("performance-measurement", {
         body,
         contentType: "application/json",
       });
 
-      // Not config.rootDir, which is the common ancestor of every project's testDir.
-      const workspace = testInfo.config.configFile
-        ? path.dirname(testInfo.config.configFile)
-        : process.cwd();
-      const directory = path.join(workspace, "reports", "performance");
-
-      await mkdir(directory, { recursive: true });
-      await writeFile(path.join(directory, `${measurement.page}-${browser}.json`), body, "utf8");
+      await mkdir(reportsDirectory(testInfo), { recursive: true });
+      await writeFile(
+        path.join(reportsDirectory(testInfo), `${artifactName(testInfo)}.json`),
+        body,
+        "utf8",
+      );
     });
   },
 });
