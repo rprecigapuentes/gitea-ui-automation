@@ -2,6 +2,10 @@ name: CT-non-functional
 
 # The three suites produce evidence a person reads; none of them gates a merge.
 on:
+  # Two hours after CT-functional's 11:00, which is past the worst case of its two jobs at 25
+  # minutes a matrix entry. A measurement taken while that suite still runs reports the runner.
+  schedule:
+    - cron: "0 13 * * *"
   workflow_dispatch:
     inputs:
       record_baselines:
@@ -9,8 +13,8 @@ on:
         type: boolean
         default: false
 
-# This does not keep CT-functional idle: dispatch away from that workflow's 11:00 cron, or the
-# performance job charges the page it measures for the functional suite's work.
+# This does not keep CT-functional idle, so a dispatch belongs away from that workflow's 11:00
+# cron, for the same reason the schedule above sits two hours after it.
 concurrency:
   group: ct-non-functional
   cancel-in-progress: true

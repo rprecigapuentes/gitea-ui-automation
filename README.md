@@ -62,7 +62,7 @@ Installs the dependencies of every workspace (6 under `core/`, `business-logic` 
 
 - `ci.yml` — on every push/PR: `npm ci` + `format:check` + `lint` + `typecheck` across the whole monorepo. Never runs real tests, never blocked by external infra.
 - `ct-functional.yml` — "CT-functional": the functional suites, two jobs, one per framework, each deploying its own disposable Gitea and then running that framework's suites. Each publishes `allure-report-<suite>` with a `junit` file per browser, and the Playwright job also publishes what a failed test's retry left: its video and its trace. Manual dispatch + daily cron.
-- `ct-non-functional.yml` — "CT-non-functional": the three suites whose output is read rather than gated, as three jobs chained one after another. `accessibility` publishes `accessibility-scans`, `visual` publishes `playwright-report-visual` and `visual-baselines-linux` when it recorded one, and `performance` publishes `performance-metrics` and `performance-baselines-linux`. Chained rather than parallel because `performance` reports whatever else runs on the VPS as the page's own cost.
+- `ct-non-functional.yml` — "CT-non-functional": the three suites whose output is read rather than gated, as three jobs chained one after another. `accessibility` publishes `accessibility-scans`, `visual` publishes `playwright-report-visual` and `visual-baselines-linux` when it recorded one, and `performance` publishes `performance-metrics` and `performance-baselines-linux`. Chained rather than parallel because `performance` reports whatever else runs on the VPS as the page's own cost. Manual dispatch + daily cron, two hours after the functional one for that same reason.
 
 ### Which suites `ct-functional.yml` runs
 
@@ -70,7 +70,7 @@ The `selenium` job's matrix is hardcoded to `gitea-selenium-vitest` and `gitea-s
 
 The cron run covers all of them. A manual dispatch takes a `suite` input to run exactly one; leaving it at `all` runs the lot. Suites run one at a time, and the `playwright` job waits on the `selenium` job so a single VPS never hosts two applications under test at once — but it runs whatever that job's outcome was. A failing suite does not cancel the others, so a red Cucumber run still leaves you the vitest report. Each publishes its own artifact, named `allure-report-<suite>`.
 
-Both `ct-functional.yml` and `ct-non-functional.yml` are scheduled or dispatched, never a merge gate; `ci.yml` stays lint, format and typecheck. Each keeps a concurrency group of its own, so dispatch `ct-non-functional.yml` away from the 11:00 cron: its `performance` job charges the page it measures for anything else running on the VPS.
+Both `ct-functional.yml` and `ct-non-functional.yml` are scheduled and dispatched, never a merge gate; `ci.yml` stays lint, format and typecheck. Each keeps a concurrency group of its own, so neither holds the other back, which is why their crons sit two hours apart and why a dispatch of `ct-non-functional.yml` belongs away from the 11:00 one: its `performance` job charges the page it measures for anything else running on the VPS.
 
 ## Known flaky scenarios
 
