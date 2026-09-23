@@ -11,10 +11,8 @@ import { test as base } from "./fixture";
 /** Enough loads for a median to mean something without doubling the suite's duration. */
 const LOADS = 5;
 
-/** Upper bound as a multiple of the median recorded for a metric. Request count and transferred
- *  weight barely move between runs, so their band is tight; a timing on a shared machine moves a
- *  great deal, so its band is loose enough to catch a doubling and nothing smaller. The engine
- *  counters and the largest paint carry no band: they explain a figure, they do not decide it. */
+/** Upper bound as a multiple of the median recorded for a metric. The engine counters and the
+ *  largest paint carry no band: they explain a figure, they do not decide it. */
 const TOLERANCE: Partial<Record<Metric, number>> = {
   requests: 1.1,
   transferredBytes: 1.1,
@@ -24,9 +22,8 @@ const TOLERANCE: Partial<Record<Metric, number>> = {
   firstContentfulPaint: 2,
 };
 
-/** Floor under a band, in the unit of its metric. A multiple of a small median is a small band:
- *  doubling a 2 ms time to first byte is noise on a busy machine, not a regression, and a band of
- *  4 ms would report it as one. A count needs no floor, since it does not drift. */
+/** Floor under a band, in the unit of its metric, so a small median cannot produce a band narrow
+ *  enough for ordinary noise to break. A count needs no floor. */
 const FLOOR: Partial<Record<Metric, number>> = {
   ttfb: 50,
   domContentLoaded: 250,
