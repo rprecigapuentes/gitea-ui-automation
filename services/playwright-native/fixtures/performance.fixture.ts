@@ -1,8 +1,9 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import type { TestInfo } from "@playwright/test";
+import { expect, type TestInfo } from "@playwright/test";
 import {
   PerformanceCollector,
+  type Metric,
   type PageMeasurement,
 } from "@gitea-automation/core-playwright/performance-collector/performance-collector";
 import { test as base } from "./fixture";
@@ -10,9 +11,40 @@ import { test as base } from "./fixture";
 /** Enough loads for a median to mean something without doubling the suite's duration. */
 const LOADS = 5;
 
+/** Upper bound as a multiple of the median recorded for a metric. Request count and transferred
+ *  weight barely move between runs, so their band is tight; a timing on a shared machine moves a
+ *  great deal, so its band is loose enough to catch a doubling and nothing smaller. The engine
+ *  counters and the largest paint carry no band: they explain a figure, they do not decide it. */
+const TOLERANCE: Partial<Record<Metric, number>> = {
+  requests: 1.1,
+  transferredBytes: 1.1,
+  ttfb: 2,
+  domContentLoaded: 2,
+  load: 2,
+  firstContentfulPaint: 2,
+};
+
+/** Floor under a band, in the unit of its metric. A multiple of a small median is a small band:
+ *  doubling a 2 ms time to first byte is noise on a busy machine, not a regression, and a band of
+ *  4 ms would report it as one. A count needs no floor, since it does not drift. */
+const FLOOR: Partial<Record<Metric, number>> = {
+  ttfb: 50,
+  domContentLoaded: 250,
+  load: 250,
+  firstContentfulPaint: 250,
+};
+
+type Band = Partial<Record<Metric, number>>;
+
+interface Baseline {
+  cold: Band;
+  warm: Band;
+}
+
 interface PerformanceFixtures {
   performanceCollector: PerformanceCollector;
   publishMeasurement: (measurement: PageMeasurement) => Promise<void>;
+  verifyAgainstBaseline: (measurement: PageMeasurement) => Promise<void>;
 }
 
 /** Both artifacts of a run land here: `reports/` is what the workflow uploads, and unlike the
@@ -79,6 +111,52 @@ export const test = base.extend<PerformanceFixtures>({
       );
     });
   },
+
+  verifyAgainstBaseline: async ({}, use, testInfo) => {
+    await use(async (measurement) => {
+      const file = path.join(path.dirname(testInfo.file), "baselines", `${measurement.page}.json`);
+      const recorded = await readBaseline(file);
+
+      if (!recorded) {
+        await mkdir(path.dirname(file), { recursive: true });
+        await writeFile(file, `${JSON.stringify(bandOf(measurement), null, 2)}\n`, "utf8");
+        throw new Error(`No band was recorded for ${measurement.page}; this run wrote one`);
+      }
+
+      /* Soft, so one metric leaving its band still reports the others: the set of metrics that
+         moved together is what says whether the page or the machine changed. */
+      for (const phase of ["cold", "warm"] as const) {
+        for (const [metric, bound] of Object.entries(recorded[phase]) as [Metric, number][]) {
+          const observed = measurement[phase][metric]?.median;
+          if (observed === undefined) continue;
+          expect
+            .soft(observed, `${measurement.page} ${phase} ${metric}`)
+            .toBeLessThanOrEqual(bound);
+        }
+      }
+    });
+  },
 });
+
+function bandOf(measurement: PageMeasurement): Baseline {
+  const bandFor = (phase: "cold" | "warm"): Band =>
+    Object.fromEntries(
+      (Object.entries(TOLERANCE) as [Metric, number][]).flatMap(([metric, factor]) => {
+        const summary = measurement[phase][metric];
+        if (!summary) return [];
+        return [[metric, Math.ceil(Math.max(summary.median * factor, FLOOR[metric] ?? 0))]];
+      }),
+    );
+
+  return { cold: bandFor("cold"), warm: bandFor("warm") };
+}
+
+async function readBaseline(file: string): Promise<Baseline | null> {
+  try {
+    return JSON.parse(await readFile(file, "utf8")) as Baseline;
+  } catch {
+    return null;
+  }
+}
 
 export { expect } from "@playwright/test";

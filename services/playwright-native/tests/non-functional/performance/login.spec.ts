@@ -4,6 +4,7 @@ test("the login form is measured as an anonymous visitor reaches it", async ({
   pageObjects,
   performanceCollector,
   publishMeasurement,
+  verifyAgainstBaseline,
 }) => {
   const measurement = await performanceCollector.measure("login", () =>
     pageObjects.loginPage.open(),
@@ -11,4 +12,5 @@ test("the login form is measured as an anonymous visitor reaches it", async ({
   expect(await pageObjects.loginPage.hasExpectedFormElements()).toBe(true);
 
   await publishMeasurement(measurement);
+  await verifyAgainstBaseline(measurement);
 });

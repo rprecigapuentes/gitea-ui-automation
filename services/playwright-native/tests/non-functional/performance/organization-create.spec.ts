@@ -5,6 +5,7 @@ test("organization creation is measured as the signed-in owner reaches it", asyn
   pageObjects,
   performanceCollector,
   publishMeasurement,
+  verifyAgainstBaseline,
 }) => {
   await sessionManager.loginAsOwner();
 
@@ -14,4 +15,5 @@ test("organization creation is measured as the signed-in owner reaches it", asyn
   expect(await pageObjects.createOrganizationPage.hasExpectedFormElements()).toBe(true);
 
   await publishMeasurement(measurement);
+  await verifyAgainstBaseline(measurement);
 });

@@ -5,6 +5,7 @@ test("the user dashboard is measured as the signed-in owner reaches it", async (
   pageObjects,
   performanceCollector,
   publishMeasurement,
+  verifyAgainstBaseline,
 }) => {
   await sessionManager.loginAsOwner();
 
@@ -16,4 +17,5 @@ test("the user dashboard is measured as the signed-in owner reaches it", async (
   expect(await pageObjects.mainPage.hasExpectedElementsDisplayed()).toBe(true);
 
   await publishMeasurement(measurement);
+  await verifyAgainstBaseline(measurement);
 });
