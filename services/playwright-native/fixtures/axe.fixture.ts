@@ -19,8 +19,8 @@ interface AxeFixtures {
 export const test = base.extend<AxeFixtures>({
   makeAxeBuilder: async ({ page }, use, testInfo) => {
     await use((exclusions = []) => {
-      // Logged because an excluded region leaves no trace in the results: without this the run
-      // says a scan was clean, not that part of the page was never read.
+      // An excluded region leaves no trace in the results, so a clean scan and a page read in
+      // part look the same.
       if (exclusions.length > 0) {
         logger.info({ scan: testInfo.title, exclusions }, "Regions excluded from the scan");
       }

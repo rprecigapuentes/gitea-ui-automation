@@ -1,7 +1,6 @@
 name: CT-non-functional
 
-# The three suites produce evidence a person reads; none of them gates a merge. Kept off
-# CT-functional so their duration never lands in the functional suites' path.
+# The three suites produce evidence a person reads; none of them gates a merge.
 on:
   workflow_dispatch:
     inputs:
@@ -10,9 +9,8 @@ on:
         type: boolean
         default: false
 
-# A group of its own, and the jobs below are chained on top of it, so two of them never share
-# the runner. What this cannot promise is that CT-functional is idle: dispatch this workflow
-# away from that one's 11:00 cron, or the performance job charges the page for its work.
+# This does not keep CT-functional idle: dispatch away from that workflow's 11:00 cron, or the
+# performance job charges the page it measures for the functional suite's work.
 concurrency:
   group: ct-non-functional
   cancel-in-progress: true

@@ -1,14 +1,14 @@
 import "dotenv/config";
 
-// Set by test:chrome/test:firefox/test:edge; test:parallel runs those three as three processes
-// against this one file, so the junit path carries the browser or they overwrite each other.
+// Set by test:chrome/test:firefox/test:edge. test:parallel runs those three as three processes
+// against this one file, so the junit path carries the browser.
 const singleBrowser = process.env.BROWSER;
 
 export default {
   import: ["features/step-definitions/**/*.ts", "features/support/**/*.ts"],
   paths: ["features/**/*.feature"],
   // "progress" for the console, Allure for the results `npm run report` reads, junit for the
-  // one machine-readable format every functional suite shares.
+  // format every functional suite shares.
   format: [
     "progress",
     "allure-cucumberjs/reporter",

@@ -15,8 +15,6 @@ on:
           - gitea-selenium-cucumber
           - playwright-native
 
-# A group of its own. Sharing one with CT-non-functional cancelled the queued run instead of
-# holding it, and a cancelled run is a hole in the execution trend.
 concurrency:
   group: ct-functional
   cancel-in-progress: true
@@ -181,7 +179,8 @@ jobs:
         continue-on-error: true
         run: npm run report -w @gitea-automation/${{ matrix.suite }}
 
-      # Both suites run one process per browser, so each leaves a junit file of its own.
+      # Cucumber writes one junit file per browser process; vitest writes a single one
+      # carrying its three projects.
       - name: Upload the report
         if: always()
         uses: actions/upload-artifact@v3
@@ -337,8 +336,8 @@ jobs:
         continue-on-error: true
         run: npm run report -w @gitea-automation/${{ matrix.suite }}
 
-      # test-results/ is where the retry of a failed test leaves its video and its trace; it is
-      # empty when nothing failed, and the upload warns rather than fails on that.
+      # test-results/ holds the video and the trace of a retried test, and is absent when
+      # nothing failed, which the upload warns about rather than fails on.
       - name: Upload the report
         if: always()
         uses: actions/upload-artifact@v3

@@ -29,8 +29,7 @@ const visual = {
   testDir: "./tests/non-functional/visual",
   snapshotPathTemplate: "{testDir}/baselines/{projectName}/{platform}/{arg}{ext}",
   retries: 0,
-  /* Same reason as the scans above: with no retry the global on-first-retry never fires, so a
-     mismatch left no trace at all. */
+  /* Same reason as the scans above: with no retry, the global on-first-retry never fires. */
   use: { trace: "retain-on-failure" as const },
 };
 
@@ -57,8 +56,7 @@ export default defineConfig({
     /* open: never, or the run ends by launching a browser and CI hangs on it. */
     ["html", { outputFolder: "playwright-report", open: "never" }],
     ["allure-playwright", { resultsDir: "allure-results" }],
-    /* Named after the browser when one process runs one of them, because test:parallel starts
-       three that would otherwise write over each other. */
+    /* test:parallel starts one process per browser, and they would overwrite one file. */
     [
       "junit",
       { outputFile: singleBrowser ? `reports/junit-${singleBrowser}.xml` : "reports/junit.xml" },
@@ -75,8 +73,6 @@ export default defineConfig({
     ...browsers.map((browser) => ({
       ...browser,
       testIgnore: "**/non-functional/**",
-      /* A recording costs nothing on a green run: the retry that keeps one only happens after a
-         failure, which is when the trace is kept too. */
       use: { ...browser.use, video: "on-first-retry" as const },
     })),
 
