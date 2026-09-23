@@ -1,4 +1,4 @@
-name: CT
+name: CT-functional
 
 on:
   schedule:
@@ -16,7 +16,7 @@ on:
           - playwright-native
 
 concurrency:
-  group: ct
+  group: ct-functional
   cancel-in-progress: true
 
 jobs:
@@ -66,7 +66,8 @@ jobs:
           SE_NODE_OVERRIDE_MAX_SESSIONS: "true"
 
     env:
-      MAX_WORKERS: "3"
+      # One per process, and three processes, which is what the grid above allows at once.
+      MAX_WORKERS: "1"
       GITEA_BASE_URL: http://gitea-test:3000
       SELENIUM_REMOTE_URL: http://selenium:4444
       GITEA_ADMIN_USERNAME: ct-admin
@@ -179,7 +180,8 @@ jobs:
         continue-on-error: true
         run: npm run report -w @gitea-automation/${{ matrix.suite }}
 
-      # junit.xml is the vitest suite's only; absent for Cucumber, upload warns.
+      # Cucumber writes one junit file per browser process; vitest writes a single one
+      # carrying its three projects.
       - name: Upload the report
         if: always()
         uses: actions/upload-artifact@v3
@@ -187,7 +189,7 @@ jobs:
           name: allure-report-${{ matrix.suite }}
           path: |
             services/${{ matrix.suite }}/allure-report/
-            services/${{ matrix.suite }}/reports/junit.xml
+            services/${{ matrix.suite }}/reports/junit*.xml
           retention-days: 14
 
   # Playwright launches its browsers inside the job, so this one carries them in its image.
@@ -335,10 +337,15 @@ jobs:
         continue-on-error: true
         run: npm run report -w @gitea-automation/${{ matrix.suite }}
 
+      # test-results/ holds the video and the trace of a retried test, and is absent when
+      # nothing failed, which the upload warns about rather than fails on.
       - name: Upload the report
         if: always()
         uses: actions/upload-artifact@v3
         with:
           name: allure-report-${{ matrix.suite }}
-          path: services/${{ matrix.suite }}/allure-report/
+          path: |
+            services/${{ matrix.suite }}/allure-report/
+            services/${{ matrix.suite }}/reports/junit*.xml
+            services/${{ matrix.suite }}/test-results/
           retention-days: 14

@@ -6,12 +6,12 @@
 
 A suite whose framework drives a remote browser SHALL address the Selenium server started alongside it in the same job. The job SHALL fail before any test executes when that server does not report itself ready, and the failure SHALL name the component that did not answer. A suite whose framework launches its own browsers is not covered by this requirement.
 
-#### Scenario: A remote-browser suite starts a session
+#### Scenario: A suite starts a session
 
 - **WHEN** a suite whose framework drives a remote browser requests a session
 - **THEN** the request is made to the Selenium server running in the same job
 
-#### Scenario: The remote browser never becomes ready
+#### Scenario: The browser never becomes ready
 
 - **WHEN** the Selenium server does not report itself ready within the job's wait
 - **THEN** the job fails before any test executes

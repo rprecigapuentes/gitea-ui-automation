@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import AxeBuilder from "@axe-core/playwright";
+import { logger } from "@gitea-automation/core-logger/pino.logger";
 import { test as base } from "./fixture";
 
 type ScanResults = Awaited<ReturnType<AxeBuilder["analyze"]>>;
@@ -9,15 +10,26 @@ type ScanResults = Awaited<ReturnType<AxeBuilder["analyze"]>>;
 const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
 
 interface AxeFixtures {
-  makeAxeBuilder: () => AxeBuilder;
+  makeAxeBuilder: (exclusions?: string[]) => AxeBuilder;
   publishScan: (results: ScanResults, page: string) => Promise<void>;
 }
 
 /** Extends the suite's fixture, not Playwright's, so a scan signs in through `sessionManager`
  *  instead of driving the login form it evaluates. */
 export const test = base.extend<AxeFixtures>({
-  makeAxeBuilder: async ({ page }, use) => {
-    await use(() => new AxeBuilder({ page }).withTags(WCAG_TAGS));
+  makeAxeBuilder: async ({ page }, use, testInfo) => {
+    await use((exclusions = []) => {
+      // An excluded region leaves no trace in the results, so a clean scan and a page read in
+      // part look the same.
+      if (exclusions.length > 0) {
+        logger.info({ scan: testInfo.title, exclusions }, "Regions excluded from the scan");
+      }
+
+      return exclusions.reduce(
+        (builder, selector) => builder.exclude(selector),
+        new AxeBuilder({ page }).withTags(WCAG_TAGS),
+      );
+    });
   },
 
   publishScan: async ({}, use, testInfo) => {

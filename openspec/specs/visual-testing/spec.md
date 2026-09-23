@@ -183,3 +183,50 @@ A project named for the bundled Chromium SHALL resolve its owner credentials fro
 
 - **WHEN** a Firefox project resolves the owner credentials
 - **THEN** it receives the Firefox account's
+
+### Requirement: Phone-width visual check
+
+The visual suite SHALL be able to check a page's screenshot against a baseline while the browser's viewport is narrowed to a phone width, in addition to the desktop-width checks the suite already performs.
+
+#### Scenario: Main view checked at a phone width
+
+- **WHEN** the phone-width main-view visual spec runs
+- **THEN** it signs in, asserts the main view has loaded, and compares a screenshot taken while the page is rendered at a phone-width viewport against its own baseline
+
+### Requirement: Viewport override scoped to the spec that needs it
+
+A spec that renders at a non-default viewport SHALL NOT change the viewport used by any other spec in the same Playwright project.
+
+#### Scenario: Desktop specs unaffected by a phone-width spec
+
+- **WHEN** the phone-width main-view spec and the desktop main-view spec both run in the same visual project
+- **THEN** the desktop spec's page is rendered at the project's configured desktop viewport, unchanged by the phone-width spec's override
+
+### Requirement: A spec may generate one test per row of a data table
+
+A visual spec MAY generate more than one test from an array of cases declared at module scope, one `test()` per row, instead of only ever declaring a single test per file. Each generated test SHALL be reported and pass or fail independently of the others. The rows MAY check against one baseline shared across the whole data table, the same way an existing spec MAY check two accounts against one baseline, when the difference between rows is expected to be excluded by a mask; a baseline name used this way SHALL still not collide with any other spec's.
+
+#### Scenario: A data-driven spec runs
+
+- **WHEN** a spec generates its tests from a data table
+- **THEN** each row runs as its own test, reported and checked independently of the others
+
+#### Scenario: Rows share one baseline
+
+- **WHEN** every row of a data table is expected to look the same once masked
+- **THEN** every row checks against the same baseline name
+- **AND** that name does not collide with any other spec's baseline
+
+### Requirement: Bounded pixel tolerance per check
+
+A visual check SHALL accept an optional maximum number of differing pixels. When given, the check SHALL pass as long as the number of pixels that differ from the baseline does not exceed it. When omitted, the check SHALL require an exact match, as every existing check does today.
+
+#### Scenario: A check tolerates a bounded number of differing pixels
+
+- **WHEN** a spec calls a visual check with a maximum differing-pixel count and the rendered page differs from its baseline by fewer pixels than that count
+- **THEN** the check passes
+
+#### Scenario: Omitting the tolerance keeps exact-match behavior
+
+- **WHEN** a spec calls a visual check without a maximum differing-pixel count and the rendered page differs from its baseline by even one pixel
+- **THEN** the check fails, matching today's behavior

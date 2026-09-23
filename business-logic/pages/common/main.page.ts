@@ -77,4 +77,10 @@ export class MainPage extends BasePage {
       "[data-tooltip-content='Profile and Settings…'] img.ui.avatar",
     ];
   }
+
+  // The contribution heatmap's last column is the week in progress, so its cell count follows
+  // the calendar rather than the markup.
+  getScanExclusions(): string[] {
+    return [".heatmap-day"];
+  }
 }
