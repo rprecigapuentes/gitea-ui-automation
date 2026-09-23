@@ -115,8 +115,6 @@ A platform is one entry in `browserStackPlatforms` in `vitest.config.ts`. **Keep
 curl -u "$BROWSERSTACK_USERNAME:$BROWSERSTACK_ACCESS_KEY" https://api.browserstack.com/automate/plan.json
 ```
 
-`.gitea/workflows/bs.yml` (repo root) runs the same suite on the pipeline, with the disposable Gitea as its only service container and no Selenium container, because the hub is the grid. It runs on manual dispatch and a weekly schedule only, so it never gates a merge and never spends minutes on a push. It needs `BROWSERSTACK_USERNAME` and `BROWSERSTACK_ACCESS_KEY` as repository secrets, under Settings, Actions, Secrets.
-
 ## Continuous testing
 
 `.gitea/workflows/ct.yml` (repo root) is a second pipeline, separate from CI. It deploys a disposable
