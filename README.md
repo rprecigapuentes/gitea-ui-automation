@@ -31,19 +31,19 @@ Installs the dependencies of every workspace (6 under `core/`, `business-logic` 
 
 ## Root scripts (delegate to the matching workspace)
 
-| Script                                               | What it does                                                                                              |
-| ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `npm test`                                           | `gitea-selenium-vitest` suite, 3 local browsers (single Vitest run)                                       |
-| `npm run test:chrome` / `test:firefox` / `test:edge` | One browser at a time (`gitea-selenium-vitest`)                                                           |
-| `npm run test:parallel`                              | `gitea-selenium-vitest`, the 3 browsers as 3 genuinely concurrent processes, one JUnit report per browser |
-| `npm run test:serial`                                | Same suite, one file at a time                                                                            |
-| `npm run test:browserstack`                          | `gitea-selenium-vitest` suite against BrowserStack                                                        |
-| `npm run test:cucumber`                              | `gitea-selenium-cucumber` suite, the 3 browsers as 3 concurrent processes (what CT runs)                  |
-| `npm run test:cucumber:parallel`                     | The same three, under the explicit name                                                                   |
-| `npm run report` / `report:open`                     | Allure report for `gitea-selenium-vitest`                                                                 |
-| `npm run lint` / `lint:fix`                          | ESLint across the whole monorepo                                                                          |
-| `npm run typecheck`                                  | `tsc --noEmit` in every workspace that defines it                                                         |
-| `npm run format` / `format:check`                    | Prettier across the whole monorepo                                                                        |
+| Script                                               | What it does                                                                                          |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `npm test`                                           | `gitea-selenium-vitest` suite, the 3 browsers as 3 concurrent processes, one JUnit report per browser |
+| `npm run test:chrome` / `test:firefox` / `test:edge` | One browser at a time (`gitea-selenium-vitest`)                                                       |
+| `npm run test:parallel`                              | The same three, under the explicit name                                                               |
+| `npm run test:serial`                                | Same suite, one file at a time                                                                        |
+| `npm run test:browserstack`                          | `gitea-selenium-vitest` suite against BrowserStack                                                    |
+| `npm run test:cucumber`                              | `gitea-selenium-cucumber` suite, the 3 browsers as 3 concurrent processes (what CT runs)              |
+| `npm run test:cucumber:parallel`                     | The same three, under the explicit name                                                               |
+| `npm run report` / `report:open`                     | Allure report for `gitea-selenium-vitest`                                                             |
+| `npm run lint` / `lint:fix`                          | ESLint across the whole monorepo                                                                      |
+| `npm run typecheck`                                  | `tsc --noEmit` in every workspace that defines it                                                     |
+| `npm run format` / `format:check`                    | Prettier across the whole monorepo                                                                    |
 
 `test:parallel` and `test:cucumber:parallel` run three separate OS processes (via `concurrently`), one per browser — a stronger guarantee of real 3-way parallelism than relying on a single process to schedule everything internally. See [`services/gitea-selenium-vitest/README.md`](services/gitea-selenium-vitest/README.md) for why each mode exists and how JUnit output is kept from colliding.
 

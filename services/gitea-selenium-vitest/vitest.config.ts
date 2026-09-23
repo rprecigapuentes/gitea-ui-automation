@@ -24,7 +24,9 @@ export default defineConfig({
       junit: singleBrowser ? `./reports/junit-${singleBrowser}.xml` : "./reports/junit.xml",
     },
     fileParallelism: true,
-    maxWorkers: Number(process.env.MAX_WORKERS ?? 3),
+    // One per process: test:parallel starts a process per browser, so the three run at once
+    // without a worker each.
+    maxWorkers: Number(process.env.MAX_WORKERS ?? 1),
     server: {
       deps: {
         inline: [

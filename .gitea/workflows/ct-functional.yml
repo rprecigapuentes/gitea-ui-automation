@@ -1,6 +1,10 @@
 name: CT-functional
 
 on:
+  # Temporary: Gitea lists only the workflows of the default branch, so until this merges the
+  # only way to run it is a push. Remove it before the branch merges.
+  push:
+    branches: [108-wire-non-functional-suites-into-ct]
   schedule:
     - cron: "0 11 * * *"
   workflow_dispatch:
@@ -66,7 +70,8 @@ jobs:
           SE_NODE_OVERRIDE_MAX_SESSIONS: "true"
 
     env:
-      MAX_WORKERS: "3"
+      # One per process, and three processes, which is what the grid above allows at once.
+      MAX_WORKERS: "1"
       GITEA_BASE_URL: http://gitea-test:3000
       SELENIUM_REMOTE_URL: http://selenium:4444
       GITEA_ADMIN_USERNAME: ct-admin

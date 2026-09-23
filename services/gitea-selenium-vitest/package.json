@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "pretest": "node -e \"require('fs').rmSync('allure-results', { recursive: true, force: true })\"",
-    "test": "vitest run --project=!bs-*",
+    "test": "npm run test:parallel",
     "test:chrome": "cross-env BROWSER=chrome vitest run --project=chrome",
     "test:firefox": "cross-env BROWSER=firefox vitest run --project=firefox",
     "test:edge": "cross-env BROWSER=edge vitest run --project=edge",
