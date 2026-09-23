@@ -71,3 +71,26 @@ The `selenium` job's matrix is hardcoded to `gitea-selenium-vitest` and `gitea-s
 The cron run covers all of them. A manual dispatch takes a `suite` input to run exactly one; leaving it at `all` runs the lot. Suites run one at a time, and the `playwright` job waits on the `selenium` job so a single VPS never hosts two applications under test at once — but it runs whatever that job's outcome was. A failing suite does not cancel the others, so a red Cucumber run still leaves you the vitest report. Each publishes its own artifact, named `allure-report-<suite>`.
 
 Both `ct-functional.yml` and `ct-non-functional.yml` are scheduled or dispatched, never a merge gate; `ci.yml` stays lint, format and typecheck. Each keeps a concurrency group of its own, so dispatch `ct-non-functional.yml` away from the 11:00 cron: its `performance` job charges the page it measures for anything else running on the VPS.
+
+## Known flaky scenarios
+
+The project board's column and card interactions fail intermittently in both frameworks, and a
+re-run passes. They are not a defect in the application under test and not one this repository has
+fixed; they are recorded here so a red run on one of them is recognised rather than investigated
+from scratch.
+
+| Suite                     | Scenario                                                               | What is seen                                                                                                        |
+| ------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `gitea-selenium-cucumber` | `project-board.feature`, `A column added from the board appears on it` | `TimeoutError: No visible element(s) for locator "#project-column-title-input"` after the full 5 s wait, on Firefox |
+| `playwright-native`       | `demo-e2e.spec.ts`, moving an issue to the board that tracks it        | Fails on the first attempt, passes on the retry, on Chrome                                                          |
+| `playwright-native`       | `project-board.spec.ts`, the cards of a deleted column                 | Fails on the first attempt, passes on the retry, on Chrome                                                          |
+
+`ProjectBoardPage.addColumn` clicks the new-column button and then waits for the modal's input,
+and the click itself waits for nothing: `BaseComponent` has no primitive that repeats an action
+until its effect appears, only `clickAndWaitUntil`, which clicks once and then waits. Raising the
+timeout would move the threshold rather than remove the race. The fix is a primitive on
+`BaseComponent` that retries the action, which every page would gain, and it needs several runs to
+show it worked because the failure is intermittent.
+
+`demo-e2e.feature` drives the same `addColumn`, so a demonstration that includes the project board
+is recorded rather than run live.
