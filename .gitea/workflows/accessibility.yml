@@ -2,6 +2,10 @@ name: Accessibility
 
 # Dispatch only: the scans are read, not gated, so they stay out of the scheduled run.
 on:
+  # Temporary: Gitea lists only the workflows of the default branch, so until this merges the
+  # only way to run it is a push. Remove it before the branch merges.
+  push:
+    branches: [108-wire-non-functional-suites-into-ct]
   workflow_dispatch:
 
 concurrency:
