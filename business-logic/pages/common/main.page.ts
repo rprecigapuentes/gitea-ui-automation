@@ -13,9 +13,6 @@ export class MainPage extends BasePage {
     renderedPanel: "#dashboard-repo-list .dashboard-repos",
     repositoryOption: ".ui.two.item.menu a.item:nth-of-type(1)",
     organizationOption: ".ui.two.item.menu a.item:nth-of-type(2)",
-    organizationAvatar: ".secondary-nav .ui.floating.dropdown.jump span.text img.ui.avatar",
-    organizationName: ".secondary-nav .text span.gt-ellipsis",
-    accountAvatar: "[data-tooltip-content='Profile and Settings…'] img.ui.avatar",
   };
 
   override getUrl(): string {
@@ -75,9 +72,9 @@ export class MainPage extends BasePage {
 
   getVolatileRegions(): string[] {
     return [
-      this.locators.organizationAvatar,
-      this.locators.organizationName,
-      this.locators.accountAvatar,
+      ".secondary-nav .ui.floating.dropdown.jump span.text img.ui.avatar",
+      ".secondary-nav .text span.gt-ellipsis",
+      "[data-tooltip-content='Profile and Settings…'] img.ui.avatar",
     ];
   }
 }
