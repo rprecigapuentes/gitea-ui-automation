@@ -2,10 +2,6 @@ name: Performance
 
 # Dispatch only: the figures are read, not gated, so they stay out of the scheduled run.
 on:
-  # Temporary: Gitea lists only the workflows of the default branch, so until this merges the
-  # only way to run it is a push. Remove it before the branch merges.
-  push:
-    branches: [107-performance-metrics]
   workflow_dispatch:
 
 # Two runs must never measure at once: work beside a measurement changes it, and the change
