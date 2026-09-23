@@ -68,7 +68,9 @@ function readTimings() {
   }));
 }
 
-const ENGINE_COUNTERS: Record<string, Metric> = {
+type EngineCounters = Pick<LoadSample, "scriptDuration" | "layoutDuration" | "recalcStyleDuration">;
+
+const ENGINE_COUNTERS: Record<string, keyof EngineCounters> = {
   ScriptDuration: "scriptDuration",
   LayoutDuration: "layoutDuration",
   RecalcStyleDuration: "recalcStyleDuration",
@@ -130,37 +132,22 @@ export class PerformanceCollector {
   }
 
   private async sample(navigate: () => Promise<void>): Promise<LoadSample> {
-    const before = await this.counters();
     await navigate();
-    const timings = await this.page.evaluate(readTimings);
-    const after = await this.counters();
 
-    return { ...timings, ...this.deltaOf(before, after) };
+    return { ...(await this.page.evaluate(readTimings)), ...(await this.counters()) };
   }
 
-  /** The engine counters accumulate from the moment collection was enabled, so only the
-   *  difference across one navigation describes the page rather than the whole session. */
-  private async counters(): Promise<Map<string, number>> {
+  /** The engine counters reset on every navigation, so the value read after one describes that
+   *  document alone. They are reported in seconds, unlike every timing beside them. */
+  private async counters(): Promise<EngineCounters> {
     const { metrics } = await this.session.send("Performance.getMetrics");
-    return new Map(metrics.map((metric) => [metric.name, metric.value]));
-  }
-
-  private deltaOf(
-    before: Map<string, number>,
-    after: Map<string, number>,
-  ): Pick<LoadSample, "scriptDuration" | "layoutDuration" | "recalcStyleDuration"> {
-    const delta = {} as Pick<
-      LoadSample,
-      "scriptDuration" | "layoutDuration" | "recalcStyleDuration"
-    >;
+    const counters = {} as EngineCounters;
 
     for (const [counter, metric] of Object.entries(ENGINE_COUNTERS)) {
-      const start = before.get(counter);
-      const end = after.get(counter);
-      delta[metric as keyof typeof delta] =
-        start === undefined || end === undefined ? null : end - start;
+      const seconds = metrics.find(({ name }) => name === counter)?.value;
+      counters[metric] = seconds === undefined ? null : seconds * 1000;
     }
 
-    return delta;
+    return counters;
   }
 }
