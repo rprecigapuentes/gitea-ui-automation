@@ -5,21 +5,22 @@ import path from "node:path";
 
 const DIRECTORY = path.join(process.cwd(), "reports", "performance");
 const BANDS = path.join(process.cwd(), "tests", "non-functional", "performance", "baselines");
-const HEAVIEST = 5;
+const SAMPLE_RESPONSES = 6;
 
-/** How each metric reads. A duration is milliseconds, a weight is bytes, a count is itself. */
-const METRICS = [
-  ["ttfb", "Time to first byte", "ms"],
-  ["response", "Response download", "ms"],
-  ["domContentLoaded", "DOM content loaded", "ms"],
-  ["load", "Load", "ms"],
-  ["firstContentfulPaint", "First contentful paint", "ms"],
-  ["largestContentfulPaint", "Largest contentful paint", "ms"],
-  ["scriptDuration", "Script", "ms"],
-  ["layoutDuration", "Layout", "ms"],
-  ["recalcStyleDuration", "Style recalculation", "ms"],
-  ["requests", "Requests", "count"],
-  ["transferredBytes", "Transferred", "bytes"],
+/** A spread is worth showing once it is this wide relative to its median. */
+const WIDE_SPREAD = 0.1;
+
+/** The columns of the comparison. Every other metric the collector records stays in the JSON:
+ *  DNS and connection are zero against a local instance, and layout is under two milliseconds. */
+const COLUMNS = [
+  ["load", "cold", "Load", "ms"],
+  ["load", "warm", "Load warm", "ms"],
+  ["firstContentfulPaint", "cold", "First paint", "ms"],
+  ["scriptDuration", "cold", "Script", "ms"],
+  ["ttfb", "cold", "Server", "ms"],
+  ["transferredBytes", "cold", "Transferred", "bytes"],
+  ["transferredBytes", "warm", "Transferred warm", "bytes"],
+  ["requests", "cold", "Requests", "count"],
 ];
 
 function escape(text) {
@@ -32,9 +33,9 @@ function escape(text) {
 
 function format(value, unit) {
   if (value === undefined || value === null) return "&ndash;";
-  if (unit === "bytes") return `${(value / 1024).toFixed(1)} KB`;
+  if (unit === "bytes") return value >= 1024 ? `${Math.round(value / 1024)} KB` : `${value} B`;
   if (unit === "count") return String(value);
-  return `${value.toFixed(1)} ms`;
+  return `${Math.round(value)} ms`;
 }
 
 function plural(count, noun) {
@@ -42,7 +43,11 @@ function plural(count, noun) {
 }
 
 function statTile(value, label, className = "") {
-  return `<div class="tile ${className}"><b>${value}</b><span>${label}</span></div>`;
+  return `<div class="tile ${className}"><b>${value}</b><span>${escape(label)}</span></div>`;
+}
+
+function path_(url) {
+  return url.replace(/^https?:\/\/[^/]+/, "") || "/";
 }
 
 /** One entry per URL. A recording holds every load of a page, so the same request repeats. */
@@ -59,7 +64,7 @@ function headerOf(entry, name) {
 
 function measurements() {
   return readdirSync(DIRECTORY)
-    .filter((file) => file.endsWith(".json") && file !== "summary.json")
+    .filter((file) => file.endsWith(".json"))
     .map((file) => {
       const separator = file.lastIndexOf("-");
       const page = file.slice(0, separator);
@@ -79,89 +84,103 @@ function measurements() {
     .sort((first, second) => first.page.localeCompare(second.page));
 }
 
-/** What the recording answers and the timings cannot: what failed, what is not compressed, and
- *  what the application asks the browser to keep. */
-function network(requests) {
-  const incomplete = requests.filter((entry) => entry.response.status < 100);
-  const uncompressed = requests.filter(
-    (entry) => entry.response.status >= 100 && !headerOf(entry, "content-encoding"),
-  );
+/** A finding is a kind of defect across every page that shows it, because that is the unit a
+ *  bug report is written against. One page's instance of it is an example, not a finding. */
+function findings(all) {
+  const uncompressed = [];
+  const incomplete = [];
+  const uncached = [];
 
-  return {
-    total: requests.length,
-    incomplete,
-    uncompressed,
-    uncompressedBytes: uncompressed.reduce((sum, entry) => sum + entry.response.content.size, 0),
-    decompressed: requests.reduce((sum, entry) => sum + entry.response.content.size, 0),
-    caching: [...new Set(requests.map((entry) => headerOf(entry, "cache-control") ?? "none"))],
-    heaviest: [...requests]
-      .sort((first, second) => second.response.content.size - first.response.content.size)
-      .slice(0, HEAVIEST),
-  };
+  for (const { page, requests } of all) {
+    for (const entry of requests) {
+      const example = { page, url: path_(entry.request.url), size: entry.response.content.size };
+      if (entry.response.status < 100) incomplete.push(example);
+      else if (!headerOf(entry, "content-encoding")) uncompressed.push(example);
+      if (entry.response.status >= 100 && !headerOf(entry, "cache-control")) uncached.push(example);
+    }
+  }
+
+  return [
+    {
+      id: "uncompressed",
+      title: "Responses served without compression",
+      why: "Every byte of them crosses the network as written.",
+      examples: uncompressed,
+      weigh: true,
+    },
+    {
+      id: "incomplete",
+      title: "Requests that never completed",
+      why: "The recording carries no response for them, so the page waited on nothing.",
+      examples: incomplete,
+    },
+    {
+      id: "uncached",
+      title: "Responses with no cache-control",
+      why: "The browser is left to guess whether it may keep them.",
+      examples: uncached,
+    },
+  ].filter((finding) => finding.examples.length);
 }
 
-function metricRows({ measurement, band }) {
-  return METRICS.flatMap(([metric, label, unit]) => {
-    const cold = measurement.cold[metric];
-    const warm = measurement.warm[metric];
-    if (!cold && !warm) return [];
-
-    const spread = (summary) =>
-      summary ? `${format(summary.min, unit)} &ndash; ${format(summary.max, unit)}` : "&ndash;";
-    const bound = band?.cold?.[metric];
-
-    return [
-      `<tr>
-        <th scope="row">${escape(label)}</th>
-        <td class="figure">${format(cold?.median, unit)}</td>
-        <td class="range">${spread(cold)}</td>
-        <td class="figure">${format(warm?.median, unit)}</td>
-        <td class="range">${spread(warm)}</td>
-        <td class="range">${bound === undefined ? "&ndash;" : `&le; ${format(bound, unit)}`}</td>
-      </tr>`,
-    ];
-  }).join("");
-}
-
-function pageSection(entry) {
-  const { page, measurement } = entry;
-  const exchange = network(entry.requests);
-  const url = measurement.url.replace(/^https?:\/\/[^/]+/, "") || "/";
-
-  const list = (entries) =>
-    entries
-      .map(
-        (item) =>
-          `<li><code>${escape(item.request.url.replace(/^https?:\/\/[^/]+/, ""))}</code>
-           <span class="muted">${format(item.response.content.size, "bytes")}
-           ${escape(headerOf(item, "content-encoding") ?? "uncompressed")}</span></li>`,
-      )
-      .join("");
+function findingCard(finding) {
+  const pages = [...new Set(finding.examples.map((example) => example.page))];
+  const weight = finding.examples.reduce((sum, example) => sum + example.size, 0);
+  const shown = [...finding.examples]
+    .sort((first, second) => second.size - first.size)
+    .slice(0, SAMPLE_RESPONSES);
 
   return `
-  <section class="page">
-    <h3>${escape(page)} <code>${escape(url)}</code></h3>
+  <details class="finding">
+    <summary>
+      <b>${finding.examples.length}</b>
+      <span class="title">${escape(finding.title)}</span>
+      <span class="muted">${plural(pages.length, "page")}${finding.weigh ? `, ${format(weight, "bytes")}` : ""}</span>
+    </summary>
+    <p class="muted">${escape(finding.why)}</p>
+    <ul>
+      ${shown
+        .map(
+          (example) =>
+            `<li><code>${escape(example.url)}</code> <span class="muted">${escape(example.page)}${finding.weigh ? `, ${format(example.size, "bytes")}` : ""}</span></li>`,
+        )
+        .join("")}
+      ${finding.examples.length > shown.length ? `<li class="muted">and ${finding.examples.length - shown.length} more</li>` : ""}
+    </ul>
+  </details>`;
+}
 
-    <table>
-      <thead>
-        <tr><th></th><th colspan="2">Cold</th><th colspan="2">Warm</th><th rowspan="2">Band</th></tr>
-        <tr><th></th><th>Median</th><th>Spread</th><th>Median</th><th>Spread</th></tr>
-      </thead>
-      <tbody>${metricRows(entry)}</tbody>
-    </table>
+function cell(entry, [metric, phase, , unit]) {
+  const summary = entry.measurement[phase][metric];
+  if (!summary) return `<td>&ndash;</td>`;
 
-    <div class="tiles">
-      ${statTile(exchange.total, "distinct requests")}
-      ${statTile(format(exchange.decompressed, "bytes"), "decompressed")}
-      ${statTile(exchange.uncompressed.length, "uncompressed", exchange.uncompressed.length ? "warn" : "")}
-      ${statTile(exchange.incomplete.length, "never completed", exchange.incomplete.length ? "warn" : "")}
-    </div>
+  /* Only a figure past its bound is marked. A tight band sits just above the median that
+     recorded it, so anything short of that would colour those columns on every run. */
+  const bound = entry.band?.[phase]?.[metric];
+  const over = bound !== undefined && summary.median > bound;
+  const half = (summary.max - summary.min) / 2;
+  const wide = half > Math.abs(summary.median) * WIDE_SPREAD;
 
-    <p class="muted">Cache-control: ${exchange.caching.map((value) => `<code>${escape(value)}</code>`).join(" ")}</p>
+  return `<td class="figure${over ? " over" : ""}"${bound === undefined ? "" : ` title="band ${format(bound, unit)}"`}>
+    ${format(summary.median, unit)}${wide ? `<span class="spread">&plusmn;${format(half, unit).replace(/ (ms|KB|B)$/, "")}</span>` : ""}
+  </td>`;
+}
 
-    ${exchange.uncompressed.length ? `<details><summary>${plural(exchange.uncompressed.length, "response")} without compression, ${format(exchange.uncompressedBytes, "bytes")}</summary><ul>${list(exchange.uncompressed)}</ul></details>` : ""}
-    <details><summary>Heaviest ${Math.min(HEAVIEST, exchange.total)} responses</summary><ul>${list(exchange.heaviest)}</ul></details>
-  </section>`;
+function comparison(all) {
+  return `
+  <table>
+    <thead><tr><th></th>${COLUMNS.map(([, , label]) => `<th>${escape(label)}</th>`).join("")}</tr></thead>
+    <tbody>
+      ${all
+        .map(
+          (entry) => `<tr>
+        <th scope="row">${escape(entry.page)}<span class="muted"> ${escape(path_(entry.measurement.url))}</span></th>
+        ${COLUMNS.map((column) => cell(entry, column)).join("")}
+      </tr>`,
+        )
+        .join("")}
+    </tbody>
+  </table>`;
 }
 
 const STYLE = `
@@ -184,30 +203,39 @@ main { max-width: 68rem; margin: 0 auto; }
 h1 { font-size: 1.5rem; margin: 0 0 .35rem; }
 h2 { font-size: .95rem; margin: 2.5rem 0 .75rem; text-transform: uppercase;
      letter-spacing: .07em; color: var(--muted); }
-h3 { font-size: 1.05rem; margin: 0 0 .9rem; display: flex; flex-wrap: wrap; gap: .5rem;
-     align-items: baseline; }
 .lede { color: var(--muted); margin: 0 0 1.75rem; }
-.muted { color: var(--muted); font-size: .85rem; }
+.muted { color: var(--muted); font-weight: 400; }
 code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .85em;
        background: var(--code); border-radius: .25rem; padding: .05rem .3rem; }
-.tiles { display: flex; flex-wrap: wrap; gap: .75rem; margin: 1rem 0 .75rem; }
-.tile { flex: 1 1 8rem; background: var(--bg); border: 1px solid var(--line);
-        border-radius: .5rem; padding: .7rem .9rem; }
-.tile b { display: block; font-size: 1.4rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
-.tile span { color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; }
+
+.tiles { display: flex; flex-wrap: wrap; gap: .75rem; }
+.tile { flex: 1 1 8rem; background: var(--panel); border: 1px solid var(--line);
+        border-radius: .5rem; padding: .85rem 1rem; }
+.tile b { display: block; font-size: 1.85rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.tile span { color: var(--muted); font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; }
 .tile.warn b { color: var(--warn); }
-.page { border: 1px solid var(--line); border-radius: .5rem; background: var(--panel);
-        padding: 1.1rem 1.2rem; margin-bottom: 1rem; }
+
+.finding { border: 1px solid var(--line); border-radius: .5rem; margin-bottom: .6rem;
+           background: var(--panel); }
+.finding summary { cursor: pointer; padding: .8rem 1rem; display: flex; flex-wrap: wrap;
+                   gap: .6rem; align-items: baseline; }
+.finding summary::marker { color: var(--muted); }
+.finding summary b { font-variant-numeric: tabular-nums; color: var(--warn); min-width: 1.5rem; }
+.finding summary .title { font-weight: 600; }
+.finding[open] summary { border-bottom: 1px solid var(--line); }
+.finding p, .finding ul { margin: .7rem 1rem; }
+.finding ul { padding-left: 1.1rem; }
+.finding li { margin-bottom: .15rem; }
+
 table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-th, td { text-align: right; padding: .3rem .5rem; border-bottom: 1px solid var(--line); }
-thead th { font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
-tbody th { text-align: left; font-weight: 400; }
-.range { color: var(--muted); font-size: .85em; }
-.figure { font-weight: 600; }
-details { margin-top: .6rem; }
-summary { cursor: pointer; color: var(--muted); font-size: .85rem; }
-ul { margin: .5rem 0 0; padding-left: 1.1rem; }
-li { margin-bottom: .2rem; }
+th, td { text-align: right; padding: .45rem .55rem; border-bottom: 1px solid var(--line); }
+thead th { font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted);
+           vertical-align: bottom; }
+tbody th { text-align: left; font-weight: 600; white-space: nowrap; }
+tbody th .muted { font-size: .8em; }
+.figure { white-space: nowrap; }
+.figure.over { color: var(--warn); font-weight: 600; }
+.spread { color: var(--muted); font-size: .78em; margin-left: .2rem; }
 footer { margin-top: 2.5rem; color: var(--muted); font-size: .85rem; }
 `;
 
@@ -218,9 +246,21 @@ if (!all.length) {
   process.exit(1);
 }
 
+const found = findings(all);
 const browsers = [...new Set(all.map((entry) => entry.browser))];
 const loads = all[0].measurement.loads;
-const origin = all[0].measurement.url.match(/^https?:\/\/[^/]+/)?.[0] ?? "";
+const slowest = all.reduce((worst, entry) =>
+  (entry.measurement.cold.load?.median ?? 0) > (worst.measurement.cold.load?.median ?? 0)
+    ? entry
+    : worst,
+);
+const heaviest = all.reduce((worst, entry) =>
+  (entry.measurement.cold.transferredBytes?.median ?? 0) >
+  (worst.measurement.cold.transferredBytes?.median ?? 0)
+    ? entry
+    : worst,
+);
+const countOf = (id) => found.find((finding) => finding.id === id)?.examples.length ?? 0;
 
 const html = `<!doctype html>
 <html lang="en">
@@ -234,26 +274,32 @@ const html = `<!doctype html>
 <main>
   <h1>Performance metrics</h1>
   <p class="lede">
-    ${all.length} pages on ${escape(browsers.join(", "))}, ${loads} loads each, cold and warm,
-    against <code>${escape(origin)}</code>.
+    ${plural(all.length, "page")} on ${escape(browsers.join(", "))}, ${loads} loads each, cold and
+    warm, against <code>${escape(all[0].measurement.url.match(/^https?:\/\/[^/]+/)?.[0] ?? "")}</code>.
   </p>
 
+  <div class="tiles">
+    ${statTile(format(slowest.measurement.cold.load?.median, "ms"), `slowest, ${slowest.page}`)}
+    ${statTile(format(heaviest.measurement.cold.transferredBytes?.median, "bytes"), `heaviest, ${heaviest.page}`)}
+    ${statTile(countOf("uncompressed"), "uncompressed", countOf("uncompressed") ? "warn" : "")}
+    ${statTile(countOf("incomplete"), "never completed", countOf("incomplete") ? "warn" : "")}
+  </div>
+
+  ${found.length ? `<h2>Findings</h2>${found.map(findingCard).join("")}` : ""}
+
   <h2>Per page</h2>
-  ${all.map(pageSection).join("")}
+  ${comparison(all)}
 
   <footer>
     <p>
-      A <b>cold</b> figure is the first arrival with the browser cache cleared; a <b>warm</b> one is
-      the same page loaded straight after. They answer different questions and are never combined.
-      The <b>median</b> of ${loads} loads decides, and the <b>spread</b> is what says whether it
-      means anything: a spread wider than the gap between two runs makes the median noise.
+      <b>Cold</b> is the first arrival with the browser cache cleared, <b>warm</b> the same page
+      straight after; they answer different questions and are never combined. A figure is the
+      median of ${loads} loads, with &plusmn; half the spread where that spread is wide enough to
+      matter. One in amber is past the band recorded for it; hover any figure for its bound.
     </p>
     <p>
-      The <b>band</b> is the upper bound recorded for the cold figure on the machine that recorded
-      it. Script, layout, style and the largest paint carry none: they explain a figure rather than
-      decide it. <b>Decompressed</b> is what the browser parses, which is larger than what it
-      transferred. For the waterfall itself, open the <code>.har</code> beside this page in a
-      browser's network panel.
+      For the waterfall itself, open the <code>.har</code> beside this page in a browser's network
+      panel.
     </p>
   </footer>
 </main>
@@ -264,13 +310,13 @@ const html = `<!doctype html>
 writeFileSync(path.join(DIRECTORY, "summary.html"), html, "utf8");
 
 for (const entry of all) {
-  const exchange = network(entry.requests);
   const cold = entry.measurement.cold;
   console.log(
-    `${entry.page}/${entry.browser}: cold ${format(cold.load?.median, "ms").replace("&ndash;", "-")} ` +
-      `${format(cold.transferredBytes?.median, "bytes")} over ${exchange.total} requests, ` +
-      `${exchange.uncompressed.length} uncompressed, ${exchange.incomplete.length} never completed`,
+    `${entry.page}/${entry.browser}: ${format(cold.load?.median, "ms")} cold, ` +
+      `${format(cold.transferredBytes?.median, "bytes")} over ${format(cold.requests?.median, "count")} requests`,
   );
 }
-
+for (const finding of found) {
+  console.log(`  ${finding.examples.length} ${finding.title.toLowerCase()}`);
+}
 console.log(`\nWritten to ${path.join(DIRECTORY, "summary.html")}`);

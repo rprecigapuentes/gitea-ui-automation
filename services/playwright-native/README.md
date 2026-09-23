@@ -326,7 +326,13 @@ Two files per page land in `reports/performance/`, both named `<page>-<browser>`
 
 They are written to `reports/` rather than the test's output directory because Playwright removes that directory when a test passes, after the context has written the HAR into it.
 
-`report:perf` turns both into `summary.html` beside them: a table per page of every metric with its cold median, warm median, the spread behind each and the band it was judged against, then what the recording says that the timings cannot — how many responses ship without compression and how much they weigh, which never completed, what `cache-control` the application sends, and the heaviest responses. One self-contained page of about 20 KB, no network needed to open it. The waterfall itself stays in the `.har`; the summary reads its facts, not its timeline.
+`report:perf` turns both into `summary.html` beside them, one self-contained page of about 8 KB that opens without a network. It carries three things, in the order they are asked about:
+
+1. **Tiles** — the slowest page, the heaviest page, and how many responses ship uncompressed or never complete.
+2. **Findings** — a card per kind of defect the recording exposes, across every page that shows it, because a kind is the unit a bug report is written against. One page's instance of it is an example, not a finding. This is the part the timings cannot produce at all.
+3. **Per page** — one row per page, so they can be compared side by side, carrying the eight figures worth acting on. A figure past its band is amber, and every one names its band on hover. The metrics left out stay in the JSON: DNS and connection are zero against a local instance, and layout is under two milliseconds.
+
+The waterfall itself stays in the `.har`; the summary reads its facts, not its timeline.
 
 Allure and the stock Playwright report also run, as they do for every suite, but neither renders the figures: they report pass or fail per page and carry the JSON as an attachment.
 
