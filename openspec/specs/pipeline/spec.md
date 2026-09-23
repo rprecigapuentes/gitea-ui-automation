@@ -85,11 +85,11 @@ The `test` script of every test-bearing workspace SHALL run the suite on each br
 
 ### Requirement: A suite reaches the browser through the Selenium server its own job starts
 
-A suite SHALL address the Selenium server started alongside it in the same job. The job SHALL fail before any test executes when that server does not report itself ready, and the failure SHALL name the component that did not answer.
+A suite whose framework drives a remote browser SHALL address the Selenium server started alongside it in the same job. The job SHALL fail before any test executes when that server does not report itself ready, and the failure SHALL name the component that did not answer. A suite whose framework launches its own browsers is not covered by this requirement.
 
 #### Scenario: A suite starts a session
 
-- **WHEN** a suite requests a browser session
+- **WHEN** a suite whose framework drives a remote browser requests a session
 - **THEN** the request is made to the Selenium server running in the same job
 
 #### Scenario: The browser never becomes ready
@@ -155,3 +155,83 @@ The visual workflow SHALL run in one job that compares the suite against the com
 - **THEN** the job fails
 - **AND** the failure names the baseline that was auto-created
 - **AND** the recorded baseline is still uploaded as an artifact for a person to commit
+
+### Requirement: A job provisions every account and token its suite needs
+
+Each job SHALL create, on its own ephemeral application under test, every Gitea account and API token the suite it runs expects to find already present, and SHALL publish them to the suite. A suite MUST NOT depend on an account or token carried in from outside the run, because the instance it runs against is created fresh for that job and holds nothing from any earlier run.
+
+#### Scenario: A suite expects an account the instance does not have
+
+- **WHEN** a job starts against a freshly created application under test
+- **THEN** every account the suite it runs reads from its environment is registered before the suite starts
+- **AND** an API token is issued for each account the suite reads a token for
+- **AND** each is published to the suite under the name that suite reads
+
+#### Scenario: A suite requires an administrative account
+
+- **WHEN** the suite a job runs performs operations that only an administrator may perform
+- **THEN** the job provisions an administrative identity distinct from the accounts its scenarios drive through the browser
+- **AND** issues that identity a token carrying administrative privilege
+- **AND** the tokens issued to the accounts the scenarios drive do not carry administrative privilege
+
+#### Scenario: A token is issued to an account that turns out not to be privileged
+
+- **WHEN** a job issues a token that claims administrative privilege
+- **AND** that token is refused by an operation only an administrator may perform
+- **THEN** the job fails at the provisioning step, before the suite starts
+- **AND** the failure names the account and the privilege it lacks
+
+#### Scenario: A token reaches the run log
+
+- **WHEN** a job issues any API token
+- **THEN** the token's value is masked in the run's output
+
+### Requirement: A measuring suite runs alone on its runner
+
+A suite whose result is a measurement SHALL be the only work of its own executing while it runs. Its workflow SHALL NOT run concurrently with another of its own runs, and the pages it measures SHALL be measured one after another rather than side by side, because work running alongside a measurement changes it and the change cannot be told apart from a regression.
+
+#### Scenario: A measuring workflow is dispatched while one is already running
+
+- **WHEN** a run of the measuring workflow is requested while another is in progress
+- **THEN** the two do not measure at the same time
+
+#### Scenario: The suite measures more than one page
+
+- **WHEN** a run measures several pages
+- **THEN** they are measured one after another rather than side by side
+
+### Requirement: A measuring workflow publishes its figures and its network recording whether it passed or failed
+
+The workflow of a measuring suite SHALL publish both the figures it produced and the network recording it captured as artifacts of the run, on pass and on fail, so that the reading of a run never depends on repeating it.
+
+#### Scenario: The suite fails
+
+- **WHEN** a measurement falls outside its tolerance and the suite fails
+- **THEN** the figures and the network recording are still published
+
+#### Scenario: The suite passes
+
+- **WHEN** every measurement falls inside its tolerance
+- **THEN** the figures and the network recording are published all the same
+
+### Requirement: A suite that launches its own browsers runs where those browsers are present
+
+A suite whose framework launches browsers inside the job SHALL run in an environment that already provides them, and every browser its matrix names SHALL be available before any test executes. Where the matrix names a branded browser, the suite SHALL drive that product rather than a substitute engine, so that a result can be attributed to the browser it claims. The job SHALL fail before any test executes when a named browser cannot be provided.
+
+#### Scenario: The suite starts
+
+- **WHEN** the job runs a suite whose framework launches its own browsers
+- **THEN** every browser that suite's matrix names is already present in the job
+- **AND** no test has executed before that is true
+
+#### Scenario: The matrix names branded browsers
+
+- **WHEN** the suite runs the project it names after a branded browser
+- **THEN** that project drives the named product rather than the engine the product is built on
+- **AND** two projects naming different products do not resolve to the same binary
+
+#### Scenario: A named browser cannot be provided
+
+- **WHEN** a browser the matrix names cannot be installed or launched in the job
+- **THEN** the job fails before any test executes
+- **AND** the failure names the browser that is missing
