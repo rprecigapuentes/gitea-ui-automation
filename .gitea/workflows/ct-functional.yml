@@ -329,8 +329,11 @@ jobs:
           echo "GITEA_ADMIN_TOKEN=$admin_token" >> "$GITHUB_ENV"
           echo "admin token minted for $GITEA_ADMIN_USERNAME"
 
+      # test:parallel runs chrome/firefox/edge as three concurrent processes, the same pattern
+      # the selenium job's suites use - npm test alone would run all three in one process under
+      # the config's CI worker cap, one browser after another.
       - name: Run the suite
-        run: npm test -w @gitea-automation/${{ matrix.suite }}
+        run: npm run test:parallel -w @gitea-automation/${{ matrix.suite }}
 
       - name: Generate the Allure report
         if: always()
