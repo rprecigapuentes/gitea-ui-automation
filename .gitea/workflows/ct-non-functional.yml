@@ -1,0 +1,437 @@
+name: CT-non-functional
+
+# The three suites produce evidence a person reads; none of them gates a merge. Kept off
+# CT-functional so their duration never lands in the functional suites' path.
+on:
+  # Temporary: Gitea lists only the workflows of the default branch, so until this merges the
+  # only way to run it is a push. Remove it before the branch merges.
+  push:
+    branches: [108-wire-non-functional-suites-into-ct]
+  workflow_dispatch:
+    inputs:
+      record_baselines:
+        description: Record every visual baseline again instead of comparing against the committed ones
+        type: boolean
+        default: false
+
+# Shared with CT-functional: see the note there. The jobs below are chained on top of this, so
+# two of them never share the runner either.
+concurrency:
+  group: ct
+  cancel-in-progress: false
+
+jobs:
+  accessibility:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    # The tag tracks the @playwright/test version in package-lock.json and is bumped with it.
+    container: mcr.microsoft.com/playwright:v1.63.0-noble
+
+    services:
+      gitea-test:
+        image: docker.gitea.com/gitea:1.27.3
+        env:
+          USER_UID: "1000"
+          USER_GID: "1000"
+          GITEA__server__ROOT_URL: http://gitea-test:3000/
+          GITEA__server__HTTP_PORT: "3000"
+          GITEA__server__START_SSH_SERVER: "false"
+          GITEA__database__DB_TYPE: sqlite3
+          GITEA__security__INSTALL_LOCK: "true"
+          GITEA__security__SECRET_KEY: gitea-test-not-a-secret
+          GITEA__service__DISABLE_REGISTRATION: "false"
+          GITEA__service__REGISTER_EMAIL_CONFIRM: "false"
+
+    env:
+      GITEA_BASE_URL: http://gitea-test:3000
+      # One account per browser project, and the bundled Chromium the scans run on shares the
+      # Chrome one, which is what fixtures/credentials.ts resolves it to.
+      GITEA_OWNER_CHROME: chrome-owner
+      GITEA_OWNER_CHROME_PASSWORD: Qa-bot-not-a-secret-1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # The image ships Node 24; the repo declares >=22 <23 and has no .npmrc to enforce it.
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - run: npm ci
+
+      - name: Wait for the application under test
+        run: |
+          for _ in $(seq 1 60); do
+            curl -fsS "$GITEA_BASE_URL/api/healthz" > /dev/null && exit 0
+            sleep 2
+          done
+          echo "gitea-test never became healthy"
+          exit 1
+
+      - name: Register the browser account and mint its API token
+        # A container job's steps default to sh, which doesn't support ${!var} indirection.
+        shell: bash
+        run: |
+          register() {
+            local jar="$1" user="$2" pass="$3"
+            csrf=$(curl -fsS -c "$jar" "$GITEA_BASE_URL/user/sign_up" \
+              | sed -n 's/.*name="_csrf" value="\([^"]*\)".*/\1/p' | head -1)
+            curl -fsS -b "$jar" -o /dev/null \
+              -X POST "$GITEA_BASE_URL/user/sign_up" \
+              --data-urlencode "_csrf=$csrf" \
+              --data-urlencode "user_name=$user" \
+              --data-urlencode "email=$user@example.com" \
+              --data-urlencode "password=$pass" \
+              --data-urlencode "retype=$pass"
+            curl -fsS -u "$user:$pass" "$GITEA_BASE_URL/api/v1/user" > /dev/null
+            echo "account $user is usable"
+          }
+
+          # Gitea makes the first user of a fresh instance an administrator, so this one
+          # registers before the browser accounts and none of them inherits the privilege.
+          register "/tmp/gitea-a11y-admin.jar" "a11y-admin" "Qa-admin-not-a-secret-1"
+
+          for b in CHROME; do
+            owner_user="GITEA_OWNER_$b"; owner_pass="GITEA_OWNER_${b}_PASSWORD"
+
+            register "/tmp/gitea-$b-owner.jar" "${!owner_user}" "${!owner_pass}"
+
+            token=$(curl -fsS -u "${!owner_user}:${!owner_pass}" \
+              -H "Content-Type: application/json" \
+              -X POST "$GITEA_BASE_URL/api/v1/users/${!owner_user}/tokens" \
+              -d '{"name":"accessibility","scopes":["write:user","write:organization"]}' \
+              | node -pe 'JSON.parse(require("fs").readFileSync(0, "utf8")).sha1')
+            echo "::add-mask::$token"
+            echo "GITEA_TOKEN_$b=$token" >> "$GITHUB_ENV"
+            echo "token minted for ${!owner_user}"
+          done
+
+      - name: Scan the pages
+        run: npm run test:a11y -w @gitea-automation/playwright-native
+
+      # A scan that failed on a new violation is the one most worth summarising.
+      - name: Summarise the scans by severity
+        if: always()
+        run: npm run report:a11y -w @gitea-automation/playwright-native
+
+      - name: Generate the Allure report
+        if: always()
+        continue-on-error: true
+        run: npm run report -w @gitea-automation/playwright-native
+
+      # Four readings of one run: the raw JSON for severity triage, summary.html for the counts
+      # per impact, Allure for the verdict in the format the other suites publish, and the stock
+      # Playwright report for the same verdict with its trace viewer bundled. test-results/ holds
+      # the trace under a usable name; the report's copy of it is content-hashed.
+      - name: Upload the scans
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: accessibility-scans
+          path: |
+            services/playwright-native/reports/accessibility/
+            services/playwright-native/allure-report/
+            services/playwright-native/playwright-report/
+            services/playwright-native/test-results/
+          retention-days: 14
+
+  visual:
+    needs: accessibility
+    # needs serialises the jobs on one VPS; always() keeps this one's outcome independent.
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    # The tag tracks the @playwright/test version in package-lock.json and is bumped with it.
+    container: mcr.microsoft.com/playwright:v1.63.0-noble
+
+    services:
+      gitea-test:
+        image: docker.gitea.com/gitea:1.27.3
+        env:
+          USER_UID: "1000"
+          USER_GID: "1000"
+          GITEA__server__ROOT_URL: http://gitea-test:3000/
+          GITEA__server__HTTP_PORT: "3000"
+          GITEA__server__START_SSH_SERVER: "false"
+          GITEA__database__DB_TYPE: sqlite3
+          GITEA__security__INSTALL_LOCK: "true"
+          GITEA__security__SECRET_KEY: gitea-test-not-a-secret
+          GITEA__service__DISABLE_REGISTRATION: "false"
+          GITEA__service__REGISTER_EMAIL_CONFIRM: "false"
+
+    env:
+      GITEA_BASE_URL: http://gitea-test:3000
+      # One owner and one invited account per browser project, so the three run in parallel
+      # without sharing state.
+      GITEA_OWNER_CHROME: chrome-owner
+      GITEA_OWNER_CHROME_PASSWORD: Qa-bot-not-a-secret-1
+      GITEA_OWNER_FIREFOX: firefox-owner
+      GITEA_OWNER_FIREFOX_PASSWORD: Qa-bot-not-a-secret-1
+      GITEA_OWNER_EDGE: edge-owner
+      GITEA_OWNER_EDGE_PASSWORD: Qa-bot-not-a-secret-1
+      GITEA_INV_CHROME: inv-chrome
+      GITEA_INV_CHROME_PASSWORD: Qa-bot2-not-a-secret-1
+      GITEA_INV_FIREFOX: inv-firefox
+      GITEA_INV_FIREFOX_PASSWORD: Qa-bot2-not-a-secret-1
+      GITEA_INV_EDGE: inv-edge
+      GITEA_INV_EDGE_PASSWORD: Qa-bot2-not-a-secret-1
+      BASELINES: services/playwright-native/tests/non-functional/visual/baselines
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # The image ships Node 24; the repo declares >=22 <23 and has no .npmrc to enforce it.
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - run: npm ci
+
+      # The image bundles Chromium, Firefox and WebKit, not the branded products.
+      - name: Install the branded browsers
+        run: npx playwright install chrome msedge
+
+      - name: Wait for the application under test
+        run: |
+          for _ in $(seq 1 60); do
+            curl -fsS "$GITEA_BASE_URL/api/healthz" > /dev/null && exit 0
+            sleep 2
+          done
+          echo "gitea-test never became healthy"
+          exit 1
+
+      - name: Register the browser accounts and mint their API tokens
+        # A container job's steps default to sh, which doesn't support ${!var} indirection.
+        shell: bash
+        run: |
+          register() {
+            local jar="$1" user="$2" pass="$3"
+            csrf=$(curl -fsS -c "$jar" "$GITEA_BASE_URL/user/sign_up" \
+              | sed -n 's/.*name="_csrf" value="\([^"]*\)".*/\1/p' | head -1)
+            curl -fsS -b "$jar" -o /dev/null \
+              -X POST "$GITEA_BASE_URL/user/sign_up" \
+              --data-urlencode "_csrf=$csrf" \
+              --data-urlencode "user_name=$user" \
+              --data-urlencode "email=$user@example.com" \
+              --data-urlencode "password=$pass" \
+              --data-urlencode "retype=$pass"
+            curl -fsS -u "$user:$pass" "$GITEA_BASE_URL/api/v1/user" > /dev/null
+            echo "account $user is usable"
+          }
+
+          # Gitea makes the first user of a fresh instance an administrator, so this one
+          # registers before the browser accounts and none of them inherits the privilege.
+          register "/tmp/gitea-visual-admin.jar" "visual-admin" "Qa-admin-not-a-secret-1"
+
+          for b in CHROME FIREFOX EDGE; do
+            owner_user="GITEA_OWNER_$b"; owner_pass="GITEA_OWNER_${b}_PASSWORD"
+            inv_user="GITEA_INV_$b"; inv_pass="GITEA_INV_${b}_PASSWORD"
+
+            register "/tmp/gitea-$b-owner.jar" "${!owner_user}" "${!owner_pass}"
+            register "/tmp/gitea-$b-inv.jar" "${!inv_user}" "${!inv_pass}"
+
+            token=$(curl -fsS -u "${!owner_user}:${!owner_pass}" \
+              -H "Content-Type: application/json" \
+              -X POST "$GITEA_BASE_URL/api/v1/users/${!owner_user}/tokens" \
+              -d '{"name":"visual","scopes":["write:user","write:repository","write:issue","write:organization"]}' \
+              | node -pe 'JSON.parse(require("fs").readFileSync(0, "utf8")).sha1')
+            echo "::add-mask::$token"
+            echo "GITEA_TOKEN_$b=$token" >> "$GITHUB_ENV"
+            echo "token minted for ${!owner_user}"
+          done
+
+      # By default the suite compares against the committed baselines. A dispatch that asks, or a
+      # commit message carrying [record-baselines], records every baseline instead.
+      - name: Choose what to run
+        shell: bash
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          script=test:visual:ci
+          recording=false
+          if [ "${{ github.event.inputs.record_baselines }}" = "true" ]; then
+            script=test:visual:ci:update
+            recording=true
+          fi
+          case "$COMMIT_MESSAGE" in *"[record-baselines]"*) script=test:visual:ci:update; recording=true ;; esac
+          echo "VISUAL_SCRIPT=$script" >> "$GITHUB_ENV"
+          echo "RECORDING=$recording" >> "$GITHUB_ENV"
+          echo "running $script"
+
+      - name: Fingerprint the committed baselines
+        shell: bash
+        run: find "$BASELINES" -name '*.png' -exec sha256sum {} + | sort > /tmp/baselines-before.txt
+
+      - name: Run the suite
+        run: npm run "$VISUAL_SCRIPT" -w @gitea-automation/playwright-native
+
+      # Runs whether the suite step above passed or failed, so a missing baseline is caught even
+      # when it's the only thing wrong. A missing baseline makes Playwright write one and report
+      # that check as passed, so this is the only way to catch it; a real mismatch already failed
+      # the step above on its own.
+      - name: Fail on a baseline that was missing
+        if: always()
+        shell: bash
+        run: |
+          find "$BASELINES" -name '*.png' -exec sha256sum {} + | sort > /tmp/baselines-after.txt
+          if cmp -s /tmp/baselines-before.txt /tmp/baselines-after.txt; then
+            echo "no baseline was recorded"
+            exit 0
+          fi
+
+          recorded=$(comm -13 /tmp/baselines-before.txt /tmp/baselines-after.txt | sed -n 's/^[^ ]* .*baselines\//recorded: /p')
+
+          if [ "$RECORDING" = "true" ]; then
+            echo "$recorded"
+            exit 0
+          fi
+
+          echo "A baseline was missing and got auto-created; download the visual-baselines-linux artifact and commit it, then re-run:"
+          echo "$recorded"
+          exit 1
+
+      # A person downloads this and commits it to make it the reference.
+      - name: Upload the recorded baselines
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: visual-baselines-linux
+          path: services/playwright-native/tests/non-functional/visual/baselines/**/linux/
+          retention-days: 14
+
+      # The native report carries the expected, actual and diff images of a failing check, and
+      # test-results/ the trace of it under a name playwright show-trace can be pointed at.
+      - name: Upload the Playwright report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: playwright-report-visual
+          path: |
+            services/playwright-native/playwright-report/
+            services/playwright-native/test-results/
+          retention-days: 14
+
+  performance:
+    needs: visual
+    # Last in the chain, so the runner carries nothing else while it measures.
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    # The tag tracks the @playwright/test version in package-lock.json and is bumped with it.
+    container: mcr.microsoft.com/playwright:v1.63.0-noble
+
+    services:
+      gitea-test:
+        image: docker.gitea.com/gitea:1.27.3
+        env:
+          USER_UID: "1000"
+          USER_GID: "1000"
+          GITEA__server__ROOT_URL: http://gitea-test:3000/
+          GITEA__server__HTTP_PORT: "3000"
+          GITEA__server__START_SSH_SERVER: "false"
+          GITEA__database__DB_TYPE: sqlite3
+          GITEA__security__INSTALL_LOCK: "true"
+          GITEA__security__SECRET_KEY: gitea-test-not-a-secret
+          GITEA__service__DISABLE_REGISTRATION: "false"
+          GITEA__service__REGISTER_EMAIL_CONFIRM: "false"
+
+    env:
+      GITEA_BASE_URL: http://gitea-test:3000
+      # One account per browser project, and the bundled Chromium the measurements run on shares
+      # the Chrome one, which is what fixtures/credentials.ts resolves it to.
+      GITEA_OWNER_CHROME: chrome-owner
+      GITEA_OWNER_CHROME_PASSWORD: Qa-bot-not-a-secret-1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # The image ships Node 24; the repo declares >=22 <23 and has no .npmrc to enforce it.
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - run: npm ci
+
+      - name: Wait for the application under test
+        run: |
+          for _ in $(seq 1 60); do
+            curl -fsS "$GITEA_BASE_URL/api/healthz" > /dev/null && exit 0
+            sleep 2
+          done
+          echo "gitea-test never became healthy"
+          exit 1
+
+      - name: Register the browser account and mint its API token
+        # A container job's steps default to sh, which doesn't support ${!var} indirection.
+        shell: bash
+        run: |
+          register() {
+            local jar="$1" user="$2" pass="$3"
+            csrf=$(curl -fsS -c "$jar" "$GITEA_BASE_URL/user/sign_up" \
+              | sed -n 's/.*name="_csrf" value="\([^"]*\)".*/\1/p' | head -1)
+            curl -fsS -b "$jar" -o /dev/null \
+              -X POST "$GITEA_BASE_URL/user/sign_up" \
+              --data-urlencode "_csrf=$csrf" \
+              --data-urlencode "user_name=$user" \
+              --data-urlencode "email=$user@example.com" \
+              --data-urlencode "password=$pass" \
+              --data-urlencode "retype=$pass"
+            curl -fsS -u "$user:$pass" "$GITEA_BASE_URL/api/v1/user" > /dev/null
+            echo "account $user is usable"
+          }
+
+          # Gitea makes the first user of a fresh instance an administrator, so this one
+          # registers before the browser accounts and none of them inherits the privilege.
+          register "/tmp/gitea-perf-admin.jar" "perf-admin" "Qa-admin-not-a-secret-1"
+
+          for b in CHROME; do
+            owner_user="GITEA_OWNER_$b"; owner_pass="GITEA_OWNER_${b}_PASSWORD"
+
+            register "/tmp/gitea-$b-owner.jar" "${!owner_user}" "${!owner_pass}"
+
+            token=$(curl -fsS -u "${!owner_user}:${!owner_pass}" \
+              -H "Content-Type: application/json" \
+              -X POST "$GITEA_BASE_URL/api/v1/users/${!owner_user}/tokens" \
+              -d '{"name":"performance","scopes":["write:user","write:organization"]}' \
+              | node -pe 'JSON.parse(require("fs").readFileSync(0, "utf8")).sha1')
+            echo "::add-mask::$token"
+            echo "GITEA_TOKEN_$b=$token" >> "$GITHUB_ENV"
+            echo "token minted for ${!owner_user}"
+          done
+
+      - name: Measure the pages
+        run: npm run test:perf -w @gitea-automation/playwright-native
+
+      # A run that left a band is the one most worth summarising.
+      - name: Summarise the figures
+        if: always()
+        run: npm run report:perf -w @gitea-automation/playwright-native
+
+      - name: Generate the Allure report
+        if: always()
+        continue-on-error: true
+        run: npm run report -w @gitea-automation/playwright-native
+
+      # A band belongs to the machine that recorded it, so a run that wrote one publishes it here
+      # and a person commits it to make the runner's bands the reference.
+      - name: Upload the bands the run recorded
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-baselines-linux
+          path: services/playwright-native/tests/non-functional/performance/baselines/
+          retention-days: 14
+
+      # A run that left a band is as worth reading as one that held it, so the figures and the
+      # recording are published either way. Both land in reports/performance/, which the suite
+      # writes to rather than the test output directory: that one is removed when a test passes.
+      - name: Upload the figures and the recordings
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-metrics
+          path: |
+            services/playwright-native/reports/performance/
+            services/playwright-native/allure-report/
+            services/playwright-native/playwright-report/
+          retention-days: 14

@@ -117,7 +117,7 @@ curl -u "$BROWSERSTACK_USERNAME:$BROWSERSTACK_ACCESS_KEY" https://api.browsersta
 
 ## Continuous testing
 
-`.gitea/workflows/ct.yml` (repo root) is a second pipeline, separate from CI. It deploys a disposable
+`.gitea/workflows/ct-functional.yml` (repo root) is a second pipeline, separate from CI. It deploys a disposable
 Gitea instance and a Selenium container as service containers, registers the first account,
 mints an API token for it, and runs this suite against them.
 

@@ -1,4 +1,4 @@
-name: CT
+name: CT-functional
 
 on:
   schedule:
@@ -15,9 +15,12 @@ on:
           - gitea-selenium-cucumber
           - playwright-native
 
+# Shared with CT-non-functional: one suite occupies the VPS at a time, and the measuring
+# job reports whatever else runs beside it as the page's own cost. Queued rather than
+# cancelled, because neither workflow gates anything and a dropped run is a hole in the trend.
 concurrency:
   group: ct
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   selenium:

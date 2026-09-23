@@ -129,7 +129,7 @@ A fixture's precondition runs only for a test that names it in its signature, an
 `fixtures/organizations-fixtures.ts` holds what the organization smokes and the `@e2e` scenario of `organizations.feature` start from, extending `fixtures/fixture.ts`:
 
 - `existingOrganization` — "an organization already exists" in the Cucumber smokes: a public organization created through the API and recorded in `scenarioState`, so `cleanupCreatedOrganization` removes it.
-- `seededUsers` — the Cucumber suite's `createSeededUsers`: two users, "user 1" and "user 2", created through the admin API before the test and deleted after it, named per browser so the three browsers never share one. It needs `GITEA_ADMIN_TOKEN`, one token shared by the three browsers, and the `ct.yml` job mints it.
+- `seededUsers` — the Cucumber suite's `createSeededUsers`: two users, "user 1" and "user 2", created through the admin API before the test and deleted after it, named per browser so the three browsers never share one. It needs `GITEA_ADMIN_TOKEN`, one token shared by the three browsers, and the `ct-functional.yml` job mints it.
 - `seededOrganizationWithTeamAndRepository` — one organization with a `team-1` team and a `frontend` repository, mirroring the Cucumber hook behind its own `@team-repository` tag. `cleanupCreatedOrganization` removes it.
 
 `SMOKE_TAG` (`"@smoke"`), `TEAM_REPOSITORY_TAG` (`"@team-repository"`) and `E2E_TAG` (`"@e2e"`) mirror the Cucumber suite's own tags of those names. `ORGANIZATION_TAG` and `ORGANIZATION_NAME_PREFIX` are read by `cleanupOrganizationsBeforeRun` below, so they live in `fixture.ts` next to it; this file re-exports them, so a spec still needs one import.
@@ -207,7 +207,7 @@ That is a reading of the findings against the standard, never a conformance clai
 
 A scan asserts a sorted `rule<tab>target` fingerprint against `tests/non-functional/accessibility/baselines/`, so it fails on a violation the baseline does not record rather than on the ones the application already has. One baseline per page, shared by the three browsers.
 
-A baseline only matches the application it was recorded against, so record it against a disposable Gitea seeded the way `.gitea/workflows/accessibility.yml` seeds one:
+A baseline only matches the application it was recorded against, so record it against a disposable Gitea seeded the way the `accessibility` job of `.gitea/workflows/ct-non-functional.yml` seeds one:
 
 ```bash
 docker network create a11y-net
@@ -282,14 +282,14 @@ A screenshot is pixel-exact for one browser on one platform, so baselines are st
 
 ### Workflow
 
-`.gitea/workflows/visual.yml` runs the suite against a disposable Gitea, in two jobs so that a view added later needs no manual round trip:
+The `visual` job of `.gitea/workflows/ct-non-functional.yml` runs the suite against a disposable Gitea:
 
 1. `baselines` runs the suite with `--update-snapshots=missing`. Playwright writes a baseline that does not exist and leaves the others alone, but it also fails the test that lacked one, so the job decides by fingerprinting the baseline folder before and after: if a file was written, the job uploads `visual-baselines-linux` and succeeds. If nothing was written, this job's run is the verdict and it uploads `playwright-report-visual`.
 2. `visual` runs only when the first recorded something. It downloads those baselines over the committed ones, compares, and uploads `playwright-report-visual`. When nothing was missing it does not run, and Gitea shows it as skipped.
 
 A dispatch with `record_baselines`, or a commit message carrying `[record-baselines]`, rewrites every baseline, which is what an intentional change to the interface needs.
 
-The workflow commits nothing. A view whose baseline was recorded in a run is compared with that same recording, which shows it renders stably but not that it has not regressed; regressions are caught once a person commits `visual-baselines-linux`. While the branch is unmerged the workflow also carries a temporary `push` trigger, since Gitea lists only the default branch's workflows; it is removed before the merge. Like the accessibility scans it is never part of `ct.yml`.
+The workflow commits nothing. A view whose baseline was recorded in a run is compared with that same recording, which shows it renders stably but not that it has not regressed; regressions are caught once a person commits `visual-baselines-linux`. Like the accessibility scans and the measurements it runs on `ct-non-functional.yml`, never on `ct-functional.yml`, so its duration never lands in the functional suites' path.
 
 ## Performance metrics
 
@@ -351,4 +351,4 @@ A page with no band has one written by the run and the run fails, so a missing b
 
 ### Workflow
 
-`.gitea/workflows/performance.yml` runs the suite against a disposable Gitea, dispatched by hand, and publishes `performance-metrics`: the JSON, the recordings and the Allure report, whether the run held its bands or left them. Its concurrency group cancels a run still in progress, because two measurements on one machine are not measurements. Like the other two non-functional suites it is never part of `ct.yml`.
+The `performance` job of `.gitea/workflows/ct-non-functional.yml` runs the suite against a disposable Gitea and publishes `performance-metrics`: the JSON, the recordings and the Allure report, whether the run held its bands or left them. It is the last job in the chain, so nothing else occupies the runner while it measures, and the workflow shares one concurrency group with `ct-functional.yml` for the same reason: two measurements on one machine are not measurements.
