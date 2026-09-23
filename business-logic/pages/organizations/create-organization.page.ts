@@ -14,6 +14,7 @@ export class CreateOrganizationPage extends BasePage {
     orgNameLabel: '[for="org_name"]',
     orgNameInput: "#org_name",
     orgNameHelpText: ".help",
+    errorMessage: ".tw-text-center",
     // Visibility
     visibilityLabel: '[for="visibility"]',
     publicVisibilityRadio: "#_aria_label_input_1",
@@ -164,5 +165,9 @@ export class CreateOrganizationPage extends BasePage {
     await this.selectVisibility(visibility);
     await this.setPermissions(permissions);
     await this.clickCreateOrganizationButton();
+  }
+
+  getVolatileRegions(): string[] {
+    return [this.locators.errorMessage, this.locators.orgNameInput];
   }
 }
