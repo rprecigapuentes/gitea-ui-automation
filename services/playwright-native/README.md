@@ -347,7 +347,7 @@ A timing differs on every run, so a measurement is judged against a band rather 
 
 A page with no band has one written by the run and the run fails, so a missing band is never a silent pass. Delete the file and run again to re-approve one.
 
-**A band belongs to the machine that recorded it.** A workstation is faster than the workflow's runner, so a band recorded here sits below what the runner reaches and fails every run. The committed bands are the runner's, recorded by a dispatch of `performance.yml` and committed by a person after reading them.
+**A band belongs to the machine that recorded it.** A workstation is faster than the workflow's runner, so a band recorded here sits below what the runner reaches and fails every run. The committed bands are the runner's: a run that recorded one publishes it as `performance-baselines-linux`, and a person downloads that artifact into `tests/non-functional/performance/baselines/` and commits it after reading it.
 
 ### Workflow
 

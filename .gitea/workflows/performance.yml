@@ -113,6 +113,16 @@ jobs:
         continue-on-error: true
         run: npm run report -w @gitea-automation/playwright-native
 
+      # A band belongs to the machine that recorded it, so a run that wrote one publishes it here
+      # and a person commits it to make the runner's bands the reference.
+      - name: Upload the bands the run recorded
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-baselines-linux
+          path: services/playwright-native/tests/non-functional/performance/baselines/
+          retention-days: 14
+
       # A run that left a band is as worth reading as one that held it, so the figures and the
       # recording are published either way. Both land in reports/performance/, which the suite
       # writes to rather than the test output directory: that one is removed when a test passes.
