@@ -71,6 +71,10 @@ section is added on purpose and has to be re-applied after every Playwright upgr
 rules of its own: the rules live in OpenSpec, and this points at them so there is one place to
 change them.
 
+That upgrade can also write a fresh empty `services/playwright-native/tests/seed.spec.ts`, because
+the server writes one wherever it finds no starting state. Delete it. The starting states live in
+`services/playwright-native/tests/seeds/`, and they are re-applied with this section.
+
 Before writing any test, read all three:
 
 - `openspec/config.yaml`, whose `context` block states the architecture this repository enforces.
@@ -89,6 +93,17 @@ Obey what they say. The consequences that will otherwise cost you the whole file
   object. Say in your summary which method you would add and to which file, and use the closest
   existing method meanwhile. Never inline a locator in the spec to get around a gap.
 - Test data comes from the data handler, not from literals typed into the test.
+- Values a fixture owns are read from the fixtures, never from what was on screen. The starting
+  state you were given declares them: read that file, declare the same fixtures in the test, and
+  take the owner, the repository and any seeded entity from there. A repository name written into
+  the test as a literal is a review blocker, because the pipeline runs against an instance that
+  has never heard of it.
+- Credentials are resolved per browser as the suites resolve them, through
+  `resolveOwnerCredentials(testInfo.project.name)` or `sessionManager`. No account name and no
+  password appears in a generated test.
+- A starting state that already signed in has done that work: the test does not sign in again. Use
+  the signed-out starting state only when signing in is the scenario's own subject, and name it by
+  path when you set the page up.
 
 The example above is the stock one and shows `page.click` in a spec. That example does not apply
 here. Follow the rules in this section where the two disagree.
