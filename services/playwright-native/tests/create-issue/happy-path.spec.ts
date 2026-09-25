@@ -48,7 +48,7 @@ test.describe("Create Issue", () => {
 
     await expect(page).toHaveURL(new RegExp(`/${OWNER}/${REPO}/issues/\\d+$`));
     await expect(page.getByRole("heading", { level: 1 })).toContainText(title);
-    await expect(page.locator("article").first()).toContainText(description);
+    await expect(page.getByRole("article").first()).toContainText(description);
     await expect(page.getByText("Open", { exact: true }).first()).toBeVisible();
 
     // 7. Navigate to http://localhost:3000/chrome-owner/agent-baseline/issues
