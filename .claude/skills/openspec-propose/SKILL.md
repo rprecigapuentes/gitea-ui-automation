@@ -160,3 +160,19 @@ After completing all artifacts, summarize:
 - Ask about ambiguities that would materially change scope, externally observable behavior, compatibility, or acceptance criteria; for minor details, make reasonable assumptions and record them
 - If a change with that name already exists, ask if user wants to continue it or create a new one
 - Verify each artifact file exists after writing before proceeding to next
+
+## Local addition: proposing against observed behaviour
+
+Not part of the generated skill. Re-apply after `openspec update`, which rewrites this file.
+
+The application under test is Gitea, which is third-party. A proposal that describes what the UI does, without anyone having looked, is a guess that later becomes a requirement.
+
+Before drafting artifacts for a change that touches the UI, delegate to the `playwright-test-planner` subagent to see the real application, unless the behaviour is already recorded in the repository from earlier work. Its prompt carries the URL, the scope, and the instruction to read `.env` for `GITEA_OWNER_CHROME` and `GITEA_OWNER_CHROME_PASSWORD`. It inherits nothing else.
+
+Where the findings go, and where they do not:
+
+- Inside the change, as exploration material. They record what the application does and are archived with it.
+- Never as a `test-plan.md`. The scenario is written once, in a `.feature` file. A scenario written in the specs, in a plan file and in Gherkin is three copies that drift apart, and the first reviewer to notice will ask which one is true.
+- Never into the specs as application behaviour. Specs here describe the automation framework. A sentence that would still be true against a different framework belongs in a `.feature`, and one that would still be true against a different application under test belongs in the specs.
+
+Keep the distinction visible while drafting: what was observed in the browser, and what is still assumed.

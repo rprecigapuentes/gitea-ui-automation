@@ -345,3 +345,17 @@ But this summary is optional. Sometimes the thinking IS the value.
 - **Do visualize** - A good diagram is worth many paragraphs
 - **Do explore the codebase** - Ground discussions in reality
 - **Do question assumptions** - Including the user's and your own
+
+## Local addition: exploring the application under test
+
+Not part of the generated skill. Re-apply after `openspec update`, which rewrites this file.
+
+This repository automates a third-party application, Gitea, that nobody here controls. So a question about how the application behaves cannot be answered by reading this codebase, and guessing at it is how a wrong specification gets written.
+
+When the work touches the UI and the answer depends on what Gitea actually does, delegate to the `playwright-test-planner` subagent instead of assuming. Typical cases: which fields a form really has, whether a value is validated on the client or the server, what a list shows when it is empty, which states a control moves through.
+
+The subagent inherits none of this conversation. Its prompt carries the URL of the running instance, the scope of what to explore, and the instruction to read `.env` for `GITEA_OWNER_CHROME` and `GITEA_OWNER_CHROME_PASSWORD` rather than being handed credentials in the text.
+
+What comes back is exploration material and belongs inside the change, beside the artifacts it informed. It is not a specification and not a test plan: the scenario itself is written once, in a `.feature` file, which is where this repository keeps the behaviour of the application under test.
+
+Two things to carry back into the conversation. Say which claims came from the browser and which are still assumption, because a plan that hides that distinction reads as more certain than it is. And report any data the exploration left behind, since the suites here seed and clean their own state and a stray record is a defect in what the change assumes.

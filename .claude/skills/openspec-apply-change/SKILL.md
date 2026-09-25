@@ -189,3 +189,19 @@ This skill supports the "actions on a change" model:
 
 - **Can be invoked anytime**: Before all artifacts are done (if tasks exist), after partial implementation, interleaved with other actions
 - **Allows artifact updates**: If implementation reveals design issues, suggest updating artifacts - not phase-locked, work fluidly
+
+## Local addition: generating and repairing UI tests
+
+Not part of the generated skill. Re-apply after `openspec update`, which rewrites this file.
+
+A task that adds or changes a UI test is delegated to the `playwright-test-generator` subagent rather than written by hand, so the test is exercised against the running application as it is produced instead of being asserted into existence.
+
+The subagent inherits none of this configuration, so its prompt carries all of it: the target file, the scenario with its steps and expectations, the seed file, and the instruction to read `openspec/config.yaml` and `openspec/specs/page-objects/spec.md` and obey them before writing anything.
+
+Review what comes back against those same rules, because the prompt is a request and not a guarantee:
+
+- A spec that calls `page.goto`, `page.locator`, `page.getBy*`, `driver.findElement` or `driver.wait` is regenerated with that failure named, never patched into shape. Patching it teaches nothing and the next generation repeats it.
+- A spec reaches the browser only through `pageObjects.<page>.<method>()`, and imports `test` and `expect` from the service's own fixtures.
+- Where the generator reports that no page-object method fits, the method is added to the page object as part of this task. That report is useful output, not a failure.
+
+When a UI test then fails, decide the cause before reaching for a repair. If the test is wrong, hand `playwright-test-healer` that one file, scoped to it so the rest of the suite is left alone, and review its fix like any other: a repair that reaches past a page object is rejected even though the test turns green. If the application is wrong, the test stays red and the defect is reported. A healer pointed at a real regression hides it.
