@@ -9,4 +9,9 @@ allure-report/
 local.log
 
 # Claude Code
-.claude/
+# Contents, not the directory itself: git will not descend into an excluded
+# directory, so `.claude/` would make the negation below unreachable.
+.claude/*
+# The Playwright agent definitions are a deliverable, not local configuration:
+# they are what teaches an agent this framework's architecture, so they ship.
+!.claude/agents/

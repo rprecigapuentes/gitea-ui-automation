@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "playwright-test": {
+      "command": "wsl",
+      "args": [
+        "-d",
+        "ubuntu-26.04",
+        "--",
+        "bash",
+        "-lc",
+        "cd ~/jalasoft/gui-testing/gitea-ui-automation && exec npx playwright run-test-mcp-server -c services/playwright-native/playwright.config.ts"
+      ]
+    }
+  }
+}
