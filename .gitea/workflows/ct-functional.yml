@@ -14,6 +14,7 @@ on:
           - gitea-selenium-vitest
           - gitea-selenium-cucumber
           - playwright-native
+          - playwright-bdd
 
 concurrency:
   group: ct-functional
@@ -199,7 +200,8 @@ jobs:
     if: >-
       always() && (github.event_name != 'workflow_dispatch'
       || github.event.inputs.suite == 'all'
-      || github.event.inputs.suite == 'playwright-native')
+      || github.event.inputs.suite == 'playwright-native'
+      || github.event.inputs.suite == 'playwright-bdd')
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     # The tag tracks the @playwright/test version in package-lock.json and is bumped with it.
@@ -208,9 +210,15 @@ jobs:
     strategy:
       fail-fast: false
       max-parallel: 1
+      # One suite after the other, each on its own gitea-test. act_runner plans the matrix before
+      # any job output exists, so a dispatch naming one suite has to shrink it here.
       matrix:
-        # playwright-bdd joins this list when it exposes a test script.
-        suite: [playwright-native]
+        suite: >-
+          ${{ fromJSON(
+          github.event.inputs.suite == 'playwright-native' && '["playwright-native"]'
+          || github.event.inputs.suite == 'playwright-bdd' && '["playwright-bdd"]'
+          || '["playwright-native","playwright-bdd"]'
+          ) }}
 
     services:
       gitea-test:
@@ -329,17 +337,17 @@ jobs:
           echo "GITEA_ADMIN_TOKEN=$admin_token" >> "$GITHUB_ENV"
           echo "admin token minted for $GITEA_ADMIN_USERNAME"
 
-      - name: Run the suite
+      - name: Run the suite (${{ matrix.suite }})
         run: npm test -w @gitea-automation/${{ matrix.suite }}
 
-      - name: Generate the Allure report
+      - name: Generate the Allure report (${{ matrix.suite }})
         if: always()
         continue-on-error: true
         run: npm run report -w @gitea-automation/${{ matrix.suite }}
 
       # test-results/ holds the video and the trace of a retried test, and is absent when
       # nothing failed, which the upload warns about rather than fails on.
-      - name: Upload the report
+      - name: Upload the report (${{ matrix.suite }})
         if: always()
         uses: actions/upload-artifact@v3
         with:

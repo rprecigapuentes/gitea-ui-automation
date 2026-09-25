@@ -2,5 +2,33 @@
   "name": "@gitea-automation/playwright-bdd",
   "version": "0.0.0",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "scripts": {
+    "bddgen": "bddgen",
+    "test": "npm run test:parallel",
+    "test:chrome": "bddgen && node scripts/run-with-report.mjs npm run run:chrome",
+    "test:firefox": "bddgen && node scripts/run-with-report.mjs npm run run:firefox",
+    "test:edge": "bddgen && node scripts/run-with-report.mjs npm run run:edge",
+    "test:parallel": "bddgen && node scripts/run-with-report.mjs concurrently -n chrome,firefox,edge -c blue,yellow,cyan \"npm:run:chrome\" \"npm:run:firefox\" \"npm:run:edge\"",
+    "run:chrome": "cross-env BROWSER=chrome playwright test --project=chrome --workers=1",
+    "run:firefox": "cross-env BROWSER=firefox playwright test --project=firefox --workers=1",
+    "run:edge": "cross-env BROWSER=edge playwright test --project=edge --workers=1",
+    "report": "allure generate ./allure-results",
+    "report:open": "allure open ./allure-report/",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@gitea-automation/business-logic": "*",
+    "@gitea-automation/core-page-objects": "*",
+    "dotenv": "^17.4.2"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^22.20.3",
+    "allure": "^3.18.0",
+    "allure-playwright": "^3.12.2",
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
+    "playwright-bdd": "^9.2.1"
+  }
 }
