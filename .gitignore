@@ -7,6 +7,9 @@ reports/
 allure-results/
 allure-report/
 local.log
+# Console logs and page snapshots the Playwright test MCP server drops as the
+# agents explore. Working material for one run, never worth a commit.
+.playwright-mcp/
 
 # Claude Code
 # Contents, not the directory itself: git will not descend into an excluded

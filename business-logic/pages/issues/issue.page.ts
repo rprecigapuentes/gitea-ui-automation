@@ -4,6 +4,7 @@ import { baseUrl } from "@gitea-automation/core-config/gitea.config";
 import { SidebarComboFragment } from "./fragments/sidebar-combo.fragment";
 import { labelIdFromHref } from "./fragments/label-chip.fragment";
 
+const renderedBody = ".issue-content-comment .render-content.markup";
 const WAIT_TIMEOUT_MS = 10000;
 const INSTANT = 0;
 
@@ -19,7 +20,8 @@ export class IssuePage extends BasePage {
     title: "#issue-title-display h1",
     titleIndex: "#issue-title-display h1 .index",
     stateLabel: ".issue-state-label",
-    renderedBody: ".issue-content-comment .render-content.markup",
+    renderedBody: renderedBody,
+    emptyBody: `${renderedBody} .no-content`,
     dueDate: ".due-date",
     dueDateInput: "form.issue-due-form input[name='deadline']",
     dueDateSubmit: "form.issue-due-form button",
@@ -116,6 +118,12 @@ export class IssuePage extends BasePage {
 
   async getRenderedBody(): Promise<string> {
     return (await this.findElement(this.locators.renderedBody)).getText();
+  }
+
+  // An issue created without a description still renders the comment body, holding a placeholder
+  // instead of the description, so the absence is read from that placeholder and not from the body.
+  async hasNoDescription(): Promise<boolean> {
+    return this.isVisible(this.locators.emptyBody);
   }
 
   async getMilestoneName(): Promise<string> {
