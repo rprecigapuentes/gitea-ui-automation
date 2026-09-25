@@ -101,9 +101,10 @@ Obey what they say. The consequences that will otherwise cost you the whole file
 - Credentials are resolved per browser as the suites resolve them, through
   `resolveOwnerCredentials(testInfo.project.name)` or `sessionManager`. No account name and no
   password appears in a generated test.
-- A starting state that already signed in has done that work: the test does not sign in again. Use
-  the signed-out starting state only when signing in is the scenario's own subject, and name it by
-  path when you set the page up.
+- A starting state signs you in for the exploration only. The test you emit runs in a fresh browser
+  of its own, so it establishes the same session through `sessionManager`, never by driving the
+  sign-in form. Use the signed-out starting state only when signing in is the scenario's own
+  subject, and name it by path when you set the page up.
 
 The example above is the stock one and shows `page.click` in a spec. That example does not apply
 here. Follow the rules in this section where the two disagree.

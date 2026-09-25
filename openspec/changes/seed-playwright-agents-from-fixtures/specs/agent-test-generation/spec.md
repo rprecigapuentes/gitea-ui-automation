@@ -40,7 +40,7 @@ The framework SHALL offer a starting state for a signed-in session inside a repo
 
 - **WHEN** a scenario's subject is anything the framework reaches while signed in
 - **THEN** it is explored from the signed-in starting state, already inside a repository the fixtures own
-- **AND** the generated test contains no sign-in steps of its own
+- **AND** the generated test establishes that session through the framework's session manager, not by driving the sign-in form
 
 #### Scenario: A scenario names no starting state
 

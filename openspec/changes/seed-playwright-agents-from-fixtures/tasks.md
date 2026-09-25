@@ -25,12 +25,12 @@
 
 ## 3. Prove it end to end
 
-- [ ] 3.1 Regenerate the issue-creation scenario of #125 from the default starting state. Verify the
+- [x] 3.1 Regenerate the issue-creation scenario of #125 from the default starting state. Verify the
       emitted file declares `owner` and `repository` as fixtures, contains no `agent-baseline` and no
       sign-in steps, and passes under `--project=chrome` against a repository the fixtures created.
       The file is evidence: it stays in the branch history, not in the merged diff, as
       `openspec/changes/archive` already does for the #125 specs.
-- [ ] 3.2 Generate a sign-in scenario from `tests/seeds/anonymous.spec.ts`, naming it in the plan.
+- [x] 3.2 Generate a sign-in scenario from `tests/seeds/anonymous.spec.ts`, naming it in the plan.
       Verify the plan records that path as its seed and the emitted test performs the sign-in itself.
-- [ ] 3.3 Run `npm run format`, `npm run lint` and `npm run typecheck`, the three checks the pipeline
+- [x] 3.3 Run `npm run format`, `npm run lint` and `npm run typecheck`, the three checks the pipeline
       runs, and verify all three pass.
