@@ -18,5 +18,7 @@ local.log
 # Playwright agents
 # Machine-specific: copy .mcp.json.example and adjust it for your checkout.
 .mcp.json
-specs/
+# The plans the agents write, at the root. Anchored: a change's delta specs live under
+# openspec/changes/<change>/specs/ and are tracked.
+/specs/
 .playwright-mcp/
