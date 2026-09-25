@@ -9,4 +9,16 @@ allure-report/
 local.log
 
 # Claude Code
-.claude/
+# Contents, not the directory itself: git will not descend into an excluded
+# directory, so `.claude/` would make the negations below unreachable.
+.claude/*
+!.claude/agents/
+!.claude/skills/
+
+# Playwright agents
+# Machine-specific: copy .mcp.json.example and adjust it for your checkout.
+.mcp.json
+# The plans the agents write, at the root. Anchored: a change's delta specs live under
+# openspec/changes/<change>/specs/ and are tracked.
+/specs/
+.playwright-mcp/

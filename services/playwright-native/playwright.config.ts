@@ -70,9 +70,19 @@ export default defineConfig({
   },
 
   projects: [
+    /* The starting states the Playwright agents are handed. Its own testDir, because the MCP server
+       runs a starting state through this runner and the suites below ignore that directory. First in
+       the list, because the server takes the first top-level project when an agent names none. The
+       name ends in the browser so `resolveOwnerCredentials` finds that browser's account. */
+    {
+      name: "seeds-chrome",
+      testDir: "./tests/seeds",
+      use: { ...devices["Desktop Chrome"], channel: "chrome" },
+    },
+
     ...browsers.map((browser) => ({
       ...browser,
-      testIgnore: "**/non-functional/**",
+      testIgnore: ["**/non-functional/**", "**/seeds/**"],
       use: { ...browser.use, video: "on-first-retry" as const },
     })),
 
