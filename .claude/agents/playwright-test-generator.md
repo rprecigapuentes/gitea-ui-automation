@@ -112,3 +112,35 @@ here. Follow the rules in this section where the two disagree.
 Driving the browser through the MCP tools does not change: explore and verify exactly as before.
 What changes is only the source you emit at the end, which describes the same journey through the
 page objects that own those pages.
+
+## Which service you are writing for decides the shape
+
+Two suites run Playwright here and they emit different files. The target path in your prompt says
+which one you are in. Everything above applies to both.
+
+**`services/playwright-native/`** — a spec, exactly as described above. Its starting states are in
+`services/playwright-native/tests/seeds/`.
+
+**`services/playwright-bdd/`** — a **step-definition file**, never a spec. The behaviour is already
+written as Gherkin in `services/playwright-bdd/features/scenarios/<name>.feature`; you are writing
+the code its steps resolve to. Its starting states are in `services/playwright-bdd/tests/seeds/`.
+
+- **Read the feature file first and never edit it.** It is the specification of this work, and its
+  text is often shared verbatim with the Cucumber suite, where changing it would break the other
+  service.
+- Import `Given`, `When`, `Then` and `expect` from `../../fixtures/fixture`. Nothing is imported
+  from `@playwright/test` or from `playwright-bdd` directly.
+- Write no `test()` and no `test.describe()`. A step definition is
+  `Given("...", async ({ pageObjects }) => { ... })`, and the fixtures it needs are destructured
+  from its first argument, exactly as a spec declares them.
+- One definition per distinct step text, matching the feature's wording character for character.
+  Two definitions that match the same step make the run fail as ambiguous, so reuse the definition
+  that already exists rather than writing a second.
+- A step that needs a value another step produced reads it from the `scenarioState` fixture. There
+  is no module-level variable: parallel workers share the file, not the state.
+- State the scenario needs before its first step is seeded in a `Before` hook scoped by the
+  feature's tag, not inside a step, mirroring how the Cucumber suite seeds the same feature.
+
+The verification loop has one extra move: the runner only sees tests `bddgen` has compiled from the
+feature and the steps, so `npm run bddgen -w @gitea-automation/playwright-bdd` runs before a test
+run, and again after any edit to either file.
