@@ -42,14 +42,13 @@
       `features/step-definitions/create-issue.steps.ts` on the first try, and the file it wrote has
       no `test()`, imports from `../../fixtures/fixture`, and carries one definition per step text.
       `bddgen` compiled all seven with none undefined or ambiguous, and the scenario passes on
-      chrome, firefox and edge.
-
-      The run found the gap task 2.1 could not: `ScenarioState.createdIssue` had no `description`,
-              so the generator obeyed both the feature and the `scenarioState` rule through a local cast.
-              `business-logic/state/scenario.entity.ts` gained the field and the step file dropped the
-              cast.
-
-- [x] 4.3 Run `npm run format`, `npm run lint` and `npm run typecheck`, the three checks the
-      pipeline runs, and verify all three pass.
+      chrome, firefox and edge. The run also found the gap task 2.1 could not:
+      `ScenarioState.createdIssue` had no `description`, so the generator obeyed both the feature
+      and the `scenarioState` rule through a local cast. `business-logic/state/scenario.entity.ts`
+      gained the field and the step file dropped the cast.
+- [x] 4.3 Run `npm run format:check`, `npm run lint` and `npm run typecheck`, the three checks the
+      pipeline runs, and verify all three pass. `format:check`, not `format`, which rewrites and so
+      always succeeds — and prettier is not idempotent on a list item holding two paragraphs, so a
+      file it just wrote can still fail the check.
 - [x] 4.4 Rewrite `services/playwright-bdd/README.md`, which still described the workspace as not
       started, and record there how to point the agents at this service.
