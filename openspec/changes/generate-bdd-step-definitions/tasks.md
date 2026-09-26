@@ -36,10 +36,19 @@
       `node_modules/playwright/lib/mcp/test/generatorTools.js`: it writes the agent's text verbatim
       without inspecting it, and refuses only a path outside every project's `testDir`. Task 1.1
       resolves the path half; nothing in the tool objects to the content.
-- [ ] 4.2 Run the generator against a `playwright-bdd` scenario end to end and verify the emitted
-      file is a step-definition file that passes after `bddgen`. Needs `.mcp.json` pointed at this
-      service's config and the editor restarted, so it lands with the first migrated feature rather
-      than here.
+- [x] 4.2 Run the generator against a `playwright-bdd` scenario end to end and verify the emitted
+      file is a step-definition file that passes after `bddgen`. Run against `create-issue.feature`
+      with `.mcp.json` pointed at this service's config: `generator_write_test` took
+      `features/step-definitions/create-issue.steps.ts` on the first try, and the file it wrote has
+      no `test()`, imports from `../../fixtures/fixture`, and carries one definition per step text.
+      `bddgen` compiled all seven with none undefined or ambiguous, and the scenario passes on
+      chrome, firefox and edge.
+
+      The run found the gap task 2.1 could not: `ScenarioState.createdIssue` had no `description`,
+              so the generator obeyed both the feature and the `scenarioState` rule through a local cast.
+              `business-logic/state/scenario.entity.ts` gained the field and the step file dropped the
+              cast.
+
 - [x] 4.3 Run `npm run format`, `npm run lint` and `npm run typecheck`, the three checks the
       pipeline runs, and verify all three pass.
 - [x] 4.4 Rewrite `services/playwright-bdd/README.md`, which still described the workspace as not
