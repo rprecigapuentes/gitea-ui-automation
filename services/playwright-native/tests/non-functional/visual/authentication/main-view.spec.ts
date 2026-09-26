@@ -1,7 +1,7 @@
 import {
   resolveInvitedCredentials,
   resolveOwnerCredentials,
-} from "../../../../fixtures/credentials";
+} from "@gitea-automation/core-playwright/fixtures/credentials";
 import { expect, test } from "../../../../fixtures/visual.fixture";
 
 test("Main view smoke: the main view looks the same for two accounts", async ({

@@ -1,28 +1,23 @@
 import { createBdd, test as base } from "playwright-bdd";
-import type { IInteractionStrategy } from "@gitea-automation/core-page-objects/interaction-strategy.interface";
-import { InteractionStrategyFactory } from "@gitea-automation/core-page-objects/interaction-strategy.factory";
-import { PageFactory } from "@gitea-automation/business-logic/pages/page.factory";
-import type { ScenarioState } from "@gitea-automation/business-logic/state/scenario.entity";
-import { resolveOwnerCredentials, type Credentials } from "./credentials";
+import {
+  coreFixtures,
+  type CoreFixtures,
+} from "@gitea-automation/core-playwright/fixtures/base.fixtures";
+import {
+  resolveOwnerCredentials,
+  type Credentials,
+} from "@gitea-automation/core-playwright/fixtures/credentials";
 
-interface CustomFixtures {
-  strategy: IInteractionStrategy;
-  pageObjects: PageFactory;
-  scenarioState: ScenarioState;
+interface BddFixtures {
   ownerCredentials: Credentials;
 }
 
-export const test = base.extend<CustomFixtures>({
-  strategy: async ({ page }, use) => {
-    await use(InteractionStrategyFactory.playwright(page));
-  },
-  scenarioState: async ({}, use) => {
-    const scenarioState: ScenarioState = {};
-    await use(scenarioState);
-  },
-  pageObjects: async ({ strategy, scenarioState }, use) => {
-    await use(new PageFactory(strategy, scenarioState));
-  },
+/* The same fixtures `playwright-native` runs on, extended onto playwright-bdd's own base rather
+   than @playwright/test's, which is why `core/playwright/fixtures` exports implementations and
+   each service calls `.extend()` itself. */
+export const test = base.extend<CoreFixtures & BddFixtures>({
+  ...coreFixtures,
+
   ownerCredentials: async ({}, use, testInfo) => {
     await use(resolveOwnerCredentials(testInfo.project.name));
   },
