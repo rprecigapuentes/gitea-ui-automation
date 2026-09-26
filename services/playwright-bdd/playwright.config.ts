@@ -36,12 +36,31 @@ export default defineConfig({
     headless: process.env.HEADED ? false : undefined,
   },
 
-  projects: browsers.map((browser) => ({
-    ...defineBddProject({
-      name: browser.name,
-      features: "features/scenarios/*.feature",
-      steps: ["features/step-definitions/*.ts", "fixtures/fixture.ts"],
-    }),
-    use: { ...browser.use, video: "on-first-retry" as const },
-  })),
+  projects: [
+    /* The starting states the Playwright agents are handed. Not a BDD project: the MCP server runs
+       a starting state through this runner directly, before any feature exists for it. First in the
+       list, because the server takes the first top-level project when an agent names none. The name
+       ends in the browser so `resolveOwnerCredentials` finds that browser's account.
+
+       `testDir` is the service root with an explicit `testMatch`, rather than the seeds directory,
+       because the server refuses to write a generated file outside every project's `testDir` and a
+       step definition belongs in `features/step-definitions/`, beside the feature it resolves and
+       where the Cucumber service keeps its own. The match is what decides that this project still
+       runs only the two starting states. */
+    {
+      name: "seeds-chrome",
+      testDir: ".",
+      testMatch: "tests/seeds/*.spec.ts",
+      use: { ...devices["Desktop Chrome"], channel: "chrome" },
+    },
+
+    ...browsers.map((browser) => ({
+      ...defineBddProject({
+        name: browser.name,
+        features: "features/scenarios/*.feature",
+        steps: ["features/step-definitions/*.ts", "fixtures/fixture.ts"],
+      }),
+      use: { ...browser.use, video: "on-first-retry" as const },
+    })),
+  ],
 });
