@@ -5,7 +5,10 @@ import {
   ORGANIZATION_TAG,
   E2E_TAG,
 } from "../fixtures/organizations-fixtures";
-import { resolveInvitedCredentials, resolveOwnerCredentials } from "../fixtures/credentials";
+import {
+  resolveInvitedCredentials,
+  resolveOwnerCredentials,
+} from "@gitea-automation/core-playwright/fixtures/credentials";
 import { OrgTab } from "@gitea-automation/business-logic/pages/organizations/fragments/org-navigation.fragment";
 import type { Organization } from "@gitea-automation/business-logic/entities/organization.entity";
 import type { Team } from "@gitea-automation/business-logic/entities/team.entity";
