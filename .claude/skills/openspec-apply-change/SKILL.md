@@ -205,3 +205,14 @@ Review what comes back against those same rules, because the prompt is a request
 - Where the generator reports that no page-object method fits, the method is added to the page object as part of this task. That report is useful output, not a failure.
 
 When a UI test then fails, decide the cause before reaching for a repair. If the test is wrong, hand `playwright-test-healer` that one file, scoped to it so the rest of the suite is left alone, and review its fix like any other: a repair that reaches past a page object is rejected even though the test turns green. If the application is wrong, the test stays red and the defect is reported. A healer pointed at a real regression hides it.
+
+### When the task targets `services/playwright-bdd`
+
+The behaviour belongs to a `.feature` file and the generator writes only the step definitions it resolves to. Write or copy the feature first, then delegate, and say in the prompt that the feature is the specification and is not to be edited.
+
+The runner never sees a `.feature`. It runs what `bddgen` compiles from the feature and the steps, so `npm run bddgen -w @gitea-automation/playwright-bdd` runs after any edit to either, and before the healer is handed anything. The healer has no shell of its own: given a stale build it diagnoses the previous version of the test and its repair will not make sense.
+
+Two failures particular to this service, neither of which is a locator problem, so neither is the healer's to fix:
+
+- A step reported as undefined means the definition's text and the feature's wording differ. Correct the definition, never the feature.
+- A step reported as ambiguous means two definitions match it. Delete the duplicate and reuse the one that was already there.
