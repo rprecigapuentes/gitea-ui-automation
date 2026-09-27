@@ -2,14 +2,14 @@
 
 ## 1. Give the service the fixtures the board scenarios seed from
 
-- [ ] 1.1 Extend `services/playwright-bdd/fixtures/fixture.ts` with `organizationsFixtures` and then
+- [x] 1.1 Extend `services/playwright-bdd/fixtures/fixture.ts` with `organizationsFixtures` and then
       `projectBoardFixtures`, in that order — the second is typed over `OrganizationsFixtures`, so a
       reversed chain does not compile. Leave `organizationCleanupFixtures` out: both members are
       `auto` and would build the eight API clients for every scenario of the service. Verify with
       `npm run typecheck -w @gitea-automation/playwright-bdd`, and by running the suite's six
       existing tests on all three browsers — a fixture no step declares must cost `login` and
       `create-issue` nothing.
-- [ ] 1.2 Replace the comment in that file that predicts these groups "arrive as tag-scoped hooks
+- [x] 1.2 Replace the comment in that file that predicts these groups "arrive as tag-scoped hooks
       with the first scenario that seeds an organization". The board scenarios seed and tear down
       through the fixture instead. Verify the new text names what is actually true and what a hook
       is still owed to.
