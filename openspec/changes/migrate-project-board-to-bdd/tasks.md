@@ -44,12 +44,29 @@ misses.
 
 ## 4. Prove it across the runners
 
-- [ ] 4.1 Run the five scenarios on chrome, then firefox, then edge. Firefox is the one that matters:
+- [x] 4.1 Run the five scenarios on chrome, then firefox, then edge. Firefox is the one that matters:
       `ProjectBoardPage.moveCard` falls back to a synthetic event sequence there because the native
       drag does not reach the server. Verify all five pass on each.
-- [ ] 4.2 Run the whole suite on all three browsers and verify `login` and `create-issue` still pass,
+- [x] 4.2 Run the whole suite on all three browsers and verify `login` and `create-issue` still pass,
       then confirm no `at-board-*` organization survives, after a passing run and after one made to
       fail on purpose.
-- [ ] 4.3 Run `npm run format:check`, `npm run lint` and `npm run typecheck`, the three checks the
+- [x] 4.3 Run `npm run format:check`, `npm run lint` and `npm run typecheck`, the three checks the
       pipeline runs, and verify all three pass. `format:check`, not `format`, which rewrites and so
       always succeeds.
+
+All five pass on chrome, firefox and edge, and the whole suite is green the way the pipeline runs
+it: three processes, one worker each. The drag scenario needed no attention on firefox, where the
+page object's synthetic-event fallback was the risk.
+
+One race did surface, and it is recorded rather than fixed. Running the twenty-one tests in a
+single process over six workers, the scenario that reassigns the default column failed once with a
+navigation interrupted by another navigation to the same board: `makeColumnDefault` returns when the
+column reads as default, while the reload Gitea started is still in flight. `playwright-native`'s
+spec issues the same two calls in the same order, so the race is the shared page object's and
+predates this change - and no command the project runs reaches it, because every run script pins one
+worker. It is left alone until something that does run trips on it.
+
+The organization left behind after the runs belonged to the generator's exploration session, whose
+starting state stays paused so its teardown never runs, not to a scenario. The suite's own runs left
+nothing, on a pass and on a failure forced by inverting an assertion. That places the orphan sweep
+where the evidence puts it: agent sessions, not suite runs.
