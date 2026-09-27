@@ -25,14 +25,22 @@
 
 ## 3. Migrate the feature and its step definitions
 
-- [ ] 3.1 Copy `project-board.feature` from the Cucumber service into
+- [x] 3.1 Copy `project-board.feature` from the Cucumber service into
       `services/playwright-bdd/features/scenarios/`. Verify the two files have the same checksum, as
       the two `login.feature` already do, and that no formatter rewrites `.feature`.
-- [ ] 3.2 Run the Playwright generator over the whole feature, from the board starting state, to
+- [x] 3.2 Run the Playwright generator over the whole feature, from the board starting state, to
       emit `features/step-definitions/project-board.steps.ts`. Record in this file which definitions
       it wrote and which had to be completed by hand. Verify that `bddgen` reports no undefined and
       no ambiguous step, that the generated spec carries a non-empty fixture object on every step,
       and that the five scenarios pass one at a time on chrome.
+
+The generator wrote all 23 definitions, and the compilation reported neither an undefined nor an
+ambiguous step on the first attempt. Two of them, the `Background` steps that only assert over a
+fixture, were declared `async` without awaiting anything and failed `require-await`; dropping
+`async` was the whole correction. It also found a trap worth keeping: assigning a project to an
+issue commits only when the sidebar combo is closed again, which is what
+`SidebarComboFragment.toggleAndWaitForSelection` already does and what driving the board by hand
+misses.
 
 ## 4. Prove it across the runners
 
