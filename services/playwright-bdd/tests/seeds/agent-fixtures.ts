@@ -13,5 +13,17 @@ import {
   issuesFixtures,
   type IssuesFixtures,
 } from "@gitea-automation/core-playwright/fixtures/issues.fixtures";
+import {
+  organizationsFixtures,
+  type OrganizationsFixtures,
+} from "@gitea-automation/core-playwright/fixtures/organizations.fixtures";
+import {
+  projectBoardFixtures,
+  type ProjectBoardFixtures,
+} from "@gitea-automation/core-playwright/fixtures/project-board.fixtures";
 
-export const test = base.extend<CoreFixtures>(coreFixtures).extend<IssuesFixtures>(issuesFixtures);
+export const test = base
+  .extend<CoreFixtures>(coreFixtures)
+  .extend<IssuesFixtures>(issuesFixtures)
+  .extend<OrganizationsFixtures>(organizationsFixtures)
+  .extend<ProjectBoardFixtures>(projectBoardFixtures);

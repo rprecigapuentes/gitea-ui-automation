@@ -16,7 +16,7 @@
 
 ## 2. Give the generator a board to wake up in
 
-- [ ] 2.1 Add `services/playwright-bdd/tests/seeds/board.spec.ts` on the two new fixture groups,
+- [x] 2.1 Add `services/playwright-bdd/tests/seeds/board.spec.ts` on the two new fixture groups,
       declaring `seededOrganizationWithRepositories` and `kanbanProject` and leaving the browser on
       the board. Widen `tests/seeds/agent-fixtures.ts` to carry the same groups. The basename must
       not contain `seed`: the MCP server finds a starting state by that substring and `seed.spec.ts`
