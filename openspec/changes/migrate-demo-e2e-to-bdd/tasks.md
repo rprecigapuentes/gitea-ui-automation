@@ -2,15 +2,24 @@
 
 ## 1. Give the generator the world the scenario runs in
 
-- [ ] 1.1 Add `services/playwright-bdd/tests/seeds/demo.spec.ts`, declaring
+- [x] 1.1 Add `services/playwright-bdd/tests/seeds/demo.spec.ts`, declaring
       `seededOrganizationWithRepositories`, `seededMilestone` and `seededUsers`, signed in as the
       owner and left on the organization page. No fixture group has to be added: all three are
       already in this service's chain. Verify it passes under `--project=seeds-chrome`, and that the
       organization and the two users it created are gone afterwards.
 
+The starting state left two seeded users behind, which is how a pre-existing defect surfaced:
+`parseBody` in `core/api-client/strategies/playwright-request-strategy.ts` never checks
+`response.ok()`, so every API call of the two Playwright suites treats a 4xx as success and returns
+`undefined`. Only `at-user-1` leaks, because it is the one that joined a team and Gitea refuses to
+delete it while the organization still owns it; the failed delete is swallowed and the run stays
+green. The same swallow is why a stale admin token surfaced as a UI timeout rather than a 401. The
+`got` strategy the Selenium suites use throws on an error status, so the two differ. Recorded here
+and left alone: the fix belongs in its own change, where what it turns red can be seen.
+
 ## 2. Migrate the feature and its step definitions
 
-- [ ] 2.1 Copy `demo-e2e.feature` from the Cucumber service. Verify the two files have the same
+- [x] 2.1 Copy `demo-e2e.feature` from the Cucumber service. Verify the two files have the same
       checksum, as `login.feature` and `project-board.feature` already do.
 - [ ] 2.2 Run the Playwright generator over the whole scenario, from the demo starting state, to
       emit `features/step-definitions/demo-e2e.steps.ts` with the thirty-three definitions this
