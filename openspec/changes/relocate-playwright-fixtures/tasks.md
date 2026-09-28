@@ -8,7 +8,7 @@
 
 ## 2. Point the documentation at the new home
 
-- [ ] 2.1 Strip the `Fixtures` section and the `fixtures/` branch from `core/playwright/README.md`, replacing the paragraph that justified the `business-logic` dependency with why the fixtures left
-- [ ] 2.2 Add the package to the root `README.md` tree, marked as not a suite, and correct the workspace count in the install line
-- [ ] 2.3 Repoint `services/playwright-bdd/README.md` at the new package
-- [ ] 2.4 Verify `npm run format:check` passes and no README links at a path that no longer exists
+- [x] 2.1 Strip the `Fixtures` section and the `fixtures/` branch from `core/playwright/README.md`, replacing the paragraph that justified the `business-logic` dependency with why the fixtures left
+- [x] 2.2 Add the package to the root `README.md` tree, marked as not a suite, and correct the workspace count in the install line
+- [x] 2.3 Repoint `services/playwright-bdd/README.md` at the new package
+- [x] 2.4 Verify `npm run format:check` passes and no README links at a path that no longer exists
