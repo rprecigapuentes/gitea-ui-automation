@@ -34,7 +34,10 @@ Passed on all three on the first run.
 
 ## 5. Add a user to a team
 
-- [ ] 5.1 Append the scenario. No new step. Verify it passes on chrome, firefox and edge.
+- [x] 5.1 Append the scenario. No new step. Verify it passes on chrome, firefox and edge.
+
+Passed on all three on the first run. `organizations.feature` is now byte-identical to the whole
+Cucumber source file, not only its `@e2e` scenario.
 
 ## 6. Wrap up
 
