@@ -20,9 +20,9 @@ The service SHALL generate Playwright tests from the `.feature` files under its 
 - **WHEN** a scenario's steps change and the test command runs again
 - **THEN** the generated tests reflect the edited feature, with no manual regeneration step
 
-### Requirement: The login scenario is shared with the Cucumber service
+### Requirement: A feature shared with the Cucumber service carries identical text
 
-The service SHALL carry the same login feature text as the Selenium Cucumber service, and SHALL resolve each of its steps to a step definition of its own.
+Where a feature of this service describes the same behaviour as a feature of the Selenium Cucumber service, the two SHALL carry identical Gherkin text, and this service SHALL resolve every step of that feature to exactly one step definition of its own. Neither service SHALL edit shared feature text to suit its own runner, because the edit reaches the other suite.
 
 #### Scenario: The two services describe login
 
@@ -33,6 +33,18 @@ The service SHALL carry the same login feature text as the Selenium Cucumber ser
 
 - **WHEN** the runner reaches a step of the login scenario
 - **THEN** exactly one step definition of this service matches it
+
+#### Scenario: More than one feature is shared
+
+- **WHEN** this service carries several features that the Cucumber service also carries
+- **THEN** each of them is identical to its counterpart, character for character
+- **AND** no feature is exempt because it was added after login
+
+#### Scenario: A shared feature is only partly ported
+
+- **WHEN** this service copies only some of a Cucumber feature's scenarios
+- **THEN** the scenarios it does carry are identical to their Cucumber counterparts
+- **AND** the ones it does not carry are absent rather than present with a different definition
 
 ### Requirement: Steps reach the browser only through page objects
 
