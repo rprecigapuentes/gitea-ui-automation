@@ -20,11 +20,8 @@ export interface IssuesFixtures {
 }
 
 /**
- * The API-seeded state the two issue cases start from, mirroring the fixtures of the same names in
- * `gitea-selenium-vitest/src/fixtures/fixture.ts`. Each precondition runs before `use()` and its
- * postcondition after, so Playwright tears the repository down even when the test fails. Deleting
- * the repository takes its issues, labels and milestones with it, which is why only `repository`
- * cleans up.
+ * The API-seeded state the two issue cases start from. Deleting the repository takes its issues,
+ * labels and milestones with it, which is why only `repository` cleans up.
  */
 export const issuesFixtures: Fixtures<
   IssuesFixtures,

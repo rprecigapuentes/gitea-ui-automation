@@ -31,9 +31,7 @@ Given("I am logged in as the organization owner", async ({ sessionManager }) => 
   await sessionManager.loginAsOwner();
 });
 
-// `kanbanProject` builds the project the moment a step asks for it, so referencing the fixture here
-// is what runs "a project created from the Basic Kanban template" — there is no separate action to
-// perform.
+// Referencing `kanbanProject` is what creates the project; there is no separate action.
 Given("a project created from the Basic Kanban template", ({ kanbanProject }) => {
   expect(kanbanProject.id).toBeTruthy();
 });

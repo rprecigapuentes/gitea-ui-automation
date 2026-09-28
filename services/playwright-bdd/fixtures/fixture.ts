@@ -24,19 +24,8 @@ interface BddFixtures {
   ownerCredentials: Credentials;
 }
 
-/* The same fixtures `playwright-native` runs on, extended onto playwright-bdd's own base rather
-   than @playwright/test's, which is why `core/playwright/fixtures` exports implementations and
-   each service calls `.extend()` itself.
-
-   Unlike the specs, which chain a fixture file per area, every step definition of this service
-   shares one test object, so it carries the union. A fixture runs only when a step declares it,
-   so the ones a scenario never names cost it nothing.
-
-   The organization group has to be chained before the project-board one, which is typed over it.
-   Neither needs `organizationCleanupFixtures`: the board fixtures clear `scenarioState.organization`
-   and delete what they made, and both members of that group are `auto`, so merging them would build
-   the eight API clients for every scenario of the service. A tag-scoped hook is owed to the first
-   scenario that creates an organization through the browser, where no fixture owns it. */
+/* Every step definition shares one test object, so it carries the union of the groups. The
+   organization group comes before the project-board one, which is typed over it. */
 export const test = base
   .extend<CoreFixtures & BddFixtures>({
     ...coreFixtures,

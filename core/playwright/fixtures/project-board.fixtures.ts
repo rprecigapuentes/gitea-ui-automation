@@ -31,13 +31,8 @@ export interface ProjectBoardFixtures {
 }
 
 /**
- * `project-board.feature`'s `Background`, as the two fixtures the scenarios ask for: the seeded
- * organization, and the project opened on top of it. The precondition runs before `use()` and the
- * postcondition after, which Playwright runs even when the test fails.
- *
- * Declared over the organization fixtures as well as the core ones, because the demo scenario
- * needs this file's seeded organization and that file's seeded users at once. Playwright resolves
- * a fixture only when a test asks for it, so a board spec runs none of the ones it gains here.
+ * `project-board.feature`'s `Background`: the seeded organization and the project opened on it.
+ * Declared over the organization fixtures too, because the demo scenario needs both at once.
  */
 export const projectBoardFixtures: Fixtures<
   ProjectBoardFixtures,
