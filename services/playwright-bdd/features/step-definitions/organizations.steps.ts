@@ -34,6 +34,12 @@ Given("the seeded organization is open", async ({ pageObjects }) => {
   await pageObjects.orgFacade.waitForElements();
 });
 
+Given("an organization already exists", async ({ pageObjects, existingOrganization }) => {
+  void existingOrganization;
+  await pageObjects.orgFacade.open();
+  await pageObjects.orgFacade.waitForElements();
+});
+
 When(
   'I navigate to the "Create Organization" page by "organization dropdown" menu',
   async ({ pageObjects }) => {
