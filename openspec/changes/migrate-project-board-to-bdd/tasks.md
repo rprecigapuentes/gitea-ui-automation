@@ -58,13 +58,18 @@ All five pass on chrome, firefox and edge, and the whole suite is green the way 
 it: three processes, one worker each. The drag scenario needed no attention on firefox, where the
 page object's synthetic-event fallback was the risk.
 
-One race did surface, and it is recorded rather than fixed. Running the twenty-one tests in a
-single process over six workers, the scenario that reassigns the default column failed once with a
-navigation interrupted by another navigation to the same board: `makeColumnDefault` returns when the
-column reads as default, while the reload Gitea started is still in flight. `playwright-native`'s
-spec issues the same two calls in the same order, so the race is the shared page object's and
-predates this change - and no command the project runs reaches it, because every run script pins one
-worker. It is left alone until something that does run trips on it.
+One race surfaced and is recorded rather than fixed. The scenario that reassigns the default column
+fails intermittently with a navigation interrupted by another navigation to the same board:
+`makeColumnDefault` returns when the column reads as default, while the reload Gitea started is
+still in flight, and the `openFor` that follows collides with it. `playwright-native`'s spec issues
+the same two calls in the same order, so the race is the shared page object's and predates this
+change.
+
+It reproduces under load, not in isolation: four repeats of the scenario alone pass, while it failed
+once at six workers in one process and once at one worker with the three browsers running
+concurrently - which is what `test:parallel`, and therefore the pipeline, does. An earlier note here
+said no command the project runs reaches it; that was wrong, and the second reproduction is what
+corrected it. CI's two retries are what have been absorbing it.
 
 The organization left behind after the runs belonged to the generator's exploration session, whose
 starting state stays paused so its teardown never runs, not to a scenario. The suite's own runs left
