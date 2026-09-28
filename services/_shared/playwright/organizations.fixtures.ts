@@ -1,5 +1,6 @@
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions } from "@playwright/test";
 import { UserClient } from "@gitea-automation/business-logic/clients/user.client";
+import { OrganizationClient } from "@gitea-automation/business-logic/clients/organizations.client";
 import { RequestStrategyFactory } from "@gitea-automation/core-api-client/request-strategy.factory";
 import { uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.util";
 import { logger } from "@gitea-automation/core-logger/pino.logger";
@@ -66,9 +67,12 @@ export const organizationsFixtures: Fixtures<
   // The Cucumber suite's `createSeededUsers`: "user 1" and "user 2", created through the admin API
   // and deleted after the test. Named per browser, so the three browsers never share one.
   seededUsers: async ({}, use, testInfo) => {
-    const users = new UserClient(
-      RequestStrategyFactory.playwright(process.env.GITEA_BASE_URL!, resolveAdminToken()),
+    const strategy = RequestStrategyFactory.playwright(
+      process.env.GITEA_BASE_URL!,
+      resolveAdminToken(),
     );
+    const users = new UserClient(strategy);
+    const organizations = new OrganizationClient(strategy);
     const seeded: SeededUser[] = [];
 
     for (let index = 1; index <= SEEDED_USER_COUNT; index += 1) {
@@ -89,7 +93,13 @@ export const organizationsFixtures: Fixtures<
 
     await use(seeded);
 
+    // Gitea refuses to delete a user still on an organization's roster, and a scenario can leave a
+    // seeded user there on purpose (one team keeps its member, another loses theirs). Leaving every
+    // organization first makes the delete succeed regardless of what the scenario did or didn't undo.
     for (const { username } of seeded) {
+      for (const organization of await organizations.getOrganizationsForUser(username)) {
+        await organizations.removeMember(organization.name, username);
+      }
       await users.deleteUser(username);
     }
   },
