@@ -20,7 +20,7 @@
   "dependencies": {
     "@gitea-automation/business-logic": "*",
     "@gitea-automation/core-page-objects": "*",
-    "@gitea-automation/core-playwright": "*",
+    "@gitea-automation/shared-playwright": "*",
     "dotenv": "^17.4.2"
   },
   "devDependencies": {

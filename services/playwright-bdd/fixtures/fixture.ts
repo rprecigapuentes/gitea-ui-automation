@@ -1,23 +1,20 @@
 import { createBdd, test as base } from "playwright-bdd";
-import {
-  coreFixtures,
-  type CoreFixtures,
-} from "@gitea-automation/core-playwright/fixtures/base.fixtures";
+import { coreFixtures, type CoreFixtures } from "@gitea-automation/shared-playwright/base.fixtures";
 import {
   issuesFixtures,
   type IssuesFixtures,
-} from "@gitea-automation/core-playwright/fixtures/issues.fixtures";
+} from "@gitea-automation/shared-playwright/issues.fixtures";
 import {
   resolveOwnerCredentials,
   type Credentials,
-} from "@gitea-automation/core-playwright/fixtures/credentials";
+} from "@gitea-automation/shared-playwright/credentials";
 
 interface BddFixtures {
   ownerCredentials: Credentials;
 }
 
 /* The same fixtures `playwright-native` runs on, extended onto playwright-bdd's own base rather
-   than @playwright/test's, which is why `core/playwright/fixtures` exports implementations and
+   than @playwright/test's, which is why `services/_shared/playwright` exports implementations and
    each service calls `.extend()` itself.
 
    Unlike the specs, which chain a fixture file per area, every step definition of this service

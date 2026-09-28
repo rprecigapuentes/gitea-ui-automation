@@ -2,7 +2,7 @@ import { test as base } from "./fixture";
 import {
   issuesFixtures,
   type IssuesFixtures,
-} from "@gitea-automation/core-playwright/fixtures/issues.fixtures";
+} from "@gitea-automation/shared-playwright/issues.fixtures";
 
 export const test = base.extend<IssuesFixtures>(issuesFixtures);
 

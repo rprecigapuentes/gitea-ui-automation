@@ -5,13 +5,10 @@
    Named without "seed": the server finds a starting state by looking for a basename that contains
    it, so `seed.spec.ts` has to stay the only file in this directory that does. */
 import { test as base } from "@playwright/test";
-import {
-  coreFixtures,
-  type CoreFixtures,
-} from "@gitea-automation/core-playwright/fixtures/base.fixtures";
+import { coreFixtures, type CoreFixtures } from "@gitea-automation/shared-playwright/base.fixtures";
 import {
   issuesFixtures,
   type IssuesFixtures,
-} from "@gitea-automation/core-playwright/fixtures/issues.fixtures";
+} from "@gitea-automation/shared-playwright/issues.fixtures";
 
 export const test = base.extend<CoreFixtures>(coreFixtures).extend<IssuesFixtures>(issuesFixtures);

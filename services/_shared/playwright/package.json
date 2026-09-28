@@ -1,0 +1,20 @@
+{
+  "name": "@gitea-automation/shared-playwright",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": "./*.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@gitea-automation/business-logic": "*",
+    "@gitea-automation/core-api-client": "*",
+    "@gitea-automation/core-data-handler": "*",
+    "@gitea-automation/core-logger": "*",
+    "@gitea-automation/core-page-objects": "*",
+    "@playwright/test": "^1.63.0"
+  }
+}
