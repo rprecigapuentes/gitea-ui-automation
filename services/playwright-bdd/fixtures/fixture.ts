@@ -1,5 +1,10 @@
 import { createBdd, test as base } from "playwright-bdd";
-import { coreFixtures, type CoreFixtures } from "@gitea-automation/shared-playwright/base.fixtures";
+import {
+  coreFixtures,
+  organizationCleanupFixtures,
+  type CoreFixtures,
+  type OrganizationCleanupFixtures,
+} from "@gitea-automation/shared-playwright/base.fixtures";
 import {
   issuesFixtures,
   type IssuesFixtures,
@@ -13,17 +18,8 @@ interface BddFixtures {
   ownerCredentials: Credentials;
 }
 
-/* The same fixtures `playwright-native` runs on, extended onto playwright-bdd's own base rather
-   than @playwright/test's, which is why `services/_shared/playwright` exports implementations and
-   each service calls `.extend()` itself.
-
-   Unlike the specs, which chain a fixture file per area, every step definition of this service
-   shares one test object, so it carries the union. A fixture runs only when a step declares it,
-   so the ones a scenario never names cost it nothing.
-
-   The organization and project-board groups are not here yet: they record into `scenarioState` and
-   rely on a teardown this service does not have, which arrives as tag-scoped hooks with the first
-   scenario that seeds an organization. */
+/* Every step definition shares one test object, so it carries the union of the groups. The
+   organization cleanup is `auto`, so it runs for every scenario. */
 export const test = base
   .extend<CoreFixtures & BddFixtures>({
     ...coreFixtures,
@@ -32,7 +28,8 @@ export const test = base
       await use(resolveOwnerCredentials(testInfo.project.name));
     },
   })
-  .extend<IssuesFixtures>(issuesFixtures);
+  .extend<IssuesFixtures>(issuesFixtures)
+  .extend<OrganizationCleanupFixtures>(organizationCleanupFixtures);
 
 export { expect } from "@playwright/test";
 
