@@ -101,8 +101,7 @@ export const coreFixtures: Fixtures<
 };
 
 /* Kept out of `coreFixtures` because both are `auto`: merged in, they would build the eight API
-   clients for every test of every suite, including ones that never touch an organization. A suite
-   opts in; `playwright-bdd` instead scopes its teardown by tag, as the Cucumber suite does. */
+   clients for every test of every suite, including ones that never touch an organization. */
 export const organizationCleanupFixtures: Fixtures<
   OrganizationCleanupFixtures,
   object,

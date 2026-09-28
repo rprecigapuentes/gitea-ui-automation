@@ -1,7 +1,9 @@
 import { createBdd, test as base } from "playwright-bdd";
 import {
   coreFixtures,
+  organizationCleanupFixtures,
   type CoreFixtures,
+  type OrganizationCleanupFixtures,
 } from "@gitea-automation/core-playwright/fixtures/base.fixtures";
 import {
   issuesFixtures,
@@ -24,12 +26,14 @@ interface BddFixtures {
    shares one test object, so it carries the union. A fixture runs only when a step declares it,
    so the ones a scenario never names cost it nothing.
 
-   The organization and project-board groups are not here yet: they record into `scenarioState` and
-   rely on a teardown this service does not have, which arrives as tag-scoped hooks with the first
-   scenario that seeds an organization. */
+   The organization cleanup is chained as `playwright-native` chains it, so a scenario that creates
+   an organization through the browser tears it down the same way in both suites. Its two members
+   are `auto`, so they run for every scenario. The organization and project-board seeding groups
+   are not here yet. */
 export const test = base
-  .extend<CoreFixtures & BddFixtures>({
+  .extend<CoreFixtures & OrganizationCleanupFixtures & BddFixtures>({
     ...coreFixtures,
+    ...organizationCleanupFixtures,
 
     ownerCredentials: async ({}, use, testInfo) => {
       await use(resolveOwnerCredentials(testInfo.project.name));
