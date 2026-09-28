@@ -38,4 +38,4 @@ export const test = base
 
 export { expect } from "@playwright/test";
 
-export const { Given, When, Then } = createBdd(test);
+export const { Given, When, Then, Before } = createBdd(test);

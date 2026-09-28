@@ -11,10 +11,13 @@ Each scenario is its own commit, so a regression in one is isolated from the res
 
 ## 2. Add a repository to a team
 
-- [ ] 2.1 Append the scenario. Export `Before` from `fixture.ts`'s `createBdd()` and add
+- [x] 2.1 Append the scenario. Export `Before` from `fixture.ts`'s `createBdd()` and add
       `Before({ tags: TEAM_REPOSITORY_TAG }, ...)` seeding `scenarioState.organization` from
       `seededOrganizationWithTeamAndRepository`. Verify the scenario passes on chrome, firefox and
       edge, and that `@e2e` and the first smoke still pass (the hook must not fire for them).
+
+Passed on all three on the first run. The whole suite ran green on chrome afterward (6/6),
+confirming the hook only fires for this scenario.
 
 ## 3. Create Organization
 

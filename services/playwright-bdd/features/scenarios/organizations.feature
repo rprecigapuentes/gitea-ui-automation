@@ -95,3 +95,12 @@ Feature: Organization
       | name     | visibility |
       | frontend | true       |
     Then the repositories were created successfully
+
+  @smoke @team-repository
+  Scenario: Add a repository to a team
+    Given I login with valid credentials as "owner"
+    And the seeded organization is open
+    When I add the following repositories to each team:
+      | team   | repository |
+      | team-1 | frontend   |
+    Then the repositories assigned to each team are correct

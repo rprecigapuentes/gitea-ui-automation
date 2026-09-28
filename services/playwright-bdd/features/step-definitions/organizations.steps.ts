@@ -2,7 +2,8 @@
 // seed: services/playwright-bdd/tests/seeds/seed.spec.ts
 
 import type { DataTable } from "playwright-bdd";
-import { expect, Given, When, Then } from "../../fixtures/fixture";
+import { expect, Given, When, Then, Before } from "../../fixtures/fixture";
+import { TEAM_REPOSITORY_TAG } from "@gitea-automation/shared-playwright/organizations.fixtures";
 import { uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.util";
 import type { Organization } from "@gitea-automation/business-logic/entities/organization.entity";
 import type { Team } from "@gitea-automation/business-logic/entities/team.entity";
@@ -13,6 +14,27 @@ Given('I login with valid credentials as "owner"', async ({ sessionManager, page
   expect(await pageObjects.mainPage.hasExpectedElementsDisplayed()).toBe(true);
   expect(await pageObjects.navBar.waitForElements()).toBe(true);
 });
+
+Before(
+  { tags: TEAM_REPOSITORY_TAG },
+  ({ scenarioState, seededOrganizationWithTeamAndRepository }) => {
+    const { organizationName, teamName, repositoryName } = seededOrganizationWithTeamAndRepository;
+
+    scenarioState.organization = {
+      name: organizationName,
+      visibility: "private",
+      teams: [
+        {
+          name: teamName,
+          visibility: "private",
+          createRepositories: false,
+          permissions: "general",
+        },
+      ],
+      repositories: [{ name: repositoryName, visibility: true }],
+    };
+  },
+);
 
 Given(
   "I login with valid credentials as user {int}",
