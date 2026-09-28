@@ -46,6 +46,12 @@ Where a feature of this service describes the same behaviour as a feature of the
 - **THEN** the scenarios it does carry are identical to their Cucumber counterparts
 - **AND** the ones it does not carry are absent rather than present with a different definition
 
+#### Scenario: A shared feature is completed incrementally
+
+- **WHEN** a scenario is added to a feature this service already partly carries
+- **THEN** the scenarios already present are unchanged
+- **AND** the newly added ones are identical to their Cucumber counterparts
+
 ### Requirement: Steps reach the browser only through page objects
 
 A step definition SHALL drive the application only through the shared page objects, built over the Playwright interaction strategy, and SHALL NOT call the page or locators directly.
