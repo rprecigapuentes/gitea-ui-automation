@@ -22,7 +22,7 @@ export interface ScenarioState {
   project?: SeededProject;
   milestone?: SeededMilestone;
   label?: SeededLabel;
-  // An issue created through the form is known by what its page shows: its title from the moment
-  // it is typed, its number only once the form has been submitted.
-  createdIssue?: { number?: number; title: string };
+  // An issue created through the form is known by what its page shows: its title and its
+  // description from the moment they are typed, its number only once the form has been submitted.
+  createdIssue?: { number?: number; title: string; description?: string };
 }
