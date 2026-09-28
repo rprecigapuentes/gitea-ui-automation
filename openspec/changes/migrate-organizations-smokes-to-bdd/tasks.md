@@ -28,7 +28,9 @@ Passed on all three on the first run, no step definition changed.
 
 ## 4. Create teams for an existing organization
 
-- [ ] 4.1 Append the scenario. No new step. Verify it passes on chrome, firefox and edge.
+- [x] 4.1 Append the scenario. No new step. Verify it passes on chrome, firefox and edge.
+
+Passed on all three on the first run.
 
 ## 5. Add a user to a team
 
