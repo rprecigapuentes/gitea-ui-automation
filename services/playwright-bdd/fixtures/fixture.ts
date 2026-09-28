@@ -18,28 +18,18 @@ interface BddFixtures {
   ownerCredentials: Credentials;
 }
 
-/* The same fixtures `playwright-native` runs on, extended onto playwright-bdd's own base rather
-   than @playwright/test's, which is why `core/playwright/fixtures` exports implementations and
-   each service calls `.extend()` itself.
-
-   Unlike the specs, which chain a fixture file per area, every step definition of this service
-   shares one test object, so it carries the union. A fixture runs only when a step declares it,
-   so the ones a scenario never names cost it nothing.
-
-   The organization cleanup is chained as `playwright-native` chains it, so a scenario that creates
-   an organization through the browser tears it down the same way in both suites. Its two members
-   are `auto`, so they run for every scenario. The organization and project-board seeding groups
-   are not here yet. */
+/* Every step definition shares one test object, so it carries the union of the groups. The
+   organization cleanup is `auto`, so it runs for every scenario. */
 export const test = base
-  .extend<CoreFixtures & OrganizationCleanupFixtures & BddFixtures>({
+  .extend<CoreFixtures & BddFixtures>({
     ...coreFixtures,
-    ...organizationCleanupFixtures,
 
     ownerCredentials: async ({}, use, testInfo) => {
       await use(resolveOwnerCredentials(testInfo.project.name));
     },
   })
-  .extend<IssuesFixtures>(issuesFixtures);
+  .extend<IssuesFixtures>(issuesFixtures)
+  .extend<OrganizationCleanupFixtures>(organizationCleanupFixtures);
 
 export { expect } from "@playwright/test";
 
