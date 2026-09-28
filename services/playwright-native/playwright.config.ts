@@ -51,10 +51,17 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
+  outputDir: singleBrowser ? `test-results/${singleBrowser}` : "test-results",
   reporter: [
     ["list"],
     /* open: never, or the run ends by launching a browser and CI hangs on it. */
-    ["html", { outputFolder: "playwright-report", open: "never" }],
+    [
+      "html",
+      {
+        outputFolder: singleBrowser ? `playwright-report/${singleBrowser}` : "playwright-report",
+        open: "never",
+      },
+    ],
     ["allure-playwright", { resultsDir: "allure-results" }],
     /* test:parallel starts one process per browser, and they would overwrite one file. */
     [
