@@ -57,10 +57,15 @@ requirement. Change it here and the other suite breaks.
 | `login.feature`               | a valid user signs in                                                          | yes                  |
 | `create-issue.feature`        | an issue is created with a title and a description                             | no                   |
 | `create-organization.feature` | an owner creates an organization and two teams, then adds and removes a member | no                   |
+| `organizations.feature`       | team membership and repository code access change across two teams and users   | yes (`@e2e` only)    |
 
 `create-organization.feature` is the Vitest case "should create an organization and add members",
 which `playwright-native` also carries. It keeps every assertion of that case, and the Cucumber
 service has no feature for it, so the Gherkin is authored here.
+
+`organizations.feature` carries only the `@e2e` scenario of the Cucumber service's own
+`organizations.feature`, copied character for character. The five `@smoke` scenarios of that file
+are not here yet; they come one at a time.
 
 ## Scenarios that create an organization
 

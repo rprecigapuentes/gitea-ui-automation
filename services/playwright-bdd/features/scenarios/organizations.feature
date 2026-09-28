@@ -1,0 +1,87 @@
+@organizations @cleanup
+Feature: Organization
+  As a Gitea user
+  I want to change the team member's permissions
+  So that the user can have the appropriate info access
+
+  @e2e
+  Scenario: Change team members permissions
+    Given I login with valid credentials as "owner"
+    When I navigate to the "Create Organization" page by "organization dropdown" menu
+    And I create a new organization using:
+      | name        | test-org |
+      | visibility  | public   |
+      | permissions | true     |
+    Then I should see the organization created successfully
+    When I navigate to the organization page
+    And I create the following teams:
+      | name     | visibility | repoCodeAccess | createRepo |
+      | dev-team | private    | write          | true       |
+      | qa-team  | private    | write          | true       |
+    Then the created teams are displayed in Teams page
+    When I add the following team members:
+      | user | team     |
+      | 1    | dev-team |
+      | 1    | qa-team  |
+      | 2    | qa-team  |
+    Then the member count for each created team is correct
+    And the avatars for each created team are correct
+    When I navigate to the repositories tab
+    And I create the following repositories:
+      | name     | visibility |
+      | monorepo | true       |
+    Then the repositories were created successfully
+    When I add a file to each repository
+    Then the file count for each repository is correct
+    When I add the following repositories to each team:
+      | team     | repository |
+      | dev-team | monorepo   |
+      | qa-team  | monorepo   |
+    Then the repositories assigned to each team are correct
+    When I logout
+    And I login with valid credentials as user 1
+    And the seeded organization is open
+    And I add a file to each repository
+    Then the file count for each repository is correct
+    When I logout
+    And I login with valid credentials as "owner"
+    And the seeded organization is open
+    When I remove the following team members:
+      | user | team     |
+      | 1    | dev-team |
+    Then the member count for each created team is correct
+    When I logout
+    And I login with valid credentials as user 1
+    And the seeded organization is open
+    And I add a file to each repository
+    Then the file count for each repository is correct
+    When I logout
+    And I login with valid credentials as "owner"
+    And the seeded organization is open
+    And I change the repository code access for "qa-team" to "read"
+    When I logout
+    And I login with valid credentials as user 2
+    And the seeded organization is open
+    And I open the repository
+    And I click the New File button
+    Then the fork repository prompt is displayed
+    When I logout
+    And I login with valid credentials as "owner"
+    And the seeded organization is open
+    And I change the repository code access for "qa-team" to "none"
+    When I logout
+    And I login with valid credentials as user 1
+    And the seeded organization is open
+    And I view the repository
+    Then the Code tab is not visible
+    And the Issues tab is displayed by default
+    When I logout
+    And I login with valid credentials as "owner"
+    And the seeded organization is open
+    When I remove the following team members:
+      | user | team    |
+      | 2    | qa-team |
+    Then the member count for each created team is correct
+    When I logout
+    And I login with valid credentials as user 2
+    Then the organization is no longer accessible

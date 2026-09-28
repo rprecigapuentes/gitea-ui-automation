@@ -10,6 +10,10 @@ import {
   type IssuesFixtures,
 } from "@gitea-automation/shared-playwright/issues.fixtures";
 import {
+  organizationsFixtures,
+  type OrganizationsFixtures,
+} from "@gitea-automation/shared-playwright/organizations.fixtures";
+import {
   resolveOwnerCredentials,
   type Credentials,
 } from "@gitea-automation/shared-playwright/credentials";
@@ -29,7 +33,8 @@ export const test = base
     },
   })
   .extend<IssuesFixtures>(issuesFixtures)
-  .extend<OrganizationCleanupFixtures>(organizationCleanupFixtures);
+  .extend<OrganizationCleanupFixtures>(organizationCleanupFixtures)
+  .extend<OrganizationsFixtures>(organizationsFixtures);
 
 export { expect } from "@playwright/test";
 
