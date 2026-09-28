@@ -21,8 +21,10 @@ confirming the hook only fires for this scenario.
 
 ## 3. Create Organization
 
-- [ ] 3.1 Append the scenario. No new step: it reuses the organization-creation steps `@e2e`
+- [x] 3.1 Append the scenario. No new step: it reuses the organization-creation steps `@e2e`
       already defines. Verify it passes on chrome, firefox and edge.
+
+Passed on all three on the first run, no step definition changed.
 
 ## 4. Create teams for an existing organization
 

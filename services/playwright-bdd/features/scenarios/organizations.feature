@@ -104,3 +104,13 @@ Feature: Organization
       | team   | repository |
       | team-1 | frontend   |
     Then the repositories assigned to each team are correct
+
+  @smoke
+  Scenario: Create Organization
+    Given I login with valid credentials as "owner"
+    When I navigate to the "Create Organization" page by "organization dropdown" menu
+    And I create a new organization using:
+      | name        | test-org |
+      | visibility  | public   |
+      | permissions | true     |
+    Then I should see the organization created successfully
