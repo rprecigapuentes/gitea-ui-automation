@@ -41,7 +41,17 @@ Cucumber source file, not only its `@e2e` scenario.
 
 ## 6. Wrap up
 
-- [ ] 6.1 Run the whole `playwright-bdd` suite on chrome, firefox and edge. Verify all nine pass and
+- [x] 6.1 Run the whole `playwright-bdd` suite on chrome, firefox and edge. Verify all nine pass and
       the instance carries no leftover organization or user afterward.
-- [ ] 6.2 Document `organizations.feature`'s full coverage in `services/playwright-bdd/README.md`.
-- [ ] 6.3 Run `npm run format:check`, `npm run lint` and `npm run typecheck`. Verify all three pass.
+- [x] 6.2 Document `organizations.feature`'s full coverage in `services/playwright-bdd/README.md`.
+- [x] 6.3 Run `npm run format:check`, `npm run lint` and `npm run typecheck`. Verify all three pass.
+
+27/27 across the three browsers, and `seededUsers` left no `at-user-*` account behind on any of
+them (paginated check, admin token). `lint` and `typecheck` are green; `format:check` flags only
+untracked local run output, none of it part of this change.
+
+Found, not fixed here: the instance carries 26 `at-team-repo-*` organizations from
+`seededOrganizationWithTeamAndRepository`, predating this change. Five consecutive fresh runs of
+"Add a repository to a team" today (this service and `playwright-native`'s own) left the count
+unchanged each time, so the fixture's current cleanup is not reproducibly leaking — this is stale
+debris from before, not a live defect this change introduces or needs to fix.
