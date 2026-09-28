@@ -1,4 +1,4 @@
-import { resolveOwnerCredentials } from "@gitea-automation/core-playwright/fixtures/credentials";
+import { resolveOwnerCredentials } from "@gitea-automation/shared-playwright/credentials";
 import { expect, test } from "../../../../fixtures/visual.fixture";
 
 test.use({ viewport: { width: 390, height: 844 } });

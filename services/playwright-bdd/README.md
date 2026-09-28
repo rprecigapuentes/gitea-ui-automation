@@ -42,7 +42,7 @@ Given("I am on the Gitea login page", async ({ pageObjects }) => {
 ```
 
 The fixtures a step destructures come from
-[`core/playwright/fixtures`](../../core/playwright/README.md), shared with `playwright-native`:
+[`services/_shared/playwright`](../_shared/playwright/README.md), shared with `playwright-native`:
 `pageObjects`, `clients`, `sessionManager`, `scenarioState`. A value one step produces and another
 reads travels through `scenarioState`, never through a variable in the file — the definitions serve
 every scenario that uses them, and those run in parallel.

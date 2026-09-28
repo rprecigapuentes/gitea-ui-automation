@@ -4,12 +4,12 @@ import {
   organizationCleanupFixtures,
   type CoreFixtures,
   type OrganizationCleanupFixtures,
-} from "@gitea-automation/core-playwright/fixtures/base.fixtures";
+} from "@gitea-automation/shared-playwright/base.fixtures";
 
 export {
   ORGANIZATION_TAG,
   ORGANIZATION_NAME_PREFIX,
-} from "@gitea-automation/core-playwright/fixtures/base.fixtures";
+} from "@gitea-automation/shared-playwright/base.fixtures";
 
 export const test = base.extend<CoreFixtures & OrganizationCleanupFixtures>({
   ...coreFixtures,

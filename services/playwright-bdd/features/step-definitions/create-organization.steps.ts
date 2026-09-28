@@ -3,8 +3,8 @@
 
 import type { DataTable } from "playwright-bdd";
 import { expect, Given, When, Then } from "../../fixtures/fixture";
-import { ORGANIZATION_NAME_PREFIX } from "@gitea-automation/core-playwright/fixtures/base.fixtures";
-import { resolveInvitedCredentials } from "@gitea-automation/core-playwright/fixtures/credentials";
+import { ORGANIZATION_NAME_PREFIX } from "@gitea-automation/shared-playwright/base.fixtures";
+import { resolveInvitedCredentials } from "@gitea-automation/shared-playwright/credentials";
 import { uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.util";
 import { OrgTab } from "@gitea-automation/business-logic/pages/organizations/fragments/org-navigation.fragment";
 import type { Organization } from "@gitea-automation/business-logic/entities/organization.entity";

@@ -8,7 +8,7 @@ import {
 import {
   resolveInvitedCredentials,
   resolveOwnerCredentials,
-} from "@gitea-automation/core-playwright/fixtures/credentials";
+} from "@gitea-automation/shared-playwright/credentials";
 import { OrgTab } from "@gitea-automation/business-logic/pages/organizations/fragments/org-navigation.fragment";
 import type { Organization } from "@gitea-automation/business-logic/entities/organization.entity";
 import type { Team } from "@gitea-automation/business-logic/entities/team.entity";

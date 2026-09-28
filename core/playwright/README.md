@@ -2,47 +2,17 @@
 
 Playwright-only helpers that sit outside the page-object layer. Everything in `core/page-objects/` exists so one page object runs against Selenium or Playwright; what lives here has no Selenium equivalent, so it stays out of that abstraction rather than adding a method one strategy could not honour.
 
+Nothing here knows what Gitea is. The shared Playwright fixtures used to live in this package and no longer do: they compose page objects and API clients, which is domain knowledge, and a package of `core/` that imports `business-logic` points its dependency at the layer above it. They are test-layer code and now live in [`services/_shared/playwright`](../../services/_shared/playwright/README.md).
+
 ## Structure
 
 ```
 core/playwright/
-├── fixtures/
-│   ├── credentials.ts               # per-browser owner, invited, token and admin accounts
-│   ├── session.util.ts              # sign in through the API, apply the cookies to the context
-│   ├── base.fixtures.ts             # strategy, clients, pageObjects, scenarioState, sessionManager, cleanup
-│   ├── issues.fixtures.ts           # owner, repository, issue, maintainer, label, milestone
-│   ├── organizations.fixtures.ts    # existing organization, seeded users, org with team and repository
-│   └── project-board.fixtures.ts    # organization with repositories, milestone, Kanban project
 ├── visual-tester/
 │   └── visual-tester.ts             # VisualTester: verifyPage / verifyComponent screenshot checks
 └── performance-collector/
     └── performance-collector.ts     # PerformanceCollector: navigation, paint, resource and engine figures
 ```
-
-## Fixtures
-
-Shared by `playwright-native` and `playwright-bdd`, which is why this directory exports fixture
-**implementations** rather than an extended `test`: the two services extend different bases, so
-each calls `.extend()` itself.
-
-```ts
-// playwright-native
-export const test = base.extend<CoreFixtures>(coreFixtures);
-
-// playwright-bdd, over playwright-bdd's own base
-export const test = base.extend<CoreFixtures & BddFixtures>({ ...coreFixtures, ownerCredentials });
-```
-
-This is the one directory here that depends on `business-logic`: a fixture layer composes page
-objects and API clients into a test's setup, which is what it is for. Nothing else under
-`core/playwright/` does, and `business-logic` itself stays free of Playwright so its page objects
-keep running under Selenium too.
-
-Two details that fail silently if they are changed. `resolveOwnerCredentials` takes the **project
-name** and reads the browser from the segment after its last `-`, so projects stay named
-`<area>-<browser>` (`seeds-chrome`, `visual-firefox`) or plainly after the browser. And
-`testDataName` reads `process.env.BROWSER`, so a `test:<browser>` script that drops its
-`cross-env BROWSER=<b>` names every seeded resource `-local-` instead.
 
 ## VisualTester
 

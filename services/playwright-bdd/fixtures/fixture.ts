@@ -4,15 +4,15 @@ import {
   organizationCleanupFixtures,
   type CoreFixtures,
   type OrganizationCleanupFixtures,
-} from "@gitea-automation/core-playwright/fixtures/base.fixtures";
+} from "@gitea-automation/shared-playwright/base.fixtures";
 import {
   issuesFixtures,
   type IssuesFixtures,
-} from "@gitea-automation/core-playwright/fixtures/issues.fixtures";
+} from "@gitea-automation/shared-playwright/issues.fixtures";
 import {
   resolveOwnerCredentials,
   type Credentials,
-} from "@gitea-automation/core-playwright/fixtures/credentials";
+} from "@gitea-automation/shared-playwright/credentials";
 
 interface BddFixtures {
   ownerCredentials: Credentials;

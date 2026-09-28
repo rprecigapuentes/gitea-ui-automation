@@ -1,6 +1,6 @@
 import type { Organization } from "@gitea-automation/business-logic/entities/organization.entity";
 import { uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.util";
-import { resolveOwnerCredentials } from "@gitea-automation/core-playwright/fixtures/credentials";
+import { resolveOwnerCredentials } from "@gitea-automation/shared-playwright/credentials";
 import { test } from "../../../../fixtures/visual.fixture";
 
 interface InvalidNameContext {

@@ -2,7 +2,7 @@ import { test as base } from "./fixture";
 import {
   organizationsFixtures,
   type OrganizationsFixtures,
-} from "@gitea-automation/core-playwright/fixtures/organizations.fixtures";
+} from "@gitea-automation/shared-playwright/organizations.fixtures";
 
 export { ORGANIZATION_TAG, ORGANIZATION_NAME_PREFIX } from "./fixture";
 export {
@@ -10,7 +10,7 @@ export {
   TEAM_REPOSITORY_TAG,
   E2E_TAG,
   type SeededUser,
-} from "@gitea-automation/core-playwright/fixtures/organizations.fixtures";
+} from "@gitea-automation/shared-playwright/organizations.fixtures";
 
 export const test = base.extend<OrganizationsFixtures>(organizationsFixtures);
 

@@ -6,7 +6,8 @@
   "workspaces": [
     "core/*",
     "business-logic",
-    "services/*"
+    "services/*",
+    "services/_shared/*"
   ],
   "engines": {
     "node": ">=22 <23"
