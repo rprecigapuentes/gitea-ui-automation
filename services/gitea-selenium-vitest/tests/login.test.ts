@@ -10,7 +10,9 @@ const test = baseTest.extend({
 });
 
 describe("Login test", () => {
-  test("should log in with valid credentials", async ({
+  // Kept out of the pipeline, not deleted: gitea-selenium-cucumber's login.feature already
+  // exercises this exact flow, and playwright-native and playwright-bdd each carry their own.
+  test.skip("should log in with valid credentials", async ({
     driver,
     loginPage,
     mainPage,
