@@ -58,10 +58,21 @@ requirement. Change it here and the other suite breaks.
 | `create-issue.feature`        | an issue is created with a title and a description                             | no                   |
 | `create-organization.feature` | an owner creates an organization and two teams, then adds and removes a member | no                   |
 | `organizations.feature`       | the `@e2e` scenario and the five `@smoke` scenarios of the Cucumber feature    | yes (all of it)      |
+| `project-board.feature`       | the five Kanban board scenarios                                                | yes                  |
+| `demo-e2e.feature`            | the work item that travels from a team to the board that tracks it             | yes                  |
+| `issue-metadata.feature`      | AT-ISS-01: an issue keeps its description, label, milestone and assignee       | no                   |
+| `scoped-labels.feature`       | AT-ISS-02: a scoped label replaces the label of its own scope                  | no                   |
 
 `create-organization.feature` is the Vitest case "should create an organization and add members",
 which `playwright-native` also carries. It keeps every assertion of that case, and the Cucumber
 service has no feature for it, so the Gherkin is authored here.
+
+`issue-metadata.feature` and `scoped-labels.feature` are the Vitest cases AT-ISS-01 and AT-ISS-02,
+which `playwright-native` carries as `issue-metadata.spec.ts` and `scoped-labels.spec.ts`. The
+Cucumber service has no issue feature either, so their Gherkin is authored here too, from the
+assertions those cases make. Both are tagged `@issues`. `create-issue.feature` is tagged `@skip`
+because AT-ISS-01 covers it and more; it stays on disk, and `issue-metadata.feature` resolves four
+of its steps to the definitions that file still owns.
 
 `organizations.feature` is byte-identical to the Cucumber service's own `organizations.feature`, in
 full: the `@e2e` scenario and every `@smoke`. "Add a repository to a team" is tagged
@@ -87,10 +98,14 @@ nothing recorded and removes nothing.
 browser and hands the agent the page it was left on, so an empty one means the agent invents the
 state its scenario needs and writes that invention into the test.
 
-| File                | State                                                                                              |
-| ------------------- | -------------------------------------------------------------------------------------------------- |
-| `seed.spec.ts`      | signed in as the browser's owner, inside a repository the fixtures create and remove — the default |
-| `anonymous.spec.ts` | signed out, on the sign-in form; named by path when signing in is the scenario's subject           |
+| File                     | State                                                                                              |
+| ------------------------ | -------------------------------------------------------------------------------------------------- |
+| `seed.spec.ts`           | signed in as the browser's owner, inside a repository the fixtures create and remove — the default |
+| `anonymous.spec.ts`      | signed out, on the sign-in form; named by path when signing in is the scenario's subject           |
+| `board.spec.ts`          | the seeded organization and its repositories, on the Kanban project's board                        |
+| `demo.spec.ts`           | the seeded organization, its milestone and the two seeded users, on the organization page          |
+| `issue-metadata.spec.ts` | a repository carrying the classification label and the milestone, on the new issue form            |
+| `scoped-labels.spec.ts`  | a repository carrying one seeded issue, on the label list                                          |
 
 They run under the `seeds-chrome` project, which the suite's own runs never name. Its `testDir` is
 the service root with an explicit `testMatch`, because the MCP server refuses to write a generated
