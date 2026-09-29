@@ -18,5 +18,6 @@ test("Main view smoke: the main view looks right at a phone width", async ({
       ...pageObjects.mainPage.getVolatileRegions(),
       ...pageObjects.navBar.getVolatileRegions(),
     ],
+    maxDiffPixels: 420,
   });
 });

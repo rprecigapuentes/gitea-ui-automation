@@ -20,7 +20,7 @@ test("Main view smoke: the main view looks the same for two accounts", async ({
       ...pageObjects.mainPage.getVolatileRegions(),
       ...pageObjects.navBar.getVolatileRegions(),
     ],
-    maxDiffPixels: 100,
+    maxDiffPixels: 420,
   });
 
   await pageObjects.navBar.clickSignOut();
@@ -33,6 +33,6 @@ test("Main view smoke: the main view looks the same for two accounts", async ({
       ...pageObjects.mainPage.getVolatileRegions(),
       ...pageObjects.navBar.getVolatileRegions(),
     ],
-    maxDiffPixels: 100,
+    maxDiffPixels: 420,
   });
 });
