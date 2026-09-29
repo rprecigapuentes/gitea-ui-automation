@@ -22,3 +22,7 @@
 - [x] 4.2 Run it on firefox (23.6s, both drags fell back to the dispatched events) and on edge (26.2s)
 - [x] 4.3 Run `npm run format`, `npm run lint` and `npm run typecheck`
 - [ ] 4.4 Time the same flow by hand once and record the manual duration beside the automated one, for the execution-time comparison the demo needs
+
+4.4 is archived open. It is a stopwatch measurement of a person driving the flow by hand, which no
+run of this repository can produce, and the demo it was for has passed. The automated figures it was
+to sit beside are in 4.1 and 4.2 and stand on their own.

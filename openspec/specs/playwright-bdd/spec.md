@@ -20,9 +20,9 @@ The service SHALL generate Playwright tests from the `.feature` files under its 
 - **WHEN** a scenario's steps change and the test command runs again
 - **THEN** the generated tests reflect the edited feature, with no manual regeneration step
 
-### Requirement: The login scenario is shared with the Cucumber service
+### Requirement: A feature shared with the Cucumber service carries identical text
 
-The service SHALL carry the same login feature text as the Selenium Cucumber service, and SHALL resolve each of its steps to a step definition of its own.
+Where a feature of this service describes the same behaviour as a feature of the Selenium Cucumber service, the two SHALL carry identical Gherkin text, and this service SHALL resolve every step of that feature to exactly one step definition of its own. Neither service SHALL edit shared feature text to suit its own runner, because the edit reaches the other suite.
 
 #### Scenario: The two services describe login
 
@@ -34,6 +34,18 @@ The service SHALL carry the same login feature text as the Selenium Cucumber ser
 - **WHEN** the runner reaches a step of the login scenario
 - **THEN** exactly one step definition of this service matches it
 
+#### Scenario: More than one feature is shared
+
+- **WHEN** this service carries several features that the Cucumber service also carries
+- **THEN** each of them is identical to its counterpart, character for character
+- **AND** no feature is exempt because it was added after login
+
+#### Scenario: A step's wording does not suit this runner
+
+- **WHEN** this service would express a step of a shared feature differently
+- **THEN** the feature text is left as the two services share it
+- **AND** the difference is absorbed by the step definition
+
 ### Requirement: Steps reach the browser only through page objects
 
 A step definition SHALL drive the application only through the shared page objects, built over the Playwright interaction strategy, and SHALL NOT call the page or locators directly.
@@ -42,6 +54,35 @@ A step definition SHALL drive the application only through the shared page objec
 
 - **WHEN** the login scenario opens the login page, logs in and asserts the dashboard
 - **THEN** every browser interaction goes through the login page and main page objects
+
+### Requirement: An organization a scenario creates is removed afterwards
+
+The service SHALL remove an organization a scenario created through the browser, together with the repositories it owns, once the scenario ends, whether it passed or failed. Before a scenario tagged `@organization` runs, the service SHALL remove the organizations a crashed run left under that scenario's own name prefix, and SHALL leave every other organization alone.
+
+#### Scenario: A scenario that creates an organization passes
+
+- **WHEN** a scenario creates an organization and ends with every step passing
+- **THEN** the organization and its repositories no longer exist on the instance
+
+#### Scenario: A scenario that creates an organization fails
+
+- **WHEN** a scenario creates an organization and a later step fails
+- **THEN** the organization and its repositories no longer exist on the instance
+
+#### Scenario: A crashed run left an organization behind
+
+- **WHEN** a scenario tagged `@organization` starts and an organization under its name prefix survives from an earlier run
+- **THEN** that organization is removed before the scenario's first step
+
+#### Scenario: Another suite's organization exists
+
+- **WHEN** a scenario tagged `@organization` starts and an organization outside its name prefix exists
+- **THEN** that organization is not removed
+
+#### Scenario: A scenario never touches an organization
+
+- **WHEN** a scenario that creates no organization runs
+- **THEN** the teardown finds nothing recorded and removes nothing
 
 ### Requirement: Each browser runs with its own account, in parallel
 

@@ -37,6 +37,42 @@ export default tseslint.config(
     },
   },
   {
+    /* A test reaches the browser only through a page object. Scoped by glob rather than by
+       exclusion, so the rule simply does not exist over `core`, the page objects, the fixtures,
+       `features/support/` and `gitea-selenium-vitest/src/`, which are where these calls belong. */
+    files: ["services/*/tests/**/*.ts", "services/*/features/step-definitions/**/*.ts"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "MemberExpression[object.name='page'][property.name='locator']",
+          message:
+            "A spec does not build its own locators. Call the page object that owns this page, and add a method there when none fits.",
+        },
+        {
+          selector: "MemberExpression[object.name='page'][property.name='goto']",
+          message:
+            "A spec does not navigate by URL. Call `open()` on the page object that owns this page.",
+        },
+        {
+          selector: "MemberExpression[object.name='page'][property.name=/^getBy/]",
+          message:
+            "A spec does not build its own locators. Call the page object that owns this page, and add a method there when none fits.",
+        },
+        {
+          selector: "MemberExpression[object.name='driver'][property.name=/^findElements?$/]",
+          message:
+            "A spec does not find its own elements. Call the page object that owns this page, and add a method there when none fits.",
+        },
+        {
+          selector: "MemberExpression[object.name='driver'][property.name='wait']",
+          message:
+            "A spec does not wait on the driver. Use the page object's own wait, and when none fits add the wait to BaseComponent so every page gains it.",
+        },
+      ],
+    },
+  },
+  {
     files: ["**/*.js", "**/*.mjs"],
     languageOptions: { globals: { process: "readonly", console: "readonly" } },
     extends: [tseslint.configs.disableTypeChecked],

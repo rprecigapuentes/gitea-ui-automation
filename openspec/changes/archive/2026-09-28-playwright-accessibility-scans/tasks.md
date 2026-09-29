@@ -44,3 +44,9 @@
 ## 9. Read the findings against the standard
 
 - [x] 9.1 Map each violated rule to its WCAG success criteria and conformance level from the tags axe already returns, name them on every rule card and count the failed criteria in a tile; verify the summary names 1.3.1, 1.4.3 and 4.1.2 for the three known rules.
+
+7.1 is archived open. It asked for the severity counts to be recorded in this change's pull request,
+and that pull request merged, so there is no longer a place to put them. What it was protecting
+survives in the code: requirement `A scan leaves its violations behind in a form a person can read`
+obliges every scan to publish rule, impact and offending elements, and `report:a11y` groups them, so
+the triage can be redone from any run's artifact at any time.
