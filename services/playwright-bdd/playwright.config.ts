@@ -52,6 +52,8 @@ export default defineConfig({
         name: browser.name,
         features: "features/scenarios/*.feature",
         steps: ["features/step-definitions/*.ts", "fixtures/fixture.ts"],
+        // A scenario tagged @skip is kept in its feature file but never compiled into a test.
+        tags: "not @skip",
       }),
       use: { ...browser.use, video: "on-first-retry" as const },
     })),
