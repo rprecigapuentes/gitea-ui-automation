@@ -14,6 +14,11 @@
       through the fixture instead. Verify the new text names what is actually true and what a hook
       is still owed to.
 
+Task 1.1's instruction to leave `organizationCleanupFixtures` out held when it was carried out and
+no longer does. `migrate-organizations-to-bdd` chained the group in on main, and merging main here
+brought it along. Nothing in this change had to move: the board fixtures already clear
+`scenarioState.organization` before deleting, so the group finds nothing to do behind them.
+
 ## 2. Give the generator a board to wake up in
 
 - [x] 2.1 Add `services/playwright-bdd/tests/seeds/board.spec.ts` on the two new fixture groups,

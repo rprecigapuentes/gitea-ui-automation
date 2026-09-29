@@ -40,6 +40,13 @@ of its members are `auto`, so merging them would build the eight API clients for
 `create-issue.feature`, which never touch an organization. Here they would also find nothing to do —
 the fixture clears `scenarioState.organization` before deleting.
 
+No longer true as of 2026-09-28. `migrate-organizations-to-bdd` chained the group in on main, so
+this branch now carries it. The reasoning above still describes its cost accurately — every
+scenario of the service builds the eight clients — but the cost was accepted, because
+`create-organization.feature` seeds an organization through a step rather than a fixture and has
+nothing else to tear it down with. For the board scenarios the group remains a no-op, for the
+reason given: the fixture clears `scenarioState.organization` before it deletes.
+
 ### `I am logged in as the organization owner` establishes the session through the session manager
 
 Cucumber's definition of this step drives the sign-in form. This service's will call
