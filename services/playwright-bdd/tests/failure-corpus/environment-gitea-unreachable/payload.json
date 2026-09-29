@@ -1,0 +1,30 @@
+[
+  {
+    "test": "A valid Gitea user can log in",
+    "fullName": ".features-gen/chrome/features/scenarios/login.feature.spec.js › Login › A valid Gitea user can log in",
+    "browser": "chrome",
+    "tags": [],
+    "status": "failed",
+    "failingStep": "Given I am on the Gitea login page",
+    "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3999/user/login\nCall log:\n  - navigating to \"http://localhost:3999/user/login\", waiting until \"load\"\n",
+    "trace": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3999/user/login\nCall log:\n  - navigating to \"http://localhost:3999/user/login\", waiting until \"load\"\n\n    at PlaywrightInteractionStrategy.open (/home/rprec/jalasoft/gui-testing/gitea-ui-automation/core/page-objects/strategies/playwright-interaction.strategy.ts:262:21)\n    at LoginPage.open (/home/rprec/jalasoft/gui-testing/gitea-ui-automation/core/page-objects/base.page.ts:12:25)\n    at LoginPage.open (/home/rprec/jalasoft/gui-testing/gitea-ui-automation/business-logic/pages/authentication/login.page.ts:25:17)\n    at Object.<anonymous> (/home/rprec/jalasoft/gui-testing/gitea-ui-automation/services/playwright-bdd/features/step-definitions/login.steps.ts:4:31)\n    at /home/rprec/jalasoft/gui-testing/gitea-ui-automation/services/playwright-bdd/.features-gen/chrome/features/scenarios/login.feature.spec.js:7:5",
+    "steps": [
+      {
+        "name": "Before Hooks",
+        "status": "passed"
+      },
+      {
+        "name": "Given I am on the Gitea login page",
+        "status": "failed",
+        "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3999/user/login\nCall log:\n  - navigating to \"http://localhost:3999/user/login\", waiting until \"load\"\n"
+      },
+      {
+        "name": "error-context"
+      },
+      {
+        "name": "After Hooks",
+        "status": "passed"
+      }
+    ]
+  }
+]

@@ -1,0 +1,32 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["test", "failingStep", "category", "confidence", "reasoning", "firstThingToCheck"],
+  "properties": {
+    "test": {
+      "type": "string",
+      "description": "The name of the test, copied from the payload."
+    },
+    "failingStep": {
+      "type": "string",
+      "description": "The step of the scenario that failed, in the words the feature file uses. Empty when the payload names none."
+    },
+    "category": {
+      "type": "string",
+      "enum": ["locator", "timing", "data", "environment", "application", "unknown"],
+      "description": "unknown whenever the payload does not support a cause."
+    },
+    "confidence": {
+      "type": "string",
+      "enum": ["high", "medium", "low"]
+    },
+    "reasoning": {
+      "type": "string",
+      "description": "What in the payload leads to that category."
+    },
+    "firstThingToCheck": {
+      "type": "string",
+      "description": "The one thing a reader should look at first."
+    }
+  }
+}

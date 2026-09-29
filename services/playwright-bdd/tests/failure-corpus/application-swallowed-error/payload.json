@@ -1,0 +1,47 @@
+[
+  {
+    "test": "Add a user to a team",
+    "fullName": ".features-gen/chrome/features/scenarios/organizations.feature.spec.js › Organization › Add a user to a team",
+    "browser": "chrome",
+    "tags": ["organizations", "cleanup", "smoke"],
+    "status": "failed",
+    "failingStep": "When I add the following team members:",
+    "message": "Error: Timed out after 5000ms waiting for condition",
+    "trace": "Error: Timed out after 5000ms waiting for condition\n    at PlaywrightInteractionStrategy.waitFor (/home/rprec/jalasoft/gui-testing/gitea-ui-automation/core/page-objects/strategies/playwright-interaction.strategy.ts:278:13)\n    at PlaywrightInteractionStrategy.actAndWaitUntil (/home/rprec/jalasoft/gui-testing/gitea-ui-automation/core/page-objects/strategies/playwright-interaction.strategy.ts:176:5)\n    at PlaywrightInteractionStrategy.clickAndWaitUntil (/home/rprec/jalasoft/gui-testing/gitea-ui-automation/core/page-objects/strategies/playwright-interaction.strategy.ts:185:5)\n    at SpecificTeamFragment.addMemberByUsername (/home/rprec/jalasoft/gui-testing/gitea-ui-automation/business-logic/pages/organizations/fragments/specific-team.fragment.ts:176:5)\n    at Object.<anonymous> (/home/rprec/jalasoft/gui-testing/gitea-ui-automation/services/playwright-bdd/features/step-definitions/organizations.steps.ts:145:7)\n    at /home/rprec/jalasoft/gui-testing/gitea-ui-automation/services/playwright-bdd/.features-gen/chrome/features/scenarios/organizations.feature.spec.js:103:5",
+    "steps": [
+      {
+        "name": "Before Hooks",
+        "status": "passed"
+      },
+      {
+        "name": "Given I login with valid credentials as \"owner\"",
+        "status": "passed"
+      },
+      {
+        "name": "And an organization already exists",
+        "status": "passed"
+      },
+      {
+        "name": "When I create the following teams:",
+        "status": "passed"
+      },
+      {
+        "name": "Then the created teams are displayed in Teams page",
+        "status": "passed"
+      },
+      {
+        "name": "When I add the following team members:",
+        "status": "failed",
+        "message": "Error: Timed out after 5000ms waiting for condition"
+      },
+      {
+        "name": "error-context"
+      },
+      {
+        "name": "After Hooks",
+        "status": "failed",
+        "message": "TypeError: (intermediate value) is not iterable"
+      }
+    ]
+  }
+]

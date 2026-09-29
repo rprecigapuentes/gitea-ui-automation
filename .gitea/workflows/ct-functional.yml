@@ -348,6 +348,26 @@ jobs:
         continue-on-error: true
         run: npm run report -w @gitea-automation/${{ matrix.suite }}
 
+      # The raw Allure results are the only artifact naming the Gherkin step that failed, and
+      # nothing uploads them, so the explanation is written here while they are still on disk.
+      # The key is on this step alone: the job also checks out and runs the repository's code.
+      - name: Explain the failures (${{ matrix.suite }})
+        if: failure() && matrix.suite == 'playwright-bdd'
+        continue-on-error: true
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: npm run explain -w @gitea-automation/${{ matrix.suite }}
+
+      # The only step that addresses the instance holding this repository. Its token carries
+      # write:issue and nothing else: it cannot read the code, push, or reach any other endpoint.
+      - name: File what the failures were (${{ matrix.suite }})
+        if: failure() && matrix.suite == 'playwright-bdd'
+        continue-on-error: true
+        env:
+          # Gitea reserves the GITEA_ prefix for secret names, so the secret is TOKEN_ISSUES.
+          GITEA_TOKEN_ISSUES: ${{ secrets.TOKEN_ISSUES }}
+        run: npm run file-issue -w @gitea-automation/${{ matrix.suite }}
+
       # test-results/ holds the video and the trace of a retried test, and is absent when
       # nothing failed, which the upload warns about rather than fails on.
       - name: Upload the report (${{ matrix.suite }})
@@ -358,5 +378,7 @@ jobs:
           path: |
             services/${{ matrix.suite }}/allure-report/
             services/${{ matrix.suite }}/reports/junit*.xml
+            services/${{ matrix.suite }}/reports/failures.json
+            services/${{ matrix.suite }}/reports/explanation.json
             services/${{ matrix.suite }}/test-results/
           retention-days: 14

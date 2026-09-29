@@ -15,7 +15,10 @@
     "run:edge": "cross-env BROWSER=edge playwright test --project=edge --workers=1",
     "report": "allure generate ./allure-results",
     "report:open": "allure open ./allure-report/",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "explain": "node scripts/explain-failures.mjs",
+    "explain:score": "node scripts/score-explanations.mjs",
+    "file-issue": "node scripts/file-failure-issue.mjs"
   },
   "dependencies": {
     "@gitea-automation/business-logic": "*",

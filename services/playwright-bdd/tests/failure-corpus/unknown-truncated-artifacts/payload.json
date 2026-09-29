@@ -1,0 +1,37 @@
+[
+  {
+    "test": "An issue added to the project lands in the default column",
+    "fullName": ".features-gen/chrome/features/scenarios/project-board.feature.spec.js › Organization project board › An issue added to the project lands in the default column",
+    "browser": "chrome",
+    "tags": ["project-board", "cleanup"],
+    "status": "failed",
+    "failingStep": "Then the default column holds the first seeded issue",
+    "message": "",
+    "trace": "",
+    "steps": [
+      {
+        "name": "Before Hooks",
+        "status": "passed"
+      },
+      {
+        "name": "When I add the first seeded issue to the project",
+        "status": "passed"
+      },
+      {
+        "name": "And I open the project board",
+        "status": "passed"
+      },
+      {
+        "name": "Then the default column holds the first seeded issue",
+        "status": "broken"
+      },
+      {
+        "name": "error-context"
+      },
+      {
+        "name": "After Hooks",
+        "status": "passed"
+      }
+    ]
+  }
+]

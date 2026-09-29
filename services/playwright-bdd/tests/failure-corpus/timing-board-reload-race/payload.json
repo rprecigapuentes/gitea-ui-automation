@@ -1,0 +1,198 @@
+[
+  {
+    "test": "A work item travels from the team that may be assigned it to the board that tracks it",
+    "fullName": ".features-gen/edge/features/scenarios/demo-e2e.feature.spec.js › Organization work item lifecycle › A work item travels from the team that may be assigned it to the board that tracks it",
+    "browser": "edge",
+    "tags": ["demo-e2e", "cleanup", "e2e"],
+    "status": "failed",
+    "failingStep": "And I open the project board",
+    "message": "Error: page.goto: Navigation to \"http://localhost:3000/at-board-edge-a5ba9a78/-/projects/430\" is interrupted by another navigation to \"http://localhost:3000/at-board-edge-a5ba9a78/-/projects/430\"\nCall log:\n  - navigating to \"http://localhost:3000/at-board-edge-a5ba9a78/-/projects/430\", waiting until \"load\"\n",
+    "trace": "Error: page.goto: Navigation to \"http://localhost:3000/at-board-edge-a5ba9a78/-/projects/430\" is interrupted by another navigation to \"http://localhost:3000/at-board-edge-a5ba9a78/-/projects/430\"\nCall log:\n  - navigating to \"http://localhost:3000/at-board-edge-a5ba9a78/-/projects/430\", waiting until \"load\"\n\n    at PlaywrightInteractionStrategy.open (/home/rprec/jalasoft/gui-testing/gitea-ui-automation/core/page-objects/strategies/playwright-interaction.strategy.ts:262:21)\n    at ProjectBoardPage.open (/home/rprec/jalasoft/gui-testing/gitea-ui-automation/core/page-objects/base.page.ts:12:25)\n    at ProjectBoardPage.openFor (/home/rprec/jalasoft/gui-testing/gitea-ui-automation/business-logic/pages/projects/project-board.page.ts:27:17)\n    at Object.<anonymous> (/home/rprec/jalasoft/gui-testing/gitea-ui-automation/services/playwright-bdd/features/step-definitions/project-board.steps.ts:69:40)\n    at /home/rprec/jalasoft/gui-testing/gitea-ui-automation/services/playwright-bdd/.features-gen/edge/features/scenarios/demo-e2e.feature.spec.js:49:5",
+    "steps": [
+      {
+        "name": "Before Hooks",
+        "status": "passed"
+      },
+      {
+        "name": "Given the seeded organization has two repositories with one issue each",
+        "status": "passed"
+      },
+      {
+        "name": "And I am logged in as the organization owner",
+        "status": "passed"
+      },
+      {
+        "name": "And the seeded organization is open",
+        "status": "passed"
+      },
+      {
+        "name": "When I create the following teams:",
+        "status": "passed"
+      },
+      {
+        "name": "Then the created teams are displayed in Teams page",
+        "status": "passed"
+      },
+      {
+        "name": "And the team \"qa-team\" has no members yet",
+        "status": "passed"
+      },
+      {
+        "name": "When I add the first seeded repository to the team \"qa-team\"",
+        "status": "passed"
+      },
+      {
+        "name": "And I open the new issue form of the first seeded repository",
+        "status": "passed"
+      },
+      {
+        "name": "Then the assignee list does not offer user 1",
+        "status": "passed"
+      },
+      {
+        "name": "Given the teams page of the organization is open",
+        "status": "passed"
+      },
+      {
+        "name": "When I add the following team members:",
+        "status": "passed"
+      },
+      {
+        "name": "Then the member count for each created team is correct",
+        "status": "passed"
+      },
+      {
+        "name": "And the avatars for each created team are correct",
+        "status": "passed"
+      },
+      {
+        "name": "When I open the new issue form of the first seeded repository",
+        "status": "passed"
+      },
+      {
+        "name": "Then the assignee list offers user 1",
+        "status": "passed"
+      },
+      {
+        "name": "And the assignee list does not offer user 2",
+        "status": "passed"
+      },
+      {
+        "name": "When I create the scoped label \"priority/high\" in the first seeded repository",
+        "status": "passed"
+      },
+      {
+        "name": "And I open the new issue form of the first seeded repository",
+        "status": "passed"
+      },
+      {
+        "name": "And I fill the issue \"Demo work item\" with a description",
+        "status": "passed"
+      },
+      {
+        "name": "Then the description preview renders the heading \"Demo work item\"",
+        "status": "passed"
+      },
+      {
+        "name": "When I select the label, the milestone and user 1 as assignee",
+        "status": "passed"
+      },
+      {
+        "name": "And I submit the issue",
+        "status": "passed"
+      },
+      {
+        "name": "Then the created issue carries the label, the milestone and user 1 as assignee",
+        "status": "passed"
+      },
+      {
+        "name": "When I filter the issue list of the first seeded repository by the label",
+        "status": "passed"
+      },
+      {
+        "name": "Then the issue list shows only the created issue",
+        "status": "passed"
+      },
+      {
+        "name": "Given a project created from the Basic Kanban template",
+        "status": "passed"
+      },
+      {
+        "name": "And the seeded issues of both repositories are in the default column",
+        "status": "passed"
+      },
+      {
+        "name": "And the created issue is in the default column",
+        "status": "passed"
+      },
+      {
+        "name": "When I open the project board",
+        "status": "passed"
+      },
+      {
+        "name": "Then the board shows the columns Backlog, To Do, In Progress and Done",
+        "status": "passed"
+      },
+      {
+        "name": "And the default column is \"Backlog\"",
+        "status": "passed"
+      },
+      {
+        "name": "And the default column counts 3 issues",
+        "status": "passed"
+      },
+      {
+        "name": "And the column \"In Progress\" counts 0 issues",
+        "status": "passed"
+      },
+      {
+        "name": "When I add the column \"Review\" to the board",
+        "status": "passed"
+      },
+      {
+        "name": "And I open the project board",
+        "status": "passed"
+      },
+      {
+        "name": "Then the board shows the column \"Review\"",
+        "status": "passed"
+      },
+      {
+        "name": "When I drag the first seeded issue onto the column \"In Progress\"",
+        "status": "passed"
+      },
+      {
+        "name": "And I drag the second seeded issue onto the column \"Review\"",
+        "status": "passed"
+      },
+      {
+        "name": "Then the column \"In Progress\" holds only the first seeded issue",
+        "status": "passed"
+      },
+      {
+        "name": "And the column \"Review\" holds only the second seeded issue",
+        "status": "passed"
+      },
+      {
+        "name": "And the default column counts 1 issue",
+        "status": "passed"
+      },
+      {
+        "name": "When I delete the column \"Review\"",
+        "status": "passed"
+      },
+      {
+        "name": "And I open the project board",
+        "status": "failed",
+        "message": "Error: page.goto: Navigation to \"http://localhost:3000/at-board-edge-a5ba9a78/-/projects/430\" is interrupted by another navigation to \"http://localhost:3000/at-board-edge-a5ba9a78/-/projects/430\"\nCall log:\n  - navigating to \"http://localhost:3000/at-board-edge-a5ba9a78/-/projects/430\", waiting until \"load\"\n"
+      },
+      {
+        "name": "error-context"
+      },
+      {
+        "name": "After Hooks",
+        "status": "passed"
+      }
+    ]
+  }
+]

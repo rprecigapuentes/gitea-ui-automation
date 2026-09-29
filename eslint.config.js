@@ -74,7 +74,9 @@ export default tseslint.config(
   },
   {
     files: ["**/*.js", "**/*.mjs"],
-    languageOptions: { globals: { process: "readonly", console: "readonly" } },
+    languageOptions: {
+      globals: { process: "readonly", console: "readonly", fetch: "readonly" },
+    },
     extends: [tseslint.configs.disableTypeChecked],
   },
   prettier,

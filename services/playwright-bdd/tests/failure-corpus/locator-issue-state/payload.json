@@ -1,0 +1,50 @@
+[
+  {
+    "test": "An issue is created with a title and a description",
+    "fullName": ".features-gen/chrome/features/scenarios/create-issue.feature.spec.js › Create an issue › An issue is created with a title and a description",
+    "browser": "chrome",
+    "tags": [],
+    "status": "broken",
+    "failingStep": "And the created issue is \"Open\"",
+    "message": "Test timeout of 120000ms exceeded.",
+    "trace": "Test timeout of 120000ms exceeded.",
+    "steps": [
+      {
+        "name": "Before Hooks",
+        "status": "passed"
+      },
+      {
+        "name": "Given I am signed in as the repository owner",
+        "status": "passed"
+      },
+      {
+        "name": "When I open the new issue form of the repository",
+        "status": "passed"
+      },
+      {
+        "name": "And I fill the issue with a title and a description",
+        "status": "passed"
+      },
+      {
+        "name": "And I submit the issue",
+        "status": "passed"
+      },
+      {
+        "name": "Then the created issue carries that title and that description",
+        "status": "passed"
+      },
+      {
+        "name": "And the created issue is \"Open\"",
+        "status": "failed",
+        "message": "Error: locator.textContent: Test timeout of 120000ms exceeded.\nCall log:\n  - waiting for locator('.issue-state-badge')\n"
+      },
+      {
+        "name": "error-context"
+      },
+      {
+        "name": "After Hooks",
+        "status": "passed"
+      }
+    ]
+  }
+]
