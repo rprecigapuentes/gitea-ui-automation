@@ -10,6 +10,10 @@ export class NavBarFragment extends BaseComponent {
     navigationBarContainer: "#navbar",
   };
 
+  private readonly primaryBarLocators = {
+    profileAvatar: "span.navbar-avatar",
+  };
+
   private readonly secondaryBarLocators = {
     // container for the secondary navigation bar
     secondaryBarContainer: ".ui.secondary.stackable.menu",
@@ -25,6 +29,7 @@ export class NavBarFragment extends BaseComponent {
     accountDropdown: "[data-tooltip-content='Profile and Settings…']",
     accountAvatar: "[data-tooltip-content='Profile and Settings…'] img.ui.avatar",
     signOutLink: "a[href='/user/logout']",
+    organizationDropdownContainer: ".stackable.menu div[role='menu']",
   };
 
   private readonly dropdownOrganizationLocators = {
@@ -140,5 +145,12 @@ export class NavBarFragment extends BaseComponent {
     );
     const organizationNames = await Promise.all(organizationElements.map((el) => el.getText()));
     return organizationNames;
+  }
+
+  getVolatileRegions(): string[] {
+    return [
+      this.secondaryBarLocators.organizationDropdownContainer,
+      this.primaryBarLocators.profileAvatar,
+    ];
   }
 }
