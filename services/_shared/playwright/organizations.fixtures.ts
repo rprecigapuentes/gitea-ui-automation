@@ -38,7 +38,7 @@ export interface SeededUser {
 export interface OrganizationsFixtures {
   existingOrganization: Organization;
   seededUsers: SeededUser[];
-  seededOrganizationWithTeamAndRepository: SeededOrganizationWithTeamAndRepository;
+  seededOrganizationWithTeamAndRepository: SeededOrganizationWithTeamAndRepository | null;
 }
 
 /**
@@ -105,22 +105,45 @@ export const organizationsFixtures: Fixtures<
   },
 
   // One organization with a team and a repository: the state `@team-repository`-tagged tests start
-  // from, mirroring the Cucumber hook of that tag. `cleanupCreatedOrganization` removes it.
-  seededOrganizationWithTeamAndRepository: async ({ clients, scenarioState }, use, testInfo) => {
-    const organizationName = `at-team-repo-${testInfo.project.name}-${uniqueSuffix()}`;
+  // from, mirroring the Cucumber hook of that tag. `auto`, like `cleanupOrganizationsBeforeRun`, so
+  // a scenario picks this up by carrying the tag rather than by declaring the fixture — a step a
+  // tagged and an untagged scenario share stays untagged-scenario-free of this seeding.
+  // `cleanupCreatedOrganization` removes what it creates.
+  seededOrganizationWithTeamAndRepository: [
+    async ({ clients, scenarioState }, use, testInfo) => {
+      if (!testInfo.tags.includes(TEAM_REPOSITORY_TAG)) {
+        await use(null);
+        return;
+      }
 
-    await clients.organizations.createOrganization(organizationName);
-    scenarioState.organization = { name: organizationName, visibility: "private" };
-    await clients.teams.createTeam(organizationName, SEEDED_TEAM_NAME, "write");
-    await clients.repositories.createOrganizationRepository(
-      organizationName,
-      SEEDED_REPOSITORY_NAME,
-    );
+      const organizationName = `at-team-repo-${testInfo.project.name}-${uniqueSuffix()}`;
 
-    await use({
-      organizationName,
-      teamName: SEEDED_TEAM_NAME,
-      repositoryName: SEEDED_REPOSITORY_NAME,
-    });
-  },
+      await clients.organizations.createOrganization(organizationName);
+      scenarioState.organization = {
+        name: organizationName,
+        visibility: "private",
+        teams: [
+          {
+            name: SEEDED_TEAM_NAME,
+            visibility: "private",
+            createRepositories: false,
+            permissions: "general",
+          },
+        ],
+        repositories: [{ name: SEEDED_REPOSITORY_NAME, visibility: true }],
+      };
+      await clients.teams.createTeam(organizationName, SEEDED_TEAM_NAME, "write");
+      await clients.repositories.createOrganizationRepository(
+        organizationName,
+        SEEDED_REPOSITORY_NAME,
+      );
+
+      await use({
+        organizationName,
+        teamName: SEEDED_TEAM_NAME,
+        repositoryName: SEEDED_REPOSITORY_NAME,
+      });
+    },
+    { auto: true },
+  ],
 };
