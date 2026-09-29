@@ -5,14 +5,12 @@ import { baseUrl } from "@gitea-automation/core-config/gitea.config";
 
 export class MainPage extends BasePage {
   private readonly locators = {
-    // Server-rendered: it is on the page before Vue mounts anything into it, so waiting for it
-    // proves nothing about the tab strip.
     dashboardRepoList: "#dashboard-repo-list",
-    // Rendered by the same Vue component as the tab strip, in the same patch, and asserted on by
-    // nobody. Waiting for this is what says the tabs carry their labels and their active class.
     renderedPanel: "#dashboard-repo-list .dashboard-repos",
     repositoryOption: ".ui.two.item.menu a.item:nth-of-type(1)",
     organizationOption: ".ui.two.item.menu a.item:nth-of-type(2)",
+    heatmapMonths: "g.heatmap-month-labels",
+    heatmapDays: "g.heatmap-day-labels",
   };
 
   override getUrl(): string {
@@ -27,9 +25,6 @@ export class MainPage extends BasePage {
     await super.open([this.locators.renderedPanel]);
   }
 
-  // Reading the tabs before Vue has rendered them is what asked the healing proxy to repair a
-  // timing problem: it answered with the most similar node, and two identical tab anchors are each
-  // other's most similar node. Nothing here is read until the panel that carries them exists.
   async hasExpectedElementsDisplayed(): Promise<boolean> {
     if (!(await this.isVisible(this.locators.renderedPanel))) return false;
 
@@ -71,11 +66,7 @@ export class MainPage extends BasePage {
   }
 
   getVolatileRegions(): string[] {
-    return [
-      ".secondary-nav .ui.floating.dropdown.jump span.text img.ui.avatar",
-      ".secondary-nav .text span.gt-ellipsis",
-      "[data-tooltip-content='Profile and Settings…'] img.ui.avatar",
-    ];
+    return [this.locators.heatmapDays, this.locators.heatmapMonths];
   }
 
   // The contribution heatmap's last column is the week in progress, so its cell count follows

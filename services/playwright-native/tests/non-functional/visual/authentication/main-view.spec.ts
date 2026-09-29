@@ -16,8 +16,11 @@ test("Main view smoke: the main view looks the same for two accounts", async ({
   await pageObjects.loginPage.login(owner.username, owner.password);
   expect(await pageObjects.mainPage.hasExpectedElementsDisplayed()).toBe(true);
   await visualTester.verifyPage(page, "main.png", {
-    mask: pageObjects.mainPage.getVolatileRegions(),
-    maxDiffPixels: 400,
+    mask: [
+      ...pageObjects.mainPage.getVolatileRegions(),
+      ...pageObjects.navBar.getVolatileRegions(),
+    ],
+    maxDiffPixels: 100,
   });
 
   await pageObjects.navBar.clickSignOut();
@@ -26,7 +29,10 @@ test("Main view smoke: the main view looks the same for two accounts", async ({
   await pageObjects.loginPage.login(invited.username, invited.password);
   expect(await pageObjects.mainPage.hasExpectedElementsDisplayed()).toBe(true);
   await visualTester.verifyPage(page, "main.png", {
-    mask: pageObjects.mainPage.getVolatileRegions(),
-    maxDiffPixels: 400,
+    mask: [
+      ...pageObjects.mainPage.getVolatileRegions(),
+      ...pageObjects.navBar.getVolatileRegions(),
+    ],
+    maxDiffPixels: 100,
   });
 });
