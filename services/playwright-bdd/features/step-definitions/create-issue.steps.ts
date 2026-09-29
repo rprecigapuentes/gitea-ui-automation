@@ -7,9 +7,8 @@ import type { ScenarioState } from "@gitea-automation/business-logic/state/scena
 
 const ISSUE_DESCRIPTION = "Description created by the create-issue BDD scenario.";
 
-/* The title and the description travel from the step that types them to the steps that read them
-   back through `scenarioState`, never through a variable in this file: parallel workers share the
-   file, not the state. The guard mirrors `createdIssue` in the Cucumber suite's `scenario-state`. */
+/* The title and the description travel through `scenarioState` rather than a variable in this
+   file, which parallel workers share. */
 function getCreatedIssue(scenarioState: ScenarioState): NonNullable<ScenarioState["createdIssue"]> {
   const createdIssue = scenarioState.createdIssue;
 
