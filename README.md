@@ -13,6 +13,7 @@ An `npm workspaces` monorepo grouping Gitea UI/API automation into several indep
 │   └── logger/                     # @gitea-automation/core-logger — logging, tool-agnostic
 ├── business-logic/                # @gitea-automation/business-logic — a single package: clients/, pages/, entities/, state/
 ├── services/
+│   ├── _shared/playwright/        # @gitea-automation/shared-playwright — the fixtures both Playwright suites start from; not a suite, declares no test script
 │   ├── gitea-selenium-vitest/     # Selenium + Vitest — active project, full suite
 │   ├── gitea-selenium-cucumber/   # Selenium + Cucumber (BDD) — under construction
 │   ├── playwright-native/         # Playwright's native test runner — clients/strategy/pages/scenarioState fixtures, a login-via-API test
@@ -27,7 +28,7 @@ An `npm workspaces` monorepo grouping Gitea UI/API automation into several indep
 npm install
 ```
 
-Installs the dependencies of every workspace (6 under `core/`, `business-logic` itself, and the 4 services) in one shot.
+Installs the dependencies of every workspace (7 under `core/`, `business-logic` itself, the 4 services and the Playwright package they share) in one shot.
 
 ## Root scripts (delegate to the matching workspace)
 

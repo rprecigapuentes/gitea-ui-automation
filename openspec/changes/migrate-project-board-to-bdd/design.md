@@ -4,7 +4,7 @@
 
 See proposal.md — Why. Two facts of the existing code decide most of this change.
 
-`core/playwright/fixtures/project-board.fixtures.ts` already describes itself as this feature's
+`services/_shared/playwright/project-board.fixtures.ts` already describes itself as this feature's
 `Background`: `seededOrganizationWithRepositories` creates the organization, two repositories and an
 issue in each, and removes them again whether the scenario passed or failed; `kanbanProject` opens
 the project on top of it. Both were written for `playwright-native`'s board specs and are shared.

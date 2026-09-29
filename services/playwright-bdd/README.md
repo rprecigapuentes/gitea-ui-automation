@@ -42,13 +42,37 @@ Given("I am on the Gitea login page", async ({ pageObjects }) => {
 ```
 
 The fixtures a step destructures come from
-[`core/playwright/fixtures`](../../core/playwright/README.md), shared with `playwright-native`:
+[`services/_shared/playwright`](../_shared/playwright/README.md), shared with `playwright-native`:
 `pageObjects`, `clients`, `sessionManager`, `scenarioState`. A value one step produces and another
 reads travels through `scenarioState`, never through a variable in the file — the definitions serve
 every scenario that uses them, and those run in parallel.
 
 Feature text that also exists in the Selenium Cucumber service is **identical on both sides**, by
 requirement. Change it here and the other suite breaks.
+
+## The features
+
+| Feature                       | Case                                                                           | Shared with Cucumber |
+| ----------------------------- | ------------------------------------------------------------------------------ | -------------------- |
+| `login.feature`               | a valid user signs in                                                          | yes                  |
+| `create-issue.feature`        | an issue is created with a title and a description                             | no                   |
+| `create-organization.feature` | an owner creates an organization and two teams, then adds and removes a member | no                   |
+
+`create-organization.feature` is the Vitest case "should create an organization and add members",
+which `playwright-native` also carries. It keeps every assertion of that case, and the Cucumber
+service has no feature for it, so the Gherkin is authored here.
+
+## Scenarios that create an organization
+
+Tag the feature `@organization`. The scenario records what it creates in `scenarioState`, and two
+fixtures chained in `fixtures/fixture.ts`, the same ones `playwright-native` chains, do the rest:
+
+- After the scenario, passed or failed, the organization and its repositories are removed.
+- Before a scenario carrying the tag, organizations a crashed run left under the `test-orgs` prefix
+  are removed. Nothing outside that prefix is touched, so parallel workers and other suites are safe.
+
+Both are `auto`, so they run for every scenario, and a scenario that creates no organization finds
+nothing recorded and removes nothing.
 
 ## The starting states, for the Playwright agents
 

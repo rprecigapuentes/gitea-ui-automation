@@ -1,5 +1,5 @@
 import { test, expect, SMOKE_TAG, TEAM_REPOSITORY_TAG } from "../fixtures/organizations-fixtures";
-import { resolveInvitedCredentials } from "@gitea-automation/core-playwright/fixtures/credentials";
+import { resolveInvitedCredentials } from "@gitea-automation/shared-playwright/credentials";
 import type { PageFactory } from "@gitea-automation/business-logic/pages/page.factory";
 import type { Organization } from "@gitea-automation/business-logic/entities/organization.entity";
 import type { Team } from "@gitea-automation/business-logic/entities/team.entity";

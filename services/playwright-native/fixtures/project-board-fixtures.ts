@@ -4,12 +4,12 @@ import { test as base } from "./organizations-fixtures";
 import {
   projectBoardFixtures,
   type ProjectBoardFixtures,
-} from "@gitea-automation/core-playwright/fixtures/project-board.fixtures";
+} from "@gitea-automation/shared-playwright/project-board.fixtures";
 
 export {
   PROJECT_BOARD_TAG,
   type SeededOrganizationWithRepositories,
-} from "@gitea-automation/core-playwright/fixtures/project-board.fixtures";
+} from "@gitea-automation/shared-playwright/project-board.fixtures";
 
 export const test = base.extend<ProjectBoardFixtures>(projectBoardFixtures);
 

@@ -10,6 +10,7 @@
     "@gitea-automation/core-logger": "*",
     "@gitea-automation/core-page-objects": "*",
     "@gitea-automation/core-playwright": "*",
+    "@gitea-automation/shared-playwright": "*",
     "dotenv": "^17.4.2"
   },
   "devDependencies": {
@@ -21,7 +22,7 @@
   },
   "scripts": {
     "pretest": "node -e \"require('fs').rmSync('allure-results', { recursive: true, force: true })\"",
-    "test": "playwright test --project=chrome --project=firefox --project=edge",
+    "test": "npm run test:parallel",
     "test:chrome": "cross-env BROWSER=chrome playwright test --project=chrome --workers=1",
     "test:firefox": "cross-env BROWSER=firefox playwright test --project=firefox --workers=1",
     "test:edge": "cross-env BROWSER=edge playwright test --project=edge --workers=1",
