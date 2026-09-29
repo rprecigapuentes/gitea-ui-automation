@@ -1,5 +1,6 @@
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions } from "@playwright/test";
 import { UserClient } from "@gitea-automation/business-logic/clients/user.client";
+import { OrganizationClient } from "@gitea-automation/business-logic/clients/organizations.client";
 import { RequestStrategyFactory } from "@gitea-automation/core-api-client/request-strategy.factory";
 import { uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.util";
 import { logger } from "@gitea-automation/core-logger/pino.logger";
@@ -37,7 +38,7 @@ export interface SeededUser {
 export interface OrganizationsFixtures {
   existingOrganization: Organization;
   seededUsers: SeededUser[];
-  seededOrganizationWithTeamAndRepository: SeededOrganizationWithTeamAndRepository;
+  seededOrganizationWithTeamAndRepository: SeededOrganizationWithTeamAndRepository | null;
 }
 
 /** State the organization smokes and the `@e2e` scenario of `organizations.feature` start from. */
@@ -63,9 +64,12 @@ export const organizationsFixtures: Fixtures<
   // The Cucumber suite's `createSeededUsers`: "user 1" and "user 2", created through the admin API
   // and deleted after the test. Named per browser, so the three browsers never share one.
   seededUsers: async ({}, use, testInfo) => {
-    const users = new UserClient(
-      RequestStrategyFactory.playwright(process.env.GITEA_BASE_URL!, resolveAdminToken()),
+    const strategy = RequestStrategyFactory.playwright(
+      process.env.GITEA_BASE_URL!,
+      resolveAdminToken(),
     );
+    const users = new UserClient(strategy);
+    const organizations = new OrganizationClient(strategy);
     const seeded: SeededUser[] = [];
 
     for (let index = 1; index <= SEEDED_USER_COUNT; index += 1) {
@@ -86,28 +90,57 @@ export const organizationsFixtures: Fixtures<
 
     await use(seeded);
 
+    // Gitea refuses to delete a user still on an organization's roster, and a scenario can leave a
+    // seeded user there on purpose (one team keeps its member, another loses theirs). Leaving every
+    // organization first makes the delete succeed regardless of what the scenario did or didn't undo.
     for (const { username } of seeded) {
+      for (const organization of await organizations.getOrganizationsForUser(username)) {
+        await organizations.removeMember(organization.name, username);
+      }
       await users.deleteUser(username);
     }
   },
 
   // One organization with a team and a repository: the state `@team-repository`-tagged tests start
-  // from, mirroring the Cucumber hook of that tag. `cleanupCreatedOrganization` removes it.
-  seededOrganizationWithTeamAndRepository: async ({ clients, scenarioState }, use, testInfo) => {
-    const organizationName = `at-team-repo-${testInfo.project.name}-${uniqueSuffix()}`;
+  // from, mirroring the Cucumber hook of that tag. `auto`, like `cleanupOrganizationsBeforeRun`, so
+  // a scenario picks this up by carrying the tag rather than by declaring the fixture — a step a
+  // tagged and an untagged scenario share stays untagged-scenario-free of this seeding.
+  // `cleanupCreatedOrganization` removes what it creates.
+  seededOrganizationWithTeamAndRepository: [
+    async ({ clients, scenarioState }, use, testInfo) => {
+      if (!testInfo.tags.includes(TEAM_REPOSITORY_TAG)) {
+        await use(null);
+        return;
+      }
 
-    await clients.organizations.createOrganization(organizationName);
-    scenarioState.organization = { name: organizationName, visibility: "private" };
-    await clients.teams.createTeam(organizationName, SEEDED_TEAM_NAME, "write");
-    await clients.repositories.createOrganizationRepository(
-      organizationName,
-      SEEDED_REPOSITORY_NAME,
-    );
+      const organizationName = `at-team-repo-${testInfo.project.name}-${uniqueSuffix()}`;
 
-    await use({
-      organizationName,
-      teamName: SEEDED_TEAM_NAME,
-      repositoryName: SEEDED_REPOSITORY_NAME,
-    });
-  },
+      await clients.organizations.createOrganization(organizationName);
+      scenarioState.organization = {
+        name: organizationName,
+        visibility: "private",
+        teams: [
+          {
+            name: SEEDED_TEAM_NAME,
+            visibility: "private",
+            createRepositories: false,
+            permissions: "general",
+          },
+        ],
+        repositories: [{ name: SEEDED_REPOSITORY_NAME, visibility: true }],
+      };
+      await clients.teams.createTeam(organizationName, SEEDED_TEAM_NAME, "write");
+      await clients.repositories.createOrganizationRepository(
+        organizationName,
+        SEEDED_REPOSITORY_NAME,
+      );
+
+      await use({
+        organizationName,
+        teamName: SEEDED_TEAM_NAME,
+        repositoryName: SEEDED_REPOSITORY_NAME,
+      });
+    },
+    { auto: true },
+  ],
 };

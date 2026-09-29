@@ -318,11 +318,14 @@ jobs:
           done
 
           # One admin token for all three browsers: only the users it creates have to be
-          # browser-unique, and they already are.
+          # browser-unique, and they already are. read:user and write:organization are here
+          # for seededUsers' teardown, which reads and leaves a seeded user's organizations
+          # before deleting them - write:admin alone does not cover either call, and Gitea
+          # does not accept read:organization in place of read:user for the first one.
           admin_token=$(curl -fsS -u "$GITEA_ADMIN_USERNAME:$GITEA_ADMIN_PASSWORD" \
             -H "Content-Type: application/json" \
             -X POST "$GITEA_BASE_URL/api/v1/users/$GITEA_ADMIN_USERNAME/tokens" \
-            -d '{"name":"continuous-testing-admin","scopes":["write:admin"]}' \
+            -d '{"name":"continuous-testing-admin","scopes":["write:admin","read:user","write:organization"]}' \
             | node -pe 'JSON.parse(require("fs").readFileSync(0, "utf8")).sha1')
           echo "::add-mask::$admin_token"
 

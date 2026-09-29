@@ -154,7 +154,7 @@ test.describe("Organization smokes", () => {
     "Add a repository to a team",
     { tag: [SMOKE_TAG, TEAM_REPOSITORY_TAG] },
     async ({ pageObjects, sessionManager, seededOrganizationWithTeamAndRepository }) => {
-      const { teamName, repositoryName } = seededOrganizationWithTeamAndRepository;
+      const { teamName, repositoryName } = seededOrganizationWithTeamAndRepository!;
 
       await sessionManager.loginAsOwner();
       await pageObjects.orgFacade.open();

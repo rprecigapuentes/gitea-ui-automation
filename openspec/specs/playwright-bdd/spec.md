@@ -40,6 +40,18 @@ Where a feature of this service describes the same behaviour as a feature of the
 - **THEN** each of them is identical to its counterpart, character for character
 - **AND** no feature is exempt because it was added after login
 
+#### Scenario: A shared feature is only partly ported
+
+- **WHEN** this service copies only some of a Cucumber feature's scenarios
+- **THEN** the scenarios it does carry are identical to their Cucumber counterparts
+- **AND** the ones it does not carry are absent rather than present with a different definition
+
+#### Scenario: A shared feature is completed incrementally
+
+- **WHEN** a scenario is added to a feature this service already partly carries
+- **THEN** the scenarios already present are unchanged
+- **AND** the newly added ones are identical to their Cucumber counterparts
+
 #### Scenario: A step's wording does not suit this runner
 
 - **WHEN** this service would express a step of a shared feature differently

@@ -1,10 +1,8 @@
 // spec: services/playwright-bdd/features/scenarios/demo-e2e.feature
 // seed: services/playwright-bdd/tests/seeds/demo.spec.ts
 
-import { DataTable } from "playwright-bdd";
 import { expect, Given, When, Then } from "../../fixtures/fixture";
 import { testDataName } from "@gitea-automation/core-data-handler/data-handler.util";
-import type { Team } from "@gitea-automation/business-logic/entities/team.entity";
 import type { ScenarioState } from "@gitea-automation/business-logic/state/scenario.entity";
 
 const LABEL_DESCRIPTION = "Set by the demo end to end";
@@ -28,55 +26,6 @@ function getCreatedLabel(scenarioState: ScenarioState): NonNullable<ScenarioStat
 
   return label;
 }
-
-Given("the seeded organization is open", async ({ pageObjects }) => {
-  await pageObjects.orgFacade.open();
-  await pageObjects.orgFacade.waitForElements();
-});
-
-When(
-  "I create the following teams:",
-  async ({ pageObjects, scenarioState }, dataTable: DataTable) => {
-    scenarioState.organization!.teams ??= [];
-
-    for (const row of dataTable.hashes()) {
-      const team: Team = {
-        name: row.name,
-        visibility: row.visibility as Team["visibility"],
-        repoCodeAccess: row.repoCodeAccess as Team["repoCodeAccess"],
-        createRepositories: row.createRepo === "true",
-        permissions: "general",
-      };
-
-      await pageObjects.orgFacade.navigateToTeamsTab();
-      await pageObjects.orgTeams.clickNewTeamButton();
-      await pageObjects.orgNewTeam.waitForElements();
-      await pageObjects.orgNewTeam.createTeam(
-        team.name,
-        team.visibility,
-        team.repoCodeAccess ?? "none",
-        team.createRepositories,
-      );
-      await pageObjects.orgSpecificTeam.waitForElements();
-      await pageObjects.orgNavigation.waitForElements();
-
-      scenarioState.organization!.teams.push(team);
-    }
-  },
-);
-
-Then("the created teams are displayed in Teams page", async ({ pageObjects, scenarioState }) => {
-  await pageObjects.orgFacade.navigateToTeamsTab();
-  const createdTeams = scenarioState.organization!.teams ?? [];
-
-  // Asked for one card at a time rather than read off one snapshot of the grid: a snapshot
-  // taken while the grid is still rendering can answer for a team that has not appeared yet.
-  for (const team of createdTeams) {
-    expect(await pageObjects.orgTeams.hasTeamContainer(team.name)).toBe(true);
-  }
-  // +1 for the organization's own default "Owners" team.
-  expect(await pageObjects.orgTeams.getTeamContainersCount()).toBe(createdTeams.length + 1);
-});
 
 Then("the team {string} has no members yet", async ({ pageObjects }, team: string) => {
   await pageObjects.orgFacade.navigateToTeamsTab();
@@ -120,53 +69,6 @@ Given("the teams page of the organization is open", async ({ pageObjects }) => {
   await pageObjects.orgFacade.open();
   await pageObjects.orgFacade.waitForElements();
   await pageObjects.orgFacade.navigateToTeamsTab();
-});
-
-When(
-  "I add the following team members:",
-  async ({ pageObjects, scenarioState, seededUsers }, dataTable: DataTable) => {
-    for (const row of dataTable.hashes()) {
-      const user = seededUsers[Number(row.user) - 1];
-
-      await pageObjects.orgFacade.navigateToSpecificTeam(row.team);
-      await pageObjects.orgSpecificTeam.addMemberByUsername(user.username);
-      expect(await pageObjects.orgSpecificTeam.hasMember(user.username)).toBe(true);
-
-      const team = scenarioState.organization!.teams!.find(
-        (candidate) => candidate.name === row.team,
-      );
-      team!.users ??= [];
-      team!.users.push(user.username);
-
-      await pageObjects.orgFacade.navigateToTeamsTab();
-    }
-  },
-);
-
-Then(
-  "the member count for each created team is correct",
-  async ({ pageObjects, scenarioState }) => {
-    await pageObjects.orgFacade.navigateToTeamsTab();
-
-    for (const team of scenarioState.organization!.teams ?? []) {
-      const expectedCount = `${team.users?.length ?? 0} members`;
-      expect(await pageObjects.orgTeams.getTeamMembersCount(team.name)).toBe(expectedCount);
-    }
-  },
-);
-
-Then("the avatars for each created team are correct", async ({ pageObjects, scenarioState }) => {
-  await pageObjects.orgFacade.navigateToTeamsTab();
-
-  for (const team of scenarioState.organization!.teams ?? []) {
-    const avatarUsernames = await pageObjects.orgTeams.getTeamAvatarUsernames(team.name);
-    const expectedUsernames = team.users ?? [];
-
-    for (const username of expectedUsernames) {
-      expect(avatarUsernames).toContain(username);
-    }
-    expect(avatarUsernames.length).toBe(expectedUsernames.length);
-  }
 });
 
 Then(
@@ -346,23 +248,6 @@ When(
 
     await pageObjects.issuePage.openFor(organizationName, first.name, number);
     await pageObjects.issuePage.reopen();
-  },
-);
-
-When("I logout", async ({ sessionManager }) => {
-  await sessionManager.logout();
-});
-
-When(
-  "I login with valid credentials as user {int}",
-  async ({ pageObjects, sessionManager, seededUsers }, userIndex: number) => {
-    const user = seededUsers[userIndex - 1];
-
-    await sessionManager.loginAs(user.username, user.password);
-    // The Cucumber step signs in through the form and asserts the dashboard. Asserting it here
-    // too is what tells a session that never landed from a page that never answers.
-    await pageObjects.mainPage.open();
-    expect(await pageObjects.mainPage.hasExpectedElementsDisplayed()).toBe(true);
   },
 );
 
