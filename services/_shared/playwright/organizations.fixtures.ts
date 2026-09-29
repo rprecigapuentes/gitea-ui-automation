@@ -41,10 +41,7 @@ export interface OrganizationsFixtures {
   seededOrganizationWithTeamAndRepository: SeededOrganizationWithTeamAndRepository | null;
 }
 
-/**
- * State the organization smokes and the `@e2e` scenario of `organizations.feature` start from,
- * mirroring the Cucumber suite's own `Given` steps and `Before` hooks for that feature.
- */
+/** State the organization smokes and the `@e2e` scenario of `organizations.feature` start from. */
 export const organizationsFixtures: Fixtures<
   OrganizationsFixtures,
   object,

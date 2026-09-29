@@ -14,6 +14,10 @@ import {
   type OrganizationsFixtures,
 } from "@gitea-automation/shared-playwright/organizations.fixtures";
 import {
+  projectBoardFixtures,
+  type ProjectBoardFixtures,
+} from "@gitea-automation/shared-playwright/project-board.fixtures";
+import {
   resolveOwnerCredentials,
   type Credentials,
 } from "@gitea-automation/shared-playwright/credentials";
@@ -23,7 +27,8 @@ interface BddFixtures {
 }
 
 /* Every step definition shares one test object, so it carries the union of the groups. The
-   organization cleanup is `auto`, so it runs for every scenario. */
+   organization group comes before the project-board one, which is typed over it. The cleanup is
+   `auto`, so it runs for every scenario. */
 export const test = base
   .extend<CoreFixtures & BddFixtures>({
     ...coreFixtures,
@@ -33,8 +38,9 @@ export const test = base
     },
   })
   .extend<IssuesFixtures>(issuesFixtures)
-  .extend<OrganizationCleanupFixtures>(organizationCleanupFixtures)
-  .extend<OrganizationsFixtures>(organizationsFixtures);
+  .extend<OrganizationsFixtures>(organizationsFixtures)
+  .extend<ProjectBoardFixtures>(projectBoardFixtures)
+  .extend<OrganizationCleanupFixtures>(organizationCleanupFixtures);
 
 export { expect } from "@playwright/test";
 

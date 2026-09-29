@@ -5,23 +5,32 @@
 ## 2. Port AT-ISS-01
 
 - [x] 2.1 Write `tests/issue-metadata.spec.ts` against `pageObjects`, with no assertion dropped
-- [ ] 2.2 Run it on chrome, firefox and edge, alone and with `test:parallel`
+- [x] 2.2 Run it on chrome, firefox and edge, alone and with `test:parallel`
 
-Green on firefox. Chrome and edge are unrun: their branded builds are not installed on this machine, only bundled Chromium and Firefox.
+Green on firefox when this was written. Chrome and edge were unrun then, because their branded builds
+were not installed on this machine, only bundled Chromium and Firefox. That is no longer the case:
+both are installed, and the case was run alone on each - chrome 5.8s, firefox 8.5s, edge 5.7s - and
+under `test:parallel`, where it passed inside a full three-browser run of 16 tests each.
 
 ## 3. Port AT-ISS-02
 
 - [x] 3.1 Write `tests/scoped-labels.spec.ts` against `pageObjects`, with no assertion dropped
-- [ ] 3.2 Run it on chrome, firefox and edge, alone and with `test:parallel`
+- [x] 3.2 Run it on chrome, firefox and edge, alone and with `test:parallel`
 
-Green on firefox. Chrome and edge unrun, same reason.
+Same as 2.2: green on firefox when written, then run on all three once the branded builds were
+installed - chrome 6.6s, firefox 9.6s, edge 7.3s - and green under `test:parallel` in the same full
+run.
 
 ## 4. Agree on what a URL wait means
 
 Found while reading the two strategies before 2.1: `IssueListPage.filterByLabel` waits on the string `labels=<id>`, which `until.urlContains` matches as a substring and `page.waitForURL` matches as a glob against the whole URL. Reproduced outside Gitea against a `file://` URL carrying a query string: the string times out, a predicate and a regex both match. `filterByMilestone`, one line below, already waits on a regex.
 
 - [x] 4.1 Make `filterByLabel` wait on the regex `labels=<id>(&|$)` instead, the form both strategies read the same way
-- [ ] 4.2 Confirm the Vitest suite still passes, since the page object is shared
+- [x] 4.2 Confirm the Vitest suite still passes, since the page object is shared
+
+Green on all three browsers, 4 test files and 4 tests each, run as `test:parallel`. The regex reads
+the same way through `until.urlContains` as it does through `page.waitForURL`, which is what the
+change was for.
 
 ## 5. Align the Playwright handle where the port needed it
 

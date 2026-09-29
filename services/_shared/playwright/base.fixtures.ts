@@ -51,9 +51,8 @@ export interface OrganizationCleanupFixtures {
   cleanupOrganizationsBeforeRun: void;
 }
 
-/* Fixture implementations rather than an extended `test`, because the two services extend
-   different bases: `playwright-native` extends @playwright/test's, `playwright-bdd` extends the
-   one `playwright-bdd` builds. Each calls `.extend()` itself and passes this object. */
+/* Implementations rather than an extended `test`: the two services extend different bases and
+   each calls `.extend()` with this object. */
 export const coreFixtures: Fixtures<
   CoreFixtures,
   object,

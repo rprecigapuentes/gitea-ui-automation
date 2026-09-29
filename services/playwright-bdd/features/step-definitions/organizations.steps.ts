@@ -20,6 +20,9 @@ Given(
     const user = seededUsers[userIndex - 1];
 
     await sessionManager.loginAs(user.username, user.password);
+    // The Cucumber step signs in through the form and asserts the dashboard. Asserting it here
+    // too is what tells a session that never landed from a page that never answers.
+    await pageObjects.mainPage.open();
     expect(await pageObjects.mainPage.hasExpectedElementsDisplayed()).toBe(true);
     expect(await pageObjects.navBar.waitForElements()).toBe(true);
   },
