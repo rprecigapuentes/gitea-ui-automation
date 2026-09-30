@@ -42,3 +42,25 @@ export function withOrdinals(keys) {
     return count === 1 ? key : `${key}#${count}`;
   });
 }
+
+export function readStates() {
+  const { document, getComputedStyle } = globalThis;
+
+  return [...document.querySelectorAll("[data-cov]")].map((element) => {
+    const states = [];
+    const shown =
+      element.getClientRects().length > 0 && getComputedStyle(element).visibility !== "hidden";
+    const expanded = element.getAttribute("aria-expanded");
+
+    if (shown) states.push("visible");
+    states.push(
+      element.matches(":disabled, [aria-disabled=true], .disabled") ? "disabled" : "enabled",
+    );
+    if (element.matches("input[type=checkbox], input[type=radio]")) {
+      states.push(element.checked ? "checked" : "unchecked");
+    }
+    if (expanded !== null) states.push(expanded === "true" ? "expanded" : "collapsed");
+
+    return [Number(element.dataset.cov), states];
+  });
+}

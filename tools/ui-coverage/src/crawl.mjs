@@ -1,13 +1,15 @@
 import { chromium } from "@playwright/test";
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { collectElements, keyOf, withOrdinals } from "./elements.mjs";
+import { collectElements, keyOf, readStates, withOrdinals } from "./elements.mjs";
 import { INVENTORY, PAGES, pageFile } from "./paths.mjs";
 import { routeTemplate } from "./route-template.mjs";
 import { seed, unseed } from "./seed.mjs";
 
 const BASE = new URL(process.env.GITEA_BASE_URL ?? "http://localhost:3000");
 const LIMIT = 200;
+const TOGGLES = ".ui.dropdown:not(.disabled), details > summary";
+const TOGGLE_LIMIT = 20;
 const AVOID =
   /logout|delete|\/-\/admin|\/api\/|\/assets\/|\/avatars?\/|\/attachments\/|\/archive\/|\/raw\/|\/media\/|\.rss$/;
 
@@ -30,11 +32,42 @@ async function localLinks(page, owns) {
     .filter((pathname) => !routeTemplate(pathname).includes("{") || owns(pathname));
 }
 
+function merge(states, observed) {
+  for (const [id, list] of observed) list.forEach((state) => states[id]?.add(state));
+}
+
+async function observeDropdowns(page, states) {
+  const url = page.url();
+  const count = Math.min(await page.locator(TOGGLES).count(), TOGGLE_LIMIT);
+
+  for (let index = 0; index < count; index++) {
+    await page
+      .locator(TOGGLES)
+      .nth(index)
+      .click({ timeout: 500 })
+      .catch(() => null);
+    await page.waitForTimeout(150);
+
+    if (page.url() === url) {
+      merge(states, await page.evaluate(readStates));
+      await page.keyboard.press("Escape");
+    } else {
+      await page.goto(url);
+      await page.evaluate(collectElements);
+    }
+  }
+}
+
 async function save(page, template) {
   const found = await page.evaluate(collectElements);
-  const elements = withOrdinals(found.map((element) => keyOf(element, page.url())));
+  const states = found.map(() => new Set());
+
+  merge(states, await page.evaluate(readStates));
   writeFileSync(pageFile(template), await page.content());
-  return { elements };
+  await observeDropdowns(page, states);
+
+  const keys = withOrdinals(found.map((element) => keyOf(element, page.url())));
+  return { elements: keys.map((key, index) => ({ key, states: [...states[index]].sort() })) };
 }
 
 async function crawl(page, seeded) {
