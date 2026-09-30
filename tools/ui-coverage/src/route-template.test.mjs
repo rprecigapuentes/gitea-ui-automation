@@ -10,6 +10,7 @@ const cases = {
   "/alice/app/issues/4": "/{owner}/{repo}/issues/{n}",
   "/bob/lib/issues/9": "/{owner}/{repo}/issues/{n}",
   "/alice/app/src/branch/main/docs/a.md": "/{owner}/{repo}/src/*",
+  "/org/create": "/org/create",
   "/org/acme/dashboard": "/org/{org}/dashboard",
   "/acme/-/projects/12": "/{owner}/-/projects/{n}",
 };

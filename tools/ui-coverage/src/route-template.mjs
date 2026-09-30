@@ -17,6 +17,7 @@ export function routeTemplate(pathname) {
   const [head, ...rest] = pathname.split("/").filter(Boolean);
 
   if (head === undefined) return "/";
+  if (head === "org" && rest[0] === "create") return "/org/create";
   if (head === "org") return join(["org", "{org}", ...rest.slice(1).map(number)]);
   if (ROOTS.has(head)) return join([head, ...rest.map(number)]);
 
