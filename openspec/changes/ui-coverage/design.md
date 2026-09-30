@@ -69,8 +69,10 @@ crawled UI.
 ## States
 
 A state is one of `visible`, `enabled`, `disabled`, `checked`, `unchecked`, `expanded`, `collapsed`.
-The crawler reads them from each element, then opens up to twenty dropdowns of the page, one at a
-time, and reads them again, so the items of a menu that is closed on load are observed as visible.
+The crawler reads them from each element, then shows every drop-down menu and every `details` of the
+page by style, without clicking, and reads them again, so the items of a menu that is closed on load are
+observed as visible. Clicking to open them was tried first and made the inventory depend on animation
+times, so two crawls differed.
 An element's states are the union of what was seen.
 
 A locator covers the states its call implies: an interaction covers `visible` and `enabled`, a reader
@@ -133,3 +135,11 @@ The inventory is not everything that can be done in Gitea, which is a universe t
 what can be inferred from the pages the crawler reached: their elements, the states seen on them and
 the actions their type allows. Dragging, hovering and keyboard shortcuts are not in the table, and the
 report says so.
+
+## A stable inventory
+
+The elements of a URL are written sorted by key, because the order of a list on the page can follow
+the time of the data, and the position of an element on the page is kept apart, next to the stored
+page, so that a selector that matches it can be traced back to its key. The names of drop-down menus
+are left out of the key, since they carry the name of whatever the menu currently shows. The page is
+given half a second to settle before it is read. Three crawls in a row gave the same inventory.
