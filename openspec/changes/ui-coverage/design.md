@@ -174,3 +174,15 @@ The workflow publishes `coverage.html`, `coverage.md`, `coverage.json` and the i
 artifact named `ui-coverage-report`, apart from the Allure report, and writes the figures to the step
 summary of the run. The summary holds the figures and points to the artifact, which holds the inventory
 of elements.
+
+## Naming the elements, and showing the locators as written
+
+The name of an element is the first of these that the page gives it: the `aria-label`, the text of the
+element it is labelled by, its `<label>`, its visible text, its placeholder, its title, its tooltip,
+the name of the icon inside it, its `name` and its `id`. A drop-down menu takes the name of the field
+it fills. What a run generates, such as the repository, the organization and the user created for it,
+a commit hash or a time like "3 hours ago", is replaced by a placeholder, so that two crawls name an
+element the same way. A link also keeps the kind of page it leads to.
+
+A locator whose value a run completes is shown in the report as the page object writes it, with
+`${…}` where the value goes, and the selector it is matched as is in the tooltip.
