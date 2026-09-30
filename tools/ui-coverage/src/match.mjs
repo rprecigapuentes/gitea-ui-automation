@@ -1,6 +1,7 @@
 import { chromium } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { pageFile } from "./paths.mjs";
+import { impliedStates } from "./states.mjs";
 
 async function matches(page, selector) {
   try {
@@ -11,23 +12,27 @@ async function matches(page, selector) {
   }
 }
 
-export async function coveredElements(used, templates, reached) {
+function appliesTo(entry, template, reached) {
+  return entry.template === template || (entry.template === null && reached.has(template));
+}
+
+export async function coveredStates(used, templates, reached) {
   const browser = await chromium.launch();
   const page = await (await browser.newContext({ javaScriptEnabled: false })).newPage();
   const covered = new Map();
 
   for (const template of templates) {
-    const selectors = used
-      .filter(
-        (entry) =>
-          entry.template === template || (entry.template === null && reached.has(template)),
-      )
-      .map((entry) => entry.selector);
-    const ids = new Set();
-
+    const elements = new Map();
     await page.setContent(readFileSync(pageFile(template), "utf8"));
-    for (const selector of selectors) (await matches(page, selector)).forEach((id) => ids.add(id));
-    covered.set(template, ids);
+
+    for (const entry of used.filter((candidate) => appliesTo(candidate, template, reached))) {
+      for (const id of await matches(page, entry.selector)) {
+        const states = elements.get(id) ?? new Set();
+        impliedStates(entry.action).forEach((state) => states.add(state));
+        elements.set(id, states);
+      }
+    }
+    covered.set(template, elements);
   }
 
   await browser.close();
