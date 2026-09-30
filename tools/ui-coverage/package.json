@@ -4,6 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "crawl": "node --env-file=../../services/playwright-bdd/.env src/crawl.mjs"
+  },
+  "dependencies": {
+    "@playwright/test": "^1.63.0"
   }
 }
