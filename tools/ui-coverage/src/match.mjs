@@ -27,9 +27,10 @@ export async function coveredStates(used, templates, reached) {
 
     for (const entry of used.filter((candidate) => appliesTo(candidate, template, reached))) {
       for (const id of await matches(page, entry.selector)) {
-        const states = elements.get(id) ?? new Set();
-        impliedStates(entry.action).forEach((state) => states.add(state));
-        elements.set(id, states);
+        const hit = elements.get(id) ?? { states: new Set(), tests: new Set() };
+        impliedStates(entry.action).forEach((state) => hit.states.add(state));
+        entry.tests.forEach((test) => hit.tests.add(test));
+        elements.set(id, hit);
       }
     }
     covered.set(template, elements);

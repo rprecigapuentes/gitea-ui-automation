@@ -11,16 +11,24 @@ export async function measure(inventory) {
 
   const perUrl = crawled.map((url) => {
     const elements = inventory.urls[url].elements;
-    const touched = [...covered.get(url)];
+    const hits = covered.get(url);
+    const touched = [...hits];
 
     return {
       url,
       reached: reached.has(url),
       elements: { covered: touched.length, total: elements.length },
+      detail: elements.map((element, id) => ({
+        key: element.key,
+        states: element.states,
+        covered: element.states.filter((state) => hits.get(id)?.states.has(state)),
+        touched: hits.has(id),
+        tests: [...(hits.get(id)?.tests ?? [])].sort(),
+      })),
       states: {
         covered: sum(
           touched.map(
-            ([id, states]) => elements[id].states.filter((state) => states.has(state)).length,
+            ([id, hit]) => elements[id].states.filter((state) => hit.states.has(state)).length,
           ),
         ),
         total: sum(elements.map((element) => element.states.length)),

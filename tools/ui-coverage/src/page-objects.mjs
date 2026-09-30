@@ -1,24 +1,11 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { PAGES } from "./locators.mjs";
 import { routeTemplate } from "./route-template.mjs";
-
-const STEPS = path.resolve(
-  import.meta.dirname,
-  "../../../services/playwright-bdd/features/step-definitions",
-);
+import { stepDefinitions } from "./steps.mjs";
 
 export function stepCalls() {
-  const calls = [];
-
-  for (const file of readdirSync(STEPS)) {
-    const source = readFileSync(path.join(STEPS, file), "utf8");
-    for (const [, getter, member] of source.matchAll(/pageObjects\.(\w+)\.(\w+)/g)) {
-      calls.push([getter, member]);
-    }
-  }
-
-  return calls;
+  return stepDefinitions().flatMap((definition) => definition.calls);
 }
 
 export function factoryClasses() {

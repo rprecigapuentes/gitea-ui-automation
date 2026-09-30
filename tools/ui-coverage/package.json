@@ -9,6 +9,9 @@
     "coverage": "node src/report.mjs"
   },
   "dependencies": {
+    "@cucumber/cucumber-expressions": "^18.0.1",
+    "@cucumber/gherkin": "^30.0.4",
+    "@cucumber/messages": "^27.2.0",
     "@playwright/test": "^1.63.0",
     "typescript": "~5.9.3"
   }
