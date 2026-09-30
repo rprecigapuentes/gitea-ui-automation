@@ -158,3 +158,19 @@ test looks at on purpose. Nothing in the page objects changes: they are read and
 
 A click on an element inside a drop-down menu also counts as opening that menu, since the element
 cannot be reached otherwise.
+
+## How an element is named
+
+An element of the inventory has a type and a name, in two fields, and a number that tells apart two
+elements of the same type and name on one page. A link is named by the kind of page it leads to, and a
+drop-down menu has no name. The report shows the type and the name in columns of their own.
+
+For each element that a step reaches, the report also lists the CSS locators the tests use to reach
+it, and the method that uses each one.
+
+## Where the report is published
+
+The workflow publishes `coverage.html`, `coverage.md`, `coverage.json` and the inventory as an
+artifact named `ui-coverage-report`, apart from the Allure report, and writes the figures to the step
+summary of the run. The summary holds the figures and points to the artifact, which holds the inventory
+of elements.
