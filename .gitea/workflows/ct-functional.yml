@@ -390,6 +390,18 @@ jobs:
             services/${{ matrix.suite }}/reports/failures.json
             services/${{ matrix.suite }}/reports/explanation.json
             services/${{ matrix.suite }}/test-results/
-            coverage-data/inventory/
-            coverage-data/reports/
+          retention-days: 14
+
+      # Apart from the Allure report so that it is found by its own name, and because the step
+      # summary carries the figures and not the inventory.
+      - name: Upload the UI coverage report (${{ matrix.suite }})
+        if: always() && matrix.suite == 'playwright-bdd'
+        uses: actions/upload-artifact@v3
+        with:
+          name: ui-coverage-report
+          path: |
+            coverage-data/reports/coverage.html
+            coverage-data/reports/coverage.md
+            coverage-data/reports/coverage.json
+            coverage-data/inventory/ui-inventory.json
           retention-days: 14
