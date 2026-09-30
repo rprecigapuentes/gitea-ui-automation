@@ -1,6 +1,7 @@
 import { chromium } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { pageFile } from "./paths.mjs";
+import { performedActions } from "./actions.mjs";
 import { impliedStates } from "./states.mjs";
 
 async function matches(page, selector) {
@@ -27,8 +28,9 @@ export async function coveredStates(used, templates, reached) {
 
     for (const entry of used.filter((candidate) => appliesTo(candidate, template, reached))) {
       for (const id of await matches(page, entry.selector)) {
-        const hit = elements.get(id) ?? { states: new Set(), tests: new Set() };
+        const hit = elements.get(id) ?? { states: new Set(), actions: new Set(), tests: new Set() };
         impliedStates(entry.action).forEach((state) => hit.states.add(state));
+        performedActions(entry.action).forEach((action) => hit.actions.add(action));
         entry.tests.forEach((test) => hit.tests.add(test));
         elements.set(id, hit);
       }
