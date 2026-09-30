@@ -64,7 +64,7 @@ crawled UI.
 - A fragment has no URL of its own, so its locators run against every URL a step reaches.
 - A selector counts every interactive element it selects. A generic one such as `.item` selects many,
   so the element figure can be higher than the number of elements a test looks at on purpose.
-- The DOM of each URL is kept in `coverage-data/pages/`, which is regenerated and not committed.
+- The DOM of each URL is kept in `services/playwright-bdd/coverage-data/pages/`, which is regenerated and not committed.
 
 ## States
 
@@ -182,3 +182,11 @@ the name of the icon inside it, its `name` and its `id`. A drop-down menu takes 
 it fills. What a run generates, such as the repository, the organization and the user created for it,
 a commit hash or a time like "3 hours ago", is replaced by a placeholder, so that two crawls name an
 element the same way. A link also keeps the kind of page it leads to.
+
+## Where it lives
+
+The scripts live in `services/playwright-bdd/scripts/ui-coverage/`, beside `explain-failures.mjs`, and
+their data in `services/playwright-bdd/coverage-data/`. They measure that suite only, read its steps and
+its features, and need the same accounts and tokens it does, so they are not a workspace of their own.
+They are not in `core/` either: `core/` is what the page objects and the suites depend on, and this
+tool depends on them, so putting it there would turn that around.

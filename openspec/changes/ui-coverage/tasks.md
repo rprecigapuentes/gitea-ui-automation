@@ -2,15 +2,15 @@
 
 ## 1. Scaffold
 
-- [ ] 1.1 `tools/ui-coverage` workspace and `tools/*` in the root workspaces.
-- [ ] 1.2 `route-template.mjs`: reduce a pathname to a route template, with a unit test.
+- [x] 1.1 `ui-coverage` scripts in `services/playwright-bdd/scripts/`, with no workspace of their own.
+- [x] 1.2 `route-template.mjs`: reduce a pathname to a route template, with a unit test.
 
 ## 2. URL level
 
 - [x] 2.1 Crawler over same-origin links, signed in through the API session, writing the URLs of
       `ui-inventory.json`.
 - [x] 2.2 Parser: the `getUrl()` of each page object reached by a BDD step, as a route template.
-- [x] 2.3 URL figure printed by `npm run coverage`.
+- [x] 2.3 URL figure printed by `npm run ui-coverage`.
 
 ## 3. Element level
 

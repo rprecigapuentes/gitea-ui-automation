@@ -7,10 +7,11 @@ the inventory of what exists.
 
 ## What Changes
 
-- `tools/ui-coverage/`, a workspace of small Node scripts, one per stage: crawl, parse, match, report.
+- `services/playwright-bdd/scripts/ui-coverage/`, small Node scripts in the suite it measures, one per
+  stage: crawl, parse, match, report.
 - The denominator is the crawled application: URLs reached, interactive elements per URL and the
   states observed per element, from the accessibility tree. It is committed as
-  `coverage-data/inventory/ui-inventory.json`, sorted and free of ids and timestamps, so two runs
+  `services/playwright-bdd/coverage-data/inventory/ui-inventory.json`, sorted and free of ids and timestamps, so two runs
   can be compared with a diff.
 - The numerator is the page objects that the `playwright-bdd` steps reach, parsed statically with the
   TypeScript compiler API. No model is involved, and no page object is modified.
@@ -26,7 +27,8 @@ the inventory of what exists.
 
 ## Impact
 
-- New: `tools/ui-coverage/`, `coverage-data/`. Modified: root `package.json` (workspaces).
+- New: `services/playwright-bdd/scripts/ui-coverage/`, `services/playwright-bdd/coverage-data/`.
+  Modified: `services/playwright-bdd/package.json`, `.gitea/workflows/ct-functional.yml`.
 - `openspec/specs/` is not the denominator. Those specs describe the automation framework and never
   Gitea's behaviour, so counting against them would measure the framework against itself.
 
