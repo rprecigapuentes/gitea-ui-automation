@@ -25,6 +25,11 @@
 
 ## 5. Report
 
-- [ ] 5.1 `coverage.json` and `coverage.md`, with the delta against the committed inventory.
-- [ ] 5.2 Verified: two crawls give the same inventory, and adding a step that reaches one more
-      locator raises the element figure by exactly what it selects.
+- [x] 5.1 `coverage.json` and `coverage.md`, with the change of the crawled surface against the
+      committed inventory.
+- [x] 5.2 Verified: two crawls give the same inventory, and a step that reaches one more page object
+      raised the element figure by exactly what its locators select.
+- [ ] 5.3 One step in `ct-functional.yml`, in the Playwright job and for the BDD suite only, that
+      crawls the run's own gitea-test, reports against the committed inventory and uploads both.
+- [ ] 5.4 Verified by one run of the workflow. Gitea offers `workflow_dispatch` only on the default
+      branch, so the run needs a temporary `push` trigger, removed in a commit of its own.

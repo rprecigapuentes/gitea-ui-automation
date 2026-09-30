@@ -78,3 +78,19 @@ such as `isRadioSelected` covers both values of its dimension, anything else cov
 
 The crawl does not open modals, inline editors or menus that need a hover. Their elements are in the
 inventory without `visible`, and count only when a step touches them.
+
+## Checking that the figure moves by what it should
+
+A step that calls `createProjectPage.openFor` was added and then removed. The element figure rose by
+56: one element that the two locators of that method select, and 55 that the fragment locators select
+on the page that became reached. Both numbers were counted independently against the stored page.
+Reaching a new page therefore raises the figure through the fragments as well, which is what the rule
+"a fragment applies to every URL a step reaches" says.
+
+## In the pipeline
+
+The measurement runs in the Playwright job of `ct-functional.yml`, for the BDD suite, after the
+suite whether it passed or not: the numerator is read from the code and does not depend on the
+outcome. It crawls the run's own gitea-test, so the inventory it produces belongs to a fresh
+instance. The step does not fail the run, and it uploads the inventory and the report. Promoting an
+uploaded inventory to the committed one is a decision taken in a pull request.
