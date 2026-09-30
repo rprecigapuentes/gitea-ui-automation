@@ -22,6 +22,7 @@ h2 { margin: 40px 0 12px; font-size: 20px; }
 .bar span { display: block; height: 100%; }
 .meter { min-width: 150px; font-size: 13px; }
 .meter .bar { margin: 2px 0; }
+details.url > summary .meter { flex: none; width: 240px; font-weight: 400; }
 tr.reached td:first-child { box-shadow: inset 5px 0 0 var(--ok); }
 tr.reached td { background: var(--ok-bg); }
 .tag { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 12px; font-weight: 600; white-space: nowrap; }
@@ -35,7 +36,7 @@ th { font-size: 13px; color: var(--muted); font-weight: 600; }
 code { font-size: 13px; word-break: break-all; }
 .chip { display: inline-block; padding: 1px 8px; margin: 1px 3px 1px 0; border-radius: 10px; font-size: 12px;
   background: var(--no-bg); color: var(--no); }
-.chip.on { background: var(--ok-bg); color: var(--ok); }
+.chip.on { background: var(--ok-bg); color: var(--ok); border: 1px solid var(--ok); }
 .badge { font-weight: 600; white-space: nowrap; }
 .badge.on { color: var(--ok); }
 .badge.off { color: var(--no); }
@@ -43,7 +44,7 @@ code { font-size: 13px; word-break: break-all; }
 .controls input[type=search] { flex: 1 1 260px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px;
   background: var(--card); color: var(--text); font: inherit; }
 details.url { margin-bottom: 8px; }
-details.url > summary { cursor: pointer; padding: 10px 12px; background: var(--card); border: 1px solid var(--line);
+details.url > summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; cursor: pointer; padding: 10px 12px; background: var(--card); border: 1px solid var(--line);
   border-radius: 8px; font-weight: 600; }
 details ul { margin: 6px 0 2px; padding-left: 18px; }
 [hidden] { display: none !important; }
@@ -95,7 +96,6 @@ function pageRow({ url, reached, elements, states }) {
 }
 
 function testsCell(tests) {
-  if (tests.length === 0) return "—";
   const items = tests.map((test) => `<li>${escape(test)}</li>`).join("");
   return `<details><summary>${tests.length} test${tests.length === 1 ? "" : "s"}</summary><ul>${items}</ul></details>`;
 }
@@ -104,19 +104,19 @@ function elementRow({ key, states, covered, touched, tests }) {
   const chips = states
     .map((state) => `<span class="chip${covered.includes(state) ? " on" : ""}">${state}</span>`)
     .join("");
-  const badge = touched
-    ? '<span class="badge on">Cubierto</span>'
-    : '<span class="badge off">Sin cubrir</span>';
+  const mark = touched
+    ? '<span class="tag on">✔ Alcanzado por un test</span>'
+    : '<span class="tag off">Sin test</span>';
 
-  return `<tr data-covered="${touched ? 1 : 0}"><td><code>${escape(key)}</code></td>
-    <td>${chips}</td><td>${badge}</td><td>${testsCell(tests)}</td></tr>`;
+  return `<tr class="${touched ? "reached" : ""}" data-covered="${touched ? 1 : 0}">
+    <td><code>${escape(key)}</code></td><td>${chips}</td>
+    <td>${mark}${tests.length > 0 ? testsCell(tests) : ""}</td></tr>`;
 }
 
 function inventoryBlock({ url, elements, detail }) {
-  return `<details class="url"><summary>${escape(url)}
-    <span class="muted">· ${elements.covered} de ${elements.total} elementos cubiertos</span></summary>
-    <table><thead><tr><th>Elemento</th><th>Estados observados (en verde, los cubiertos)</th>
-    <th>Cobertura</th><th>Tests</th></tr></thead>
+  return `<details class="url"><summary><code>${escape(url)}</code>${meter(elements)}</summary>
+    <table><thead><tr><th>Elemento</th><th>Estados observados (en verde, los que un test ejercita)</th>
+    <th>Test</th></tr></thead>
     <tbody>${detail.map(elementRow).join("")}</tbody></table></details>`;
 }
 
@@ -137,11 +137,12 @@ export function html(figures) {
 <p class="muted">Alcanzados por un test pero no rastreados: ${figures.unseen.map(escape).join(", ") || "ninguno"}.</p>
 
 <h2>Inventario de elementos</h2>
+<div class="legend">Cada página muestra su cobertura. En verde, los elementos que un test alcanza; el detalle de estados dice cuáles se ejercitan.</div>
 <div class="controls">
 <input id="search" type="search" placeholder="Buscar un elemento, una página o un test">
 <label><input type="radio" name="mode" value="all" checked> Todos</label>
-<label><input type="radio" name="mode" value="covered"> Cubiertos</label>
-<label><input type="radio" name="mode" value="uncovered"> Sin cubrir</label>
+<label><input type="radio" name="mode" value="covered"> Con test</label>
+<label><input type="radio" name="mode" value="uncovered"> Sin test</label>
 </div>
 <div id="inventory">${figures.perUrl.map(inventoryBlock).join("")}</div>
 </main><script>${SCRIPT}</script></body></html>
