@@ -7,6 +7,7 @@
     "core/*",
     "business-logic",
     "services/*",
+    "tools/*",
     "services/_shared/*"
   ],
   "engines": {
