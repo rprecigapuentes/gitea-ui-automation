@@ -20,8 +20,8 @@
 
 ## 4. State level
 
-- [ ] 4.1 Crawler records the states of each element.
-- [ ] 4.2 Map the reading methods to the states they imply. State figure.
+- [x] 4.1 Crawler records the states of each element.
+- [x] 4.2 Map the reading methods to the states they imply. State figure.
 
 ## 5. Report
 

@@ -65,3 +65,16 @@ crawled UI.
 - A selector counts every interactive element it selects. A generic one such as `.item` selects many,
   so the element figure can be higher than the number of elements a test looks at on purpose.
 - The DOM of each URL is kept in `coverage-data/pages/`, which is regenerated and not committed.
+
+## States
+
+A state is one of `visible`, `enabled`, `disabled`, `checked`, `unchecked`, `expanded`, `collapsed`.
+The crawler reads them from each element, then opens up to twenty dropdowns of the page, one at a
+time, and reads them again, so the items of a menu that is closed on load are observed as visible.
+An element's states are the union of what was seen.
+
+A locator covers the states its call implies: an interaction covers `visible` and `enabled`, a reader
+such as `isRadioSelected` covers both values of its dimension, anything else covers `visible`.
+
+The crawl does not open modals, inline editors or menus that need a hover. Their elements are in the
+inventory without `visible`, and count only when a step touches them.
