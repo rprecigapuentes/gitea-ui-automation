@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
-    "crawl": "node --env-file=../../services/playwright-bdd/.env src/crawl.mjs",
+    "crawl": "node --env-file-if-exists=../../services/playwright-bdd/.env src/crawl.mjs",
     "coverage": "node src/report.mjs"
   },
   "dependencies": {
