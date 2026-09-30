@@ -106,7 +106,7 @@ expression that definition declares. An element is covered by the scenarios whos
 locator that selects it. A step text that no definition matches, such as an outline placeholder, is
 not attributed to any scenario, so a scenario can be missing from the list but never wrongly in it.
 
-The report is also written as `coverage.html`, with the figures, the pages and the inventory of
+The report is written as `coverage.html`, with the figures, the pages and the inventory of
 elements. A row is highlighted when a test reaches it, and lists the scenarios that reach it.
 
 ## Actions
@@ -160,10 +160,8 @@ cannot be reached otherwise.
 
 ## Where the report is published
 
-The workflow publishes `coverage.html`, `coverage.md`, `coverage.json` and the inventory as an
-artifact named `ui-coverage-report`, apart from the Allure report, and writes the figures to the step
-summary of the run. The summary holds the figures and points to the artifact, which holds the inventory
-of elements.
+The workflow publishes `coverage.html`, `coverage.json` and the inventory as an artifact named
+`ui-coverage-report`, apart from the Allure report.
 
 ## Naming the elements
 

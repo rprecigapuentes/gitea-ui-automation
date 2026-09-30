@@ -25,8 +25,7 @@
 
 ## 5. Report
 
-- [x] 5.1 `coverage.json` and `coverage.md`, with the change of the crawled surface against the
-      committed inventory.
+- [x] 5.1 `coverage.json`, with the change of the crawled surface against the committed inventory.
 - [x] 5.2 Verified: two crawls give the same inventory, and a step that reaches one more page object
       raised the element figure by exactly what its locators select.
 - [x] 5.3a `coverage.html` with the figures, the pages and the inventory of elements, listing the
