@@ -3,7 +3,7 @@
 ### Requirement: The framework measures how much of the crawled UI its BDD suite exercises
 
 The framework SHALL report, per level, how much of the application's UI the `playwright-bdd` suite
-exercises: URLs, then interactive elements per URL, then states per element. The denominator of each
+exercises: URLs, then interactive elements per URL, then states and actions per element. The denominator of each
 level SHALL be the inventory produced by crawling the running application, never the specs under
 `openspec/specs/`. The numerator SHALL be derived from the page objects that the suite's steps
 reach, by static parsing and without a model.
@@ -31,3 +31,9 @@ or to a step.
 
 - **WHEN** the method that reads a locator does not imply a state
 - **THEN** that state is not counted as covered
+
+#### Scenario: A step only reads an element
+
+- **WHEN** a step of the BDD suite reads an element without clicking it or typing in it
+- **THEN** the element counts as covered
+- **AND** none of its actions count as covered

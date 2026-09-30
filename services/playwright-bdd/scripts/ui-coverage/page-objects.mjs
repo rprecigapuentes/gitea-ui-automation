@@ -4,10 +4,6 @@ import { PAGES } from "./locators.mjs";
 import { routeTemplate } from "./route-template.mjs";
 import { stepDefinitions, testsByPattern } from "./steps.mjs";
 
-export function stepCalls() {
-  return stepDefinitions().flatMap((definition) => definition.calls);
-}
-
 export function factoryClasses() {
   const factory = readFileSync(path.join(PAGES, "page.factory.ts"), "utf8");
   const fileOfClass = new Map();

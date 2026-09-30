@@ -107,7 +107,7 @@ locator that selects it. A step text that no definition matches, such as an outl
 not attributed to any scenario, so a scenario can be missing from the list but never wrongly in it.
 
 The report is also written as `coverage.html`, with the figures, the pages and the inventory of
-elements, each marked as covered or not and listing its scenarios.
+elements. A row is highlighted when a test reaches it, and lists the scenarios that reach it.
 
 ## Actions
 
@@ -140,9 +140,8 @@ report says so.
 
 The elements of a URL are written sorted by key, because the order of a list on the page can follow
 the time of the data, and the position of an element on the page is kept apart, next to the stored
-page, so that a selector that matches it can be traced back to its key. The names of drop-down menus
-are left out of the key, since they carry the name of whatever the menu currently shows. The page is
-given half a second to settle before it is read. Three crawls in a row gave the same inventory.
+page, so that a selector that matches it can be traced back to its key. The page is given half a
+second to settle before it is read. Three crawls in a row gave the same inventory.
 
 ## Selectors that a run completes
 
@@ -159,14 +158,6 @@ test looks at on purpose. Nothing in the page objects changes: they are read and
 A click on an element inside a drop-down menu also counts as opening that menu, since the element
 cannot be reached otherwise.
 
-## How an element is named
-
-An element of the inventory has a type and a name, in two fields, and a number that tells apart two
-elements of the same type and name on one page. A link is named by the kind of page it leads to, and a
-drop-down menu has no name. The report shows the type and the name in columns of their own.
-
-For each page and each element that a step reaches, the report lists the scenarios that reach it.
-
 ## Where the report is published
 
 The workflow publishes `coverage.html`, `coverage.md`, `coverage.json` and the inventory as an
@@ -175,6 +166,10 @@ summary of the run. The summary holds the figures and points to the artifact, wh
 of elements.
 
 ## Naming the elements
+
+An element of the inventory has a type and a name, in two fields, and a number that tells apart two
+elements of the same type and name on one page. The report shows the type and the name in columns of
+their own.
 
 The name of an element is the first of these that the page gives it: the `aria-label`, the text of the
 element it is labelled by, its `<label>`, its visible text, its placeholder, its title, its tooltip,

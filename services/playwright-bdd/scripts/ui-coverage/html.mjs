@@ -26,9 +26,6 @@ h2 { margin: 40px 0 12px; font-size: 20px; }
 .meter .bar { margin: 2px 0; }
 tr.reached td:first-child { box-shadow: inset 5px 0 0 var(--ok); }
 tr.reached td { background: var(--ok-bg); }
-.tag { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 12px; font-weight: 600; white-space: nowrap; }
-.tag.on { background: var(--ok); color: #fff; }
-.tag.off { color: var(--muted); border: 1px dashed var(--line); }
 .legend { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font-size: 13px; color: var(--muted); }
 .legend i { width: 160px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, hsl(0 70% 42%), hsl(60 70% 42%), hsl(120 70% 42%)); }
 table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); }
@@ -86,14 +83,6 @@ const ELEMENTS = {
   combobox: "Selection list",
   other: "Other",
 };
-const ACTIONS = {
-  click: "click",
-  fill: "fill",
-  clear: "clear",
-  toggle: "toggle",
-  choose: "choose",
-  open: "open",
-};
 const STATE_SCOPE = [
   ["visible", "Every element"],
   ["enabled / disabled", "Every element"],
@@ -144,7 +133,7 @@ function elementRow(element) {
   return `<tr class="${touched ? "reached" : ""}" data-covered="${touched ? 1 : 0}">
     <td>${ELEMENTS[type] ?? escape(type)}</td>
     <td>${name === "" ? '<span class="muted">(no name)</span>' : escape(name)}${target ? `<div class="muted"><code>${escape(target)}</code></div>` : ""}</td>
-    <td>${chips(actions, coveredActions, ACTIONS)}</td>
+    <td>${chips(actions, coveredActions)}</td>
     <td>${chips(states, coveredStates)}</td>
     <td>${testsCell(tests)}</td></tr>`;
 }
@@ -158,8 +147,7 @@ function inventoryBlock({ url, elements, detail }) {
 
 function scope() {
   const actions = Object.entries(ACTIONS_BY_ROLE).map(
-    ([type, list]) =>
-      `<tr><td>${ELEMENTS[type]}</td><td>${list.map((item) => ACTIONS[item]).join(", ")}</td></tr>`,
+    ([type, list]) => `<tr><td>${ELEMENTS[type]}</td><td>${list.join(", ")}</td></tr>`,
   );
   const states = STATE_SCOPE.map(([state, who]) => `<tr><td>${state}</td><td>${who}</td></tr>`);
 

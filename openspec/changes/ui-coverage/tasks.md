@@ -29,8 +29,8 @@
       committed inventory.
 - [x] 5.2 Verified: two crawls give the same inventory, and a step that reaches one more page object
       raised the element figure by exactly what its locators select.
-- [x] 5.3a `coverage.html` with the figures, the pages and the inventory of elements, each marked as
-      covered or not and listing the scenarios that cover it.
+- [x] 5.3a `coverage.html` with the figures, the pages and the inventory of elements, listing the
+      scenarios that reach each one.
 - [x] 5.3 One step in `ct-functional.yml`, in the Playwright job and for the BDD suite only, that
       crawls the run's own gitea-test, reports against the committed inventory and uploads both.
 - [x] 5.3b Actions as a fourth level: inferred from the role of each element, counted from the method

@@ -10,12 +10,12 @@ the inventory of what exists.
 - `services/playwright-bdd/scripts/ui-coverage/`, small Node scripts in the suite it measures, one per
   stage: crawl, parse, match, report.
 - The denominator is the crawled application: URLs reached, interactive elements per URL and the
-  states observed per element, from the accessibility tree. It is committed as
+  states observed per element and actions each one allows, read from the page. It is committed as
   `services/playwright-bdd/coverage-data/inventory/ui-inventory.json`, sorted and free of ids and timestamps, so two runs
   can be compared with a diff.
 - The numerator is the page objects that the `playwright-bdd` steps reach, parsed statically with the
   TypeScript compiler API. No model is involved, and no page object is modified.
-- A figure per level, mirroring the API method: URLs, then elements, then states.
+- A figure per level, mirroring the API method: URLs, then elements, then states, then actions.
 - The limits of the measurement, and why the figure is a floor, are written in `design.md`.
 
 ## Capabilities
