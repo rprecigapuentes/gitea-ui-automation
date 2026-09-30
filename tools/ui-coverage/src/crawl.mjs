@@ -1,6 +1,8 @@
 import { chromium } from "@playwright/test";
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { collectElements, keyOf, withOrdinals } from "./elements.mjs";
+import { INVENTORY, PAGES, pageFile } from "./paths.mjs";
 import { routeTemplate } from "./route-template.mjs";
 import { seed, unseed } from "./seed.mjs";
 
@@ -8,10 +10,6 @@ const BASE = new URL(process.env.GITEA_BASE_URL ?? "http://localhost:3000");
 const LIMIT = 200;
 const AVOID =
   /logout|delete|\/-\/admin|\/api\/|\/assets\/|\/avatars?\/|\/attachments\/|\/archive\/|\/raw\/|\/media\/|\.rss$/;
-const OUTPUT = path.resolve(
-  import.meta.dirname,
-  "../../../coverage-data/inventory/ui-inventory.json",
-);
 
 async function signIn(page) {
   await page.goto(`${BASE.origin}/user/login`);
@@ -32,16 +30,24 @@ async function localLinks(page, owns) {
     .filter((pathname) => !routeTemplate(pathname).includes("{") || owns(pathname));
 }
 
+async function save(page, template) {
+  const found = await page.evaluate(collectElements);
+  const elements = withOrdinals(found.map((element) => keyOf(element, page.url())));
+  writeFileSync(pageFile(template), await page.content());
+  return { elements };
+}
+
 async function crawl(page, seeded) {
-  const templates = new Set();
+  const urls = {};
   const queue = ["/", ...seeded.entries];
   const known = new Set(queue.map(routeTemplate));
 
-  while (queue.length > 0 && templates.size < LIMIT) {
+  while (queue.length > 0 && Object.keys(urls).length < LIMIT) {
     const response = await page.goto(BASE.origin + queue.shift()).catch(() => null);
     if (!response || response.status() >= 400) continue;
 
-    templates.add(routeTemplate(new URL(page.url()).pathname));
+    const template = routeTemplate(new URL(page.url()).pathname);
+    if (!urls[template]) urls[template] = await save(page, template);
     for (const link of await localLinks(page, seeded.owns)) {
       if (known.has(routeTemplate(link))) continue;
       known.add(routeTemplate(link));
@@ -49,8 +55,10 @@ async function crawl(page, seeded) {
     }
   }
 
-  return [...templates].sort();
+  return Object.fromEntries(Object.entries(urls).sort(([a], [b]) => a.localeCompare(b)));
 }
+
+mkdirSync(PAGES, { recursive: true });
 
 const browser = await chromium.launch();
 const page = await browser.newPage();
@@ -66,6 +74,10 @@ try {
 
 const version = await fetch(`${BASE.origin}/api/v1/version`).then((response) => response.json());
 
-mkdirSync(path.dirname(OUTPUT), { recursive: true });
-writeFileSync(OUTPUT, `${JSON.stringify({ gitea: version.version, urls }, null, 2)}\n`);
-console.log(`${urls.length} URLs written to ${OUTPUT}`);
+mkdirSync(path.dirname(INVENTORY), { recursive: true });
+writeFileSync(
+  INVENTORY,
+  `${JSON.stringify({ gitea: version.version, urls }, null, 2)}
+`,
+);
+console.log(`${Object.keys(urls).length} URLs written to ${INVENTORY}`);

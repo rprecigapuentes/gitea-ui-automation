@@ -1,22 +1,18 @@
 import { readFileSync } from "node:fs";
-import path from "node:path";
+import { INVENTORY } from "./paths.mjs";
 import { reachedUrls } from "./page-objects.mjs";
-
-const INVENTORY = path.resolve(
-  import.meta.dirname,
-  "../../../coverage-data/inventory/ui-inventory.json",
-);
 
 const inventory = JSON.parse(readFileSync(INVENTORY, "utf8"));
 const reached = reachedUrls();
-const covered = inventory.urls.filter((url) => reached.has(url));
-const missed = inventory.urls.filter((url) => !reached.has(url));
-const unseen = [...reached].filter((url) => !inventory.urls.includes(url));
+const crawled = Object.keys(inventory.urls);
+const covered = crawled.filter((url) => reached.has(url));
+const missed = crawled.filter((url) => !reached.has(url));
+const unseen = [...reached].filter((url) => !crawled.includes(url));
 
-const percent = ((covered.length / inventory.urls.length) * 100).toFixed(1);
+const percent = ((covered.length / crawled.length) * 100).toFixed(1);
 
 console.log(`UI coverage (Gitea ${inventory.gitea})`);
-console.log(`URLs  ${covered.length} / ${inventory.urls.length}  ${percent}%`);
+console.log(`URLs  ${covered.length} / ${crawled.length}  ${percent}%`);
 console.log(`\nCovered:\n${covered.map((url) => `  ${url}`).join("\n")}`);
 console.log(`\nReached by a step but not crawled:\n${unseen.map((url) => `  ${url}`).join("\n")}`);
 console.log(`\nNot covered: ${missed.length}`);
