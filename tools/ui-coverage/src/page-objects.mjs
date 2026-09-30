@@ -1,42 +1,46 @@
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { PAGES } from "./locators.mjs";
 import { routeTemplate } from "./route-template.mjs";
 
-const ROOT = path.resolve(import.meta.dirname, "../../..");
-const PAGES = path.join(ROOT, "business-logic/pages");
-const STEPS = path.join(ROOT, "services/playwright-bdd/features/step-definitions");
+const STEPS = path.resolve(
+  import.meta.dirname,
+  "../../../services/playwright-bdd/features/step-definitions",
+);
 
-function stepGetters() {
-  const getters = new Set();
+export function stepCalls() {
+  const calls = [];
 
   for (const file of readdirSync(STEPS)) {
     const source = readFileSync(path.join(STEPS, file), "utf8");
-    for (const [, getter] of source.matchAll(/pageObjects\.(\w+)/g)) getters.add(getter);
+    for (const [, getter, member] of source.matchAll(/pageObjects\.(\w+)\.(\w+)/g)) {
+      calls.push([getter, member]);
+    }
   }
 
-  return getters;
+  return calls;
 }
 
-function fileOfGetter() {
+export function factoryClasses() {
   const factory = readFileSync(path.join(PAGES, "page.factory.ts"), "utf8");
   const fileOfClass = new Map();
-  const fileOf = new Map();
+  const classes = new Map();
 
   for (const [, name, file] of factory.matchAll(/import \{ (\w+) \} from "\.\/([^"]+)"/g)) {
     fileOfClass.set(name, file);
   }
   for (const [, getter, name] of factory.matchAll(/get (\w+)\(\): (\w+)/g)) {
-    fileOf.set(getter, fileOfClass.get(name));
+    classes.set(getter, { name, file: fileOfClass.get(name) });
   }
 
-  return fileOf;
+  return classes;
 }
 
 function sample(expression) {
   return /number|id$|index/i.test(expression) ? "1" : "x";
 }
 
-function urlTemplate(file) {
+export function urlTemplate(file) {
   const source = readFileSync(path.join(PAGES, `${file}.ts`), "utf8");
   const found = source.match(/getUrl\([^)]*\)[^{]*\{\s*return `([^`]*)`/);
   if (!found) return undefined;
@@ -48,11 +52,11 @@ function urlTemplate(file) {
 }
 
 export function reachedUrls() {
-  const fileOf = fileOfGetter();
+  const classes = factoryClasses();
   const urls = new Set();
 
-  for (const getter of stepGetters()) {
-    const file = fileOf.get(getter);
+  for (const [getter] of stepCalls()) {
+    const file = classes.get(getter)?.file;
     const template = file && urlTemplate(file);
     if (template) urls.add(template);
   }
