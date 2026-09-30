@@ -11,8 +11,8 @@ export function usedSelectors() {
     if (!target) continue;
 
     const template = urlTemplate(target.file) ?? null;
-    for (const selector of selectorsReachedBy(classes, target.name, member)) {
-      used.set(`${template}|${selector}`, { selector, template });
+    for (const { selector, action } of selectorsReachedBy(classes, target.name, member).values()) {
+      used.set(`${template}|${selector}|${action}`, { selector, action, template });
     }
   }
 

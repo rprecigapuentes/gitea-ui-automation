@@ -46,18 +46,21 @@ function selectorsOf(literal, constants) {
 function referencesOf(node) {
   const refs = { self: new Set(), pairs: [] };
 
-  const visit = (child) => {
+  const onThis = (expression) =>
+    ts.isPropertyAccessExpression(expression) &&
+    expression.expression.kind === ts.SyntaxKind.ThisKeyword;
+
+  const visit = (child, action) => {
+    let next = action;
+    if (ts.isCallExpression(child) && ts.isPropertyAccessExpression(child.expression)) {
+      next = child.expression.name.text;
+    }
     if (ts.isPropertyAccessExpression(child)) {
       const { expression, name } = child;
       if (expression.kind === ts.SyntaxKind.ThisKeyword) refs.self.add(name.text);
-      if (
-        ts.isPropertyAccessExpression(expression) &&
-        expression.expression.kind === ts.SyntaxKind.ThisKeyword
-      ) {
-        refs.pairs.push([expression.name.text, name.text]);
-      }
+      if (onThis(expression)) refs.pairs.push([expression.name.text, name.text, action]);
     }
-    ts.forEachChild(child, visit);
+    ts.forEachChild(child, (grandchild) => visit(grandchild, next));
   };
 
   visit(node);
@@ -103,24 +106,26 @@ export function parsePageObjects() {
   return classes;
 }
 
-export function selectorsReachedBy(classes, className, member, seen = new Set()) {
+export function selectorsReachedBy(
+  classes,
+  className,
+  member,
+  found = new Map(),
+  seen = new Set(),
+) {
   const key = `${className}.${member}`;
   const facts = classes.get(className);
   const refs = facts?.members.get(member);
-  const found = new Set();
   if (!refs || seen.has(key)) return found;
   seen.add(key);
 
-  for (const [property, name] of refs.pairs) {
+  for (const [property, name, action] of refs.pairs) {
     const selector = facts.selectors.get(property)?.get(name);
-    if (selector) found.add(selector);
+    if (selector) found.set(`${selector}|${action}`, { selector, action });
     const target = facts.types.get(property);
-    if (target)
-      selectorsReachedBy(classes, target, name, seen).forEach((value) => found.add(value));
+    if (target) selectorsReachedBy(classes, target, name, found, seen);
   }
-  for (const name of refs.self) {
-    selectorsReachedBy(classes, className, name, seen).forEach((value) => found.add(value));
-  }
+  for (const name of refs.self) selectorsReachedBy(classes, className, name, found, seen);
 
   return found;
 }
