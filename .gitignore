@@ -25,3 +25,4 @@ local.log
 
 # UI coverage
 coverage-data/pages/
+coverage-data/reports/
