@@ -1,0 +1,54 @@
+# Design
+
+## Denominator and numerator come from different places
+
+```
+Gitea --crawl--> ui-inventory.json ----\
+                                        match --> coverage report
+page objects + steps --parse--> usage -/
+```
+
+The crawler says what exists, the parser says what the suite exercises, and the matcher joins them.
+Nothing in the page objects knows about coverage.
+
+## The three units
+
+- **URL**: the pathname reduced to a route template, so `/alice/app/issues/4` and
+  `/bob/lib/issues/9` are the one URL `/{owner}/{repo}/issues/{n}`.
+- **Element**: an interactive element of a URL, keyed by its role and accessible name.
+- **State**: a value of a property observed on an element, such as `visible`, `enabled` or `checked`.
+
+## How the two sides meet
+
+Every locator in a page object is a CSS string. The crawler stores the DOM of each URL it visits, and
+the matcher runs each used locator against that DOM. The elements it selects are the covered ones. No
+name is compared with another name.
+
+A locator is used only when a step of `playwright-bdd` reaches it: step, then `pageObjects.<getter>`,
+then the class `PageFactory` returns, then the methods it calls and the locators those read.
+
+A state counts as covered only when the method that reads the locator implies it: `isVisible`,
+`isChecked`, `isDisabled`. When in doubt it does not count.
+
+## Limits
+
+The figure is a floor of a floor. The denominator holds only what the crawler reached, so the ratio
+is relative to that and not to Gitea as a whole.
+
+The crawler does not reach:
+
+- states that need particular data or permissions, unless the crawl seeds them
+- multi-step wizards, hover-only or timed interface
+- the site administration, unless the crawl signs in as an administrator
+- anything behind a destructive action, which the crawler avoids on purpose
+- navigation done by script rather than by a link
+
+A different Gitea version changes the inventory, which is why the version is recorded in it.
+
+Read the figure as a trend over one inventory, not as a share of the application.
+
+## Framework versus application
+
+`openspec/specs/` describes the automation framework. It says nothing about which pages, elements or
+states Gitea has, so it cannot be the denominator of a coverage of Gitea's UI. The denominator is the
+crawled UI.
