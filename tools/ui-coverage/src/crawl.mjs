@@ -41,7 +41,13 @@ function merge(states, observed) {
   for (const [id, list] of observed) list.forEach((state) => states[id]?.add(state));
 }
 
-async function save(page, template) {
+const replacementsOf = ({ owner, repo, org }) => [
+  [repo, "{repo}"],
+  [org, "{org}"],
+  [owner, "{owner}"],
+];
+
+async function save(page, template, seeded) {
   await page.waitForTimeout(500);
   const found = await page.evaluate(collectElements);
   const states = found.map(() => new Set());
@@ -51,7 +57,9 @@ async function save(page, template) {
   await page.evaluate(openMenus);
   merge(states, await page.evaluate(readStates));
 
-  const described = withOrdinals(found.map((element) => describe(element, page.url())));
+  const described = withOrdinals(
+    found.map((element) => describe(element, page.url(), replacementsOf(seeded))),
+  );
   writeFileSync(idsFile(template), JSON.stringify(described.map(keyOf)));
 
   const elements = described.map((element, index) => ({
@@ -75,7 +83,7 @@ async function crawl(page, seeded) {
     if (!response || response.status() >= 400) continue;
 
     const template = routeTemplate(new URL(page.url()).pathname);
-    if (!urls[template]) urls[template] = await save(page, template);
+    if (!urls[template]) urls[template] = await save(page, template, seeded);
     for (const link of await localLinks(page, seeded.owns)) {
       if (known.has(routeTemplate(link))) continue;
       known.add(routeTemplate(link));

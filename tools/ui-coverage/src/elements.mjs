@@ -6,6 +6,33 @@ export function collectElements() {
     "a[href], button, input:not([type=hidden]), select, textarea, summary, [role=button], [role=menuitem], [role=tab], [role=checkbox], .ui.dropdown:not(.disabled)";
   const roles = { A: "link", BUTTON: "button", SELECT: "combobox", SUMMARY: "button" };
   const inputs = { checkbox: "checkbox", radio: "radio", submit: "button", button: "button" };
+  const clean = (value) => (value ?? "").trim().replace(/\s+/g, " ");
+
+  function nameOf(element, role) {
+    const editable = ["INPUT", "TEXTAREA"].includes(element.tagName);
+    const choice = role === "checkbox" || role === "radio";
+    const icon = element
+      .querySelector("svg[class*='octicon-']")
+      ?.getAttribute("class")
+      .match(/octicon-([\w-]+)/)?.[1];
+    const sources = [
+      element.getAttribute("aria-label"),
+      document.getElementById(element.getAttribute("aria-labelledby"))?.innerText,
+      element.labels?.[0]?.innerText,
+      choice ? element.closest(".ui.checkbox, label")?.innerText : "",
+      role === "dropdown" ? element.querySelector("input[name]")?.getAttribute("name") : "",
+      editable ? "" : element.innerText,
+      element.getAttribute("placeholder"),
+      element.getAttribute("title"),
+      element.getAttribute("data-tooltip-content"),
+      element.tagName === "INPUT" && role === "button" ? element.value : "",
+      icon ? `${icon} icon` : "",
+      element.getAttribute("name"),
+      element.id,
+    ];
+
+    return clean(sources.find((value) => clean(value) !== "")).slice(0, 60);
+  }
 
   return [...document.querySelectorAll(selector)].map((element, index) => {
     element.setAttribute("data-cov", index);
@@ -15,37 +42,42 @@ export function collectElements() {
       : (roles[element.tagName] ??
         inputs[element.getAttribute("type")] ??
         (editable ? "textbox" : (element.getAttribute("role") ?? "other")));
-    const label =
-      element.getAttribute("aria-label") ||
-      (editable ? "" : element.innerText) ||
-      element.placeholder ||
-      element.title ||
-      element.getAttribute("name") ||
-      "";
 
-    const name = role === "dropdown" ? "" : label.trim().replace(/\s+/g, " ").slice(0, 60);
-
-    return { role, name, href: element.getAttribute("href") };
+    return { role, name: nameOf(element, role), href: element.getAttribute("href") };
   });
 }
 
-export function describe({ role, name, href }, pageUrl) {
-  if (role !== "link" || href === null) return { type: role, name };
-  return { type: "link", name: routeTemplate(new URL(href, pageUrl).pathname) };
+const HASH = /\b(?=[0-9a-f]*\d)[0-9a-f]{7,40}\b/g;
+const TIME = /\b(?:an?|less than a|\d+) (?:second|minute|hour|day|week|month|year)s? ago\b/g;
+
+function normalise(name, replacements) {
+  let value = name;
+
+  for (const [actual, placeholder] of replacements) value = value.split(actual).join(placeholder);
+  return value.replace(HASH, "{hash}").replace(TIME, "{time}").replace(/\d+/g, "N").trim();
+}
+
+export function describe({ role, name, href }, pageUrl, replacements = []) {
+  const clean = normalise(name, replacements);
+  if (role !== "link" || href === null) return { type: role, name: clean };
+
+  const target = routeTemplate(new URL(href, pageUrl).pathname);
+  return { type: "link", name: clean === "" ? target : clean, target };
 }
 
 export function withOrdinals(elements) {
   const seen = new Map();
 
   return elements.map((element) => {
-    const identity = `${element.type}|${element.name}`;
+    const identity = `${element.type}|${element.name}|${element.target ?? ""}`;
     const ordinal = (seen.get(identity) ?? 0) + 1;
     seen.set(identity, ordinal);
     return { ...element, ordinal };
   });
 }
 
-export const keyOf = ({ type, name, ordinal }) => `${type}|${name}|${ordinal}`;
+export const keyOf = ({ type, name, target, ordinal }) =>
+  `${type}|${name}|${target ?? ""}|${ordinal}`;
 
 export function readStates() {
   const { document, getComputedStyle } = globalThis;
