@@ -2,6 +2,7 @@ import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import path from "node:path";
 import { delta } from "./delta.mjs";
 import { measure } from "./figures.mjs";
+import { html } from "./html.mjs";
 import { markdown } from "./markdown.mjs";
 import { INVENTORY, REPORTS } from "./paths.mjs";
 
@@ -19,6 +20,7 @@ writeFileSync(
   `${JSON.stringify({ figures, change }, null, 2)}\n`,
 );
 writeFileSync(path.join(REPORTS, "coverage.md"), text);
+writeFileSync(path.join(REPORTS, "coverage.html"), html(figures));
 
 if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, text);
 console.log(text);
