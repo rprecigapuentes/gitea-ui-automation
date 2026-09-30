@@ -124,54 +124,35 @@ function chips(all, done, labels = {}) {
     .join("");
 }
 
-function pageRow({ url, reached, elements, states, actions }) {
-  const mark = reached
-    ? '<span class="tag on">✔ Reached by a test</span>'
-    : '<span class="tag off">No test</span>';
-
-  return `<tr class="${reached ? "reached" : ""}"><td><code>${escape(url)}</code></td><td>${mark}</td>
-    <td>${meter(elements)}</td><td>${meter(states)}</td><td>${meter(actions)}</td></tr>`;
-}
-
 function list(items, label) {
   const lines = items.map((item) => `<li>${item}</li>`).join("");
   return `<details><summary>${items.length} ${label}${items.length === 1 ? "" : "s"}</summary><ul>${lines}</ul></details>`;
 }
 
-function locatorLine({ selector, source, action }) {
-  return `<code title="${escape(selector)}">${escape(source)}</code> <span class="muted">· ${escape(action ?? "read")}</span>`;
+const testsCell = (tests) => (tests.length > 0 ? list(tests.map(escape), "test") : "—");
+
+function pageRow({ url, reached, tests, elements, states, actions }) {
+  return `<tr class="${reached ? "reached" : ""}"><td><code>${escape(url)}</code></td>
+    <td>${testsCell(tests)}</td>
+    <td>${meter(elements)}</td><td>${meter(states)}</td><td>${meter(actions)}</td></tr>`;
 }
 
 function elementRow(element) {
-  const {
-    type,
-    name,
-    target,
-    states,
-    actions,
-    coveredStates,
-    coveredActions,
-    touched,
-    tests,
-    locators,
-  } = element;
-  const mark = touched
-    ? '<span class="tag on">✔ Reached by a test</span>'
-    : '<span class="tag off">No test</span>';
+  const { type, name, target, states, actions, coveredStates, coveredActions, touched, tests } =
+    element;
 
   return `<tr class="${touched ? "reached" : ""}" data-covered="${touched ? 1 : 0}">
     <td>${ELEMENTS[type] ?? escape(type)}</td>
     <td>${name === "" ? '<span class="muted">(no name)</span>' : escape(name)}${target ? `<div class="muted"><code>${escape(target)}</code></div>` : ""}</td>
     <td>${chips(actions, coveredActions, ACTIONS)}</td>
     <td>${chips(states, coveredStates)}</td>
-    <td>${locators.length > 0 ? list(locators.map(locatorLine), "locator") : "—"}</td>
-    <td>${mark}${tests.length > 0 ? list(tests.map(escape), "test") : ""}</td></tr>`;
+    <td>${testsCell(tests)}</td></tr>`;
 }
 
 function inventoryBlock({ url, elements, detail }) {
   return `<details class="url"><summary><code>${escape(url)}</code>${meter(elements)}</summary>
     <table><thead><tr><th>Type</th><th>Name</th><th>Possible actions</th><th>Observed states</th>
-    <th>CSS locators used by the tests</th><th>Test</th></tr></thead>
+    <th>Tests</th></tr></thead>
     <tbody>${detail.map(elementRow).join("")}</tbody></table></details>`;
 }
 
@@ -207,14 +188,14 @@ ${scope()}
 
 <h2>Coverage per page</h2>
 <div class="legend">Low coverage <i></i> high · a green border and background mark the pages a test reaches</div>
-<table><thead><tr><th>Page</th><th>Test</th><th>Elements</th><th>States</th><th>Actions</th></tr></thead>
+<table><thead><tr><th>Page</th><th>Tests</th><th>Elements</th><th>States</th><th>Actions</th></tr></thead>
 <tbody>${figures.perUrl.map(pageRow).join("")}</tbody></table>
 <p class="muted">Reached by a test but not crawled: ${figures.unseen.map(escape).join(", ") || "none"}.</p>
 
 <h2>Inventory of elements</h2>
-<div class="legend">Each page shows its coverage. Green elements are reached by a test; in green too, the actions and states a test exercises and the CSS locators it uses.</div>
+<div class="legend">Each page shows its coverage. Green rows are reached by a test; in green too, the actions and states a test exercises.</div>
 <div class="controls">
-<input id="search" type="search" placeholder="Search an element, a page, a locator or a test">
+<input id="search" type="search" placeholder="Search an element, a page or a test">
 <label><input type="radio" name="mode" value="all" checked> All</label>
 <label><input type="radio" name="mode" value="covered"> With a test</label>
 <label><input type="radio" name="mode" value="uncovered"> Without a test</label>

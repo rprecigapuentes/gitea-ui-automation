@@ -9,8 +9,6 @@ import { usedSelectors } from "./usage.mjs";
 const sum = (values) => values.reduce((total, value) => total + value, 0);
 const count = (detail, pick) => sum(detail.map((element) => pick(element).length));
 
-const byLocator = (a, b) => (a.selector < b.selector ? -1 : a.selector > b.selector ? 1 : 0);
-
 function detailOf(elements, ids, hits) {
   const idOf = new Map(ids.map((key, id) => [key, id]));
 
@@ -28,18 +26,18 @@ function detailOf(elements, ids, hits) {
       coveredActions: actions.filter((action) => hit?.actions.has(action)),
       touched: hit !== undefined,
       tests: [...(hit?.tests ?? [])].sort(),
-      locators: [...(hit?.locators.values() ?? [])].sort(byLocator),
     };
   });
 }
 
-function rowOf(url, reached, elements, hits) {
+function rowOf(url, reached, tests, elements, hits) {
   const ids = JSON.parse(readFileSync(idsFile(url), "utf8"));
   const detail = detailOf(elements, ids, hits);
 
   return {
     url,
     reached,
+    tests: [...(tests ?? [])].sort(),
     elements: { covered: hits.size, total: elements.length },
     states: {
       covered: count(detail, (e) => e.coveredStates),
@@ -59,7 +57,7 @@ export async function measure(inventory) {
   const covered = await coveredStates(usedSelectors(), crawled, reached);
 
   const perUrl = crawled.map((url) =>
-    rowOf(url, reached.has(url), inventory.urls[url].elements, covered.get(url)),
+    rowOf(url, reached.has(url), reached.get(url), inventory.urls[url].elements, covered.get(url)),
   );
 
   const level = (pick) => ({
@@ -73,7 +71,7 @@ export async function measure(inventory) {
     elements: level((row) => row.elements),
     states: level((row) => row.states),
     actions: level((row) => row.actions),
-    unseen: [...reached].filter((url) => !crawled.includes(url)),
+    unseen: [...reached.keys()].filter((url) => !crawled.includes(url)),
     perUrl,
   };
 }

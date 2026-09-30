@@ -2,12 +2,9 @@ import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import ts from "typescript";
 
-export const sourceOf = (selector) => SOURCES.get(selector) ?? selector;
-
 export const PAGES = path.resolve(import.meta.dirname, "../../../business-logic/pages");
 
 const OPEN = "@@OPEN@@";
-const SOURCES = new Map();
 const WHOLE_VALUE = /\[([\w-]+)[~|^$*]?=(["'])@@OPEN@@\2\]/g;
 
 function text(node, constants, open = false) {
@@ -32,7 +29,6 @@ function dynamic(node, constants) {
   const closed = raw.replace(WHOLE_VALUE, "[$1]").replace(/^@@OPEN@@\s*/, "");
   if (closed === "" || closed.includes(OPEN)) return undefined;
 
-  if (raw.includes(OPEN)) SOURCES.set(closed, raw.replaceAll(OPEN, "${…}"));
   return closed;
 }
 
@@ -178,7 +174,7 @@ export function selectorsReachedBy(
 
   const add = (selector, action) => {
     const used = action ?? inherited;
-    found.set(`${selector}|${used}`, { selector, source: sourceOf(selector), action: used });
+    found.set(`${selector}|${used}`, { selector, action: used });
   };
 
   for (const [property, name, action] of refs.pairs) {

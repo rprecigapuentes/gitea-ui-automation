@@ -29,17 +29,11 @@ function record(elements, id, entry) {
     states: new Set(),
     actions: new Set(),
     tests: new Set(),
-    locators: new Map(),
   };
 
   impliedStates(entry.action).forEach((state) => hit.states.add(state));
   performedActions(entry.action).forEach((action) => hit.actions.add(action));
   entry.tests.forEach((test) => hit.tests.add(test));
-  hit.locators.set(`${entry.selector}|${entry.action}`, {
-    selector: entry.selector,
-    source: entry.source,
-    action: entry.action,
-  });
   elements.set(id, hit);
 }
 

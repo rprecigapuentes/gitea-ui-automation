@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { PAGES } from "./locators.mjs";
 import { routeTemplate } from "./route-template.mjs";
-import { stepDefinitions } from "./steps.mjs";
+import { stepDefinitions, testsByPattern } from "./steps.mjs";
 
 export function stepCalls() {
   return stepDefinitions().flatMap((definition) => definition.calls);
@@ -40,12 +40,20 @@ export function urlTemplate(file) {
 
 export function reachedUrls() {
   const classes = factoryClasses();
-  const urls = new Set();
+  const definitions = stepDefinitions();
+  const tests = testsByPattern(definitions);
+  const urls = new Map();
 
-  for (const [getter] of stepCalls()) {
-    const file = classes.get(getter)?.file;
-    const template = file && urlTemplate(file);
-    if (template) urls.add(template);
+  for (const { pattern, calls } of definitions) {
+    for (const [getter] of calls) {
+      const file = classes.get(getter)?.file;
+      const template = file && urlTemplate(file);
+      if (!template) continue;
+
+      const found = urls.get(template) ?? new Set();
+      tests.get(pattern).forEach((test) => found.add(test));
+      urls.set(template, found);
+    }
   }
 
   return urls;
