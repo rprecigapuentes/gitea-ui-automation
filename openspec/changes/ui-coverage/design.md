@@ -106,3 +106,30 @@ not attributed to any scenario, so a scenario can be missing from the list but n
 
 The report is also written as `coverage.html`, with the figures, the pages and the inventory of
 elements, each marked as covered or not and listing its scenarios.
+
+## Actions
+
+A fourth level counts what can be done with an element. The possible actions are not observed; they
+are inferred from the role of the element, by a table in `actions.mjs`:
+
+| Element                             | Actions     |
+| ----------------------------------- | ----------- |
+| link, button, menu item, tab, other | click       |
+| drop-down menu                      | open        |
+| text field                          | fill, clear |
+| checkbox                            | toggle      |
+| radio, selection list               | choose      |
+
+The performed actions come from the method that reads the locator: a `click*` method performs click,
+open, toggle and choose, `type*` performs fill, and `clearAndType` performs fill and clear. Reads such
+as `getText` or `isVisible` perform none, so an element that a step only looks at is covered but has no
+action covered.
+
+A drop-down menu (`.ui.dropdown`) is an element of its own, so opening one is counted. A locator that a
+step builds from an argument is not resolved, which leaves part of the drop-down use of the suite out of
+the figure.
+
+The inventory is not everything that can be done in Gitea, which is a universe too large to list. It is
+what can be inferred from the pages the crawler reached: their elements, the states seen on them and
+the actions their type allows. Dragging, hovering and keyboard shortcuts are not in the table, and the
+report says so.

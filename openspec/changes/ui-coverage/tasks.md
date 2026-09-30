@@ -33,5 +33,7 @@
       covered or not and listing the scenarios that cover it.
 - [x] 5.3 One step in `ct-functional.yml`, in the Playwright job and for the BDD suite only, that
       crawls the run's own gitea-test, reports against the committed inventory and uploads both.
+- [x] 5.3b Actions as a fourth level: inferred from the role of each element, counted from the method
+      that reads each locator, with the drop-down menus as elements of their own.
 - [ ] 5.4 Verified by one run of the workflow. Gitea offers `workflow_dispatch` only on the default
       branch, so the run needs a temporary `push` trigger, removed in a commit of its own.
