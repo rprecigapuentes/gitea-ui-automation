@@ -18,6 +18,8 @@ const REFS = new Set([
   "_new",
   "_upload",
   "_diffpatch",
+  "blame",
+  "rss",
 ]);
 
 const number = (part) => (/^\d+$/.test(part) ? "{n}" : part);
