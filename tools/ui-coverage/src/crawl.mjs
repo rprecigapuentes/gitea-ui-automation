@@ -1,7 +1,14 @@
 import { chromium } from "@playwright/test";
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { collectElements, keyOf, openMenus, readStates, withOrdinals } from "./elements.mjs";
+import {
+  collectElements,
+  describe,
+  keyOf,
+  openMenus,
+  readStates,
+  withOrdinals,
+} from "./elements.mjs";
 import { idsFile, INVENTORY, PAGES, pageFile } from "./paths.mjs";
 import { routeTemplate } from "./route-template.mjs";
 import { seed, unseed } from "./seed.mjs";
@@ -44,11 +51,18 @@ async function save(page, template) {
   await page.evaluate(openMenus);
   merge(states, await page.evaluate(readStates));
 
-  const keys = withOrdinals(found.map((element) => keyOf(element, page.url())));
-  writeFileSync(idsFile(template), JSON.stringify(keys));
+  const described = withOrdinals(found.map((element) => describe(element, page.url())));
+  writeFileSync(idsFile(template), JSON.stringify(described.map(keyOf)));
 
-  const elements = keys.map((key, index) => ({ key, states: [...states[index]].sort() }));
-  return { elements: elements.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0)) };
+  const elements = described.map((element, index) => ({
+    ...element,
+    states: [...states[index]].sort(),
+  }));
+  return { elements: elements.sort(compare) };
+}
+
+function compare(a, b) {
+  return keyOf(a) < keyOf(b) ? -1 : keyOf(a) > keyOf(b) ? 1 : 0;
 }
 
 async function crawl(page, seeded) {

@@ -1,6 +1,7 @@
 import { possibleActions } from "./actions.mjs";
 import { readFileSync } from "node:fs";
 import { coveredStates } from "./match.mjs";
+import { keyOf } from "./elements.mjs";
 import { idsFile } from "./paths.mjs";
 import { reachedUrls } from "./page-objects.mjs";
 import { usedSelectors } from "./usage.mjs";
@@ -8,21 +9,25 @@ import { usedSelectors } from "./usage.mjs";
 const sum = (values) => values.reduce((total, value) => total + value, 0);
 const count = (detail, pick) => sum(detail.map((element) => pick(element).length));
 
+const byLocator = (a, b) => (a.selector < b.selector ? -1 : a.selector > b.selector ? 1 : 0);
+
 function detailOf(elements, ids, hits) {
   const idOf = new Map(ids.map((key, id) => [key, id]));
 
   return elements.map((element) => {
-    const hit = hits.get(idOf.get(element.key));
-    const actions = possibleActions(element.key);
+    const hit = hits.get(idOf.get(keyOf(element)));
+    const actions = possibleActions(element.type);
 
     return {
-      key: element.key,
+      type: element.type,
+      name: element.name,
       states: element.states,
       actions,
       coveredStates: element.states.filter((state) => hit?.states.has(state)),
       coveredActions: actions.filter((action) => hit?.actions.has(action)),
       touched: hit !== undefined,
       tests: [...(hit?.tests ?? [])].sort(),
+      locators: [...(hit?.locators.values() ?? [])].sort(byLocator),
     };
   });
 }

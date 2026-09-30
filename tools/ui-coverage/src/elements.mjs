@@ -29,20 +29,23 @@ export function collectElements() {
   });
 }
 
-export function keyOf({ role, name, href }, pageUrl) {
-  if (role !== "link" || href === null) return `${role}:${name}`;
-  return `link:${routeTemplate(new URL(href, pageUrl).pathname)}`;
+export function describe({ role, name, href }, pageUrl) {
+  if (role !== "link" || href === null) return { type: role, name };
+  return { type: "link", name: routeTemplate(new URL(href, pageUrl).pathname) };
 }
 
-export function withOrdinals(keys) {
+export function withOrdinals(elements) {
   const seen = new Map();
 
-  return keys.map((key) => {
-    const count = (seen.get(key) ?? 0) + 1;
-    seen.set(key, count);
-    return count === 1 ? key : `${key}#${count}`;
+  return elements.map((element) => {
+    const identity = `${element.type}|${element.name}`;
+    const ordinal = (seen.get(identity) ?? 0) + 1;
+    seen.set(identity, ordinal);
+    return { ...element, ordinal };
   });
 }
+
+export const keyOf = ({ type, name, ordinal }) => `${type}|${name}|${ordinal}`;
 
 export function readStates() {
   const { document, getComputedStyle } = globalThis;

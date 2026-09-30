@@ -11,7 +11,7 @@ export const ACTIONS_BY_ROLE = {
   combobox: ["choose"],
 };
 
-export const possibleActions = (key) => ACTIONS_BY_ROLE[key.split(":")[0]] ?? [];
+export const possibleActions = (type) => ACTIONS_BY_ROLE[type] ?? [];
 
 export function performedActions(method = "") {
   if (method.startsWith("click")) return ["click", "open", "toggle", "choose"];

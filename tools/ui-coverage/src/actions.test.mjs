@@ -3,10 +3,10 @@ import { test } from "node:test";
 import { performedActions, possibleActions } from "./actions.mjs";
 
 test("the possible actions follow the role of the element", () => {
-  assert.deepEqual(possibleActions("button:Save"), ["click"]);
-  assert.deepEqual(possibleActions("textbox:title"), ["fill", "clear"]);
-  assert.deepEqual(possibleActions("dropdown:Labels"), ["open"]);
-  assert.deepEqual(possibleActions("unknown:x"), []);
+  assert.deepEqual(possibleActions("button"), ["click"]);
+  assert.deepEqual(possibleActions("textbox"), ["fill", "clear"]);
+  assert.deepEqual(possibleActions("dropdown"), ["open"]);
+  assert.deepEqual(possibleActions("unknown"), []);
 });
 
 test("a click performs the actions that a click carries out", () => {
