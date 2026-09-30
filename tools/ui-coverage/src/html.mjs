@@ -19,7 +19,16 @@ h2 { margin: 40px 0 12px; font-size: 20px; }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
 .card .value { font-size: 32px; font-weight: 700; }
 .bar { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; margin: 8px 0; }
-.bar span { display: block; height: 100%; background: var(--accent); }
+.bar span { display: block; height: 100%; }
+.meter { min-width: 150px; font-size: 13px; }
+.meter .bar { margin: 2px 0; }
+tr.reached td:first-child { box-shadow: inset 5px 0 0 var(--ok); }
+tr.reached td { background: var(--ok-bg); }
+.tag { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.tag.on { background: var(--ok); color: #fff; }
+.tag.off { color: var(--muted); border: 1px dashed var(--line); }
+.legend { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font-size: 13px; color: var(--muted); }
+.legend i { width: 160px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, hsl(0 70% 42%), hsl(60 70% 42%), hsl(120 70% 42%)); }
 table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); }
 th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
 th { font-size: 13px; color: var(--muted); font-weight: 600; }
@@ -62,16 +71,27 @@ search.addEventListener("input", apply);
 document.querySelectorAll("input[name=mode]").forEach((input) => input.addEventListener("change", apply));
 `;
 
+const fill = (level) => `width:${percent(level)}%;background:hsl(${percent(level) * 1.2} 70% 42%)`;
+
 function card(title, level) {
   return `<div class="card"><div class="muted">${title}</div>
     <div class="value">${percent(level)}%</div>
-    <div class="bar"><span style="width:${percent(level)}%"></span></div>
+    <div class="bar"><span style="${fill(level)}"></span></div>
     <div class="muted">${level.covered} de ${level.total}</div></div>`;
 }
 
+function meter(level) {
+  return `<div class="meter"><div class="bar"><span style="${fill(level)}"></span></div>
+    <span>${level.covered} / ${level.total} · ${percent(level)}%</span></div>`;
+}
+
 function pageRow({ url, reached, elements, states }) {
-  return `<tr><td><code>${escape(url)}</code></td><td>${reached ? "Sí" : "No"}</td>
-    <td>${elements.covered} / ${elements.total}</td><td>${states.covered} / ${states.total}</td></tr>`;
+  const mark = reached
+    ? '<span class="tag on">✔ Alcanzada por un test</span>'
+    : '<span class="tag off">Sin test</span>';
+
+  return `<tr class="${reached ? "reached" : ""}"><td><code>${escape(url)}</code></td><td>${mark}</td>
+    <td>${meter(elements)}</td><td>${meter(states)}</td></tr>`;
 }
 
 function testsCell(tests) {
@@ -111,7 +131,8 @@ export function html(figures) {
 <div class="cards">${card("Páginas", figures.urls)}${card("Elementos", figures.elements)}${card("Estados", figures.states)}</div>
 
 <h2>Cobertura por página</h2>
-<table><thead><tr><th>Página</th><th>Alcanzada por un test</th><th>Elementos</th><th>Estados</th></tr></thead>
+<div class="legend">Cobertura baja <i></i> alta · el borde y el fondo verdes marcan las páginas que un test alcanza</div>
+<table><thead><tr><th>Página</th><th>Test</th><th>Elementos</th><th>Estados</th></tr></thead>
 <tbody>${figures.perUrl.map(pageRow).join("")}</tbody></table>
 <p class="muted">Alcanzados por un test pero no rastreados: ${figures.unseen.map(escape).join(", ") || "ninguno"}.</p>
 
