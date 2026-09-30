@@ -203,7 +203,9 @@ jobs:
       || github.event.inputs.suite == 'playwright-native'
       || github.event.inputs.suite == 'playwright-bdd')
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    # A red run now re-runs the failing scenario and then the suite, to check a locator repair
+    # before proposing it. A green run never reaches that step, so the ceiling costs it nothing.
+    timeout-minutes: 40
     # The tag tracks the @playwright/test version in package-lock.json and is bumped with it.
     container: mcr.microsoft.com/playwright:v1.63.0-noble
 
@@ -377,6 +379,18 @@ jobs:
           GITEA_TOKEN_ISSUES: ${{ secrets.TOKEN_ISSUES }}
         run: npm run file-issue -w @gitea-automation/${{ matrix.suite }}
 
+      # After the issue is filed, so filing is not delayed by a suite run, and before the upload,
+      # because the page it reads is served by this job's own gitea-test and dies with it.
+      - name: Propose the locator to change (${{ matrix.suite }})
+        if: failure() && matrix.suite == 'playwright-bdd'
+        continue-on-error: true
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          # Under the job's own ceiling, so a repair that is taking too long ends this step rather
+          # than the job: a run killed by its timeout publishes nothing at all.
+          HEAL_BUDGET_MINUTES: "8"
+        run: npm run heal -w @gitea-automation/${{ matrix.suite }}
+
       # test-results/ holds the video and the trace of a retried test, and is absent when
       # nothing failed, which the upload warns about rather than fails on.
       - name: Upload the report (${{ matrix.suite }})
@@ -389,6 +403,8 @@ jobs:
             services/${{ matrix.suite }}/reports/junit*.xml
             services/${{ matrix.suite }}/reports/failures.json
             services/${{ matrix.suite }}/reports/explanation.json
+            services/${{ matrix.suite }}/reports/repairs.json
+            services/${{ matrix.suite }}/reports/*.patch
             services/${{ matrix.suite }}/test-results/
           retention-days: 14
 

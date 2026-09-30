@@ -19,6 +19,8 @@
     "explain": "node scripts/explain-failures.mjs",
     "explain:score": "node scripts/score-explanations.mjs",
     "file-issue": "node scripts/file-failure-issue.mjs",
+    "heal": "node scripts/heal-locators.mjs",
+    "heal:score": "node scripts/score-repairs.mjs",
     "ui-coverage:crawl": "node --env-file-if-exists=.env scripts/ui-coverage/crawl.mjs",
     "ui-coverage": "node scripts/ui-coverage/report.mjs",
     "ui-coverage:test": "node --test scripts/ui-coverage/*.test.mjs"
