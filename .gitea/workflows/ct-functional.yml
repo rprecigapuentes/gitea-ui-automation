@@ -350,6 +350,15 @@ jobs:
         continue-on-error: true
         run: npm run report -w @gitea-automation/${{ matrix.suite }}
 
+      # The crawl seeds its own data on this run's gitea-test and deletes it before it ends.
+      - name: Measure the UI coverage (${{ matrix.suite }})
+        if: always() && matrix.suite == 'playwright-bdd'
+        continue-on-error: true
+        run: |
+          cp services/playwright-bdd/coverage-data/inventory/ui-inventory.json /tmp/baseline-inventory.json
+          npm run ui-coverage:crawl -w @gitea-automation/playwright-bdd
+          npm run ui-coverage -w @gitea-automation/playwright-bdd -- --baseline /tmp/baseline-inventory.json
+
       # The raw Allure results are the only artifact naming the Gherkin step that failed, and
       # nothing uploads them, so the explanation is written here while they are still on disk.
       # The key is on this step alone: the job also checks out and runs the repository's code.
@@ -397,4 +406,16 @@ jobs:
             services/${{ matrix.suite }}/reports/repairs.json
             services/${{ matrix.suite }}/reports/*.patch
             services/${{ matrix.suite }}/test-results/
+          retention-days: 14
+
+      # Apart from the Allure report so that it is found by its own name.
+      - name: Upload the UI coverage report (${{ matrix.suite }})
+        if: always() && matrix.suite == 'playwright-bdd'
+        uses: actions/upload-artifact@v3
+        with:
+          name: ui-coverage-report
+          path: |
+            services/playwright-bdd/coverage-data/reports/coverage.html
+            services/playwright-bdd/coverage-data/reports/coverage.json
+            services/playwright-bdd/coverage-data/inventory/ui-inventory.json
           retention-days: 14

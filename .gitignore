@@ -22,3 +22,7 @@ local.log
 # openspec/changes/<change>/specs/ and are tracked.
 /specs/
 .playwright-mcp/
+
+# UI coverage
+services/playwright-bdd/coverage-data/pages/
+services/playwright-bdd/coverage-data/reports/
