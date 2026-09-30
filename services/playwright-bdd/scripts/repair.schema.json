@@ -1,0 +1,19 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["selector", "why", "observedInThePage"],
+  "properties": {
+    "selector": {
+      "type": "string",
+      "description": "The selector written into the page object, exactly as it now reads."
+    },
+    "why": {
+      "type": "string",
+      "description": "One sentence: what the element is, and why this selector addresses it."
+    },
+    "observedInThePage": {
+      "type": "boolean",
+      "description": "True only if this was read from a page snapshot taken during this session. False if it came from the repository, from documentation or from what the model already knew."
+    }
+  }
+}

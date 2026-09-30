@@ -18,7 +18,9 @@
     "typecheck": "tsc --noEmit",
     "explain": "node scripts/explain-failures.mjs",
     "explain:score": "node scripts/score-explanations.mjs",
-    "file-issue": "node scripts/file-failure-issue.mjs"
+    "file-issue": "node scripts/file-failure-issue.mjs",
+    "heal": "node scripts/heal-locators.mjs",
+    "heal:score": "node scripts/score-repairs.mjs"
   },
   "dependencies": {
     "@gitea-automation/business-logic": "*",

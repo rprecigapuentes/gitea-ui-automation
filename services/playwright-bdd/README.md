@@ -92,6 +92,33 @@ fixtures chained in `fixtures/fixture.ts`, the same ones `playwright-native` cha
 Both are `auto`, so they run for every scenario, and a scenario that creates no organization finds
 nothing recorded and removes nothing.
 
+## When a locator drifts
+
+A red run in continuous testing explains itself: `npm run explain` classifies each failure, and when
+the answer is `locator`, `npm run heal` says which one to change.
+
+It never changes it. The run's outcome stays the failure the suite reported, nothing is committed,
+and the working tree is put back whatever happens — which is the distance between this and the
+WebDriver proxy it replaces, and why `openspec/specs/pipeline/spec.md` still requires that a locator
+matching nothing fails its test.
+
+What it does, in order:
+
+1. Keeps the failures classified `locator` above low confidence, and traces the selector each one
+   names to the page object that declares it. That is a search, not a question for a model: page
+   objects hold their selectors as literals in one `locators` object.
+2. Hands an agent the page through the Playwright MCP server, with the tools it may call enumerated.
+   It finds the element by role and accessible name in the snapshot, then reads its classes from the
+   DOM: the snapshot is the accessibility tree and carries no attributes, and a page object holds a
+   CSS string.
+3. Accepts what comes back only if all three hold: the diff touches nothing outside a `locators`
+   object, the failing scenario passes, and the suite still passes on that browser. The third is the
+   one that catches a repair to a fragment several pages share.
+4. Writes the file, the key, both selectors and what was re-run to the run's step summary, and the
+   patch to `reports/`.
+
+A repair that fails any gate is reported with the reason rather than dropped.
+
 ## The starting states, for the Playwright agents
 
 `tests/seeds/` holds the world an agent wakes up in. The MCP server runs one of these to open a

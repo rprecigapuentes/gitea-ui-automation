@@ -1,0 +1,42 @@
+[
+  {
+    "name": "issue-state-label",
+    "file": "business-logic/pages/issues/issue.page.ts",
+    "key": "stateLabel",
+    "drifted": ".issue-state-badge",
+    "scenario": "An issue created with a Markdown description, a label, a milestone and an assignee is returned by both list filters and completes its milestone when it is closed",
+    "feature": "issue-metadata",
+    "failingStep": "Then the created issue is \"Open\"",
+    "repairable": true
+  },
+  {
+    "name": "new-label-button",
+    "file": "business-logic/pages/issues/label-list.page.ts",
+    "key": "newLabelButton",
+    "drifted": ".ui.button.new-label-button",
+    "scenario": "A scoped label replaces the label of its own scope, coexists with labels of other scopes, and leaves the issue when it is removed",
+    "feature": "scoped-labels",
+    "failingStep": "When I open the label list of the repository",
+    "repairable": true,
+    "skip": true,
+    "skipReason": "Measured once at 3 of 3 and recorded; skipped so a demo run pays for one entry. The unrepairable one alone was 400k of the 670k that run cost."
+  },
+  {
+    "name": "label-rows",
+    "file": "business-logic/pages/issues/label-list.page.ts",
+    "key": "rows",
+    "drifted": "ul.label-list > li.item",
+    "scenario": "A scoped label replaces the label of its own scope, coexists with labels of other scopes, and leaves the issue when it is removed",
+    "feature": "scoped-labels",
+    "failingStep": "Then the label list shows \"priority/high\" as exclusive, coloured \"d73a4a\" and described \"Blocks the release\"",
+    "repairable": false,
+    "alsoBreak": {
+      "file": "services/playwright-bdd/features/step-definitions/scoped-labels.steps.ts",
+      "from": "expect(row.exclusive).toBe(true)",
+      "to": "expect(row.exclusive).toBe(false)"
+    },
+    "why": "The assertion is inverted as well, so no locator makes this scenario pass. A healer that proposes one has fabricated it.",
+    "skip": true,
+    "skipReason": "Measured once at 3 of 3 and recorded; skipped so a demo run pays for one entry. The unrepairable one alone was 400k of the 670k that run cost."
+  }
+]
