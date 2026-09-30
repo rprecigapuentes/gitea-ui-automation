@@ -7,10 +7,10 @@
 
 ## 2. URL level
 
-- [ ] 2.1 Crawler over same-origin links, signed in through the API session, writing the URLs of
+- [x] 2.1 Crawler over same-origin links, signed in through the API session, writing the URLs of
       `ui-inventory.json`.
-- [ ] 2.2 Parser: the `getUrl()` of each page object reached by a BDD step, as a route template.
-- [ ] 2.3 URL figure printed by `npm run coverage`.
+- [x] 2.2 Parser: the `getUrl()` of each page object reached by a BDD step, as a route template.
+- [x] 2.3 URL figure printed by `npm run coverage`.
 
 ## 3. Element level
 
