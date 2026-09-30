@@ -8,7 +8,17 @@ const ROOTS = new Set([
   "repo",
   "-",
 ]);
-const REFS = new Set(["src", "raw", "commits", "commit", "compare"]);
+const REFS = new Set([
+  "src",
+  "raw",
+  "commits",
+  "commit",
+  "compare",
+  "_edit",
+  "_new",
+  "_upload",
+  "_diffpatch",
+]);
 
 const number = (part) => (/^\d+$/.test(part) ? "{n}" : part);
 const join = (parts) => `/${parts.join("/")}`;
