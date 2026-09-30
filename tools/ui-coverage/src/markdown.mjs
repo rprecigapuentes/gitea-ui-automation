@@ -23,15 +23,16 @@ export function markdown(figures, change) {
     row("URLs", figures.urls),
     row("Elements", figures.elements),
     row("States", figures.states),
+    row("Actions", figures.actions),
     "",
     ...(change ? surface(change) : []),
     "### Per URL with coverage",
     "",
-    "| URL | Elements | States |",
-    "| --- | --- | --- |",
+    "| URL | Elements | States | Actions |",
+    "| --- | --- | --- | --- |",
     ...touched.map(
-      ({ url, elements, states }) =>
-        `| ${url} | ${elements.covered} / ${elements.total} | ${states.covered} / ${states.total} |`,
+      ({ url, elements, states, actions }) =>
+        `| ${url} | ${elements.covered} / ${elements.total} | ${states.covered} / ${states.total} | ${actions.covered} / ${actions.total} |`,
     ),
     "",
     `Reached by a step but not crawled: ${list(figures.unseen)}.`,
