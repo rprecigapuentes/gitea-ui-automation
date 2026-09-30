@@ -14,9 +14,9 @@
 
 ## 3. Element level
 
-- [ ] 3.1 Crawler stores, per URL, the interactive elements and the DOM.
-- [ ] 3.2 Parser: the locators of each page object, and which ones a step reaches.
-- [ ] 3.3 Matcher runs the used locators on the stored DOM. Element figure.
+- [x] 3.1 Crawler stores, per URL, the interactive elements and the DOM.
+- [x] 3.2 Parser: the locators of each page object, and which ones a step reaches.
+- [x] 3.3 Matcher runs the used locators on the stored DOM. Element figure.
 
 ## 4. State level
 

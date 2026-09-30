@@ -52,3 +52,16 @@ Read the figure as a trend over one inventory, not as a share of the application
 `openspec/specs/` describes the automation framework. It says nothing about which pages, elements or
 states Gitea has, so it cannot be the denominator of a coverage of Gitea's UI. The denominator is the
 crawled UI.
+
+## What the first measurement showed
+
+- The crawl signs in as the owner of the run, creates a repository with an issue, and an organization
+  with a project, crawls, and deletes all of it in a `finally`. It follows only links that belong to
+  that data, so what other runs left behind cannot change the inventory.
+- A locator counts only when a step reaches the method that reads it. Values the parser cannot
+  resolve (a selector built from an argument) are not counted, and a fragment returned by one call
+  and used by the next is not followed. Both make the figure smaller, never larger.
+- A fragment has no URL of its own, so its locators run against every URL a step reaches.
+- A selector counts every interactive element it selects. A generic one such as `.item` selects many,
+  so the element figure can be higher than the number of elements a test looks at on purpose.
+- The DOM of each URL is kept in `coverage-data/pages/`, which is regenerated and not committed.
