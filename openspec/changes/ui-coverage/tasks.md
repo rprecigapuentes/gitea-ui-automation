@@ -29,7 +29,9 @@
       committed inventory.
 - [x] 5.2 Verified: two crawls give the same inventory, and a step that reaches one more page object
       raised the element figure by exactly what its locators select.
-- [ ] 5.3 One step in `ct-functional.yml`, in the Playwright job and for the BDD suite only, that
+- [x] 5.3a `coverage.html` with the figures, the pages and the inventory of elements, each marked as
+      covered or not and listing the scenarios that cover it.
+- [x] 5.3 One step in `ct-functional.yml`, in the Playwright job and for the BDD suite only, that
       crawls the run's own gitea-test, reports against the committed inventory and uploads both.
 - [ ] 5.4 Verified by one run of the workflow. Gitea offers `workflow_dispatch` only on the default
       branch, so the run needs a temporary `push` trigger, removed in a commit of its own.

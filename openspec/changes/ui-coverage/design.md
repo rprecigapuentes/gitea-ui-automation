@@ -94,3 +94,15 @@ suite whether it passed or not: the numerator is read from the code and does not
 outcome. It crawls the run's own gitea-test, so the inventory it produces belongs to a fresh
 instance. The step does not fail the run, and it uploads the inventory and the report. Promoting an
 uploaded inventory to the committed one is a decision taken in a pull request.
+
+## Which tests cover an element
+
+Each step definition is read on its own, together with the helper functions of its file that it
+calls, so every locator is known to be reached by that step. Each feature is parsed, its Background
+steps are added to every scenario, and each step text is matched to a definition with the Cucumber
+expression that definition declares. An element is covered by the scenarios whose steps reach a
+locator that selects it. A step text that no definition matches, such as an outline placeholder, is
+not attributed to any scenario, so a scenario can be missing from the list but never wrongly in it.
+
+The report is also written as `coverage.html`, with the figures, the pages and the inventory of
+elements, each marked as covered or not and listing its scenarios.
