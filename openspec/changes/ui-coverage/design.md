@@ -165,8 +165,7 @@ An element of the inventory has a type and a name, in two fields, and a number t
 elements of the same type and name on one page. A link is named by the kind of page it leads to, and a
 drop-down menu has no name. The report shows the type and the name in columns of their own.
 
-For each element that a step reaches, the report also lists the CSS locators the tests use to reach
-it, and the method that uses each one.
+For each page and each element that a step reaches, the report lists the scenarios that reach it.
 
 ## Where the report is published
 
@@ -175,7 +174,7 @@ artifact named `ui-coverage-report`, apart from the Allure report, and writes th
 summary of the run. The summary holds the figures and points to the artifact, which holds the inventory
 of elements.
 
-## Naming the elements, and showing the locators as written
+## Naming the elements
 
 The name of an element is the first of these that the page gives it: the `aria-label`, the text of the
 element it is labelled by, its `<label>`, its visible text, its placeholder, its title, its tooltip,
@@ -183,6 +182,3 @@ the name of the icon inside it, its `name` and its `id`. A drop-down menu takes 
 it fills. What a run generates, such as the repository, the organization and the user created for it,
 a commit hash or a time like "3 hours ago", is replaced by a placeholder, so that two crawls name an
 element the same way. A link also keeps the kind of page it leads to.
-
-A locator whose value a run completes is shown in the report as the page object writes it, with
-`${…}` where the value goes, and the selector it is matched as is in the tooltip.
