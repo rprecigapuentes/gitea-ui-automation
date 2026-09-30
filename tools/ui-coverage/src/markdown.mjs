@@ -37,5 +37,7 @@ export function markdown(figures, change) {
     "",
     `Reached by a step but not crawled: ${list(figures.unseen)}.`,
     "",
+    "The inventory of elements, with their locators and tests, is in `coverage.html`, the `ui-coverage-report` artifact of this run.",
+    "",
   ].join("\n");
 }

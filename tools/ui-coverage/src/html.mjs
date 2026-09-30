@@ -13,7 +13,7 @@ const STYLE = `
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, sans-serif; }
-main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 64px; }
+main { max-width: 1280px; margin: 0 auto; padding: 24px 16px 64px; }
 h1 { margin: 0 0 4px; font-size: 26px; }
 h2 { margin: 40px 0 12px; font-size: 20px; }
 .muted { color: var(--muted); }
@@ -24,7 +24,6 @@ h2 { margin: 40px 0 12px; font-size: 20px; }
 .bar span { display: block; height: 100%; }
 .meter { min-width: 150px; font-size: 13px; }
 .meter .bar { margin: 2px 0; }
-details.url > summary .meter { flex: none; width: 240px; font-weight: 400; }
 tr.reached td:first-child { box-shadow: inset 5px 0 0 var(--ok); }
 tr.reached td { background: var(--ok-bg); }
 .tag { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 12px; font-weight: 600; white-space: nowrap; }
@@ -39,18 +38,16 @@ code { font-size: 13px; word-break: break-all; }
 .chip { display: inline-block; padding: 1px 8px; margin: 1px 3px 1px 0; border-radius: 10px; font-size: 12px;
   background: var(--no-bg); color: var(--no); }
 .chip.on { background: var(--ok-bg); color: var(--ok); border: 1px solid var(--ok); }
-.badge { font-weight: 600; white-space: nowrap; }
-.badge.on { color: var(--ok); }
-.badge.off { color: var(--no); }
 .controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 12px; }
 .controls input[type=search] { flex: 1 1 260px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px;
   background: var(--card); color: var(--text); font: inherit; }
 details.url { margin-bottom: 8px; }
+details.url > summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; cursor: pointer;
+  padding: 10px 12px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; font-weight: 600; }
+details.url > summary .meter { flex: none; width: 240px; font-weight: 400; }
 details.scope { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; margin: 20px 0 0; }
 details.scope > summary { cursor: pointer; font-weight: 600; }
 details.scope table { margin-top: 10px; }
-details.url > summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; cursor: pointer; padding: 10px 12px; background: var(--card); border: 1px solid var(--line);
-  border-radius: 8px; font-weight: 600; }
 details ul { margin: 6px 0 2px; padding-left: 18px; }
 [hidden] { display: none !important; }
 `;
@@ -78,39 +75,30 @@ document.querySelectorAll("input[name=mode]").forEach((input) => input.addEventL
 `;
 
 const ELEMENTS = {
-  link: "Enlace",
-  button: "Botón",
-  menuitem: "Ítem de menú",
-  tab: "Pestaña",
-  dropdown: "Menú desplegable",
-  textbox: "Campo de texto",
-  checkbox: "Casilla",
-  radio: "Opción (radio)",
-  combobox: "Lista de selección",
-  other: "Otro",
+  link: "Link",
+  button: "Button",
+  menuitem: "Menu item",
+  tab: "Tab",
+  dropdown: "Drop-down menu",
+  textbox: "Text field",
+  checkbox: "Checkbox",
+  radio: "Radio option",
+  combobox: "Selection list",
+  other: "Other",
 };
 const ACTIONS = {
-  click: "clic",
-  fill: "escribir",
-  clear: "borrar",
-  toggle: "marcar / desmarcar",
-  choose: "elegir",
-  open: "abrir",
-};
-const STATES = {
-  visible: "visible",
-  enabled: "habilitado",
-  disabled: "deshabilitado",
-  checked: "marcado",
-  unchecked: "desmarcado",
-  expanded: "desplegado",
-  collapsed: "plegado",
+  click: "click",
+  fill: "fill",
+  clear: "clear",
+  toggle: "toggle",
+  choose: "choose",
+  open: "open",
 };
 const STATE_SCOPE = [
-  ["visible", "Todos los elementos"],
-  ["habilitado / deshabilitado", "Todos los elementos"],
-  ["marcado / desmarcado", "Casillas y opciones (radio)"],
-  ["desplegado / plegado", "Elementos que declaran aria-expanded"],
+  ["visible", "Every element"],
+  ["enabled / disabled", "Every element"],
+  ["checked / unchecked", "Checkboxes and radio options"],
+  ["expanded / collapsed", "Elements that declare aria-expanded"],
 ];
 
 const fill = (level) => `width:${percent(level)}%;background:hsl(${percent(level) * 1.2} 70% 42%)`;
@@ -119,7 +107,7 @@ function card(title, level) {
   return `<div class="card"><div class="muted">${title}</div>
     <div class="value">${percent(level)}%</div>
     <div class="bar"><span style="${fill(level)}"></span></div>
-    <div class="muted">${level.covered} de ${level.total}</div></div>`;
+    <div class="muted">${level.covered} of ${level.total}</div></div>`;
 }
 
 function meter(level) {
@@ -127,88 +115,99 @@ function meter(level) {
     <span>${level.covered} / ${level.total} · ${percent(level)}%</span></div>`;
 }
 
-function chips(all, done, labels) {
+function chips(all, done, labels = {}) {
   return all
-    .map((item) => `<span class="chip${done.includes(item) ? " on" : ""}">${labels[item]}</span>`)
+    .map(
+      (item) =>
+        `<span class="chip${done.includes(item) ? " on" : ""}">${labels[item] ?? item}</span>`,
+    )
     .join("");
 }
 
 function pageRow({ url, reached, elements, states, actions }) {
   const mark = reached
-    ? '<span class="tag on">✔ Alcanzada por un test</span>'
-    : '<span class="tag off">Sin test</span>';
+    ? '<span class="tag on">✔ Reached by a test</span>'
+    : '<span class="tag off">No test</span>';
 
   return `<tr class="${reached ? "reached" : ""}"><td><code>${escape(url)}</code></td><td>${mark}</td>
     <td>${meter(elements)}</td><td>${meter(states)}</td><td>${meter(actions)}</td></tr>`;
 }
 
-function testsCell(tests) {
-  const items = tests.map((test) => `<li>${escape(test)}</li>`).join("");
-  return `<details><summary>${tests.length} test${tests.length === 1 ? "" : "s"}</summary><ul>${items}</ul></details>`;
+function list(items, label) {
+  const lines = items.map((item) => `<li>${item}</li>`).join("");
+  return `<details><summary>${items.length} ${label}${items.length === 1 ? "" : "s"}</summary><ul>${lines}</ul></details>`;
+}
+
+function locatorLine({ selector, action }) {
+  return `<code>${escape(selector)}</code> <span class="muted">· ${escape(action ?? "read")}</span>`;
 }
 
 function elementRow(element) {
-  const { key, states, actions, coveredStates, coveredActions, touched, tests } = element;
+  const { type, name, states, actions, coveredStates, coveredActions, touched, tests, locators } =
+    element;
   const mark = touched
-    ? '<span class="tag on">✔ Alcanzado por un test</span>'
-    : '<span class="tag off">Sin test</span>';
+    ? '<span class="tag on">✔ Reached by a test</span>'
+    : '<span class="tag off">No test</span>';
 
   return `<tr class="${touched ? "reached" : ""}" data-covered="${touched ? 1 : 0}">
-    <td><code>${escape(key)}</code></td><td>${chips(actions, coveredActions, ACTIONS)}</td>
-    <td>${chips(states, coveredStates, STATES)}</td>
-    <td>${mark}${tests.length > 0 ? testsCell(tests) : ""}</td></tr>`;
+    <td>${ELEMENTS[type] ?? escape(type)}</td>
+    <td>${name === "" ? '<span class="muted">(no name)</span>' : `<code>${escape(name)}</code>`}</td>
+    <td>${chips(actions, coveredActions, ACTIONS)}</td>
+    <td>${chips(states, coveredStates)}</td>
+    <td>${locators.length > 0 ? list(locators.map(locatorLine), "locator") : "—"}</td>
+    <td>${mark}${tests.length > 0 ? list(tests.map(escape), "test") : ""}</td></tr>`;
 }
 
 function inventoryBlock({ url, elements, detail }) {
   return `<details class="url"><summary><code>${escape(url)}</code>${meter(elements)}</summary>
-    <table><thead><tr><th>Elemento</th><th>Acciones posibles</th><th>Estados observados</th>
-    <th>Test</th></tr></thead>
+    <table><thead><tr><th>Type</th><th>Name</th><th>Possible actions</th><th>Observed states</th>
+    <th>CSS locators used by the tests</th><th>Test</th></tr></thead>
     <tbody>${detail.map(elementRow).join("")}</tbody></table></details>`;
 }
 
 function scope() {
   const actions = Object.entries(ACTIONS_BY_ROLE).map(
-    ([role, list]) =>
-      `<tr><td>${ELEMENTS[role]}</td><td>${list.map((item) => ACTIONS[item]).join(", ")}</td></tr>`,
+    ([type, list]) =>
+      `<tr><td>${ELEMENTS[type]}</td><td>${list.map((item) => ACTIONS[item]).join(", ")}</td></tr>`,
   );
   const states = STATE_SCOPE.map(([state, who]) => `<tr><td>${state}</td><td>${who}</td></tr>`);
 
-  return `<details class="scope" open><summary>Qué se mide y qué no</summary>
-<p>Este inventario no contiene todo lo que se puede hacer en Gitea: ese universo es demasiado grande.
-Contiene lo que se <b>puede inferir de las páginas</b> que el robot alcanzó: los elementos que encontró, los
-estados en que los vio y las acciones que permite su tipo. Lo que no aparece en esas páginas, o que un
-elemento permite pero no está en estas listas (arrastrar, pasar el ratón, atajos de teclado), queda fuera
-del total.</p>
-<table><thead><tr><th>Tipo de elemento</th><th>Acciones que contemplamos</th></tr></thead><tbody>${actions.join("")}</tbody></table>
-<table><thead><tr><th>Estado</th><th>Se observa en</th></tr></thead><tbody>${states.join("")}</tbody></table>
+  return `<details class="scope" open><summary>What is measured and what is not</summary>
+<p>This inventory is not everything that can be done in Gitea: that universe is too large to list.
+It holds what can be <b>inferred from the pages</b> the crawler reached: the elements it found, the
+states it saw them in and the actions their type allows. Whatever does not appear on those pages, or
+that an element allows but is not in these lists (dragging, hovering, keyboard shortcuts), is outside
+the total.</p>
+<table><thead><tr><th>Element type</th><th>Actions considered</th></tr></thead><tbody>${actions.join("")}</tbody></table>
+<table><thead><tr><th>State</th><th>Observed on</th></tr></thead><tbody>${states.join("")}</tbody></table>
 </details>`;
 }
 
 export function html(figures) {
   return `<!doctype html>
-<html lang="es"><head><meta charset="utf-8">
+<html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cobertura de UI</title><style>${STYLE}</style></head>
+<title>UI coverage</title><style>${STYLE}</style></head>
 <body><main>
-<h1>Cobertura de UI</h1>
-<div class="muted">Suite playwright-bdd · Gitea ${escape(figures.gitea)}</div>
-<div class="cards">${card("Páginas", figures.urls)}${card("Elementos", figures.elements)}${card("Estados", figures.states)}${card("Acciones", figures.actions)}</div>
+<h1>UI coverage</h1>
+<div class="muted">playwright-bdd suite · Gitea ${escape(figures.gitea)}</div>
+<div class="cards">${card("Pages", figures.urls)}${card("Elements", figures.elements)}${card("States", figures.states)}${card("Actions", figures.actions)}</div>
 
 ${scope()}
 
-<h2>Cobertura por página</h2>
-<div class="legend">Cobertura baja <i></i> alta · el borde y el fondo verdes marcan las páginas que un test alcanza</div>
-<table><thead><tr><th>Página</th><th>Test</th><th>Elementos</th><th>Estados</th><th>Acciones</th></tr></thead>
+<h2>Coverage per page</h2>
+<div class="legend">Low coverage <i></i> high · a green border and background mark the pages a test reaches</div>
+<table><thead><tr><th>Page</th><th>Test</th><th>Elements</th><th>States</th><th>Actions</th></tr></thead>
 <tbody>${figures.perUrl.map(pageRow).join("")}</tbody></table>
-<p class="muted">Alcanzados por un test pero no rastreados: ${figures.unseen.map(escape).join(", ") || "ninguno"}.</p>
+<p class="muted">Reached by a test but not crawled: ${figures.unseen.map(escape).join(", ") || "none"}.</p>
 
-<h2>Inventario de elementos</h2>
-<div class="legend">Cada página muestra su cobertura. En verde, los elementos que un test alcanza; en verde también, las acciones y los estados que se ejercitan.</div>
+<h2>Inventory of elements</h2>
+<div class="legend">Each page shows its coverage. Green elements are reached by a test; in green too, the actions and states a test exercises and the CSS locators it uses.</div>
 <div class="controls">
-<input id="search" type="search" placeholder="Buscar un elemento, una página o un test">
-<label><input type="radio" name="mode" value="all" checked> Todos</label>
-<label><input type="radio" name="mode" value="covered"> Con test</label>
-<label><input type="radio" name="mode" value="uncovered"> Sin test</label>
+<input id="search" type="search" placeholder="Search an element, a page, a locator or a test">
+<label><input type="radio" name="mode" value="all" checked> All</label>
+<label><input type="radio" name="mode" value="covered"> With a test</label>
+<label><input type="radio" name="mode" value="uncovered"> Without a test</label>
 </div>
 <div id="inventory">${figures.perUrl.map(inventoryBlock).join("")}</div>
 </main><script>${SCRIPT}</script></body></html>
