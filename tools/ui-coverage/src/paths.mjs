@@ -6,5 +6,7 @@ export const INVENTORY = path.join(DATA, "inventory/ui-inventory.json");
 export const PAGES = path.join(DATA, "pages");
 export const REPORTS = path.join(DATA, "reports");
 
-export const pageFile = (template) =>
-  path.join(PAGES, `${template.replace(/[^\w{}-]+/g, "_")}.html`);
+const slug = (template) => template.replace(/[^\w{}-]+/g, "_");
+
+export const pageFile = (template) => path.join(PAGES, `${slug(template)}.html`);
+export const idsFile = (template) => path.join(PAGES, `${slug(template)}.ids.json`);

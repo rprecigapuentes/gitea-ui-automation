@@ -3,17 +3,18 @@ import { routeTemplate } from "./route-template.mjs";
 export function collectElements() {
   const { document } = globalThis;
   const selector =
-    "a[href], button, input:not([type=hidden]), select, textarea, summary, [role=button], [role=menuitem], [role=tab], [role=checkbox]";
+    "a[href], button, input:not([type=hidden]), select, textarea, summary, [role=button], [role=menuitem], [role=tab], [role=checkbox], .ui.dropdown:not(.disabled)";
   const roles = { A: "link", BUTTON: "button", SELECT: "combobox", SUMMARY: "button" };
   const inputs = { checkbox: "checkbox", radio: "radio", submit: "button", button: "button" };
 
   return [...document.querySelectorAll(selector)].map((element, index) => {
     element.setAttribute("data-cov", index);
     const editable = ["INPUT", "TEXTAREA"].includes(element.tagName);
-    const role =
-      roles[element.tagName] ??
-      inputs[element.getAttribute("type")] ??
-      (editable ? "textbox" : element.getAttribute("role"));
+    const role = element.matches(".ui.dropdown")
+      ? "dropdown"
+      : (roles[element.tagName] ??
+        inputs[element.getAttribute("type")] ??
+        (editable ? "textbox" : (element.getAttribute("role") ?? "other")));
     const label =
       element.getAttribute("aria-label") ||
       (editable ? "" : element.innerText) ||
@@ -22,7 +23,7 @@ export function collectElements() {
       element.getAttribute("name") ||
       "";
 
-    const name = label.trim().replace(/\s+/g, " ").slice(0, 60);
+    const name = role === "dropdown" ? "" : label.trim().replace(/\s+/g, " ").slice(0, 60);
 
     return { role, name, href: element.getAttribute("href") };
   });
@@ -62,5 +63,17 @@ export function readStates() {
     if (expanded !== null) states.push(expanded === "true" ? "expanded" : "collapsed");
 
     return [Number(element.dataset.cov), states];
+  });
+}
+
+export function openMenus() {
+  const { document } = globalThis;
+  const style = document.createElement("style");
+
+  style.textContent =
+    ".ui.dropdown .menu { display: block !important; visibility: visible !important; opacity: 1 !important; }";
+  document.head.append(style);
+  document.querySelectorAll("details").forEach((details) => {
+    details.open = true;
   });
 }
