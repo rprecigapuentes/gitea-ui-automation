@@ -5,7 +5,7 @@ import { AstBuilder, GherkinClassicTokenMatcher, Parser } from "@cucumber/gherki
 import { IdGenerator } from "@cucumber/messages";
 import ts from "typescript";
 
-const FEATURES = path.resolve(import.meta.dirname, "../../../services/playwright-bdd/features");
+const FEATURES = path.resolve(import.meta.dirname, "../../features");
 const KEYWORDS = new Set(["Given", "When", "Then"]);
 
 const textOf = (source, node) => source.text.slice(node.getStart(source), node.end);

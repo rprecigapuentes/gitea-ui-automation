@@ -18,7 +18,10 @@
     "typecheck": "tsc --noEmit",
     "explain": "node scripts/explain-failures.mjs",
     "explain:score": "node scripts/score-explanations.mjs",
-    "file-issue": "node scripts/file-failure-issue.mjs"
+    "file-issue": "node scripts/file-failure-issue.mjs",
+    "ui-coverage:crawl": "node --env-file-if-exists=.env scripts/ui-coverage/crawl.mjs",
+    "ui-coverage": "node scripts/ui-coverage/report.mjs",
+    "ui-coverage:test": "node --test scripts/ui-coverage/*.test.mjs"
   },
   "dependencies": {
     "@gitea-automation/business-logic": "*",
@@ -27,12 +30,16 @@
     "dotenv": "^17.4.2"
   },
   "devDependencies": {
+    "@cucumber/cucumber-expressions": "^18.0.1",
+    "@cucumber/gherkin": "^30.0.4",
+    "@cucumber/messages": "^27.2.0",
     "@playwright/test": "^1.63.0",
     "@types/node": "^22.20.3",
     "allure": "^3.18.0",
     "allure-playwright": "^3.12.2",
     "concurrently": "^9.1.2",
     "cross-env": "^7.0.3",
-    "playwright-bdd": "^9.2.1"
+    "playwright-bdd": "^9.2.1",
+    "typescript": "~5.9.3"
   }
 }

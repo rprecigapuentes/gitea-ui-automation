@@ -353,9 +353,9 @@ jobs:
         if: always() && matrix.suite == 'playwright-bdd'
         continue-on-error: true
         run: |
-          cp coverage-data/inventory/ui-inventory.json /tmp/baseline-inventory.json
-          npm run crawl -w @gitea-automation/ui-coverage
-          npm run coverage -w @gitea-automation/ui-coverage -- --baseline /tmp/baseline-inventory.json
+          cp services/playwright-bdd/coverage-data/inventory/ui-inventory.json /tmp/baseline-inventory.json
+          npm run ui-coverage:crawl -w @gitea-automation/playwright-bdd
+          npm run ui-coverage -w @gitea-automation/playwright-bdd -- --baseline /tmp/baseline-inventory.json
 
       # The raw Allure results are the only artifact naming the Gherkin step that failed, and
       # nothing uploads them, so the explanation is written here while they are still on disk.
@@ -400,8 +400,8 @@ jobs:
         with:
           name: ui-coverage-report
           path: |
-            coverage-data/reports/coverage.html
-            coverage-data/reports/coverage.md
-            coverage-data/reports/coverage.json
-            coverage-data/inventory/ui-inventory.json
+            services/playwright-bdd/coverage-data/reports/coverage.html
+            services/playwright-bdd/coverage-data/reports/coverage.md
+            services/playwright-bdd/coverage-data/reports/coverage.json
+            services/playwright-bdd/coverage-data/inventory/ui-inventory.json
           retention-days: 14

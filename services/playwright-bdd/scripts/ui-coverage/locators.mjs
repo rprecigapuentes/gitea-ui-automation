@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import ts from "typescript";
 
-export const PAGES = path.resolve(import.meta.dirname, "../../../business-logic/pages");
+export const PAGES = path.resolve(import.meta.dirname, "../../../../business-logic/pages");
 
 const OPEN = "@@OPEN@@";
 const WHOLE_VALUE = /\[([\w-]+)[~|^$*]?=(["'])@@OPEN@@\2\]/g;
