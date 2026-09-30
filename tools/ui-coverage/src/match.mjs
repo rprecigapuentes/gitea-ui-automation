@@ -37,6 +37,7 @@ function record(elements, id, entry) {
   entry.tests.forEach((test) => hit.tests.add(test));
   hit.locators.set(`${entry.selector}|${entry.action}`, {
     selector: entry.selector,
+    source: entry.source,
     action: entry.action,
   });
   elements.set(id, hit);

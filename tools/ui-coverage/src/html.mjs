@@ -138,20 +138,30 @@ function list(items, label) {
   return `<details><summary>${items.length} ${label}${items.length === 1 ? "" : "s"}</summary><ul>${lines}</ul></details>`;
 }
 
-function locatorLine({ selector, action }) {
-  return `<code>${escape(selector)}</code> <span class="muted">· ${escape(action ?? "read")}</span>`;
+function locatorLine({ selector, source, action }) {
+  return `<code title="${escape(selector)}">${escape(source)}</code> <span class="muted">· ${escape(action ?? "read")}</span>`;
 }
 
 function elementRow(element) {
-  const { type, name, states, actions, coveredStates, coveredActions, touched, tests, locators } =
-    element;
+  const {
+    type,
+    name,
+    target,
+    states,
+    actions,
+    coveredStates,
+    coveredActions,
+    touched,
+    tests,
+    locators,
+  } = element;
   const mark = touched
     ? '<span class="tag on">✔ Reached by a test</span>'
     : '<span class="tag off">No test</span>';
 
   return `<tr class="${touched ? "reached" : ""}" data-covered="${touched ? 1 : 0}">
     <td>${ELEMENTS[type] ?? escape(type)}</td>
-    <td>${name === "" ? '<span class="muted">(no name)</span>' : `<code>${escape(name)}</code>`}</td>
+    <td>${name === "" ? '<span class="muted">(no name)</span>' : escape(name)}${target ? `<div class="muted"><code>${escape(target)}</code></div>` : ""}</td>
     <td>${chips(actions, coveredActions, ACTIONS)}</td>
     <td>${chips(states, coveredStates)}</td>
     <td>${locators.length > 0 ? list(locators.map(locatorLine), "locator") : "—"}</td>

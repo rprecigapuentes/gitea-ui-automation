@@ -21,6 +21,7 @@ function detailOf(elements, ids, hits) {
     return {
       type: element.type,
       name: element.name,
+      target: element.target,
       states: element.states,
       actions,
       coveredStates: element.states.filter((state) => hit?.states.has(state)),
