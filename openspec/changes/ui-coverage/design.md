@@ -143,3 +143,18 @@ the time of the data, and the position of an element on the page is kept apart, 
 page, so that a selector that matches it can be traced back to its key. The names of drop-down menus
 are left out of the key, since they carry the name of whatever the menu currently shows. The page is
 given half a second to settle before it is read. Three crawls in a row gave the same inventory.
+
+## Selectors that a run completes
+
+Some page objects build a selector from a value that only the run has: a prefix given to the
+constructor, or the value of an attribute passed to a function. The parser reads the selectors that a
+constructor assigns and the functions that return one, and leaves the unknown value open in two
+places only: a whole attribute value (`[data-value="${value}"]` becomes `[data-value]`) and a leading
+ancestor (`${root} .menu` becomes `.menu`). A selector with anything else left open, such as part of an
+attribute value, is still dropped, because opening it would select far more than the test does.
+
+The selectors that result are wider than the ones a run uses, so the figure can rise above what a
+test looks at on purpose. Nothing in the page objects changes: they are read and never written.
+
+A click on an element inside a drop-down menu also counts as opening that menu, since the element
+cannot be reached otherwise.
