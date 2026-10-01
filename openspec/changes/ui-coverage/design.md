@@ -193,5 +193,8 @@ is the chrome of the application, and says nothing about where the fragment is u
 
 The pages of a fragment are those where most of its such selectors find something, and at least two do.
 A page that one selector happens to match is not one of them. The tests that reach those selectors are
-the tests of the page. The pages a test reaches through the chrome alone, such as the members of an
-organization, stay unreached.
+the tests of the page.
+
+A page is also reached when a test clicks a link that leads to it, whatever page the link is on: the
+link is an element of the inventory and carries the kind of page it leads to. A page that a test only
+reads a link to, such as the counter of the members tab of an organization, stays unreached.

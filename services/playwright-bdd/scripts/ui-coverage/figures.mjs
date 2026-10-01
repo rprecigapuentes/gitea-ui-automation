@@ -31,14 +31,12 @@ function detailOf(elements, ids, hits) {
   });
 }
 
-function rowOf(url, reached, tests, elements, hits) {
+function rowOf(url, elements, hits) {
   const ids = JSON.parse(readFileSync(idsFile(url), "utf8"));
   const detail = detailOf(elements, ids, hits);
 
   return {
     url,
-    reached,
-    tests: [...(tests ?? [])].sort(),
     elements: { covered: hits.size, total: elements.length },
     states: {
       covered: count(detail, (e) => e.coveredStates),
@@ -64,15 +62,35 @@ function withFragments(declared, viaFragments) {
   return reached;
 }
 
+// A link that a test clicks takes it to its target, which a test has reached as much as the page
+// the link is on.
+function withNavigation(reached, rows) {
+  const all = new Map([...reached].map(([url, tests]) => [url, new Set(tests)]));
+
+  for (const { detail } of rows) {
+    for (const { type, target, coveredActions, tests } of detail) {
+      if (type !== "link" || target === undefined || !coveredActions.includes("click")) continue;
+
+      const found = all.get(target) ?? new Set();
+      tests.forEach((test) => found.add(test));
+      all.set(target, found);
+    }
+  }
+
+  return all;
+}
+
 export async function measure(inventory) {
   const declared = reachedUrls();
   const crawled = Object.keys(inventory.urls);
   const { covered, viaFragments } = await coveredStates(usedSelectors(), crawled, declared);
-  const reached = withFragments(declared, viaFragments);
-
-  const perUrl = crawled.map((url) =>
-    rowOf(url, reached.has(url), reached.get(url), inventory.urls[url].elements, covered.get(url)),
-  );
+  const rows = crawled.map((url) => rowOf(url, inventory.urls[url].elements, covered.get(url)));
+  const reached = withNavigation(withFragments(declared, viaFragments), rows);
+  const perUrl = rows.map((row) => ({
+    ...row,
+    reached: reached.has(row.url),
+    tests: [...(reached.get(row.url) ?? [])].sort(),
+  }));
 
   const level = (pick) => ({
     covered: sum(perUrl.map((row) => pick(row).covered)),
