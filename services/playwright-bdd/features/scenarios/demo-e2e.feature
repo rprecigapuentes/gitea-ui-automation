@@ -4,7 +4,7 @@ Feature: Organization work item lifecycle
   I want the work of my repositories to be assignable, tracked on a board and closable
   So that the state of an item is the same wherever the organization looks at it
 
-  @e2e @skip
+  @e2e
   Scenario: A work item travels from the team that may be assigned it to the board that tracks it
     Given the seeded organization has two repositories with one issue each
     And I am logged in as the organization owner
