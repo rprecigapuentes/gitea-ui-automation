@@ -27,12 +27,17 @@ const REFS = new Set([
 const number = (part) => (/^\d+$/.test(part) ? "{n}" : part);
 const join = (parts) => `/${parts.join("/")}`;
 
+const orgTail = ([section, name, ...more]) =>
+  section === "teams" && name !== undefined && name !== "new"
+    ? [section, "{team}", ...more.map(number)]
+    : [section, name, ...more].filter((part) => part !== undefined).map(number);
+
 export function routeTemplate(pathname) {
   const [head, ...rest] = pathname.split("/").filter(Boolean);
 
   if (head === undefined) return "/";
   if (head === "org" && rest[0] === "create") return "/org/create";
-  if (head === "org") return join(["org", "{org}", ...rest.slice(1).map(number)]);
+  if (head === "org") return join(["org", "{org}", ...orgTail(rest.slice(1))]);
   if (ROOTS.has(head)) return join([head, ...rest.map(number)]);
 
   const [repo, ...tail] = rest;

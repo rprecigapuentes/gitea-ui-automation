@@ -12,6 +12,10 @@ const cases = {
   "/alice/app/src/branch/main/docs/a.md": "/{owner}/{repo}/src/*",
   "/org/create": "/org/create",
   "/org/acme/dashboard": "/org/{org}/dashboard",
+  "/org/acme/teams": "/org/{org}/teams",
+  "/org/acme/teams/new": "/org/{org}/teams/new",
+  "/org/acme/teams/owners": "/org/{org}/teams/{team}",
+  "/org/acme/teams/owners/members": "/org/{org}/teams/{team}/members",
   "/acme/-/projects/12": "/{owner}/-/projects/{n}",
 };
 

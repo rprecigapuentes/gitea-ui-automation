@@ -3,6 +3,7 @@
 const BASE = new URL(process.env.GITEA_BASE_URL ?? "http://localhost:3000");
 const OWNER = process.env.GITEA_OWNER_CHROME;
 const TOKEN = process.env.GITEA_TOKEN_CHROME;
+const TEAM = "coverage-team";
 
 async function api(method, endpoint, body) {
   const response = await fetch(`${BASE.origin}/api/v1${endpoint}`, {
@@ -33,9 +34,14 @@ export async function seed(page) {
   await api("POST", "/user/repos", { name: repo, auto_init: true, default_branch: "main" });
   const issue = await api("POST", `/repos/${OWNER}/${repo}/issues`, { title: "Coverage issue" });
   await api("POST", "/orgs", { username: org });
+  await api("POST", `/orgs/${org}/teams`, {
+    name: TEAM,
+    permission: "read",
+    units: ["repo.code"],
+  });
   const project = await createProject(page, org);
 
-  const prefixes = [`/${OWNER}/${repo}`, `/${OWNER}/-/`, `/${org}`];
+  const prefixes = [`/${OWNER}/${repo}`, `/${OWNER}/-/`, `/${org}`, `/org/${org}`];
 
   return {
     owner: OWNER,
@@ -45,6 +51,7 @@ export async function seed(page) {
       `/${OWNER}/${repo}`,
       `/${OWNER}/${repo}/issues/${issue.number}`,
       `/org/${org}/dashboard`,
+      `/org/${org}/teams/${TEAM}`,
       `/${org}/-/projects/${project}`,
     ],
     owns: (pathname) => pathname === `/${OWNER}` || prefixes.some((p) => pathname.startsWith(p)),
