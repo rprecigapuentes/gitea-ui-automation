@@ -6,6 +6,13 @@ import { pageFile } from "./paths.mjs";
 import { performedActions } from "./actions.mjs";
 import { impliedStates } from "./states.mjs";
 
+// A fragment has no URL. A selector of it that selects on more pages than this is part of the chrome
+// of the application, and says nothing about where the fragment is used.
+const SPECIFIC_PAGES = 10;
+// The pages of a fragment are those where most of its other selectors find something, and at least
+// this many do.
+const HOME_SELECTORS = 2;
+
 async function matches(page, selector) {
   try {
     return await page.$$eval(selector, (found) =>
@@ -23,8 +30,63 @@ async function matches(page, selector) {
   }
 }
 
-function appliesTo(entry, template, reached) {
-  return entry.template === template || (entry.template === null && reached.has(template));
+const mayApply = (entry, template) => entry.template === template || entry.template === null;
+
+async function scan(used, templates) {
+  const browser = await chromium.launch();
+  const page = await (await browser.newContext({ javaScriptEnabled: false })).newPage();
+  const found = new Map();
+
+  for (const template of templates) {
+    const selectors = new Set(
+      used.filter((entry) => mayApply(entry, template)).map((e) => e.selector),
+    );
+    const onPage = new Map();
+
+    await page.setContent(readFileSync(pageFile(template), "utf8"));
+    for (const selector of selectors) onPage.set(selector, await matches(page, selector));
+    found.set(template, onPage);
+  }
+
+  await browser.close();
+  return found;
+}
+
+function spreadOf(found) {
+  const spread = new Map();
+
+  for (const onPage of found.values()) {
+    for (const [selector, selected] of onPage) {
+      if (selected.length > 0) spread.set(selector, (spread.get(selector) ?? 0) + 1);
+    }
+  }
+
+  return spread;
+}
+
+const isSpecific = (spread, selector) => (spread.get(selector) ?? 0) <= SPECIFIC_PAGES;
+
+function homesOf(used, found, spread) {
+  const byOwner = new Map();
+
+  for (const entry of used.filter((e) => e.template === null && isSpecific(spread, e.selector))) {
+    for (const [template, onPage] of found) {
+      if (!(onPage.get(entry.selector) ?? []).some((match) => match.id !== undefined)) continue;
+
+      const byTemplate = byOwner.get(entry.owner) ?? new Map();
+      const selectors = byTemplate.get(template) ?? new Set();
+      byOwner.set(entry.owner, byTemplate.set(template, selectors.add(entry.selector)));
+    }
+  }
+
+  const homes = new Map();
+  for (const [owner, byTemplate] of byOwner) {
+    const best = Math.max(...[...byTemplate.values()].map((selectors) => selectors.size));
+    const pages = [...byTemplate].filter(([, selectors]) => selectors.size === best);
+    if (best >= HOME_SELECTORS) homes.set(owner, new Set(pages.map(([template]) => template)));
+  }
+
+  return homes;
 }
 
 function record(elements, id, entry) {
@@ -40,26 +102,35 @@ function record(elements, id, entry) {
   elements.set(id, hit);
 }
 
-export async function coveredStates(used, templates, reached) {
-  const browser = await chromium.launch();
-  const page = await (await browser.newContext({ javaScriptEnabled: false })).newPage();
+/** The elements each page has covered, and the tests of the pages that only a fragment reaches. */
+export async function coveredStates(used, templates, declared) {
+  const found = await scan(used, templates);
+  const spread = spreadOf(found);
+  const homes = homesOf(used, found, spread);
   const covered = new Map();
+  const viaFragments = new Map();
 
   for (const template of templates) {
     const elements = new Map();
-    await page.setContent(readFileSync(pageFile(template), "utf8"));
 
-    for (const entry of used.filter((candidate) => appliesTo(candidate, template, reached))) {
+    for (const entry of used.filter((candidate) => mayApply(candidate, template))) {
+      const own = entry.template === template || declared.has(template);
+      const home = isSpecific(spread, entry.selector) && homes.get(entry.owner)?.has(template);
+      if (!own && !home) continue;
+
       const opens = performedActions(entry.action).includes("open");
-
-      for (const { id, dropdown } of await matches(page, entry.selector)) {
+      for (const { id, dropdown } of found.get(template).get(entry.selector)) {
         if (id !== undefined) record(elements, Number(id), entry);
         if (dropdown !== undefined && opens) record(elements, Number(dropdown), entry);
+        if (!own && (id !== undefined || dropdown !== undefined)) {
+          const tests = viaFragments.get(template) ?? new Set();
+          entry.tests.forEach((test) => tests.add(test));
+          viaFragments.set(template, tests);
+        }
       }
     }
     covered.set(template, elements);
   }
 
-  await browser.close();
-  return covered;
+  return { covered, viaFragments };
 }

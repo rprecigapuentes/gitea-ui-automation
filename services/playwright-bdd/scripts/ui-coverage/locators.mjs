@@ -176,7 +176,7 @@ export function selectorsReachedBy(
 
   const add = (selector, action) => {
     const used = action ?? inherited;
-    found.set(`${selector}|${used}`, { selector, action: used });
+    found.set(`${selector}|${used}`, { selector, action: used, owner: className });
   };
 
   for (const [property, name, action] of refs.pairs) {

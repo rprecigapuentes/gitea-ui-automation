@@ -14,13 +14,13 @@ export function usedSelectors() {
       if (!target) continue;
 
       const template = urlTemplate(target.file) ?? null;
-      for (const { selector, action } of selectorsReachedBy(
+      for (const { selector, action, owner } of selectorsReachedBy(
         classes,
         target.name,
         member,
       ).values()) {
         const key = `${template}|${selector}|${action}`;
-        const entry = used.get(key) ?? { selector, action, template, tests: new Set() };
+        const entry = used.get(key) ?? { selector, action, owner, template, tests: new Set() };
 
         tests.forEach((test) => entry.tests.add(test));
         used.set(key, entry);

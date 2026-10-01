@@ -52,10 +52,23 @@ function rowOf(url, reached, tests, elements, hits) {
   };
 }
 
+function withFragments(declared, viaFragments) {
+  const reached = new Map([...declared].map(([url, tests]) => [url, new Set(tests)]));
+
+  for (const [url, tests] of viaFragments) {
+    const found = reached.get(url) ?? new Set();
+    tests.forEach((test) => found.add(test));
+    reached.set(url, found);
+  }
+
+  return reached;
+}
+
 export async function measure(inventory) {
-  const reached = reachedUrls();
+  const declared = reachedUrls();
   const crawled = Object.keys(inventory.urls);
-  const covered = await coveredStates(usedSelectors(), crawled, reached);
+  const { covered, viaFragments } = await coveredStates(usedSelectors(), crawled, declared);
+  const reached = withFragments(declared, viaFragments);
 
   const perUrl = crawled.map((url) =>
     rowOf(url, reached.has(url), reached.get(url), inventory.urls[url].elements, covered.get(url)),
@@ -72,7 +85,7 @@ export async function measure(inventory) {
     elements: level((row) => row.elements),
     states: level((row) => row.states),
     actions: level((row) => row.actions),
-    unseen: [...reached.keys()].filter((url) => !crawled.includes(url)),
+    unseen: [...declared.keys()].filter((url) => !crawled.includes(url)),
     perUrl,
   };
 }

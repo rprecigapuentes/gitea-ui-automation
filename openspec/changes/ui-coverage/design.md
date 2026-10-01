@@ -183,3 +183,15 @@ their data in `services/playwright-bdd/coverage-data/`. They measure that suite 
 its features, and need the same accounts and tokens it does, so they are not a workspace of their own.
 They are not in `core/` either: `core/` is what the page objects and the suites depend on, and this
 tool depends on them, so putting it there would turn that around.
+
+## Pages that only a fragment reaches
+
+The steps of a team or of a repository file use fragments, which declare no URL, so those pages would
+count as unreached however much a test does on them. A selector of a fragment is attributed to the
+pages where it selects something only when it does so on ten pages or fewer; one that selects on more
+is the chrome of the application, and says nothing about where the fragment is used.
+
+The pages of a fragment are those where most of its such selectors find something, and at least two do.
+A page that one selector happens to match is not one of them. The tests that reach those selectors are
+the tests of the page. The pages a test reaches through the chrome alone, such as the members of an
+organization, stay unreached.
