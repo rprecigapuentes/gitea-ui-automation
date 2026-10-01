@@ -55,7 +55,9 @@ const TIME = /\b(?:an?|less than a|\d+) (?:second|minute|hour|day|week|month|yea
 function normalise(name, replacements) {
   let value = name;
 
-  for (const [actual, placeholder] of replacements) value = value.split(actual).join(placeholder);
+  for (const [actual, placeholder] of replacements) {
+    if (actual) value = value.split(actual).join(placeholder);
+  }
   return value.replace(HASH, "{hash}").replace(TIME, "{time}").replace(/\d+/g, "N").trim();
 }
 

@@ -15,6 +15,8 @@ const cases = {
   "/org/acme/teams": "/org/{org}/teams",
   "/org/acme/teams/new": "/org/{org}/teams/new",
   "/org/acme/teams/owners": "/org/{org}/teams/{team}",
+  "/org/acme/dashboard/owners": "/org/{org}/dashboard/{team}",
+  "/org/acme/issues/owners": "/org/{org}/issues/{team}",
   "/org/acme/teams/owners/members": "/org/{org}/teams/{team}/members",
   "/acme/-/projects/12": "/{owner}/-/projects/{n}",
 };

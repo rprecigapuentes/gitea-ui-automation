@@ -80,6 +80,15 @@ function compare(a, b) {
   return keyOf(a) < keyOf(b) ? -1 : keyOf(a) > keyOf(b) ? 1 : 0;
 }
 
+const sorted = (urls) =>
+  Object.fromEntries(Object.entries(urls).sort(([a], [b]) => a.localeCompare(b)));
+
+// Only seen signed out: a signed-in session is sent away from it.
+async function visitLogin(page) {
+  await page.goto(`${BASE.origin}/user/login`);
+  return { "/user/login": await save(page, "/user/login", {}) };
+}
+
 async function crawl(page, seeded) {
   const urls = {};
   const queue = ["/", ...seeded.entries];
@@ -99,19 +108,20 @@ async function crawl(page, seeded) {
     }
   }
 
-  return Object.fromEntries(Object.entries(urls).sort(([a], [b]) => a.localeCompare(b)));
+  return sorted(urls);
 }
 
 mkdirSync(PAGES, { recursive: true });
 
 const browser = await chromium.launch();
 const page = await browser.newPage();
+const login = await visitLogin(page);
 await signIn(page);
 const seeded = await seed(page);
 let urls;
 // Whatever the crawl does, the seeded data is deleted and the browser closed.
 try {
-  urls = await crawl(page, seeded);
+  urls = sorted({ ...login, ...(await crawl(page, seeded)) });
 } finally {
   await unseed(seeded);
   await browser.close();

@@ -27,8 +27,10 @@ const REFS = new Set([
 const number = (part) => (/^\d+$/.test(part) ? "{n}" : part);
 const join = (parts) => `/${parts.join("/")}`;
 
+const TEAM_SECTIONS = new Set(["teams", "dashboard", "issues", "pulls", "milestones"]);
+
 const orgTail = ([section, name, ...more]) =>
-  section === "teams" && name !== undefined && name !== "new"
+  TEAM_SECTIONS.has(section) && name !== undefined && name !== "new"
     ? [section, "{team}", ...more.map(number)]
     : [section, name, ...more].filter((part) => part !== undefined).map(number);
 
