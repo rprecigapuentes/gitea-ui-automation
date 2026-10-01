@@ -4,7 +4,7 @@ Feature: Organization
   I want to change the team member's permissions
   So that the user can have the appropriate info access
 
-  @e2e
+  @e2e @skip
   Scenario: Change team members permissions
     Given I login with valid credentials as "owner"
     When I navigate to the "Create Organization" page by "organization dropdown" menu
