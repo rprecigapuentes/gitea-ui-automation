@@ -1,32 +1,43 @@
-# core/
+# core
 
-Purely organizational — **not an npm workspace itself** (no `package.json` here). Each subfolder below is its own independent package, separated by tool/concern so a future Playwright implementation doesn't get tangled up with the existing Selenium one.
+> The tool-level building blocks every suite stands on. None of them knows what Gitea is.
+
+`core/` is a folder, not a package: each subfolder is its own npm workspace with its own
+`package.json`, split by the tool it depends on, so a file that needs `selenium-webdriver` can never
+sit somewhere meant to be tool-agnostic.
+
+## Packages
+
+| Package                                       | What it holds                                                               | Depends on                   |
+| --------------------------------------------- | --------------------------------------------------------------------------- | ---------------------------- |
+| [`core-page-objects`](page-objects/README.md) | The Strategy pattern for page objects: one interface, two tools             | Selenium, Playwright, logger |
+| [`core-api-client`](api-client/README.md)     | The same pattern for Gitea API clients                                      | `got`, Playwright            |
+| [`core-selenium`](selenium/README.md)         | WebDriver lifecycle and BrowserStack configuration                          | `selenium-webdriver`         |
+| [`core-playwright`](playwright/README.md)     | Playwright-only helpers with no Selenium equivalent: visual and performance | `@playwright/test`           |
+| [`core-config`](config/README.md)             | The address of the Gitea under test                                         | nothing                      |
+| [`core-data-handler`](data-handler/README.md) | Names for the data a test creates                                           | nothing                      |
+| [`core-logger`](logger/README.md)             | The logging interface and its Pino implementation                           | `pino`                       |
+
+## The rule
+
+**A package depends only on what is beneath it.** `core` never imports `business-logic` or a
+suite, which is what lets every suite reuse it unchanged. Two packages, `core-page-objects` and
+`core-api-client`, talk to both tools on purpose: that is the point of a Strategy, and each keeps
+the tool-specific half in its own `strategies/` folder.
 
 ```
-core/
-├── selenium/      @gitea-automation/core-selenium      — Selenium driver, drivers/browserstack-config (WebDriver-coupled)
-├── page-objects/  @gitea-automation/core-page-objects   — Strategy pattern: the interfaces + Context classes every page object extends, strategies/ for both tools, InteractionStrategyFactory
-├── api-client/    @gitea-automation/core-api-client     — Strategy pattern: the interface + GiteaApiClient every API client extends, strategies/ for both tools, RequestStrategyFactory
-├── playwright/    @gitea-automation/core-playwright     — Playwright-only helpers with no Selenium equivalent: the VisualTester
-├── config/        @gitea-automation/core-config         — Gitea app config (baseUrl), tool-agnostic
-├── data-handler/  @gitea-automation/core-data-handler   — test-data naming helpers, tool-agnostic
-└── logger/        @gitea-automation/core-logger         — Logger adapter + Pino implementation, tool-agnostic
+services/*          the suites: specs, steps, fixtures
+   │
+business-logic      Gitea: page objects, API clients, entities, scenario state
+   │
+core/*              the tools: strategies, driver, logger, config
 ```
 
-## Why split by tool instead of one `core` package
+## Importing
 
-Each subfolder encapsulates exactly what it depends on: if a file has any real dependency on `selenium-webdriver` — even just one function's parameter type — it lives inside `core/selenium/`, not in a folder that's supposed to be tool-agnostic. `browserstack.config.ts` is the concrete example: it lives in `core/selenium/browserstack-config/` because its `setSessionStatus()` takes a `WebDriver`. `core/config/` holds only `gitea.config.ts`, which genuinely has zero tool dependency.
+Every package exports its files by path, so a module is imported by the name of its file:
 
-`core/page-objects/` and `core/api-client/` are the two deliberate exceptions to "split by tool": each exists specifically to hold code that talks to _both_ tools (or neither, in the Context classes' case) behind one shared interface — see their own READMEs for why that's not a contradiction of the rule above. Each also holds both tools' concrete strategy implementations in its own `strategies/` subfolder, and a Factory (`InteractionStrategyFactory`, `RequestStrategyFactory`) as the one place that picks between them.
-
-`core/selenium/` used to also hold `ui/base-pages/` (`BaseComponent`/`BasePage`), `api/gitea-client.client.ts` (`GiteaApiClient`), and `utils/html5-drag.util.ts`; all three were retired once `core/page-objects/` and `core/api-client/` replaced them — the drag util moved into `core/page-objects/strategies/utils/`, next to its Playwright counterpart, since the Selenium strategy that's its only caller already lives there. What's left (`drivers/`, `browserstack-config/`) is genuinely Selenium-specific: driver lifecycle and BrowserStack session config — no `ui/` wrapper folder anymore, since those two are the only thing inside it.
-
-## Read each package's own README
-
-- [`core/selenium/README.md`](selenium/README.md)
-- [`core/page-objects/README.md`](page-objects/README.md)
-- [`core/api-client/README.md`](api-client/README.md)
-- [`core/playwright/README.md`](playwright/README.md)
-- [`core/config/README.md`](config/README.md)
-- [`core/data-handler/README.md`](data-handler/README.md)
-- [`core/logger/README.md`](logger/README.md)
+```ts
+import { BasePage } from "@gitea-automation/core-page-objects/base.page";
+import { logger } from "@gitea-automation/core-logger/pino.logger";
+```

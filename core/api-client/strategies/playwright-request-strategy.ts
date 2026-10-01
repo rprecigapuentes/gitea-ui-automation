@@ -1,11 +1,16 @@
 import { request, APIRequestContext, APIResponse } from "@playwright/test";
 import { IRequestStrategy } from "../request-strategy.interface";
 
+// An empty body (a 204 on DELETE) has nothing to parse, so it becomes undefined.
 async function parseBody<T>(response: APIResponse): Promise<T> {
   const text = await response.text();
   return (text ? JSON.parse(text) : undefined) as T;
 }
 
+/**
+ * Unlike got, Playwright's request context does not throw on a 4xx or 5xx: the error body is
+ * parsed and returned as if it were the answer. The context is created once and reused.
+ */
 export class PlaywrightRequestStrategy implements IRequestStrategy {
   private contextPromise: Promise<APIRequestContext> | undefined;
 

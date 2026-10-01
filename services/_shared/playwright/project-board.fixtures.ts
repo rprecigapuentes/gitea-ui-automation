@@ -69,8 +69,8 @@ export const projectBoardFixtures: Fixtures<
     await clients.organizations.deleteOrganization(organizationName);
   },
 
-  // `demo-e2e.feature`'s own `Before` hook: the milestone on the first seeded repository that the
-  // scenario closes an issue against. Deleting the repository takes it with it.
+  // The Cucumber `@demo-e2e` Before hook, as a fixture: the milestone on the first seeded
+  // repository that the scenario closes an issue against. Deleting the repository takes it with it.
   seededMilestone: async ({ clients, seededOrganizationWithRepositories }, use) => {
     const { organizationName, repositories } = seededOrganizationWithRepositories;
     const [firstRepository] = repositories;

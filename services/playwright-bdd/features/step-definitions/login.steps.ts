@@ -1,5 +1,7 @@
 import { expect, Given, When, Then } from "../../fixtures/fixture";
 
+// Each step calls a page object and nothing else: no selector ever appears in a step definition.
+
 Given("I am on the Gitea login page", async ({ pageObjects }) => {
   await pageObjects.loginPage.open();
 });

@@ -1,3 +1,4 @@
+// The coverage figure per level (URLs, elements, states, actions), from the inventory and matches.
 import { possibleActions } from "./actions.mjs";
 import { readFileSync } from "node:fs";
 import { coveredStates } from "./match.mjs";

@@ -1,11 +1,9 @@
 import { Locator } from "@playwright/test";
 
 /**
- * The events a browser emits for an HTML5 drag, sharing one DataTransfer. They are spaced across
- * tasks of the event loop because a drag library discards a `dragover` that arrives before it has
- * finished starting the drag. Firefox's Playwright automation moves the pointer like Chromium's
- * does, but never synthesizes the native `dragstart`/`dragover`/`drop` sequence Gitea's Kanban board
- * listens for, so neither `Locator.dragTo()` nor a manual mouse path ever reaches the server there.
+ * The events a browser emits for an HTML5 drag, sharing one DataTransfer, spaced across event-loop
+ * tasks because a drag library discards a `dragover` that arrives before the drag has started.
+ * Firefox never emits the native sequence Gitea's board listens for, so nothing else reaches it.
  */
 export async function simulateHtml5Drag(source: Locator, target: Locator): Promise<void> {
   const [sourceHandle, targetHandle] = await Promise.all([

@@ -5,6 +5,7 @@ import { SidebarComboFragment } from "./fragments/sidebar-combo.fragment";
 import { labelIdFromHref } from "./fragments/label-chip.fragment";
 
 const WAIT_TIMEOUT_MS = 10000;
+// A timeout of 0 checks once, now, instead of waiting for the element.
 const INSTANT = 0;
 
 export class IssuePage extends BasePage {
@@ -127,13 +128,10 @@ export class IssuePage extends BasePage {
   }
 
   /**
-   * A native date input is typed in the format its browser and OS locale expect, and that order
-   * varies: Firefox takes the ISO string, Chromium takes bare digits in the locale's date order,
-   * which is month-first on US-locale machines but day-first elsewhere. What every combination
-   * agrees on is that the `value` property reads back as ISO, so each spelling is typed and
-   * verified rather than assumed. The form carries `form-fetch-action`, so a successful submit
-   * reloads the page and the rendered date has to be waited for rather than read straight after
-   * the click.
+   * A native date input takes a different spelling per browser and locale (ISO in Firefox, bare
+   * digits in the locale's order in Chromium), and `value` always reads back as ISO, so each
+   * spelling is typed and verified. A submit reloads the page (`form-fetch-action`), so the date is
+   * waited for, not read.
    */
   async setDueDate(date: Date): Promise<void> {
     const pad = (value: number): string => String(value).padStart(2, "0");

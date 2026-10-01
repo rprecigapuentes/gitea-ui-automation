@@ -20,6 +20,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # axe scans of the pages. The run fails when the violations differ from the recorded set.
   accessibility:
     runs-on: ubuntu-24.04
     timeout-minutes: 25
@@ -134,6 +135,7 @@ jobs:
             services/playwright-native/test-results/
           retention-days: 14
 
+  # Screenshots of each view, per browser, compared with the committed baselines.
   visual:
     needs: accessibility
     # needs serialises the jobs on one VPS; always() keeps this one's outcome independent.
@@ -310,6 +312,7 @@ jobs:
             services/playwright-native/test-results/
           retention-days: 14
 
+  # Page-load metrics, cold and warm, compared with the bands recorded for this runner.
   performance:
     needs: visual
     # Last in the chain, so the runner carries nothing else while it measures.

@@ -4,6 +4,7 @@ import type { IInteractionStrategy } from "./interaction-strategy.interface";
 import { SeleniumInteractionStrategy } from "./strategies/selenium-interaction.strategy";
 import { PlaywrightInteractionStrategy } from "./strategies/playwright-interaction.strategy";
 
+/** The one place a tool is chosen: a service builds its strategy here and hands it to the pages. */
 export class InteractionStrategyFactory {
   static selenium(driver: WebDriver): IInteractionStrategy {
     return new SeleniumInteractionStrategy(driver);

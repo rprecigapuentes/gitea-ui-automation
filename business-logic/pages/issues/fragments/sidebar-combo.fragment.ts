@@ -2,6 +2,7 @@ import { BaseComponent } from "@gitea-automation/core-page-objects/base-componen
 import { IInteractionStrategy } from "@gitea-automation/core-page-objects/interaction-strategy.interface";
 import { labelIdFromHref } from "./label-chip.fragment";
 
+// A timeout of 0 checks once, now, instead of waiting for the element.
 const INSTANT = 0;
 const SELECTION_TIMEOUT_MS = 10000;
 
@@ -20,7 +21,7 @@ export class SidebarComboFragment extends BaseComponent {
     super(strategy);
     this.locators = {
       trigger: `${root} .ui.dropdown a.fixed-text`,
-      // The dropdown holds a scrolling menu inside its own menu, so only the outer one is "the menu".
+      // The dropdown holds a scrolling menu inside its own, so only the outer one is "the menu".
       menu: `${root} .ui.dropdown > .menu`,
       menuItem: (value: number) => `${root} .menu a.item[data-value="${value}"]`,
       selectedItems: `${root} .ui.list .item:not(.empty-list)`,
@@ -86,6 +87,8 @@ export class SidebarComboFragment extends BaseComponent {
 
       return await Promise.all(items.map((item) => item.getText()));
     } catch {
+      // Any read error counts as "nothing selected yet", so the poll in toggleAndWaitForSelection
+      // goes on and a dead session surfaces as its timeout.
       return [];
     }
   }
@@ -97,6 +100,7 @@ export class SidebarComboFragment extends BaseComponent {
 
       return hrefs.map(labelIdFromHref).filter((id): id is number => id !== null);
     } catch {
+      // Same as getSelectedTexts: a failed read is an empty selection, not an error.
       return [];
     }
   }

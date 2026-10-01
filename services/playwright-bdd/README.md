@@ -1,146 +1,210 @@
 # playwright-bdd
 
-The Gherkin suite that runs on Playwright. Scenarios live in `.feature` files,
-[`playwright-bdd`](https://github.com/vitalets/playwright-bdd) compiles them together with the step
-definitions into Playwright tests, and the Playwright runner executes those.
+> Gherkin scenarios compiled into Playwright tests, on Chrome, Firefox and Edge, with an AI step in
+> the pipeline that explains a red run and proposes the locator to fix.
 
-```
-services/playwright-bdd/
-├── features/
-│   ├── scenarios/*.feature          # the behaviour, in Gherkin
-│   └── step-definitions/*.steps.ts  # what each step does
-├── fixtures/fixture.ts              # the shared fixtures, plus Given/When/Then
-├── tests/seeds/                     # the starting states the Playwright agents are handed
-└── .features-gen/                   # written by bddgen, never edited, never committed
-```
+![Playwright 1.63](https://img.shields.io/badge/Playwright-1.63-2EAD33?logo=playwright&logoColor=white)
+![playwright-bdd 9](https://img.shields.io/badge/playwright--bdd-9.2-23D96C?logo=cucumber&logoColor=white)
 
-## Running it
+## Contents
+
+- [Quick start](#quick-start)
+- [How it runs](#how-it-runs)
+- [The features](#the-features)
+- [Tags](#tags)
+- [Writing a step](#writing-a-step)
+- [When a run goes red](#when-a-run-goes-red)
+- [UI coverage](#ui-coverage)
+- [Starting states for the Playwright agents](#starting-states-for-the-playwright-agents)
+- [Structure](#structure)
+
+## Quick start
 
 ```bash
-cp .env.example .env                              # then fill it in
-npm test -w @gitea-automation/playwright-bdd      # the three browsers at once
-npm run test:chrome -w @gitea-automation/playwright-bdd
+npm install                                    # from the repository root
+npx playwright install chrome msedge firefox   # the browsers
+cp services/playwright-bdd/.env.example services/playwright-bdd/.env
+npm test -w @gitea-automation/playwright-bdd   # the three browsers, then the Allure report
 ```
 
-Every test script runs `bddgen` first. **The runner never sees a `.feature`**: it runs what
-`bddgen` wrote into `.features-gen/`, so after editing a feature or a step definition by hand, run
-`npm run bddgen -w @gitea-automation/playwright-bdd` before running the tests directly.
+| Command                                      | Runs                                                  |
+| -------------------------------------------- | ----------------------------------------------------- |
+| `npm test`                                   | the three browsers as three processes; what CI runs   |
+| `npm run test:chrome` / `:firefox` / `:edge` | one browser                                           |
+| `npm run bddgen`                             | compile the features without running them             |
+| `npm run report` / `report:open`             | build / open the Allure report                        |
+| `npm run explain` · `file-issue` · `heal`    | the pipeline's AI steps, over the last run's results  |
+| `npm run ui-coverage:crawl` · `ui-coverage`  | build the UI inventory · measure the suite against it |
 
-## How a step reaches the browser
+Outside CI, every test script ends by building and opening the Allure report, and exits with the
+tests' own status.
 
-Through the page objects in [`@gitea-automation/business-logic`](../../business-logic/README.md),
-the same ones the Selenium services use, built here over `InteractionStrategyFactory.playwright`.
-A step definition that calls `page` or a locator is a review blocker — `openspec/config.yaml` says
-so, and `openspec/specs/playwright-bdd/spec.md` repeats it for this service.
+## How it runs
 
-```ts
-import { Given, When, Then, expect } from "../../fixtures/fixture";
-
-Given("I am on the Gitea login page", async ({ pageObjects }) => {
-  await pageObjects.loginPage.open();
-});
+```
+features/*.feature + step-definitions/*.ts  ──bddgen──▶  .features-gen/*.spec.js  ──▶  Playwright
 ```
 
-The fixtures a step destructures come from
-[`services/_shared/playwright`](../_shared/playwright/README.md), shared with `playwright-native`:
-`pageObjects`, `clients`, `sessionManager`, `scenarioState`. A value one step produces and another
-reads travels through `scenarioState`, never through a variable in the file — the definitions serve
-every scenario that uses them, and those run in parallel.
+**The runner never sees a `.feature`.** `bddgen` compiles each feature and its step definitions into
+a Playwright test under `.features-gen/`, which is generated, ignored and never edited. Every test
+script runs `bddgen` first; after editing a feature or a step by hand, run `npm run bddgen` before
+calling Playwright directly.
 
-Feature text that also exists in the Selenium Cucumber service is **identical on both sides**, by
-requirement. Change it here and the other suite breaks.
+Each browser runs in its own process with its own Gitea account, so the three never act as the same
+user. A scenario gets 120 seconds, and CI retries a failure twice and keeps its trace and video.
 
 ## The features
 
-| Feature                       | Case                                                                           | Shared with Cucumber |
-| ----------------------------- | ------------------------------------------------------------------------------ | -------------------- |
-| `login.feature`               | a valid user signs in                                                          | yes                  |
-| `create-issue.feature`        | an issue is created with a title and a description                             | no                   |
-| `create-organization.feature` | an owner creates an organization and two teams, then adds and removes a member | no                   |
-| `organizations.feature`       | the `@e2e` scenario and the five `@smoke` scenarios of the Cucumber feature    | yes (all of it)      |
-| `project-board.feature`       | the five Kanban board scenarios                                                | yes                  |
-| `demo-e2e.feature`            | the work item that travels from a team to the board that tracks it             | yes                  |
-| `issue-metadata.feature`      | AT-ISS-01: an issue keeps its description, label, milestone and assignee       | no                   |
-| `scoped-labels.feature`       | AT-ISS-02: a scoped label replaces the label of its own scope                  | no                   |
+8 features, 17 scenarios.
 
-`create-organization.feature` is the Vitest case "should create an organization and add members",
-which `playwright-native` also carries. It keeps every assertion of that case, and the Cucumber
-service has no feature for it, so the Gherkin is authored here.
+| Feature                       | Covers                                                                    | Text shared with Cucumber |
+| ----------------------------- | ------------------------------------------------------------------------- | :-----------------------: |
+| `login.feature`               | a valid user signs in                                                     |             ✓             |
+| `organizations.feature`       | the `@e2e` flow of teams and permissions, and five `@smoke` scenarios     |             ✓             |
+| `project-board.feature`       | the Kanban board: template, cards, columns, drag and drop                 |             ✓             |
+| `demo-e2e.feature`            | a work item from team assignment to the board that tracks it              |             ✓             |
+| `create-organization.feature` | an owner creates an organization and two teams, adds and removes a member |                           |
+| `issue-metadata.feature`      | AT-ISS-01: an issue keeps its description, label, milestone and assignee  |                           |
+| `scoped-labels.feature`       | AT-ISS-02: a scoped label replaces the label of its own scope             |                           |
+| `create-issue.feature`        | an issue with a title and a description (`@skip`: AT-ISS-01 covers it)    |                           |
 
-`issue-metadata.feature` and `scoped-labels.feature` are the Vitest cases AT-ISS-01 and AT-ISS-02,
-which `playwright-native` carries as `issue-metadata.spec.ts` and `scoped-labels.spec.ts`. The
-Cucumber service has no issue feature either, so their Gherkin is authored here too, from the
-assertions those cases make. Both are tagged `@issues`. `create-issue.feature` is tagged `@skip`
-because AT-ISS-01 covers it and more; it stays on disk, and `issue-metadata.feature` resolves four
-of its steps to the definitions that file still owns.
+A feature marked ✓ exists **word for word** in
+[`gitea-selenium-cucumber`](../gitea-selenium-cucumber/README.md). Change it here and the other
+suite breaks. When a step's wording does not suit this runner, the step definition adapts, never
+the feature.
 
-`organizations.feature` is byte-identical to the Cucumber service's own `organizations.feature`, in
-full: the `@e2e` scenario and every `@smoke`. "Add a repository to a team" is tagged
-`@team-repository`; a `Before` hook scoped to that tag seeds `scenarioState` from
-`seededOrganizationWithTeamAndRepository` before its first step, mirroring Cucumber's own
-tag-scoped `Before` hook without adding that seeding cost to any other scenario of this feature.
+## Tags
 
-## Scenarios that create an organization
+| Tag                                                         | Effect                                                                 |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `@smoke`, `@e2e`, `@issues`                                 | scope: select with `--grep`                                            |
+| `@skip`                                                     | kept in the feature file, never compiled into a test                   |
+| `@team-repository`                                          | seeds an organization with a team and a repository before the scenario |
+| `@organization`                                             | sweeps leftovers under the `test-orgs` prefix before the scenario      |
+| `@project-board`, `@demo-e2e`, `@organizations`, `@cleanup` | match the Cucumber tags of the shared features                         |
 
-Tag the feature `@organization`. The scenario records what it creates in `scenarioState`, and two
-fixtures chained in `fixtures/fixture.ts`, the same ones `playwright-native` chains, do the rest:
+```bash
+npx bddgen && npx playwright test --project=chrome --grep @smoke   # from this folder
+```
 
-- After the scenario, passed or failed, the organization and its repositories are removed.
-- Before a scenario carrying the tag, organizations a crashed run left under the `test-orgs` prefix
-  are removed. Nothing outside that prefix is touched, so parallel workers and other suites are safe.
+Cleanup does not depend on a tag here: it is an `auto` fixture, so every scenario that created an
+organization has it removed afterwards, pass or fail.
 
-Both are `auto`, so they run for every scenario, and a scenario that creates no organization finds
-nothing recorded and removes nothing.
+## Writing a step
 
-## When a locator drifts
+```ts
+import { expect, Given, When, Then } from "../../fixtures/fixture";
 
-A red run in continuous testing explains itself: `npm run explain` classifies each failure, and when
-the answer is `locator`, `npm run heal` says which one to change.
+When("I log in with valid credentials", async ({ pageObjects, ownerCredentials }) => {
+  await pageObjects.loginPage.login(ownerCredentials.username, ownerCredentials.password);
+});
 
-It never changes it. The run's outcome stays the failure the suite reported, nothing is committed,
-and the working tree is put back whatever happens — which is the distance between this and the
-WebDriver proxy it replaces, and why `openspec/specs/pipeline/spec.md` still requires that a locator
-matching nothing fails its test.
+Then("I should land on the Gitea dashboard", async ({ pageObjects }) => {
+  expect(await pageObjects.mainPage.hasExpectedElementsDisplayed()).toBe(true);
+});
+```
 
-What it does, in order:
+- **A step only calls page objects.** `page.locator`, `page.goto` and `page.getBy*` in a step fail
+  lint: selectors belong to [`business-logic`](../../business-logic/README.md).
+- **A step names the fixtures it needs** (`pageObjects`, `clients`, `sessionManager`,
+  `scenarioState`, the seeded data); they come from
+  [`shared-playwright`](../_shared/playwright/README.md).
+- **Values between steps travel through `scenarioState`**, never through a variable in the file. A
+  module variable lives as long as the worker, so it would leak into the next scenario that worker
+  runs.
 
-1. Keeps the failures classified `locator` above low confidence, and traces the selector each one
-   names to the page object that declares it. That is a search, not a question for a model: page
-   objects hold their selectors as literals in one `locators` object.
-2. Hands an agent the page through the Playwright MCP server, with the tools it may call enumerated.
-   It finds the element by role and accessible name in the snapshot, then reads its classes from the
-   DOM: the snapshot is the accessibility tree and carries no attributes, and a page object holds a
-   CSS string.
-3. Accepts what comes back only if all three hold: the diff touches nothing outside a `locators`
-   object, the failing scenario passes, and the suite still passes on that browser. The third is the
-   one that catches a repair to a fragment several pages share.
-4. Writes the file, the key, both selectors and what was re-run to the run's step summary, and the
-   patch to `reports/`.
+## When a run goes red
 
-A repair that fails any gate is reported with the reason rather than dropped.
+On a failed CI run, three steps run after the suite, while the job's own Gitea is still serving:
 
-## The starting states, for the Playwright agents
+| Step                    | Does                                                                                                                                                             | Output                                                 |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| **Explain** (`explain`) | groups the failures, reads the source lines they name, and asks a model to classify each: `locator`, `timing`, `data`, `environment`, `application` or `unknown` | a table in the run summary, `reports/explanation.json` |
+| **File** (`file-issue`) | opens one issue per distinct failure on the repository, or comments on the one already open                                                                      | a Gitea issue                                          |
+| **Propose** (`heal`)    | for a `locator` failure, finds the page object that declares the selector, lets an agent read the live page, and checks its answer                               | a row in the run summary, a patch in `reports/`        |
 
-`tests/seeds/` holds the world an agent wakes up in. The MCP server runs one of these to open a
-browser and hands the agent the page it was left on, so an empty one means the agent invents the
-state its scenario needs and writes that invention into the test.
+**Nothing is applied.** The job stays red, nothing is committed, and the working tree is put back
+whatever happens. A proposal is accepted only when all three gates hold:
 
-| File                     | State                                                                                              |
-| ------------------------ | -------------------------------------------------------------------------------------------------- |
-| `seed.spec.ts`           | signed in as the browser's owner, inside a repository the fixtures create and remove — the default |
-| `anonymous.spec.ts`      | signed out, on the sign-in form; named by path when signing in is the scenario's subject           |
-| `board.spec.ts`          | the seeded organization and its repositories, on the Kanban project's board                        |
-| `demo.spec.ts`           | the seeded organization, its milestone and the two seeded users, on the organization page          |
-| `issue-metadata.spec.ts` | a repository carrying the classification label and the milestone, on the new issue form            |
-| `scoped-labels.spec.ts`  | a repository carrying one seeded issue, on the label list                                          |
+1. the change touches nothing outside a page object's `locators` object;
+2. the failing scenario passes with it;
+3. the suite still passes on that browser, which catches a repair to a fragment several pages share.
 
-They run under the `seeds-chrome` project, which the suite's own runs never name. Its `testDir` is
-the service root with an explicit `testMatch`, because the MCP server refuses to write a generated
-file outside every project's `testDir`, and a step definition belongs in `features/step-definitions/`.
+The agent drives the browser through the Playwright MCP server with a fixed list of tools. It finds
+the element by role and name in the accessibility snapshot, then reads its classes from the DOM,
+because the snapshot carries no attributes and a page object holds a CSS string.
 
-To point the agents at this service rather than at `playwright-native`, change the config path in
-your `.mcp.json` and restart the editor — it is read once, at session start:
+Two corpora score these steps against known answers, so a prompt change can be measured rather than
+guessed: `tests/failure-corpus/` (six real failures, `npm run explain:score`) and
+`tests/heal-corpus/` (deliberately drifted locators, `npm run heal:score`). Both call a model and
+are never part of CI.
+
+## UI coverage
+
+How much of Gitea's interface the suite actually exercises, at four levels: URLs, elements, states
+and actions.
+
+| Side            | Comes from                                                                                               |
+| --------------- | -------------------------------------------------------------------------------------------------------- |
+| **Denominator** | a crawl of the running application: every URL it reaches, the interactive elements of each, their states |
+| **Numerator**   | the page objects the steps reach, parsed with the TypeScript compiler; no model involved                 |
+
+```bash
+npm run ui-coverage:crawl -w @gitea-automation/playwright-bdd   # rebuilds coverage-data/inventory/
+npm run ui-coverage -w @gitea-automation/playwright-bdd         # writes coverage-data/reports/coverage.html
+```
+
+The inventory is committed and sorted, so two crawls compare with a diff. The figure is a floor:
+the crawl reaches only what its seeded data and permissions show it. CI measures it on every
+functional run and publishes `ui-coverage-report`.
+
+## Starting states for the Playwright agents
+
+`tests/seeds/` holds the world a Playwright agent starts in. The MCP server runs one to open a
+browser and hands the agent the page it was left on.
+
+| File                     | State                                                                        |
+| ------------------------ | ---------------------------------------------------------------------------- |
+| `seed.spec.ts`           | signed in as the owner, inside a repository the fixtures create: the default |
+| `anonymous.spec.ts`      | signed out, on the sign-in form                                              |
+| `board.spec.ts`          | the seeded organization, on its Kanban board                                 |
+| `demo.spec.ts`           | the seeded organization, its milestone and two users                         |
+| `issue-metadata.spec.ts` | a repository with a label and a milestone, on the new issue form             |
+| `scoped-labels.spec.ts`  | a repository with one issue, on the label list                               |
+
+They run under the `seeds-chrome` project, which the suite never names. To point the agents at this
+service, set the config path in `.mcp.json` and restart the editor:
 
 ```json
 "args": ["playwright", "run-test-mcp-server", "-c", "services/playwright-bdd/playwright.config.ts"]
 ```
+
+## Structure
+
+```
+services/playwright-bdd/
+├── features/
+│   ├── scenarios/*.feature          the behaviour, in Gherkin
+│   └── step-definitions/*.steps.ts  what each step does
+├── fixtures/fixture.ts              the shared fixtures, plus Given / When / Then
+├── scripts/                         explain, file-issue, heal, their scorers, ui-coverage/
+├── tests/
+│   ├── seeds/                       starting states for the agents
+│   ├── failure-corpus/              known failures with their right answer
+│   └── heal-corpus/                 drifted locators with their right repair
+├── coverage-data/                   the UI inventory and the coverage reports
+└── .features-gen/                   written by bddgen; never edited, never committed
+```
+
+## Configuration
+
+`.env` in this folder, from `.env.example`:
+
+| Variable                              | For                                                  |
+| ------------------------------------- | ---------------------------------------------------- |
+| `GITEA_BASE_URL`                      | the Gitea under test                                 |
+| `GITEA_OWNER_<BROWSER>`, `…_PASSWORD` | one owner account per browser                        |
+| `GITEA_INV_<BROWSER>`, `…_PASSWORD`   | one invited account per browser                      |
+| `GITEA_TOKEN_<BROWSER>`               | the owner's API token                                |
+| `GITEA_ADMIN_TOKEN`                   | an administrator's token, to create the seeded users |
+| `OPENAI_API_KEY`                      | only for `explain` and `heal`                        |

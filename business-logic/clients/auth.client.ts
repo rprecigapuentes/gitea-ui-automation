@@ -10,6 +10,7 @@ export interface SeleniumCookie {
   httpOnly?: boolean;
 }
 
+/** Logs in through the HTTP form and returns the session cookies, so a test can start signed in. */
 export class AuthClient {
   constructor(private readonly baseUrl: string) {}
 
@@ -50,6 +51,7 @@ export class AuthClient {
       },
     });
 
+    // A wrong password answers with the login page again, so landing back on it is the only signal.
     if (new URL(loginResponse.url).pathname === "/user/login") {
       throw new Error(`Gitea login failed for user "${username}"`);
     }

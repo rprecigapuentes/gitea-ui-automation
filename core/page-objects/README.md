@@ -1,36 +1,22 @@
 # @gitea-automation/core-page-objects
 
-The Strategy pattern that lets one page-object class run against either Selenium or Playwright: the shared interfaces, the two Context classes every page object extends, both tools' concrete strategies (both real), and the Factory that picks between them.
+> One page-object class, two tools. The Strategy pattern that lets the same `LoginPage` run on
+> Selenium or on Playwright.
 
-## Why this package, and why it isn't split by tool
+## Contents
 
-Every other package under `core/` is split by tool (`core/selenium/` vs. a Playwright equivalent) so a file with a real dependency on one tool's types never sits in a folder that's supposed to be tool-agnostic. This package is the deliberate exception: its whole purpose is to hold code that talks to _both_ tools behind one interface, so a page object never has to import either tool directly. Splitting it by tool would defeat the point — a page needs `BaseComponent`/`IInteractionStrategy` from one shared place, not from "the Selenium one" or "the Playwright one." The two concrete strategies still live apart from the shared abstraction, in their own `strategies/` subfolder, since they _are_ tool-specific — only the interface, the Context classes, and the Factory that constructs a strategy stay at the top level.
+- [How it fits together](#how-it-fits-together)
+- [Structure](#structure)
+- [How waiting works](#how-waiting-works)
+- [Where the two strategies differ](#where-the-two-strategies-differ)
+- [Drag and drop](#drag-and-drop)
 
-## Structure
+## How it fits together
 
-```
-core/page-objects/
-├── interaction-strategy.interface.ts   # IInteractionStrategy — the full contract, locators as plain CSS-selector strings
-├── element-handle.interface.ts         # IElementHandle — what findElement/findElements return, replacing a raw WebElement
-├── errors.ts                           # InteractionInterceptedError — e.g. a click blocked by a transitioning overlay, tool-agnostic
-├── base-component.ts                   # BaseComponent — the Context: holds an injected IInteractionStrategy, delegates every method to it
-├── base.page.ts                        # BasePage extends BaseComponent — adds getUrl()/open(), the Navigable contract, and getVolatileRegions()
-├── interaction-strategy.factory.ts     # InteractionStrategyFactory — the one place that picks a concrete strategy
-└── strategies/
-    ├── selenium-interaction.strategy.ts    # SeleniumInteractionStrategy — real implementation, ported from core-selenium's former base-component.ts
-    ├── playwright-interaction.strategy.ts  # PlaywrightInteractionStrategy — real implementation, every method a direct Playwright API call
-    └── utils/
-        ├── selenium-html5-drag.util.ts     # simulateHtml5Drag — Selenium's dispatchDragEvents fallback (moved from core-selenium/utils/)
-        └── playwright-html5-drag.util.ts   # simulateHtml5Drag — Playwright's dispatchDragEvents fallback
-```
-
-## Volatile regions
-
-`BasePage.getVolatileRegions()` returns the selectors, as plain strings, of the regions of a page whose content changes between runs. It is empty by default and a page overrides it when a run shows something varies. Only the visual tests read it, to mask those regions before comparing a screenshot; the screenshot comparison itself is not part of the strategy contract, because Selenium has nothing equivalent (see [`core/playwright`](../playwright/README.md)).
-
-## The pattern
-
-A page object (in `@gitea-automation/business-logic`) extends `BaseComponent`/`BasePage` and only ever calls its inherited methods (`click`, `findElement`, `isVisible`, …) with plain CSS-selector-string locators. It never imports `selenium-webdriver` or `@playwright/test`, and never decides which one backs it — that choice is made by whoever constructs the page, through the Factory:
+A page object extends `BasePage` or `BaseComponent` and only calls the methods it inherits
+(`click`, `findElement`, `isVisible`, `clickAndWaitFor`, …), with locators written as plain CSS
+strings. It never imports `selenium-webdriver` or `@playwright/test`, and it never decides which one
+backs it: whoever builds the page does, through the factory.
 
 ```ts
 import { InteractionStrategyFactory } from "@gitea-automation/core-page-objects/interaction-strategy.factory";
@@ -38,34 +24,79 @@ import { InteractionStrategyFactory } from "@gitea-automation/core-page-objects/
 const strategy = usePlaywright
   ? InteractionStrategyFactory.playwright(page)
   : InteractionStrategyFactory.selenium(driver);
-const loginPage = new LoginPage(strategy); // same LoginPage class either way
+
+const loginPage = new LoginPage(strategy); // the same class either way
 ```
 
-`BaseComponent` is the Context in the classic Strategy-pattern sense: it holds whatever `IInteractionStrategy` it was constructed with and only delegates to it, never branches on which one it has. `InteractionStrategyFactory` is the only public way to construct either concrete strategy — each of its two static methods is a one-line delegate to `new SeleniumInteractionStrategy(driver)`/`new PlaywrightInteractionStrategy(page)`.
+| Role in the pattern | Here                                                             |
+| ------------------- | ---------------------------------------------------------------- |
+| Strategy interface  | `IInteractionStrategy`                                           |
+| Concrete strategies | `SeleniumInteractionStrategy`, `PlaywrightInteractionStrategy`   |
+| Context             | `BaseComponent`, which holds a strategy and only delegates to it |
+| Factory             | `InteractionStrategyFactory`, the one place a tool is chosen     |
 
-## What closes the gap beyond the obvious `find`/`click`/`type`
+## Structure
 
-`IInteractionStrategy` has four methods beyond what `core-selenium`'s old `BaseComponent` exposed, added because several pages used to reach past it and call `WebDriver`/`WebElement` methods directly:
+```
+core/page-objects/
+├── interaction-strategy.interface.ts   IInteractionStrategy: the contract every page calls
+├── element-handle.interface.ts         IElementHandle: what findElement / findElements return
+├── errors.ts                           InteractionInterceptedError: a click an overlay covered
+├── base-component.ts                   BaseComponent: the Context, delegates to its strategy
+├── base.page.ts                        BasePage: adds getUrl(), open() and getVolatileRegions()
+├── interaction-strategy.factory.ts     InteractionStrategyFactory
+└── strategies/
+    ├── selenium-interaction.strategy.ts
+    ├── playwright-interaction.strategy.ts
+    └── utils/                          the HTML5 drag fallback, one per tool
+```
 
-- **`queryAll(locator)`** — a raw, unwaited, top-level query (empty array on no match, never throws), for the row/list-reading pattern that used to call `driver.findElements(locator)` directly.
-- **`waitFor(predicate, timeoutMs, message?)`** — a generic predicate wait with a custom timeout message, for the custom polling loops that used to call `driver.wait(predicate, ms, "message")` directly.
-- **`waitForUrl(pattern, timeoutMs?, message?)`** — waits for the current URL to match/contain `pattern`; `clickAndWaitForUrl` composes this instead of duplicating URL-wait logic.
-- **`executeScript(script, ...args)`** — runs a real function in the browser, for the one page that needed to read a Fomantic UI modal's live DOM state directly.
+## How waiting works
 
-## Playwright strategy notes
+No page and no test ever writes a wait. Every action is paired with the condition that proves it
+finished, and the strategy waits for that condition.
 
-`PlaywrightInteractionStrategy` maps every `IInteractionStrategy`/`IElementHandle` method to a direct Playwright API call, e.g. `clearAndType` → `Locator.fill` (fill already clears the field, so no separate `Locator.clear()` call), and `queryAll` → `Locator.all`. `waitFor`/`waitUntil`/`actAndWaitUntil` poll the predicate on a plain interval instead of `@playwright/test`'s `expect.poll` — `expect` is a test-assertion primitive, and pages (and everything built on them) must stay usable outside a test's `expect` context, the same reason the Selenium strategy drives its own waits through `driver.wait()` rather than an assertion library. No method holds a `try`/`catch`; the strategy has no reason to intercept a Playwright error and translate it, unlike the Selenium strategy's `resolveRoot()`.
+| Method                                 | Waits for                                                     |
+| -------------------------------------- | ------------------------------------------------------------- |
+| `findElement` / `findElements`         | the locator to resolve to visible elements                    |
+| `actAndWaitFor(action, readyLocators)` | every ready locator, after the action                         |
+| `clickAndWaitFor`, `typeAndWaitFor`    | the same, with the click or the typing built in               |
+| `actAndWaitUntil(action, predicate)`   | a predicate, for state no locator expresses (a count, a text) |
+| `clickAndWaitForUrl(locator, pattern)` | a navigation, when the click renders nothing new to wait for  |
+| `open(readyLocators)`                  | the page to load, then what proves it rendered                |
+| `waitUntil(predicate)`                 | a predicate, answering `false` on timeout instead of throwing |
 
-`isVisible` waits 5 seconds by default, like the Selenium strategy, so a locator that never shows answers `false` instead of waiting for the test's own timeout. Its `timeoutMs` special-cases `0`: several fragments pass it meaning "check right now, don't wait" (the same intent Selenium's strategy documents for its own `timeoutMs === 0` case), but Playwright's own `Locator.waitFor({ timeout: 0 })` means the opposite — no timeout, wait forever. That case calls `Locator.isVisible()` instead, Playwright's actual no-wait check.
+**A timeout of `0` means "check once, now".** Both tools read `0` as "wait forever" natively, so both
+strategies special-case it. That is how a page asks "is the banner gone?" without paying five
+seconds for every no.
 
-Four methods follow the Selenium strategy's contract rather than Playwright's default, because the page objects were written against it: `type` appends keystrokes with `Locator.pressSequentially`, like `WebElement.sendKeys`, where `fill` would replace the field's value; `getAttribute` reads the element's live string property when it has one (an input's typed `value`) and falls back to the attribute otherwise, where `Locator.getAttribute` only ever reads the attribute; `getText` trims `Locator.textContent`, like `WebElement.getText`, where the raw content carries leading and trailing whitespace; and `isVisible` given a `root` looks inside it instead of the whole page.
+On Selenium, the session's implicit wait is set to `0` in `DriverFactory`, and every lookup polls
+explicitly through `driver.wait`: it succeeds only when the elements exist **and** are displayed,
+and it retries a stale reference or a Chrome node lost mid-render while rethrowing anything else.
+Mixing an implicit wait with these explicit ones would make every absence check block for the full
+implicit timeout.
 
-Three methods follow the Selenium strategy's contract rather than Playwright's default, because the page objects were written against it: `type` appends keystrokes with `Locator.pressSequentially`, like `WebElement.sendKeys`, where `fill` would replace the field's value; `getAttribute("value")` reads the field's live value with `Locator.inputValue`, where the attribute only holds the initial one; and `isVisible` given a `root` looks inside it instead of the whole page.
+## Where the two strategies differ
 
-`dragAndDrop` moves the mouse by hand (`page.mouse.move` with `steps`, then `down`/`up`) rather than `Locator.dragTo()`: Gitea's Kanban board only reacts to a real, gradual pointer path, not the native HTML5 `DragEvent`s `dragTo()` dispatches instead. This lands reliably on chrome and edge, but under Firefox the automation protocol moves the pointer without the board ever registering a drop — the same category of limitation the Selenium strategy already documents for geckodriver (see `dispatchDragEvents`'s comment in `selenium-interaction.strategy.ts`). `dispatchDragEvents` is the real fallback for that case: [`strategies/utils/playwright-html5-drag.util.ts`](strategies/utils/playwright-html5-drag.util.ts)'s `simulateHtml5Drag` dispatches the native `pointerdown`/`dragstart`/`dragenter`/`dragover`/`drop`/`dragend` sequence by hand via `page.evaluate`, ported to Playwright's element-handle-in-`evaluate` mechanism instead of `executeAsyncScript`. `ProjectBoardPage.moveCard` (unmodified) already tries `dragAndDrop` first and only calls `dispatchDragEvents` if the drop didn't reach the server, so this fallback is exercised automatically, on whichever browser needs it, without either strategy or any page object knowing which one that is.
+The page objects were written against the Selenium contract, so the Playwright strategy follows it
+wherever the two disagree:
 
-Both strategies' drag-event-dispatch fallbacks now live side by side in `strategies/utils/`: `playwright-html5-drag.util.ts` next to `selenium-html5-drag.util.ts`, which moved here from `core-selenium/utils/` — the only thing that ever imported it was `SeleniumInteractionStrategy`, already in this package, so there was no reason for it to live in a different one.
+| Behaviour                      | Selenium                             | Playwright                                      |
+| ------------------------------ | ------------------------------------ | ----------------------------------------------- |
+| `findElement`                  | polls until one visible element      | returns a lazy locator; the wait happens on use |
+| `type`                         | `sendKeys`, appends                  | `pressSequentially`, appends (not `fill`)       |
+| `getText`                      | trimmed by the driver                | `textContent`, trimmed to match                 |
+| `getAttribute("value")`        | the live property                    | `inputValue`, the live value                    |
+| A click under an overlay       | throws `InteractionInterceptedError` | waits until the overlay is gone                 |
+| `root` (scoping to an element) | every method                         | reads and `click`; `type` addresses the page    |
 
-## Dependencies
+`waitFor` and `waitUntil` poll a plain predicate rather than using `expect.poll`, so pages stay
+usable outside a test's assertion context.
 
-`@gitea-automation/core-logger`, `selenium-webdriver`, `@playwright/test` (`Page`/`Locator` types and APIs the Playwright strategy and `IElementHandle` implementation use directly).
+## Drag and drop
+
+`dragAndDrop` moves a real pointer step by step, because Gitea's board reacts to a gradual pointer
+path rather than to the HTML5 events `Locator.dragTo()` dispatches. Firefox moves the pointer but
+never emits the drop, so `dispatchDragEvents` dispatches the native `dragstart` … `drop` sequence by
+hand. `ProjectBoardPage.moveCard` tries the gesture first and falls back only when a reloaded board
+shows the card did not move, so neither the page nor the strategy needs to know which browser it is.

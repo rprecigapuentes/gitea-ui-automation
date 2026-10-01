@@ -61,6 +61,7 @@ export const coreFixtures: Fixtures<
   strategy: async ({ page }, use) => {
     await use(InteractionStrategyFactory.playwright(page));
   },
+  // Acts as the owner of the running browser's project, so parallel browsers are different users.
   clients: async ({}, use, testInfo) => {
     const baseUrl = process.env.GITEA_BASE_URL!;
     const strategy = RequestStrategyFactory.playwright(
@@ -99,8 +100,8 @@ export const coreFixtures: Fixtures<
   },
 };
 
-/* Kept out of `coreFixtures` because both are `auto`: merged in, they would build the eight API
-   clients for every test of every suite, including ones that never touch an organization. */
+/* Kept out of `coreFixtures` because both are `auto`: a test object that adds them builds the
+   eight API clients for every test. Both suites add them; the agents' starting states do not. */
 export const organizationCleanupFixtures: Fixtures<
   OrganizationCleanupFixtures,
   object,

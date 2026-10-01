@@ -5,6 +5,7 @@ import {
   localIdentifier,
 } from "@gitea-automation/core-selenium/browserstack-config/browserstack.config";
 
+/** Starts the BrowserStack Local tunnel, so the remote browsers reach this machine's Gitea. */
 export default async function setup(): Promise<() => Promise<void>> {
   const tunnel = new Local();
 

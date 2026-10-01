@@ -1,31 +1,40 @@
 # @gitea-automation/core-selenium
 
-Selenium WebDriver framework: driver lifecycle, BrowserStack integration. No Gitea-specific knowledge — that's `@gitea-automation/business-logic`.
+> The Selenium driver: which browser to open, with which options, local or remote.
 
-Used to also hold `ui/base-pages/` (`BaseComponent`/`BasePage`) and `api/gitea-client.client.ts` (`GiteaApiClient`) — those were retired once `@gitea-automation/core-page-objects` and `@gitea-automation/core-api-client` replaced them with technology-agnostic equivalents every page object and API client in the monorepo now extends instead. `utils/html5-drag.util.ts` moved there too, into `core-page-objects/strategies/utils/`, alongside its Playwright counterpart — the only thing that ever imported it was the Selenium strategy, already living in that package. See [`core/page-objects/README.md`](../page-objects/README.md) and [`core/api-client/README.md`](../api-client/README.md).
+## Usage
+
+```ts
+import { DriverFactory } from "@gitea-automation/core-selenium/drivers/driver.factory";
+
+const driver = await DriverFactory.getDriver(); // the browser named by BROWSER, chrome by default
+await DriverFactory.quitDriver();
+```
 
 ## Structure
 
 ```
 core/selenium/
-├── drivers/
-│   └── driver.factory.ts   # builds/quits a WebDriver (chrome/firefox/edge), remote grid + BrowserStack support
-└── browserstack-config/
-    └── browserstack.config.ts   # credentials, hubUrl, bstackOptions(), setSessionStatus() (WebDriver-typed — why this lives here, not in core-config)
+├── drivers/driver.factory.ts                    DriverFactory: build and quit the WebDriver
+└── browserstack-config/browserstack.config.ts   credentials, capabilities, session status
 ```
 
-No `ui/` wrapper anymore — `drivers/` and the retired `utils/` were the only thing inside it, so the folder said nothing a flatter structure didn't already say. `config/` renamed to `browserstack-config/` for the same reason: everything in it is BrowserStack-specific, and the old name didn't say that.
+## What `DriverFactory` decides
 
-## Dependencies
+| Setting                    | Value                          | Why                                                           |
+| -------------------------- | ------------------------------ | ------------------------------------------------------------- |
+| Browsers                   | `chrome`, `firefox`, `edge`    | the matrix every suite covers                                 |
+| Window                     | 1920 × 1080                    | a headless browser opens at 800 × 600 and hides board columns |
+| Implicit wait              | `0`                            | every lookup waits explicitly; see `core-page-objects`        |
+| Occlusion flags (Chromium) | background throttling disabled | three windows side by side would freeze each other's fades    |
+| Instances                  | one per process                | each browser runs in its own process with its own account     |
 
-`selenium-webdriver`. Nothing else — `got` and `@gitea-automation/core-logger` were only needed by the now-retired `api/gitea-client.client.ts`.
+## Environment
 
-## Imports
-
-```ts
-import { DriverFactory } from "@gitea-automation/core-selenium/drivers/driver.factory";
-import {
-  isBrowserStack,
-  setSessionStatus,
-} from "@gitea-automation/core-selenium/browserstack-config/browserstack.config";
-```
+| Variable                                           | Effect                                                   |
+| -------------------------------------------------- | -------------------------------------------------------- |
+| `BROWSER`                                          | `chrome`, `firefox` or `edge`                            |
+| `HEADLESS=true`                                    | no browser windows                                       |
+| `SELENIUM_REMOTE_URL`                              | use a Selenium grid instead of a local browser (CI does) |
+| `BROWSERSTACK=true`                                | use BrowserStack Automate, through BrowserStack Local    |
+| `BROWSERSTACK_USERNAME`, `BROWSERSTACK_ACCESS_KEY` | BrowserStack credentials                                 |

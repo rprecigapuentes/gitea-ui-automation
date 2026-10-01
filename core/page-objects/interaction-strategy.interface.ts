@@ -1,17 +1,12 @@
 import { IElementHandle } from "./element-handle.interface";
 
 /**
- * The contract a page object interacts with, whatever tool (Selenium, Playwright) backs it.
- * A page never imports `selenium-webdriver` or `@playwright/test` types directly — it only ever
- * calls these methods, through the `BaseComponent`/`BasePage` Context classes that hold one of
- * these strategies (chosen by whoever constructs the page, not by the page itself).
- *
- * Locators are plain CSS-selector strings: every locator in the existing page objects is either
- * already a CSS selector or trivially expressible as one (`By.id("x")` → `"#x"`), so no separate
- * locator-strategy tagging is needed.
+ * What a page object calls, whatever tool backs it. A page never imports `selenium-webdriver` or
+ * `@playwright/test`: it holds one of these through `BaseComponent`, chosen by whoever builds it.
+ * Locators are plain CSS strings, which is what lets one page object run on both tools.
  */
 export interface IInteractionStrategy {
-  // Safe / waited / visibility-checked reads — today's BaseComponent.findElement and friends.
+  // Reads and actions on a locator, optionally scoped to `root`; `timeoutMs` bounds its wait.
   findElement(locator: string, root?: IElementHandle, timeoutMs?: number): Promise<IElementHandle>;
   findElements(
     locator: string,
@@ -45,13 +40,16 @@ export interface IInteractionStrategy {
     root?: IElementHandle,
     timeoutMs?: number,
   ): Promise<string>;
+  /** True only when each locator resolves to one visible element. A timeout of 0 checks once. */
   isVisible(
     locators: string | string[],
     root?: IElementHandle,
     timeoutMs?: number,
   ): Promise<boolean>;
 
+  /** Polls `predicate`: true once it held, false when `timeoutMs` ran out instead of throwing. */
   waitUntil(predicate: () => Promise<boolean>, timeoutMs?: number): Promise<boolean>;
+  /** Runs `action`, then waits for `predicate`: state no locator can express. Throws on timeout. */
   actAndWaitUntil(
     action: () => Promise<void>,
     predicate: () => Promise<boolean>,
@@ -63,6 +61,7 @@ export interface IInteractionStrategy {
     root?: IElementHandle,
     timeoutMs?: number,
   ): Promise<void>;
+  /** Runs `action`, then waits for every `readyLocators` entry: what proves the action finished. */
   actAndWaitFor(
     action: () => Promise<void>,
     readyLocators: string[],
@@ -82,6 +81,7 @@ export interface IInteractionStrategy {
     root?: IElementHandle,
     timeoutMs?: number,
   ): Promise<IElementHandle[]>;
+  /** A click whose outcome is a navigation, not an element a locator could wait for. */
   clickAndWaitForUrl(
     clickLocator: string,
     urlPattern: RegExp,
@@ -90,18 +90,15 @@ export interface IInteractionStrategy {
   ): Promise<void>;
   getCurrentUrl(): Promise<string>;
   reload(readyLocators: string[], timeoutMs?: number): Promise<void>;
+  /** With no `readyLocators` it returns at the browser's load event, so pass what proves it. */
   open(url: string, readyLocators?: string[], timeoutMs?: number): Promise<void>;
 
-  /** Raw, immediate, top-level query — replaces a bare `driver.findElements(locator)`. No wait,
-   *  no visibility filter, empty array on no match, never throws on absence. */
+  /** Immediate and top-level: no wait, no visibility filter, an empty array on no match. */
   queryAll(locator: string): Promise<IElementHandle[]>;
-  /** Generic predicate wait with a custom timeout message — replaces
-   *  `driver.wait(predicate, ms, "message")`. */
+  /** Polls `predicate` for up to `timeoutMs` and throws `message` if it never held. */
   waitFor(predicate: () => Promise<boolean>, timeoutMs: number, message?: string): Promise<void>;
-  /** Waits for the current URL to match/contain `pattern` — replaces
-   *  `driver.wait(until.urlMatches(...))`/`until.urlContains(...)`. `clickAndWaitForUrl` composes
-   *  this internally rather than duplicating URL-wait logic. */
+  /** Waits until the current URL matches a RegExp or contains a string. */
   waitForUrl(pattern: RegExp | string, timeoutMs?: number, message?: string): Promise<void>;
-  /** Runs `script` in the browser — replaces a raw `driver.executeScript(...)` call. */
+  /** Runs `script` in the page. */
   executeScript<T>(script: (...args: unknown[]) => T, ...args: unknown[]): Promise<T>;
 }

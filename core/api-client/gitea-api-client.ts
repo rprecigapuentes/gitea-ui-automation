@@ -1,5 +1,9 @@
 import { IRequestStrategy } from "./request-strategy.interface";
 
+/**
+ * Base of every API client. It only delegates to the `IRequestStrategy` it was given (`got` under
+ * Selenium, Playwright's request context elsewhere), so a client never knows which library is used.
+ */
 export abstract class GiteaApiClient {
   constructor(private readonly strategy: IRequestStrategy) {}
 

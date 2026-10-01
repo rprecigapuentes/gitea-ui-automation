@@ -9,8 +9,8 @@ const LABEL_DESCRIPTION = "Set by the demo end to end";
 const LABEL_COLOR = "#e11d48";
 const ISSUE_DESCRIPTION_TAIL = "The item the demo follows from assignment to close.";
 
-/* The title and description travel through `scenarioState` rather than a variable in this file,
-   which parallel workers share. */
+/* The title and description travel through `scenarioState` rather than a variable in this file:
+   module state lives as long as the worker, so it would leak into its next scenario. */
 function getCreatedIssue(scenarioState: ScenarioState): NonNullable<ScenarioState["createdIssue"]> {
   const createdIssue = scenarioState.createdIssue;
 

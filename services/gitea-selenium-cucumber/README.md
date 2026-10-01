@@ -1,71 +1,126 @@
 # gitea-selenium-cucumber
 
-Selenium WebDriver + Cucumber (BDD/Gherkin) automation against Gitea. Part of the `gitea-ui-automation` monorepo.
+> Gherkin scenarios run by Cucumber, driving Gitea through Selenium WebDriver on Chrome, Firefox and
+> Edge.
 
-Three features so far: `login`, `organizations` (org/team/repository creation and assignment, both `@e2e` and `@smoke`), `project-board` (Kanban board over an org's issues). All drive the same shared page objects/API clients from `@gitea-automation/business-logic`.
+![Cucumber 11](https://img.shields.io/badge/Cucumber-11-23D96C?logo=cucumber&logoColor=white)
+![Selenium 4](https://img.shields.io/badge/Selenium-4.48-43B02A?logo=selenium&logoColor=white)
 
-## What's here
+## Contents
 
+- [Quick start](#quick-start)
+- [The features](#the-features)
+- [Tags](#tags)
+- [How a step reaches the browser](#how-a-step-reaches-the-browser)
+- [Configuration](#configuration)
+- [Structure](#structure)
+
+## Quick start
+
+```bash
+npm install                                   # from the repository root
+cp services/gitea-selenium-cucumber/.env.example services/gitea-selenium-cucumber/.env
+npm run test:cucumber                         # the three browsers, as three processes
 ```
-services/gitea-selenium-cucumber/
-├── cucumber.mjs                            # @cucumber/cucumber config: TS via tsx, step/support glob, feature glob, tags from CUCUMBER_TAGS
-├── .env.example
-└── features/
-    ├── scenarios/                          # login.feature, organizations.feature, project-board.feature
-    ├── step-definitions/                   # one .steps.ts per feature, same base name
-    └── support/
-        ├── world.ts                        # Cucumber World — driver, scenarioState (ScenarioState), pages (PageFactory), organizationClient for the current scenario
-        ├── hooks.ts                        # Before/After (some tag-scoped) — driver lifecycle, API-side seeding, scenarioState/pages/organizationClient init, cleanup, setDefaultTimeout
-        ├── credentials.ts                  # resolveOwnerCredentials()/resolveOwnerToken() — same GITEA_OWNER_<BROWSER>[_PASSWORD]/GITEA_TOKEN_<BROWSER> scheme as gitea-selenium-vitest
-        └── seeded-users.ts                 # getSeededUser(index) — 2 users provisioned per browser process via BeforeAll/AfterAll, for steps that need an existing user without creating one inline
-```
 
-`cucumber.mjs`'s `paths` glob is `features/**/*.feature`, so any nesting under `features/` (like `scenarios/`) is picked up automatically — no config change needed when adding more `.feature` files or grouping them further.
+| Command (from this folder)                   | Runs                                                       |
+| -------------------------------------------- | ---------------------------------------------------------- |
+| `npm test`                                   | the three browsers in parallel, what CI runs               |
+| `npm run test:chrome` / `:firefox` / `:edge` | one browser                                                |
+| `CUCUMBER_TAGS="@smoke" npm test`            | only the scenarios carrying a tag                          |
+| `npm run test:tag:parallel`                  | the run, with the Allure report built and opened alongside |
+| `npm run report` / `report:open`             | build / open the Allure report                             |
+
+## The features
+
+| Feature                 | Scenarios                                                         | Tags                          |
+| ----------------------- | ----------------------------------------------------------------- | ----------------------------- |
+| `login.feature`         | a valid user signs in                                             |                               |
+| `organizations.feature` | one `@e2e` flow of teams and permissions, five `@smoke` scenarios | `@organizations` `@cleanup`   |
+| `project-board.feature` | the Kanban board: template, cards, columns, drag and drop         | `@project-board` `@cleanup`   |
+| `demo-e2e.feature`      | a work item from team assignment to the board that tracks it      | `@demo-e2e` `@cleanup` `@e2e` |
+
+`login`, `organizations`, `project-board` and `demo-e2e` exist with **identical text** in
+[`playwright-bdd`](../playwright-bdd/README.md). Change one and the other suite breaks.
 
 ## Tags
 
-- `@smoke` / `@e2e` — scope, not mutually exclusive with the others below. Run one or the other with `--tags "@smoke"` / `--tags "@e2e"`, or scope any `npm run test*` script the same way via `CUCUMBER_TAGS` (`cucumber.mjs` reads it straight into its own `tags` field).
-- `@cleanup` — set at the `Feature:` level; its `After` hook (`hooks.ts`) deletes `scenarioState.organization` (and any repositories tracked on it or on `scenarioState.repositories`) once the scenario ends, pass or fail. A feature that creates an organization should carry this tag.
-- `@project-board`, `@team-repository` — tag-scoped `Before` hooks that seed an organization (plus, depending on the tag, repositories/issues or a team+repository) purely through the API clients, before the scenario's own steps run. This is the pattern to follow for any `@smoke` scenario that wants to start mid-flow instead of building its fixture through the UI: add a tag, seed it in `hooks.ts`, keep the scenario itself to the one action under test.
+A tag either selects scenarios or attaches setup to them. The setup lives in
+`features/support/hooks.ts`, so a scenario stays the steps of the behaviour under test.
 
-## Custom World
+| Tag                | Effect                                                                      |
+| ------------------ | --------------------------------------------------------------------------- |
+| `@smoke`, `@e2e`   | scope: select with `CUCUMBER_TAGS`                                          |
+| `@cleanup`         | after the scenario, pass or fail, delete its organization and repositories  |
+| `@project-board`   | before it, seed an organization with two repositories and one issue in each |
+| `@demo-e2e`        | the same, plus a milestone on the first repository                          |
+| `@team-repository` | before it, seed an organization with a team and a repository                |
 
-`GiteaWorld` (`features/support/world.ts`) is Cucumber's per-scenario state container, populated in the `Before` hook (`features/support/hooks.ts`):
+Seeding goes through the API, so a scenario that tests "add a repository to a team" does not spend
+its time creating the organization through the screen.
 
-- `driver: WebDriver` — from `DriverFactory.getDriver()`, same as `gitea-selenium-vitest`.
-- `scenarioState: ScenarioState` — starts as `{}` each scenario, mutated by steps as they create Gitea resources (organization, teams); the same type `gitea-selenium-vitest`'s fixtures use, imported from `@gitea-automation/business-logic/state/scenario.entity` rather than duplicated.
-- `pages: PageFactory` — a `PageFactory` instance ([`@gitea-automation/business-logic/pages/page.factory.ts`](../../business-logic/README.md)), built in the `Before` hook with `InteractionStrategyFactory.selenium(this.driver)`. Steps never construct a page object directly; they read it off `pages` (`this.pages.loginPage.login(...)`, `this.pages.mainPage.waitUntilLoaded()`). Each page is built lazily on first access and memoized (`??=`) for the rest of the scenario — same pattern this repo already uses for `organizationPages` in `gitea-selenium-vitest`'s fixture. It also exposes `orgFacade`, an `OrganizationFacade` composing the organization fragments (repositories, teams, specific team, ...), resolving the organization lazily from `scenarioState.organization`. Adding a page or fragment later is one more getter, no changes to `world.ts` or `hooks.ts`.
-- `organizationClient: OrganizationClient` — built in the same `Before` hook via `ownerClients().organizations`. Steps read it off the world instead of constructing their own client, e.g. `"an organization already exists"` (`organizations.steps.ts`) calls `this.organizationClient.createOrganization(...)`.
+## How a step reaches the browser
 
-## Assertions
-
-Step definitions assert with `expect` imported directly from the `vitest` package (`import { expect } from "vitest";`) — same matcher style `gitea-selenium-vitest` already uses (`expect(await page.method()).toBe(...)`). This is `vitest` used purely as an assertion library: there's no `vitest.config.ts` here and Cucumber still runs through `cucumber-js`, not through Vitest's runner. Before this, `login.steps.ts` had no explicit assertion at all — its `Then` step just called `mainPage.waitUntilLoaded()`, which only waits for one locator and throws a generic timeout if it's missing. It's now `expect(await this.pages.mainPage.hasExpectedElementsDisplayed()).toBe(true)`, reusing a method `MainPage` already had (also used by `gitea-selenium-vitest/tests/login.test.ts` for the same check) — waits for the same locator and additionally verifies the expected dashboard elements, with a clear pass/fail instead of a bare timeout.
-
-## What it reuses
-
-- [`@gitea-automation/core-selenium/drivers/driver.factory.ts`](../../core/selenium/README.md) — same `DriverFactory` as `gitea-selenium-vitest`, driver lifecycle managed in `features/support/hooks.ts`.
-- [`@gitea-automation/business-logic/pages/**`](../../business-logic/README.md) — the same concrete page objects as `gitea-selenium-vitest` (`LoginPage`, `MainPage`, and everything else in there), built through [`PageFactory`](../../business-logic/README.md), constructed with a Selenium strategy (`InteractionStrategyFactory.selenium(driver)`, from [`@gitea-automation/core-page-objects`](../../core/page-objects/README.md)) that `hooks.ts` builds once per scenario. This service keeps no page objects of its own.
-- [`@gitea-automation/business-logic/state/scenario.entity.ts`](../../business-logic/README.md) — `ScenarioState`, the same type `gitea-selenium-vitest` uses to pass Gitea resources created mid-scenario between steps.
-- [`@gitea-automation/business-logic/clients/**`](../../business-logic/README.md) — `OrganizationClient`, `RepositoryClient`, `TeamClient`, `IssueClient`, built via `RequestStrategyFactory.got` and used in tag-scoped `hooks.ts` seeding, exactly like `gitea-selenium-vitest`'s fixtures do. Steps read a client off the world (`this.organizationClient`) rather than constructing their own — see Custom World above.
-
-## Running
-
-```bash
-npm install                                    # from the repo root
-npm run test:cucumber                          # from the repo root — chrome+firefox+edge as 3 concurrent processes
-npm run test:cucumber:parallel                 # from the repo root — the same three, under its explicit name
-# or, from this folder:
-npm test                                       # the three browsers; what CT runs
-npm run test:chrome / test:firefox / test:edge # one browser only
-npm run test:parallel                          # the three browsers, three concurrent `cucumber-js` processes via concurrently
+```
+step definition  →  this.pages.<page>  →  page object  →  Selenium strategy  →  WebDriver
 ```
 
-Needs a `.env` in this folder (copy `.env.example`) with `GITEA_BASE_URL` and, per browser, `GITEA_OWNER_<BROWSER>`/`GITEA_OWNER_<BROWSER>_PASSWORD` (same scheme as `gitea-selenium-vitest`, but a separate file — the two services' `.env` don't stay in sync automatically) pointing at a real Gitea instance and account — `features/support/credentials.ts` resolves them by the `BROWSER` env var, same convention as `gitea-selenium-vitest/src/utils/session-credentials.util.ts`.
+- **`GiteaWorld`** (`support/world.ts`) is Cucumber's per-scenario object. The `Before` hook fills
+  it with the driver, an empty `scenarioState`, a `PageFactory` and an API client.
+- **Steps never build a page object or touch a selector.** They read pages off `this.pages`, the
+  shared page objects from [`business-logic`](../../business-logic/README.md).
+- **Values travel through `this.scenarioState`**, the same `ScenarioState` the other suites use.
+- **Assertions** use `expect` from Vitest, as an assertion library only.
 
-Also needs `GITEA_ADMIN_TOKEN`, an access token belonging to a Gitea **administrator** of that same instance, with the `write:admin` scope. It is not per-browser: one admin identity is shared, and only the users it creates are browser-unique. `features/support/seeded-users.ts` calls `POST /admin/users` with it in `BeforeAll`, so without it every run dies before its first scenario with `Missing admin API token (GITEA_ADMIN_TOKEN)`.
+```ts
+When("I log in with valid credentials", async function (this: GiteaWorld) {
+  const { username, password } = resolveOwnerCredentials();
+  await this.pages.loginPage.login(username, password);
+});
+```
 
-`features/support/hooks.ts` calls `setDefaultTimeout(20000)` — Cucumber's own default step timeout (5000ms) was racing against `BaseComponent.findElement`'s own internal wait (also 5000ms by default), so a step could fail with a generic "function timed out" from Cucumber before the underlying Selenium wait got a chance to report a clearer error.
+## Hooks
 
-## Next steps
+| Hook                 | Does                                                                   |
+| -------------------- | ---------------------------------------------------------------------- |
+| `BeforeAll`          | deletes the account's leftover organizations, creates two seeded users |
+| `Before`             | opens the browser and builds the world                                 |
+| `Before` (tagged)    | seeds the state a tag asks for                                         |
+| `After` (`@cleanup`) | deletes the scenario's repositories, then its organization             |
+| `After`              | closes the browser                                                     |
+| `AfterAll`           | deletes the seeded users                                               |
 
-More features, more step definitions, more API-seeded `@smoke` scenarios following the `@project-board`/`@team-repository` hook pattern.
+Steps get 20 seconds instead of Cucumber's default 5, so a Selenium wait reports its own clearer
+error before Cucumber's generic timeout fires.
+
+## Configuration
+
+`.env` in this folder, from `.env.example`:
+
+| Variable                              | For                                                          |
+| ------------------------------------- | ------------------------------------------------------------ |
+| `GITEA_BASE_URL`                      | the Gitea under test                                         |
+| `GITEA_OWNER_<BROWSER>`, `…_PASSWORD` | one owner account per browser                                |
+| `GITEA_TOKEN_<BROWSER>`               | that owner's API token, for seeding                          |
+| `GITEA_ADMIN_TOKEN`                   | an administrator's token with `write:admin`, to create users |
+
+`<BROWSER>` is `CHROME`, `FIREFOX` or `EDGE`. Each browser has its own account, so the three
+processes never act as the same user.
+
+## Structure
+
+```
+services/gitea-selenium-cucumber/
+├── cucumber.mjs                 runner config: steps, features, reporters, tags
+└── features/
+    ├── scenarios/               *.feature
+    ├── step-definitions/        one *.steps.ts per feature
+    └── support/
+        ├── world.ts             GiteaWorld
+        ├── hooks.ts             lifecycle, seeding, cleanup
+        ├── scenario-state.ts    typed reads of scenarioState
+        ├── seeded-users.ts      the two users BeforeAll creates
+        └── credentials.ts       per-browser accounts
+```
+
+Results go to `allure-results/` and `reports/junit-<browser>.xml`.

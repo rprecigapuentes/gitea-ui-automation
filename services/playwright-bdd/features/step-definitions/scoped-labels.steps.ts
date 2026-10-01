@@ -6,8 +6,8 @@ import { expect, When, Then } from "../../fixtures/fixture";
 import type { ScenarioState } from "@gitea-automation/business-logic/state/scenario.entity";
 import type { SeededLabel } from "@gitea-automation/business-logic/entities/label.entity";
 
-/* A label is known by the name the feature gives it: its id is Gitea's, and is stored in
-   `scenarioState` once the row has been read back, since parallel workers share this file. */
+/* A label is known by the name the feature gives it: its id is Gitea's, and goes in `scenarioState`
+   once the row is read back, because module state would leak into the worker's next scenario. */
 function getCreatedLabel(scenarioState: ScenarioState, name: string): SeededLabel {
   const created = scenarioState.createdLabels?.[name];
 

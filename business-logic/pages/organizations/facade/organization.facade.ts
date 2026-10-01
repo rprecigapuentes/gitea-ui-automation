@@ -8,6 +8,10 @@ import { IInteractionStrategy } from "@gitea-automation/core-page-objects/intera
 import { baseUrl } from "@gitea-automation/core-config/gitea.config";
 import { Organization } from "../../../entities/organization.entity";
 
+/**
+ * The organization flow as one object: each step (open a tab, create a team) waits for its result
+ * and hands back the fragment that now applies, so a step never has to know which tab is open.
+ */
 export class OrganizationFacade extends BasePage {
   private readonly organization: Organization;
   private readonly navigation: OrgNavigationFragment;

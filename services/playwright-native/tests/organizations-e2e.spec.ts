@@ -15,7 +15,7 @@ import type { Team } from "@gitea-automation/business-logic/entities/team.entity
 import { uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.util";
 
 test.describe("Organizations e2e", () => {
-  // Vitest
+  // Ported from the Vitest suite's organizations test, step for step.
   test(
     "should create an organization and add members",
     { tag: ORGANIZATION_TAG },
@@ -71,6 +71,7 @@ test.describe("Organizations e2e", () => {
           await pageObjects.orgNavigation.hasOrganizationNameDisplayed(organizationToCreate.name),
         ).toBe(true);
         expect(await pageObjects.orgNavigation.isTabSelected(OrgTab.Repos)).toBe(true);
+        // A new organization already has one member, its creator, and one team, Owners.
         expect(await pageObjects.orgNavigation.getTabCount(OrgTab.Members)).toBe("1");
         expect(await pageObjects.orgNavigation.getTabCount(OrgTab.Teams)).toBe("1");
         expect(await pageObjects.orgRepositories.areOwnerElementsVisible()).toBe(true);
@@ -179,6 +180,7 @@ test.describe("Organizations e2e", () => {
       });
 
       await test.step("Add user 2 to Team 1", async () => {
+        // A two-letter prefix, so the search returns a list to filter; selectUser types the rest.
         const user2SearchQuery = invited.username.slice(0, 2);
 
         await pageObjects.orgSpecificTeam.searchUsers(user2SearchQuery);
@@ -254,7 +256,7 @@ test.describe("Organizations e2e", () => {
     },
   );
 
-  // Cucumber
+  // Ported from the Cucumber suite's organizations feature.
   test(
     "Change team members permissions",
     { tag: E2E_TAG },

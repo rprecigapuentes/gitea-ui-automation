@@ -1,3 +1,4 @@
+// Maps each PageFactory getter to its page object class, and each class to the URL it opens.
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { PAGES } from "./locators.mjs";

@@ -2,6 +2,7 @@ import { logger } from "@gitea-automation/core-logger/pino.logger";
 import { BaseComponent } from "@gitea-automation/core-page-objects/base-component";
 import { IInteractionStrategy } from "@gitea-automation/core-page-objects/interaction-strategy.interface";
 
+// A timeout of 0 checks once, now, instead of waiting for the element.
 const INSTANT = 0;
 
 export class NavBarFragment extends BaseComponent {
@@ -87,6 +88,8 @@ export class NavBarFragment extends BaseComponent {
       logger.info({ pageContext: "main", ...results }, "Navbar expectations");
       return Object.values(results).every(Boolean);
     } catch (thrown) {
+      // Logs the URL and the reason before returning false, so "the navbar said no" can be told
+      // apart from "a read threw".
       logger.warn(
         {
           pageContext: "main",

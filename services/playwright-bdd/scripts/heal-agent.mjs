@@ -13,13 +13,9 @@ const REPOSITORY = path.resolve(HERE, "..", "..", "..");
 const CODEX = "@openai/codex@0.157.1";
 const CONFIG = path.join("services", "playwright-bdd", "playwright.config.ts");
 
-/* What the healer has to be able to do: reach the page, read it by role and accessible name, and
-   ask for a locator. Running the tests is not among them - the repository does that afterwards, and
-   an agent that runs them spends its budget on the runner and can stop a process this job is using.
-   Everything else on the server stays unreachable, because
-   `default_tools_approval_mode` is per server and pre-approves whatever the server exposes —
-   `browser_run_code_unsafe` and `browser_evaluate` among them, which run arbitrary JavaScript in a
-   job that holds an administrative token. Measured in #129 on codex-cli 0.157.1. */
+/* The healer reaches the page, reads it by role and accessible name, and asks for a locator. It
+   does not run tests: the repository does, afterwards. `approve` pre-approves every tool a server
+   exposes, so this list is what keeps `browser_run_code_unsafe` out of a job with an admin token. */
 const TOOLS = [
   "browser_navigate",
   "browser_snapshot",
@@ -70,11 +66,11 @@ export function session() {
       `[mcp_servers.playwright-test]`,
       `command = "npx"`,
       `args = [${toml(["playwright", "run-test-mcp-server", "--headless", "-c", CONFIG])}]`,
-      /* The only value that lets a tool call through with stdin closed: auto, prompt, writes and
-         unset all answer "MCP tool call requires approval, but approval policy is never". */
       /* codex hands an MCP server no environment of its own, and the server launches the suite's
          fixtures, which read the accounts and tokens the job provisioned. */
       `env = { ${environment()} }`,
+      /* The only value that lets a tool call through with stdin closed: auto, prompt, writes and
+         unset all answer "MCP tool call requires approval, but approval policy is never". */
       `default_tools_approval_mode = "approve"`,
       `enabled_tools = [${toml(TOOLS)}]`,
       `startup_timeout_sec = 120`,
@@ -91,10 +87,11 @@ export function session() {
   return home;
 }
 
-/** One question, with the transcript going to the step log: codex names every tool it calls as it
- *  calls it, and that is the only evidence the answer was driven rather than written. */
+// A long session's transcript outgrows spawnSync's default 1 MB buffer.
 const maxBuffer = 64 * 1024 * 1024;
 
+/** One question, with the transcript going to the step log: codex names every tool it calls as it
+ *  calls it, and that is the only evidence the answer was driven rather than written. */
 export function ask(prompt, { schema, answer, timeout = 900_000 } = {}) {
   const { status, stdout, stderr } = spawnSync(
     "npx",
@@ -124,9 +121,9 @@ export function ask(prompt, { schema, answer, timeout = 900_000 } = {}) {
     { input: prompt, encoding: "utf8", stdio: ["pipe", "pipe", "pipe"], timeout, maxBuffer },
   );
 
-  /* Printed rather than swallowed, and returned as well: codex names every tool call as it makes
-     one, and that transcript is the only record of whether the page was opened at all. Both streams,
-     because the tool calls are on stderr and only the closing message is on stdout. */
+  /* Printed and returned: codex names every tool call as it makes one, and that transcript is the
+     only record of whether the page was opened. Both streams, since tool calls are on stderr and
+     only the closing message is on stdout. */
   const transcript = `${stdout ?? ""}${stderr ?? ""}`;
   process.stdout.write(transcript);
   if (status !== 0) throw new Error(`codex exec failed: status ${status}`);
@@ -134,8 +131,8 @@ export function ask(prompt, { schema, answer, timeout = 900_000 } = {}) {
   return transcript;
 }
 
-/** Whether the transcript shows the page being read. An agent that could not open it will answer
- *  from the repository, which holds the change documents describing the very repair it is making. */
+/** Whether the transcript shows the page being read. An agent that could not open it answers from
+ *  the repository, whose change documents describe the very repair it is making. */
 export function readThePage(transcript) {
   return /playwright-test\/browser_snapshot \(completed\)/.test(transcript);
 }

@@ -36,6 +36,8 @@ export class OrganizationClient extends GiteaApiClient {
       try {
         await this.deleteOrganization(organization.name);
       } catch (error) {
+        // One organization that cannot be deleted is logged and skipped, so it does not leave the
+        // rest behind.
         console.error(`Could not delete organization "${organization.name}":`, error);
       }
     }

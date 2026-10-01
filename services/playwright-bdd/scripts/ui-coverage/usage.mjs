@@ -1,3 +1,4 @@
+// Joins the numerator's two halves: step, then page object, then the selectors its methods read.
 import { parsePageObjects, selectorsReachedBy } from "./locators.mjs";
 import { factoryClasses, urlTemplate } from "./page-objects.mjs";
 import { stepDefinitions, testsByPattern } from "./steps.mjs";

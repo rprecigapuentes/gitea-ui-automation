@@ -22,6 +22,7 @@ test("Issues smoke: the issue form with its labels and milestones", async ({
   const milestone = await clients.milestones.createMilestone(organization.name, repository, {
     title: "at-vis-milestone",
     description: "Milestone for the visual smoke",
+    // A fixed date, not one relative to today, so the screenshot shows the same text every run.
     due_on: "2035-01-01T00:00:00Z",
   });
   await sessionManager.loginAsOwner();

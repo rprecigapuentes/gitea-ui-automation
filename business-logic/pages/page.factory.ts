@@ -27,6 +27,10 @@ import { OrganizationFacade } from "./organizations/facade/organization.facade";
 import type { Organization } from "../entities/organization.entity";
 import type { ScenarioState } from "../state/scenario.entity";
 
+/**
+ * Lazy, memoized getters for every page and fragment a scenario touches: each is built on first use
+ * and reused after. It never picks the tool; the strategy it is given already did.
+ */
 export class PageFactory {
   #loginPage?: LoginPage;
   #mainPage?: MainPage;

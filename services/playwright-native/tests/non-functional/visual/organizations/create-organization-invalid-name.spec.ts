@@ -14,6 +14,8 @@ interface InvalidNameCase {
   maxDiffPixels?: number;
 }
 
+// The two cases that type a run-specific name (the owner's, or the organization just created)
+// render different text every run, hence the larger budget; the rest render a fixed string.
 const invalidNameCases: InvalidNameCase[] = [
   { name: () => "test@org", reason: "has a disallowed character" },
   { name: () => "-test-org", reason: "starts with a non-alphanumeric character" },

@@ -1,3 +1,5 @@
+// Runs each used selector against the stored DOM of a page: the elements it selects are the covered
+// ones, and the method that read it says which states count.
 import { chromium } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { pageFile } from "./paths.mjs";
@@ -16,6 +18,7 @@ async function matches(page, selector) {
       }),
     );
   } catch {
+    // A selector the stored page cannot evaluate selects nothing.
     return [];
   }
 }

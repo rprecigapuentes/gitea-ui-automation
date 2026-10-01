@@ -1,3 +1,4 @@
+// What can be done to an element, by its role: the actions the coverage counts.
 export const ACTIONS_BY_ROLE = {
   link: ["click"],
   button: ["click"],

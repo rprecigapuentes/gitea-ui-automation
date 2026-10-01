@@ -101,6 +101,7 @@ interface CustomFixtures {
 }
 
 export const test = base.extend<CustomFixtures>({
+  // One browser per test file, shared by its tests and quit when the file ends.
   driver: [
     async ({}, use) => {
       const driver = await DriverFactory.getDriver();
@@ -124,6 +125,7 @@ export const test = base.extend<CustomFixtures>({
             ContentType.PNG,
           );
         } catch (err) {
+          // Only warns: a failed screenshot must not hide the failure it was meant to document.
           console.warn(`Failed to capture screenshot for test ${task.name}:`, err);
         }
       });
@@ -138,6 +140,8 @@ export const test = base.extend<CustomFixtures>({
   skipAutoLogin: async ({}, use) => {
     await use(false);
   },
+  // Signs in through the API and injects the cookies before every test, unless the test sets
+  // `skipAutoLogin`, as the login and organization tests do to sign in themselves.
   loggedInSession: [
     async ({ driver, authClient, skipAutoLogin }, use) => {
       if (skipAutoLogin) {
@@ -166,6 +170,7 @@ export const test = base.extend<CustomFixtures>({
       },
     });
   },
+  // One status per file, because the BrowserStack session belongs to the file's driver.
   browserstackSession: [
     async ({ driver }, use) => {
       const session = { failed: false };
@@ -313,6 +318,7 @@ export const test = base.extend<CustomFixtures>({
     },
     { auto: true },
   ],
+  // A repository per test that asks for it, deleted afterwards.
   repository: async ({ repositoryClient }, use) => {
     const { username: owner } = resolveOwnerCredentials();
     const name = `test-issues-${Date.now()}-${process.env.BROWSER ?? "local"}-${uniqueSuffix()}`;

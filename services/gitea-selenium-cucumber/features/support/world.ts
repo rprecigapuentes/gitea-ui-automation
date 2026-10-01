@@ -4,6 +4,7 @@ import type { ScenarioState } from "@gitea-automation/business-logic/state/scena
 import type { OrganizationClient } from "@gitea-automation/business-logic/clients/organizations.client";
 import type { PageFactory } from "@gitea-automation/business-logic/pages/page.factory";
 
+/** Cucumber builds a fresh one per scenario; the Before hook in hooks.ts fills it. */
 export class GiteaWorld extends World {
   driver!: WebDriver;
   scenarioState!: ScenarioState;

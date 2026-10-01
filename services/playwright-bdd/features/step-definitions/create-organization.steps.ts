@@ -10,6 +10,7 @@ import { OrgTab } from "@gitea-automation/business-logic/pages/organizations/fra
 import type { Organization } from "@gitea-automation/business-logic/entities/organization.entity";
 import type { Team } from "@gitea-automation/business-logic/entities/team.entity";
 
+// A two-letter prefix, so the search returns a list to filter; selectUser types the rest.
 const INVITED_SEARCH_LENGTH = 2;
 
 Given("I am signed in as the owner", async ({ sessionManager }) => {

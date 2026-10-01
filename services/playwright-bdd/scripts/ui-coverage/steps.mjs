@@ -1,3 +1,5 @@
+// Parses the features and step definitions: which page-object members each step calls, and which
+// scenarios run each step.
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { CucumberExpression, ParameterTypeRegistry } from "@cucumber/cucumber-expressions";
@@ -79,6 +81,7 @@ function expressionOf(pattern) {
   try {
     return new CucumberExpression(pattern, new ParameterTypeRegistry());
   } catch {
+    // A pattern that is not a Cucumber expression has none, and is skipped.
     return undefined;
   }
 }

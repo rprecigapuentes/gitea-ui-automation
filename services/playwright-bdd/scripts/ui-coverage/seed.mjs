@@ -1,3 +1,5 @@
+// Creates the data the crawl needs (repository, issue and organization through the API, the
+// project through the page) and deletes it afterwards, so other runs' leftovers never count.
 const BASE = new URL(process.env.GITEA_BASE_URL ?? "http://localhost:3000");
 const OWNER = process.env.GITEA_OWNER_CHROME;
 const TOKEN = process.env.GITEA_TOKEN_CHROME;

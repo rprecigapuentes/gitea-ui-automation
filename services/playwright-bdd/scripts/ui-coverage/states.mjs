@@ -1,3 +1,5 @@
+// The states a page-object method proves by being used: a click implies visible and enabled. When
+// in doubt only `visible` counts, so the figure stays a floor.
 const INTERACTIONS = /^(click|type|clearAndType|dragAndDrop|clickAnd|typeAnd|actAnd)/;
 
 export function impliedStates(action = "") {

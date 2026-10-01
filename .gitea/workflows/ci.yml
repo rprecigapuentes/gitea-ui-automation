@@ -1,3 +1,4 @@
+# The quality gate on every push: format, lint and types. It needs no browser and no Gitea.
 name: CI
 
 on:
@@ -10,6 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          # Check out from this Gitea, not from github.com.
           github-server-url: https://git.estiberz.online
 
       - uses: actions/setup-node@v4

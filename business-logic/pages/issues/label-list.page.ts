@@ -118,6 +118,8 @@ export class LabelListPage extends BasePage {
         if (read.name === name) return read;
       }
     } catch {
+      // Catches every error, not only a stale row: a dead session reads as "not found", so the
+      // poll in waitForLabel ends in a timeout rather than in the error itself.
       return null;
     }
 

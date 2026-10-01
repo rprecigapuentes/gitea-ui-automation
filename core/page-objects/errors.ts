@@ -1,8 +1,7 @@
 /**
- * Thrown by a strategy's `click` when the target was covered by another element (e.g. a dimmer
- * mid-transition) rather than genuinely missing or unclickable. A page catches this to tell
- * "blocked by a transitioning overlay" apart from a real failure, without depending on Selenium's
- * or Playwright's own click-intercepted error type.
+ * Thrown by the Selenium strategy's `click` when another element covered the target, such as a
+ * dimmer mid-transition. A page catches it to tell "blocked by an overlay" from a real failure
+ * without importing Selenium's error type. Playwright's click waits out an overlay on its own.
  */
 export class InteractionInterceptedError extends Error {
   constructor(locator: string, cause?: unknown) {

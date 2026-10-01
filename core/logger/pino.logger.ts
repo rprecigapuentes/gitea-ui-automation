@@ -12,6 +12,7 @@ const LEVEL_COLORS: Record<number, string> = {
   50: "\x1b[31m", // red
 };
 
+// Wraps stdout to colour each line by level; a line that is not JSON passes through unchanged.
 const destination = pino.destination({ fd: 1, sync: true });
 const colorizedStream = {
   write(chunk: string): boolean {

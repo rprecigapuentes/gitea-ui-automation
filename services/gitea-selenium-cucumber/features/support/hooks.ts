@@ -22,6 +22,7 @@ import { resolveOwnerToken } from "./credentials";
 import { createSeededUsers, deleteSeededUsers } from "./seeded-users";
 import type { GiteaWorld } from "./world";
 
+// A step can wait on the browser, so it gets 20 s instead of Cucumber's default of 5 s.
 setDefaultTimeout(20000);
 
 const PROJECT_BOARD_TAG = "@project-board";
@@ -177,10 +178,13 @@ After({ tags: CLEANUP_TAG }, async function (this: GiteaWorld) {
 
     await organizations.deleteOrganization(organization.name);
   } catch (error) {
+    // Logged, not thrown, so a teardown problem does not turn a passing scenario red.
     console.error(`Could not delete the seeded organization "${organization.name}":`, error);
   }
 });
 
+// After hooks run in reverse order of definition, so this one runs first: the browser is closed
+// before the API cleanup above, which never needs it.
 After(async () => {
   await DriverFactory.quitDriver();
 });

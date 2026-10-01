@@ -23,10 +23,12 @@ export default defineConfig({
     outputFile: {
       junit: singleBrowser ? `./reports/junit-${singleBrowser}.xml` : "./reports/junit.xml",
     },
+    // The local browser projects override this: within one browser the files run one at a time.
     fileParallelism: true,
     // One per process: test:parallel starts a process per browser, so the three run at once
     // without a worker each.
     maxWorkers: Number(process.env.MAX_WORKERS ?? 1),
+    // The workspace packages ship TypeScript, so Vitest transforms them rather than loading as is.
     server: {
       deps: {
         inline: [

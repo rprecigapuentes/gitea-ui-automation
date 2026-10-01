@@ -1,6 +1,7 @@
 import { WebDriver } from "selenium-webdriver";
 import { AuthClient } from "@gitea-automation/business-logic/clients/auth.client";
 
+/** Signs in over HTTP and hands the cookies to the browser, skipping the UI login. */
 export async function applySession(
   driver: WebDriver,
   authClient: AuthClient,
@@ -8,6 +9,7 @@ export async function applySession(
   password: string,
 ): Promise<void> {
   const baseUrl = process.env.GITEA_BASE_URL!;
+  // Selenium only adds a cookie to the domain the browser is on, so visit it first.
   await driver.get(baseUrl);
 
   const browserUserAgent = await driver.executeScript("return navigator.userAgent;");
@@ -24,6 +26,7 @@ export async function applySession(
     });
   }
 
+  // Reload so the page renders as the signed-in user.
   await driver.navigate().refresh();
 }
 

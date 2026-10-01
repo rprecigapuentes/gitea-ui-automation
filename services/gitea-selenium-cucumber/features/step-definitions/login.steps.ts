@@ -4,6 +4,8 @@ import { resolveOwnerCredentials } from "../support/credentials";
 import { getSeededUser } from "../support/seeded-users";
 import type { GiteaWorld } from "../support/world";
 
+// login.feature reads the same in playwright-bdd; only the runner behind the steps differs.
+
 Given("I am on the Gitea login page", async function (this: GiteaWorld) {
   await this.pages.loginPage.open();
 });

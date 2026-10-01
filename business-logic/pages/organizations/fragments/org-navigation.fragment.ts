@@ -1,6 +1,7 @@
 import { BaseComponent } from "@gitea-automation/core-page-objects/base-component";
 import { logger } from "@gitea-automation/core-logger/pino.logger";
 
+// One retry is enough for the rebuild described on `navigateToTab`; a second failure is real.
 const TAB_CLICK_ATTEMPTS = 2;
 const TAB_NAVIGATION_TIMEOUT_MS = 5000;
 
@@ -114,6 +115,7 @@ export class OrgNavigationFragment extends BaseComponent {
         this.currentTab = tab;
         return;
       } catch (error) {
+        // The last attempt's error is thrown, so a click that never navigates still fails the test.
         if (attempt === TAB_CLICK_ATTEMPTS) throw error;
 
         logger.warn({ tab, href }, "The organization tab click did not navigate; clicking again");

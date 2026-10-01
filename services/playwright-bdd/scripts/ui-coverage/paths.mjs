@@ -1,3 +1,4 @@
+// Where the inventory, the stored pages and the reports live, under coverage-data/.
 import path from "node:path";
 
 const DATA = path.resolve(import.meta.dirname, "../../coverage-data");

@@ -14,6 +14,7 @@ export interface SeededProject {
   title: string;
 }
 
+/** What a scenario remembers between steps; local bookkeeping, never sent to Gitea. */
 export interface ScenarioState {
   organization?: Organization;
   team1?: Team;

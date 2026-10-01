@@ -99,10 +99,9 @@ export class OrgTeamsFragment extends BaseComponent {
     await this.click(this.locators.teamNameLink, teamContainer);
   }
 
-  // Naming the card in the locator is what makes the wait mean something: reading every card and
-  // then picking one samples the grid once, so a page that has rendered some other team's card
-  // satisfies the wait and the one being looked for is reported missing. The team's own link is
-  // what identifies it - Gitea lowercases the name into the URL - so no text matching is needed.
+  // The card is named in the locator so the wait means something: reading every card and picking
+  // one samples the grid once, and some other team's card would satisfy it. The team's own link
+  // identifies it (Gitea lowercases the name into the URL), so no text matching is needed.
   private teamContainerNamed(teamName: string): string {
     return `.team-item-box:has(a[href$="/teams/${teamName.toLowerCase()}"])`;
   }

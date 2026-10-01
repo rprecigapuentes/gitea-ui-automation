@@ -3,6 +3,8 @@ import type { SeededLabel } from "@gitea-automation/business-logic/entities/labe
 import type { SeededMilestone } from "@gitea-automation/business-logic/entities/milestone.entity";
 import type { GiteaWorld } from "./world";
 
+// Typed reads of the scenario's state. Each throws a message naming what the scenario never set
+// up, instead of letting a bare undefined fail somewhere later.
 export function organizationName(world: GiteaWorld): string {
   const organization = world.scenarioState.organization;
 

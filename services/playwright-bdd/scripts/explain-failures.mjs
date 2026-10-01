@@ -35,10 +35,9 @@ function labelled(result, name) {
   return (result.labels ?? []).filter((label) => label.name === name).map((label) => label.value);
 }
 
-/** A passing test can hold nested steps that failed and were retried, so only the scenario's own
- *  steps are read: the reader is looking for the behaviour that broke, not the mechanics under it.
- *  An attachment is recorded as a step without a status, and a test killed by a timeout has no
- *  failing step at all. */
+/** Only the scenario's own steps are read, since a passing test can hold nested steps that failed
+ *  and were retried. An attachment is a step with no status, and a test killed by a timeout has
+ *  no failing step at all. */
 function failingStep(result) {
   return (result.steps ?? []).find((step) => step.status && !NOT_A_FAILURE.includes(step.status))
     ?.name;
@@ -49,11 +48,9 @@ const FRAME = /([\w./-]+\.(?:ts|mjs|js)):(\d+)(?::\d+)?/g;
 const SOURCE_WINDOW = 12;
 const SOURCE_LIMIT = 3;
 
-/** The lines around each frame the failure names, read here rather than left for the reader to go
- *  and fetch. A payload records what an assertion returned and never what it means, and asking a
- *  model to open the file makes the answer depend on a sandbox that behaves differently in a
- *  container than it does on a laptop. Reading it in Node is the same everywhere, costs one round
- *  trip instead of several, and puts in the payload exactly what was shown. */
+/** The lines around each frame the failure names, read here rather than by the model: the sandbox
+ *  that would let it open files fails silently in CI, and it answered blind. Reading them in Node
+ *  is the same everywhere and puts in the payload exactly what was shown. */
 function sources(text) {
   const found = new Map();
 
@@ -68,6 +65,7 @@ function sources(text) {
     try {
       lines = readFileSync(absolute, "utf8").split("\n");
     } catch {
+      // A frame naming a file that cannot be read is skipped.
       continue;
     }
 
@@ -114,6 +112,7 @@ function results() {
   try {
     files = readdirSync(RESULTS).filter((file) => file.endsWith("-result.json"));
   } catch {
+    // No results directory means the run produced nothing to explain.
     return [];
   }
 
@@ -178,10 +177,8 @@ console.log(`${failures.length} failing test(s) to explain`);
 
 if (process.argv.includes("--dry-run") || failures.length === 0) process.exit(0);
 
-/* A replayed payload was captured from a state of the repository that no longer exists: the seed it
-   broke has since been fixed, the assertion it inverted restored. Reading today's code would hand
-   the reader evidence that contradicts the payload, so a replay is answered blind, which is what
-   the corpus was labelled under. A live run reads, because there the two always agree. */
+/* A replay is answered blind, which is what the corpus was labelled under: the state it came from
+   no longer exists, and today's code would contradict the payload. A live run reads. */
 function prompt(failure) {
   return `A Playwright BDD test failed in continuous testing. Explain why.
 
@@ -245,24 +242,18 @@ function explain(failure, index) {
       CODEX,
       "exec",
       "--ephemeral",
-      /* Not read-only, which is what this wants and cannot have. codex sandboxes with Landlock and
-         seccomp and falls back to bubblewrap, and the job's container offers none of the three: it
-         gives up without saying so, disables every tool and answers anyway, which is
-         openai/codex#46246 and is why the same failure was answered correctly on a laptop and twice
-         wrongly on CI. The container is the isolation boundary instead - built per job, its Gitea
-         disposable, destroyed after - which is the condition that documentation puts on this flag.
-         Revisit when codex reports the failure rather than swallowing it. */
+      /* codex's own sandbox (Landlock, seccomp, bubblewrap) is unavailable in the job's container
+         and fails silently: tools off, answer anyway (openai/codex#46246). The container is the
+         isolation instead: built per job, its Gitea disposable. Revisit when codex reports it. */
       "-s",
       "danger-full-access",
-      /* Pinned rather than left to codex's default, which is the frontier model and is not what a
-         classifier this size should cost. codex 0.157.1 carries metadata for that one alone and
-         warns that it is falling back for every other id, which is accepted here: the fallback
-         answered the live failure correctly, and the alternative is paying frontier prices on every
-         red run. */
+      /* Pinned, not left to codex's default, which is the frontier model. codex 0.157.1 has
+         metadata for that one alone and warns of a fallback for any other id; accepted, since the
+         fallback answered the live failure correctly. */
       "-m",
       process.env.CODEX_MODEL ?? "gpt-5-mini",
-      /* codex defaults this to none, which is what a classifier asked to read a file before
-         answering most needs. Raised here rather than left to the default. */
+      /* codex defaults this to none, too little for a classifier asked to read a file before it
+         answers, so it is raised to medium. */
       "-c",
       `model_reasoning_effort="${process.env.CODEX_REASONING ?? "medium"}"`,
       "-C",

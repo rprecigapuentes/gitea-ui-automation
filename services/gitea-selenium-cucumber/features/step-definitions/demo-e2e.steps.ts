@@ -14,6 +14,8 @@ import {
 } from "../support/scenario-state";
 import type { GiteaWorld } from "../support/world";
 
+// The @demo-e2e Before hook in hooks.ts seeds the organization, repositories and milestone.
+
 const ISSUE_DESCRIPTION_HEADING = "Demo work item";
 const ISSUE_DESCRIPTION = `# ${ISSUE_DESCRIPTION_HEADING}\n\nThe item the demo follows from assignment to close.`;
 const LABEL_COLOR = "#e11d48";

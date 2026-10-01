@@ -1,3 +1,5 @@
+// Measures the inventory against the suite and writes the HTML report. `--baseline <file>` adds
+// what changed since an earlier inventory.
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { delta } from "./delta.mjs";

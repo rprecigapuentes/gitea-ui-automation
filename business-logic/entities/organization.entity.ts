@@ -1,4 +1,3 @@
-// src/entities/organization.entity.ts
 import { Team } from "./team.entity";
 import { Repository } from "./repository.entity";
 

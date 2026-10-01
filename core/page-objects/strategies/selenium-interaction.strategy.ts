@@ -56,14 +56,15 @@ export class SeleniumElementHandle implements IElementHandle {
 
 type SearchRoot = WebDriver | WebElement;
 
-// The healing proxy answers concurrent lookups on one session from a single shared context, so
-// two sent together can come back swapped or empty. One lookup at a time per driver; only the
-// lookup itself, never the wait around it.
+// One lookup at a time per driver, and only the lookup, never the wait around it. Added for the
+// Healenium proxy, since dropped from the pipeline, which answered two concurrent lookups on one
+// session from a shared context, swapped or empty. Nothing needs it now; it is cheap and stayed.
 const lookupTails = new WeakMap<WebDriver, Promise<unknown>>();
 
 async function lookUp(driver: WebDriver, root: SearchRoot, locator: By): Promise<WebElement[]> {
   const previous = lookupTails.get(driver) ?? Promise.resolve();
   const current = previous.then(() => root.findElements(locator));
+  // The queue goes on after a failed lookup; the failure itself reaches the caller via `current`.
   lookupTails.set(
     driver,
     current.catch(() => undefined),
@@ -71,6 +72,10 @@ async function lookUp(driver: WebDriver, root: SearchRoot, locator: By): Promise
   return current;
 }
 
+/**
+ * Every waited lookup polls explicitly: the session's implicit wait is 0 (see `DriverFactory`), so
+ * a timeout here is real time. `timeoutMs` 0 means "check once, now" rather than "wait forever".
+ */
 export class SeleniumInteractionStrategy implements IInteractionStrategy {
   constructor(private readonly driver: WebDriver) {}
 
@@ -89,8 +94,8 @@ export class SeleniumInteractionStrategy implements IInteractionStrategy {
   ): Promise<WebElement[]> {
     const locator = By.css(locatorStr);
 
-    // Chrome can drop the CDP node of an element the session still holds while the screen mutates
-    // under the poll (unhandled inspector error). The read is transient, so it retries.
+    // One poll: null means "not there yet" and the wait tries again. A match counts only when every
+    // element is displayed, because that is what a click or a read needs, not mere presence.
     const checkOnce = async (): Promise<WebElement[] | null> => {
       try {
         const found = await lookUp(this.driver, root, locator);
@@ -98,8 +103,8 @@ export class SeleniumInteractionStrategy implements IInteractionStrategy {
         const visible = await Promise.all(found.map((element) => element.isDisplayed()));
         return visible.every(Boolean) ? found : null;
       } catch (error) {
-        // Drivers with real element references report the stale read; Chrome drops the CDP node
-        // and answers an unhandled inspector error. Both are transient: the wait retries them.
+        // The only errors worth another poll: a stale reference, or Chrome dropping an element's
+        // CDP node mid-render. Anything else is a real failure and ends the wait.
         if (
           error instanceof seleniumError.StaleElementReferenceError ||
           (error instanceof seleniumError.WebDriverError &&
@@ -173,6 +178,7 @@ export class SeleniumInteractionStrategy implements IInteractionStrategy {
     try {
       await element.click();
     } catch (error) {
+      // Re-thrown as our own type, so a page can tell "an overlay covered it" from a real failure.
       if (error instanceof seleniumError.ElementClickInterceptedError) {
         throw new InteractionInterceptedError(locator, error);
       }
@@ -279,6 +285,7 @@ export class SeleniumInteractionStrategy implements IInteractionStrategy {
     if (list.length === 0) return false;
 
     const resolvedRoot = this.resolveRoot(root);
+    // A locator that never resolves is reported with its URL and the reason, then counted as false.
     const results = await Promise.all(
       list.map((locator) =>
         this.findRawElement(locator, resolvedRoot, timeoutMs)
@@ -293,10 +300,8 @@ export class SeleniumInteractionStrategy implements IInteractionStrategy {
     return results.every(Boolean);
   }
 
-  // actAndWaitUntil covers a condition that follows an action. This is for one that does not: a
-  // suggestion list settles from a query typed in an earlier step, so there is no action here to
-  // pair the wait with, and the entries carry their identity as text, which no locator can name.
-  // Reports rather than raises, so a check built on it stays a boolean for its caller.
+  // For a condition with no action to pair it with: a suggestion list settles from a query typed in
+  // an earlier step, and its entries are text no locator can name. Returns false, never throws.
   async waitUntil(
     predicate: () => Promise<boolean>,
     timeoutMs: number = DEFAULT_TIMEOUT_MS,

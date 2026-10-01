@@ -1,6 +1,7 @@
 import { resolveOwnerCredentials } from "@gitea-automation/shared-playwright/credentials";
 import { expect, test } from "../../../../fixtures/visual.fixture";
 
+// The CSS viewport of an iPhone 12 to 14.
 test.use({ viewport: { width: 390, height: 844 } });
 
 test("Main view smoke: the main view looks right at a phone width", async ({

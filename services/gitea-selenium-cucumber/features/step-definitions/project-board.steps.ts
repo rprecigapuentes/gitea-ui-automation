@@ -5,6 +5,8 @@ import type { SeededRepository } from "@gitea-automation/business-logic/state/sc
 import { resolveOwnerCredentials } from "../support/credentials";
 import type { GiteaWorld } from "../support/world";
 
+// The @project-board Before hook in hooks.ts seeds the organization and its two repositories.
+
 const TEMPLATE_COLUMNS = ["Backlog", "To Do", "In Progress", "Done"];
 
 function organizationName(world: GiteaWorld): string {

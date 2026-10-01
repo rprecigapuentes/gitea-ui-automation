@@ -1,3 +1,5 @@
+// Reduces a pathname to its route template, so /alice/app/issues/4 and /bob/lib/issues/9 are one
+// URL: /{owner}/{repo}/issues/{n}.
 const ROOTS = new Set([
   "user",
   "explore",

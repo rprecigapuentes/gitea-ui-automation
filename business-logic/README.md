@@ -1,72 +1,111 @@
 # @gitea-automation/business-logic
 
-Gitea's HTTP surface (API clients/entities), the concrete page objects, and cross-step scenario state — all technology-agnostic, shared by every test runner in this monorepo: `services/gitea-selenium-vitest`, `services/gitea-selenium-cucumber`, `services/playwright-native`. None of them keeps its own copy of any of this.
+> Everything the suites know about Gitea: its pages, its API, and what a scenario remembers between
+> steps. Written once, shared by all four suites.
+
+No suite keeps its own page object or API client. A selector Gitea changes is fixed here, in one
+file, for every suite at once.
+
+## Contents
+
+- [Structure](#structure)
+- [Page objects](#page-objects)
+- [API clients](#api-clients)
+- [Entities and scenario state](#entities-and-scenario-state)
+- [PageFactory](#pagefactory)
 
 ## Structure
 
 ```
 business-logic/
-├── clients/    # auth/issue/label/milestone/organizations/repository/team/user — all but auth extend GiteaApiClient from @gitea-automation/core-api-client
-├── entities/   # issue/label/milestone/organization/repository/team/user — the shapes those clients return
-├── state/
-│   └── scenario.entity.ts   # ScenarioState — cross-step scenario data (organization/team1/team2), shared by every test runner
-└── pages/      # concrete Gitea page objects, extending core-page-objects' BaseComponent/BasePage
-    ├── page.factory.ts   # PageFactory — lazy, memoized getters for the pages a scenario needs
-    ├── authentication/, common/, issues/, organizations/, projects/, repositories/   # one folder per feature area, fragments/facade nested where a page has them
+├── pages/                     page objects, one folder per area of Gitea
+│   ├── authentication/          login
+│   ├── common/                  dashboard, navigation bar
+│   ├── issues/                  issue, issue form, issue list, labels, milestones
+│   ├── organizations/           create, dashboard, teams; the organization facade
+│   ├── projects/                project form, project list, Kanban board
+│   ├── repositories/            create, code tab, files
+│   └── page.factory.ts          PageFactory
+├── clients/                   one API client per Gitea resource
+├── entities/                  the shapes those clients send and receive
+└── state/scenario.entity.ts   ScenarioState
 ```
 
-## Why one package instead of two
+## Page objects
 
-This used to be two packages, `business-logic/api` (clients/entities/state) and `business-logic/common` (pages), split the way `core/` still is: one package per technology. That distinction never actually held here — neither package ever had a real dependency on a specific browser/HTTP technology. Every client but `auth.client.ts` already works against either `GotRequestStrategy` or `PlaywrightRequestStrategy` (`auth.client.ts` itself is plain `got` + a cookie jar, usable from any browser technology), and every page already works against either `SeleniumInteractionStrategy` or `PlaywrightInteractionStrategy`, chosen by whichever `IInteractionStrategy` its caller injects. Splitting by technology only made sense back when `ui/pages/` still imported `selenium-webdriver` directly — once the Strategy pattern (`@gitea-automation/core-page-objects`) closed that gap, two tech-agnostic packages became one, with exactly four folders: `clients/`, `pages/`, `entities/`, `state/`.
+Every page object extends `BasePage` or `BaseComponent` from
+[`core-page-objects`](../core/page-objects/README.md), so it runs on Selenium or on Playwright
+depending on the strategy it is built with.
 
-`state/` is a sibling of `clients/`/`entities/`, not nested under either — not an API payload (`ScenarioState` never travels over HTTP; it's local bookkeeping a test mutates as a scenario runs, e.g. "which organization did this scenario create", read back later for both page objects and cleanup). Putting it in `entities/` alongside `Organization`/`Team` would mix two different things: a real Gitea API response shape vs. local per-scenario state that merely references those shapes.
+| Kind         | File            | Is                                                                       | Example              |
+| ------------ | --------------- | ------------------------------------------------------------------------ | -------------------- |
+| **Page**     | `*.page.ts`     | a view with its own URL, opened with `open()` / `openFor(...)`           | `IssuePage`          |
+| **Fragment** | `*.fragment.ts` | a piece several pages share, with no URL of its own                      | `NavBarFragment`     |
+| **Facade**   | `*.facade.ts`   | one flow across several fragments, handing back the one that now applies | `OrganizationFacade` |
 
-## Constructing a client
+Three conventions hold in every file:
 
-Whoever builds a client picks the strategy, through `RequestStrategyFactory` (`@gitea-automation/core-api-client`), not the client itself:
+- **Locators live in one `locators` object** at the top of the class, as CSS strings, grouped into
+  sections by the part of the page they belong to. Nothing outside the page object ever sees one,
+  and a lint rule rejects a spec or step that calls the browser directly.
+- **Methods say what the user does or sees**, never how: `createScopedLabel`, `hasMember`,
+  `moveCard`. A method that changes the screen waits for the proof that it finished.
+- **Checks return booleans and log why they are false.** `hasExpectedElementsDisplayed()` returns
+  `false` rather than throwing, and records the URL and the reason first, so a red run says what the
+  screen showed.
+
+## API clients
+
+Tests build their data through the API and keep the screen for what they are testing.
+
+| Client               | Covers                                                                |
+| -------------------- | --------------------------------------------------------------------- |
+| `AuthClient`         | signing in over HTTP and returning the session cookies                |
+| `UserClient`         | the signed-in user; creating and deleting users through the admin API |
+| `OrganizationClient` | organizations and their members                                       |
+| `TeamClient`         | teams                                                                 |
+| `RepositoryClient`   | repositories                                                          |
+| `IssueClient`        | issues                                                                |
+| `LabelClient`        | labels                                                                |
+| `MilestoneClient`    | milestones                                                            |
+
+All but `AuthClient` extend `GiteaApiClient` from [`core-api-client`](../core/api-client/README.md):
 
 ```ts
-import { RequestStrategyFactory } from "@gitea-automation/core-api-client/request-strategy.factory";
-import { IssueClient } from "@gitea-automation/business-logic/clients/issue.client";
-
-const issueClient = new IssueClient(RequestStrategyFactory.got(baseUrl, token));
-// or: new IssueClient(RequestStrategyFactory.playwright(baseUrl, token));
+const issues = new IssueClient(RequestStrategyFactory.got(baseUrl, token));
+const issue = await issues.createIssue(owner, repository, "A title");
 ```
 
-## Constructing a page
+`AuthClient` posts the login form itself, because Gitea's session is a browser cookie rather than a
+token. The suites use it to start a test already signed in.
 
-Same idea, through `InteractionStrategyFactory` (`@gitea-automation/core-page-objects`):
+## Entities and scenario state
 
-```ts
-import { InteractionStrategyFactory } from "@gitea-automation/core-page-objects/interaction-strategy.factory";
-import { LoginPage } from "@gitea-automation/business-logic/pages/authentication/login.page";
+Each entity comes in up to four shapes, named the same way everywhere:
 
-const loginPage = new LoginPage(InteractionStrategyFactory.selenium(driver));
-// or: new LoginPage(InteractionStrategyFactory.playwright(page));
-```
+| Name          | Is                                                |
+| ------------- | ------------------------------------------------- |
+| `Label`       | what the API returns                              |
+| `NewLabel`    | what the API is sent to create one                |
+| `LabelRow`    | what the list page shows for one                  |
+| `SeededLabel` | the id and name a scenario keeps to find it again |
+
+`ScenarioState` is what one scenario remembers between steps: the organization it created, its
+teams, the issue it filed. It never travels to Gitea, and it starts empty for every scenario, which
+is what keeps parallel scenarios from reading each other's data. Cleanup reads it to know what to
+delete.
 
 ## PageFactory
 
-`pages/page.factory.ts` is a lazy, memoized getter for every page/fragment (`this.pages.loginPage`, `this.pages.orgFacade`, ...), built once from an already-constructed `IInteractionStrategy` and a `ScenarioState`:
+`PageFactory` is the single entry point a suite uses: one getter per page and fragment, each built
+on first use and reused for the rest of the scenario.
 
 ```ts
-import { PageFactory } from "@gitea-automation/business-logic/pages/page.factory";
-
 const pages = new PageFactory(strategy, scenarioState);
-pages.loginPage.login(username, password);
+
+await pages.loginPage.login(username, password);
+await pages.orgFacade.navigateToTeamsTab();
 ```
 
-It never picks a strategy itself — whoever constructs it already has. `gitea-selenium-cucumber`'s `GiteaWorld.pages` and `playwright-native`'s `pages` fixture are both a `PageFactory` built this way, one from `InteractionStrategyFactory.selenium(driver)`, the other from `InteractionStrategyFactory.playwright(page)`.
-
-## Dependencies
-
-`@gitea-automation/core-api-client` (`GiteaApiClient` for every `clients/` file except `auth.client.ts`), `@gitea-automation/core-page-objects` (`BaseComponent`/`BasePage`, `IInteractionStrategy`, `IElementHandle`), `@gitea-automation/core-config` (`baseUrl`), `@gitea-automation/core-logger` (for `auth.client.ts`), `got`, `tough-cookie` (`auth.client.ts`'s form-login + cookie jar).
-
-## Imports
-
-```ts
-import { IssueClient } from "@gitea-automation/business-logic/clients/issue.client";
-import type { Organization } from "@gitea-automation/business-logic/entities/organization.entity";
-import type { ScenarioState } from "@gitea-automation/business-logic/state/scenario.entity";
-import { LoginPage } from "@gitea-automation/business-logic/pages/authentication/login.page";
-```
+Being lazy and memoized matters for fragments that hold state, such as which organization tab is
+open: a fresh instance on every call would forget it between steps.

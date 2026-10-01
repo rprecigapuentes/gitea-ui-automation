@@ -1,6 +1,7 @@
 import type { BrowserContext, Page } from "@playwright/test";
 import { AuthClient } from "@gitea-automation/business-logic/clients/auth.client";
 
+/** Signs in over HTTP and hands the cookies to the browser context, skipping the UI login. */
 export async function applySession(
   context: BrowserContext,
   page: Page,

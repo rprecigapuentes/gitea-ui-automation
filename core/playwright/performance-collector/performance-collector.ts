@@ -103,6 +103,7 @@ function summarise(samples: LoadSample[]): Summary {
   return summary;
 }
 
+/** Loads a page `loads` times cold (cache cleared) and warm (cache kept) and summarises each. */
 export class PerformanceCollector {
   constructor(
     private readonly page: Page,

@@ -1,3 +1,4 @@
+/** HTTP against the Gitea API. Endpoints are relative to `/api/v1`; the strategy adds the token. */
 export interface IRequestStrategy {
   get<T>(endpoint: string): Promise<T>;
   post<T>(endpoint: string, body?: unknown): Promise<T>;

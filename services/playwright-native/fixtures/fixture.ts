@@ -11,6 +11,7 @@ export {
   ORGANIZATION_NAME_PREFIX,
 } from "@gitea-automation/shared-playwright/base.fixtures";
 
+// The native suite's test object: the shared fixtures, with the organization cleanup.
 export const test = base.extend<CoreFixtures & OrganizationCleanupFixtures>({
   ...coreFixtures,
   ...organizationCleanupFixtures,

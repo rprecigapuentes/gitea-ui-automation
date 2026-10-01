@@ -1,3 +1,5 @@
+// Crawls the application as the run's owner, stores each page's DOM and writes the inventory of
+// URLs, elements and states that the coverage is measured against.
 import { chromium } from "@playwright/test";
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -14,7 +16,9 @@ import { routeTemplate } from "./route-template.mjs";
 import { seed, unseed } from "./seed.mjs";
 
 const BASE = new URL(process.env.GITEA_BASE_URL ?? "http://localhost:3000");
+// A ceiling on the URLs visited, so a crawl that finds an endless link space still ends.
 const LIMIT = 200;
+// Never followed: sign-out, deletes, the admin area and non-page resources.
 const AVOID =
   /logout|delete|\/-\/admin|\/api\/|\/assets\/|\/avatars?\/|\/attachments\/|\/archive\/|\/raw\/|\/media\/|\.rss$/;
 
@@ -30,6 +34,7 @@ async function localLinks(page, owns) {
   const hrefs = await page.$$eval("a[href]", (anchors) =>
     anchors.map((anchor) => anchor.getAttribute("href")),
   );
+  // A templated route is followed only when it belongs to the data this crawl seeded.
   return hrefs
     .map((href) => new URL(href, page.url()))
     .filter((url) => url.port === BASE.port && !AVOID.test(url.pathname))
@@ -48,12 +53,14 @@ const replacementsOf = ({ owner, repo, org }) => [
 ];
 
 async function save(page, template, seeded) {
+  // Lets late rendering settle before the page is read.
   await page.waitForTimeout(500);
   const found = await page.evaluate(collectElements);
   const states = found.map(() => new Set());
 
   merge(states, await page.evaluate(readStates));
   writeFileSync(pageFile(template), await page.content());
+  // Read again with the drop-down menus open: their items only exist then.
   await page.evaluate(openMenus);
   merge(states, await page.evaluate(readStates));
 
@@ -79,6 +86,7 @@ async function crawl(page, seeded) {
   const known = new Set(queue.map(routeTemplate));
 
   while (queue.length > 0 && Object.keys(urls).length < LIMIT) {
+    // A URL that does not load is skipped: one dead link must not end the crawl.
     const response = await page.goto(BASE.origin + queue.shift()).catch(() => null);
     if (!response || response.status() >= 400) continue;
 
@@ -101,6 +109,7 @@ const page = await browser.newPage();
 await signIn(page);
 const seeded = await seed(page);
 let urls;
+// Whatever the crawl does, the seeded data is deleted and the browser closed.
 try {
   urls = await crawl(page, seeded);
 } finally {

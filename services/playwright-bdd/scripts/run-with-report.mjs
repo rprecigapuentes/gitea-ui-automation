@@ -1,6 +1,9 @@
 import { spawnSync } from "node:child_process";
 import { rmSync } from "node:fs";
 
+// Runs the test command, then builds and opens the Allure report. The script exits with the tests'
+// own status, so a report that opens fine never turns a red run green.
+
 const command = process.argv.slice(2).join(" ");
 
 const run = (line) => spawnSync(line, { stdio: "inherit", shell: true });

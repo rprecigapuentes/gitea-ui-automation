@@ -5,6 +5,7 @@ export class GotRequestStrategy implements IRequestStrategy {
   private readonly client: Got;
 
   constructor(baseUrl: string, token: string) {
+    // got throws on a 4xx or 5xx, so a setup call that Gitea rejects fails the test loudly.
     this.client = got.extend({
       prefixUrl: `${baseUrl}/api/v1`,
       headers: {

@@ -1,6 +1,7 @@
 import { BaseComponent } from "@gitea-automation/core-page-objects/base-component";
 import { IInteractionStrategy } from "@gitea-automation/core-page-objects/interaction-strategy.interface";
 
+// A timeout of 0 checks once, now, instead of waiting for the element.
 const INSTANT = 0;
 const MENU_TIMEOUT_MS = 5000;
 

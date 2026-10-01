@@ -1,55 +1,68 @@
 # @gitea-automation/shared-playwright
 
-The Playwright setup both Playwright suites start from: the fixtures that build a test's strategy, page objects, API clients and session, and the credential and session helpers they need.
+> The fixtures both Playwright suites start from: strategy, page objects, API clients, session,
+> seeded data and cleanup.
 
-## Why it is a package, and why it sits here
+This is not a suite. It declares no `test` script, and it holds no test of its own: it is the
+setup that `playwright-native` and `playwright-bdd` would otherwise each have to write.
 
-A fixture is composition root and setup: it decides which concrete strategy is injected and puts the state a test needs in place. That is test-layer work, which is why the Selenium side keeps its equivalent in `services/gitea-selenium-cucumber/features/support/hooks.ts` rather than in a shared package.
+## How a fixture works here
 
-This one is shared because two suites need the same wiring: `playwright-native` and `playwright-bdd`. It lived in `core/playwright` until it was moved here, and that was a layering mistake rather than a placement preference — a fixture composes page objects and API clients, so the package had to import `business-logic`, and a `core/` package that imports `business-logic` points its dependency at the layer above it.
+A test **declares** what it needs and Playwright builds it before the test, then tears it down
+afterwards, whether the test passed or failed:
 
-It is not a suite. It declares no `test` script, which is how `ct-functional.yml` already tells what to run from what to depend on. The rule the repository enforces is that **no suite imports another suite**; importing this package is not that.
-
-```
-services/
-├── _shared/playwright/   ← this package: shared setup, no tests of its own
-├── playwright-bdd/
-├── playwright-native/
-├── gitea-selenium-cucumber/
-└── gitea-selenium-vitest/
+```ts
+test("a scoped label replaces its own scope", async ({ repository, issue, pageObjects }) => {
+  // the repository and the issue already exist; both are removed when the test ends
+});
 ```
 
-## Structure
+That is what replaces `beforeEach`, `afterEach` and `try` / `finally` in the test body. A fixture
+marked `auto` runs for every test without being named, which is how cleanup can never be forgotten.
 
-```
-services/_shared/playwright/
-├── credentials.ts               # per-browser owner, invited, token and admin accounts
-├── session.util.ts              # sign in through the API, apply the cookies to the context
-├── base.fixtures.ts             # strategy, clients, pageObjects, scenarioState, sessionManager, cleanup
-├── issues.fixtures.ts           # owner, repository, issue, maintainer, label, milestone
-├── organizations.fixtures.ts    # existing organization, seeded users, org with team and repository
-└── project-board.fixtures.ts    # organization with repositories, milestone, Kanban project
-```
+## Fixtures
 
-## Fixture implementations, not an extended `test`
+| File                        | Fixtures                                                                         |
+| --------------------------- | -------------------------------------------------------------------------------- |
+| `base.fixtures.ts`          | `strategy`, `clients`, `pageObjects`, `scenarioState`, `sessionManager`          |
+|                             | `cleanupCreatedOrganization`, `cleanupOrganizationsBeforeRun` (both `auto`)      |
+| `issues.fixtures.ts`        | `owner`, `repository`, `issue`, `maintainer`, `classificationLabel`, `milestone` |
+| `organizations.fixtures.ts` | `existingOrganization`, `seededUsers`, `seededOrganizationWithTeamAndRepository` |
+| `project-board.fixtures.ts` | `seededOrganizationWithRepositories`, `seededMilestone`, `kanbanProject`         |
 
-The two services extend different bases, so this package exports the implementations and each service calls `.extend()` itself.
+| Helper            | Does                                                                      |
+| ----------------- | ------------------------------------------------------------------------- |
+| `credentials.ts`  | picks the owner, invited, token and admin account for the running browser |
+| `session.util.ts` | signs in over HTTP and hands the cookies to the browser context           |
+
+## Cleanup
+
+| Fixture                         | When                                 | Removes                                                 |
+| ------------------------------- | ------------------------------------ | ------------------------------------------------------- |
+| `cleanupCreatedOrganization`    | after every test                     | the organization in `scenarioState`, repositories first |
+| `cleanupOrganizationsBeforeRun` | before a test tagged `@organization` | leftovers under the `test-orgs` prefix only             |
+
+Gitea refuses to delete an organization that still owns a repository, so the repositories go first.
+The before-run sweep never touches a name outside its prefix, so parallel workers and other suites
+are safe.
+
+## Using it
+
+The two suites extend different bases, so this package exports the implementations and each suite
+calls `.extend()` itself:
 
 ```ts
 // playwright-native
-export const test = base.extend<CoreFixtures>(coreFixtures);
-
-// playwright-bdd, over playwright-bdd's own base
-export const test = base.extend<CoreFixtures & BddFixtures>({ ...coreFixtures, ownerCredentials });
+export const test = base.extend<CoreFixtures & OrganizationCleanupFixtures>({
+  ...coreFixtures,
+  ...organizationCleanupFixtures,
+});
 ```
 
-Two details that fail silently if they are changed. `resolveOwnerCredentials` takes the **project name** and reads the browser from the segment after its last `-`, so projects stay named `<area>-<browser>` (`seeds-chrome`, `visual-firefox`) or plainly after the browser. And `testDataName` reads `process.env.BROWSER`, so a `test:<browser>` script that drops its `cross-env BROWSER=<b>` names every seeded resource `-local-` instead.
+## Two things that fail silently
 
-## Imports
-
-```ts
-import { coreFixtures } from "@gitea-automation/shared-playwright/base.fixtures";
-import { resolveOwnerCredentials } from "@gitea-automation/shared-playwright/credentials";
-```
-
-The package's `exports` map is `"./*": "./*.ts"`, so every module is reachable by its file name without an entry of its own.
+- **Project names end in the browser.** Credentials are resolved from the part of the project name
+  after its last `-` (`chrome`, `visual-firefox`, `seeds-chrome`). A project named otherwise gets no
+  account. `chromium` resolves to the Chrome account.
+- **Scripts set `BROWSER`.** `testDataName` reads it to name what a test creates. A script that drops
+  its `cross-env BROWSER=<browser>` names everything `-local-`, and the three browsers collide.

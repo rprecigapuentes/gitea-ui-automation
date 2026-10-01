@@ -92,7 +92,7 @@ export const organizationsFixtures: Fixtures<
 
     // Gitea refuses to delete a user still on an organization's roster, and a scenario can leave a
     // seeded user there on purpose (one team keeps its member, another loses theirs). Leaving every
-    // organization first makes the delete succeed regardless of what the scenario did or didn't undo.
+    // organization first makes the delete succeed whatever the scenario did or didn't undo.
     for (const { username } of seeded) {
       for (const organization of await organizations.getOrganizationsForUser(username)) {
         await organizations.removeMember(organization.name, username);
@@ -101,11 +101,9 @@ export const organizationsFixtures: Fixtures<
     }
   },
 
-  // One organization with a team and a repository: the state `@team-repository`-tagged tests start
-  // from, mirroring the Cucumber hook of that tag. `auto`, like `cleanupOrganizationsBeforeRun`, so
-  // a scenario picks this up by carrying the tag rather than by declaring the fixture — a step a
-  // tagged and an untagged scenario share stays untagged-scenario-free of this seeding.
-  // `cleanupCreatedOrganization` removes what it creates.
+  // One organization with a team and a repository, as the Cucumber `@team-repository` hook seeds
+  // it. `auto` and gated on the tag: a scenario gets it by carrying the tag, and a step it shares
+  // with an untagged scenario seeds nothing there. `cleanupCreatedOrganization` removes it.
   seededOrganizationWithTeamAndRepository: [
     async ({ clients, scenarioState }, use, testInfo) => {
       if (!testInfo.tags.includes(TEAM_REPOSITORY_TAG)) {

@@ -114,6 +114,7 @@ export const test = base.extend<PerformanceFixtures>({
       const file = path.join(path.dirname(testInfo.file), "baselines", `${measurement.page}.json`);
       const recorded = await readBaseline(file);
 
+      // The first run writes the band and fails on purpose, so a band nobody reviewed never passes.
       if (!recorded) {
         await mkdir(path.dirname(file), { recursive: true });
         await writeFile(file, `${JSON.stringify(bandOf(measurement), null, 2)}\n`, "utf8");
@@ -152,6 +153,7 @@ async function readBaseline(file: string): Promise<Baseline | null> {
   try {
     return JSON.parse(await readFile(file, "utf8")) as Baseline;
   } catch {
+    // A missing or unreadable file means there is no band yet; the caller records one.
     return null;
   }
 }

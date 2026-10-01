@@ -1,3 +1,5 @@
+// The page side of the crawl: find a page's interactive elements, name and key them, read their
+// states.
 import { routeTemplate } from "./route-template.mjs";
 
 export function collectElements() {

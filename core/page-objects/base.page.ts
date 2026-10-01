@@ -8,11 +8,12 @@ export interface Navigable {
 export abstract class BasePage extends BaseComponent implements Navigable {
   abstract getUrl(...args: unknown[]): string;
 
+  /** `readyLocators` prove the page rendered; `args` are passed through to `getUrl`. */
   async open(readyLocators: string[] = [], ...args: unknown[]): Promise<void> {
     await this.strategy.open(this.getUrl(...args), readyLocators);
   }
 
-  /** Selectors of the regions of this view that change between runs; a page overrides it. */
+  /** Regions whose content changes between runs; visual tests mask them. A page overrides it. */
   getVolatileRegions(): string[] {
     return [];
   }

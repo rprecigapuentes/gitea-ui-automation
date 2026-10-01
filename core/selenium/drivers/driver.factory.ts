@@ -12,26 +12,24 @@ const HEADLESS = process.env.HEADLESS === "true";
 // the CT pipeline) instead of spawning a local browser binary on the machine running the tests.
 const seleniumRemoteUrl = process.env.SELENIUM_REMOTE_URL;
 
-// Chromium pauses rendering and throttles timers for a window it considers occluded (fully
-// covered by another window), which is exactly what happens to two of the three real, visible
-// browser windows launched when chrome/firefox/edge run at the same time. A throttled window's
-// CSS animations never finish, so a fading-in modal can stay "not visible" to Selenium forever.
-// These flags tell Chromium to treat every window as if it were on top.
 // A headless browser opens at 800x600, which leaves the further board columns out of the viewport,
 // and a pointer gesture cannot reach a point that is not in view.
 const WINDOW_SIZE = { width: 1920, height: 1080 };
 
+// Chromium throttles timers and rendering for a window it thinks is covered, which is what happens
+// to two of three browser windows run side by side; a throttled fade-in never finishes, so a modal
+// stays "not visible" forever. These flags make every window count as on top.
 const CHROMIUM_NO_OCCLUSION_THROTTLING_FLAGS = [
   "--disable-backgrounding-occluded-windows",
   "--disable-renderer-backgrounding",
   "--disable-background-timer-throttling",
-  // Windows' native window-occlusion detection is what actually marks the window as covered in
-  // the first place; the flags above only stop Chromium from throttling once it believes that,
-  // so without this one a covered window can still get stuck mid fade-in forever.
+  // Windows' own occlusion detection is what marks the window covered; the flags above only stop
+  // the throttling that follows, so without this one a covered window can still get stuck.
   "--disable-features=CalculateNativeWinOcclusion",
 ];
 
 export class DriverFactory {
+  // One driver per worker process; the fixture or hook that asked for it quits it.
   private static instance: WebDriver | null = null;
 
   private constructor() {}
@@ -95,10 +93,9 @@ export class DriverFactory {
 
     DriverFactory.instance = await builder.build();
     await DriverFactory.instance.manage().window().setRect(WINDOW_SIZE);
-    // BaseComponent already polls every lookup explicitly. An implicit wait on top of that makes a
-    // findElements that legitimately matches nothing block for its full duration before returning
-    // the empty list (SeleniumHQ/selenium#12278), so every absence check and every failed poll
-    // inside an explicit wait pays it again, and no timeout in the framework measures real time.
+    // Every lookup already polls explicitly. An implicit wait on top makes a findElements that
+    // matches nothing block for its full duration before returning [] (SeleniumHQ/selenium#12278),
+    // so every absence check and failed poll pays it again and no timeout measures real time.
     await DriverFactory.instance.manage().setTimeouts({ implicit: 0 });
     console.log(`WebDriver started: ${browser}`);
 

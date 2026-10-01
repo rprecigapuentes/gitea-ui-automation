@@ -11,6 +11,7 @@ import {
 } from "../src/utils/session-credentials.util";
 import { uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.util";
 
+// The test signs in as its own first step, so the automatic API login is turned off.
 const baseTest = test.extend({
   skipAutoLogin: async ({}, use) => {
     await use(true);
@@ -250,8 +251,8 @@ describe("Organization test", () => {
       });
 
       await allure.step("Owner removes user 2 from Team 1", async () => {
-        // Mirrors Cucumber's "I remove the following team members:" step exactly - that one
-        // doesn't flake on the AJAX-fetched modal under load, this one occasionally did.
+        // Same sequence as Cucumber's "I remove the following team members:" (button, modal shown,
+        // confirm, modal hidden), which held up under load where this step flaked on that modal.
         await organizationPages.orgFacade().navigateToSpecificTeam(scenarioState.team1!.name);
         expect(
           await organizationPages.specificTeam().hasRemoveTeamMemberButton(invited.username),
@@ -290,6 +291,7 @@ describe("Organization test", () => {
         await sessionManager.logout();
       });
     },
+    // Twice the config's 60 s: the whole flow, two teams and a member, runs as one test.
     120_000,
   );
 });

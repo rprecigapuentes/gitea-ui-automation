@@ -1,3 +1,5 @@
+// Per entity: `X` is what the API returns, `NewX` what is sent to create one, `XRow` what its list
+// page shows, and `SeededX` the id and name a scenario keeps to find it again.
 export interface Label {
   id: number;
   name: string;

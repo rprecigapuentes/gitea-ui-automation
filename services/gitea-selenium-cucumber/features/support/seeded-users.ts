@@ -13,6 +13,7 @@ export interface SeededUser {
 const SEEDED_USER_PASSWORD = "Passw0rd!123";
 const SEEDED_USER_COUNT = 2;
 
+// Module state, so one set per Cucumber process, which is one per browser.
 let seededUsers: SeededUser[] = [];
 
 function adminClient(): UserClient {
@@ -45,6 +46,7 @@ export async function deleteSeededUsers(): Promise<void> {
     try {
       await client.deleteUser(user.username);
     } catch (error) {
+      // Logged and skipped, so one user that cannot be deleted does not leave the other behind.
       console.error(`Could not delete the seeded user "${user.username}":`, error);
     }
   }

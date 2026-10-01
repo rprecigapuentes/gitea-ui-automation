@@ -2,7 +2,7 @@ import "dotenv/config";
 import { defineConfig, devices } from "@playwright/test";
 import { defineBddProject } from "playwright-bdd";
 
-/* Set by run:chrome/run:firefox/run:edge, unset by the script that runs the three in one process. */
+/* Set by run:chrome, run:firefox and run:edge; unset by the script that runs all three at once. */
 const singleBrowser = process.env.BROWSER;
 
 /* Without a channel, Desktop Chrome and Desktop Edge both run the bundled Chromium. */
@@ -13,6 +13,7 @@ const browsers = [
 ];
 
 export default defineConfig({
+  /* A scenario is a whole flow, so it gets 120 s, not Playwright's 30. Retries are CI only. */
   timeout: 120_000,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,

@@ -22,6 +22,7 @@ export function credentials(): { userName: string; accessKey: string } {
 export function bstackOptions(): Record<string, unknown> {
   return {
     ...credentials(),
+    // Tunnels the session back to the machine under test; the identifier names that tunnel.
     local: true,
     localIdentifier,
     os: process.env.BROWSERSTACK_OS ?? "Windows",
@@ -32,6 +33,7 @@ export function bstackOptions(): Record<string, unknown> {
   };
 }
 
+// Marks the session passed or failed on the BrowserStack dashboard.
 export async function setSessionStatus(
   driver: WebDriver,
   status: "passed" | "failed",

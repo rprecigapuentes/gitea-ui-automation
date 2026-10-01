@@ -1,3 +1,5 @@
+# Runs the four functional suites daily at 11:00 and on demand, each against a Gitea the job starts
+# itself. A dispatch can name a single suite.
 name: CT-functional
 
 on:
@@ -21,6 +23,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # The two Selenium suites, each against its own gitea-test and a Selenium grid service.
   selenium:
     # A dispatch naming a Playwright suite must not fall through to the matrix default below.
     if: >-
@@ -45,6 +48,7 @@ jobs:
           ) }}
 
     services:
+      # The application under test: a throwaway Gitea, never the instance hosting this repository.
       gitea-test:
         image: docker.gitea.com/gitea:1.27.3
         env:
@@ -69,6 +73,7 @@ jobs:
     env:
       # One per process, and three processes, which is what the grid above allows at once.
       MAX_WORKERS: "1"
+      # Every account below is created inside this job's own gitea-test: none of them is a secret.
       GITEA_BASE_URL: http://gitea-test:3000
       SELENIUM_REMOTE_URL: http://selenium:4444
       GITEA_ADMIN_USERNAME: ct-admin
@@ -203,7 +208,7 @@ jobs:
       || github.event.inputs.suite == 'playwright-native'
       || github.event.inputs.suite == 'playwright-bdd')
     runs-on: ubuntu-24.04
-    # A red run now re-runs the failing scenario and then the suite, to check a locator repair
+    # A red run re-runs the failing scenario and then the suite, to check a locator repair
     # before proposing it. A green run never reaches that step, so the ceiling costs it nothing.
     timeout-minutes: 40
     # The tag tracks the @playwright/test version in package-lock.json and is bumped with it.
@@ -223,6 +228,7 @@ jobs:
           ) }}
 
     services:
+      # The application under test: a throwaway Gitea, never the instance hosting this repository.
       gitea-test:
         image: docker.gitea.com/gitea:1.27.3
         env:
@@ -238,6 +244,7 @@ jobs:
           GITEA__service__REGISTER_EMAIL_CONFIRM: "false"
 
     env:
+      # Every account below is created inside this job's own gitea-test: none of them is a secret.
       GITEA_BASE_URL: http://gitea-test:3000
       GITEA_ADMIN_USERNAME: pw-admin
       GITEA_ADMIN_PASSWORD: Qa-admin-not-a-secret-1
@@ -361,7 +368,8 @@ jobs:
 
       # The raw Allure results are the only artifact naming the Gherkin step that failed, and
       # nothing uploads them, so the explanation is written here while they are still on disk.
-      # The key is on this step alone: the job also checks out and runs the repository's code.
+      # The key goes only to the two steps that call a model, this one and the locator repair, never
+      # to the whole job, which also checks out and runs the repository's code.
       - name: Explain the failures (${{ matrix.suite }})
         if: failure() && matrix.suite == 'playwright-bdd'
         continue-on-error: true

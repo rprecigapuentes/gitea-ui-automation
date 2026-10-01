@@ -1,18 +1,14 @@
 # @gitea-automation/core-config
 
-Gitea application configuration — genuinely tool-agnostic (no `selenium-webdriver`, no `playwright` dependency).
-
-## Structure
-
-```
-core/config/
-└── gitea.config.ts   # baseUrl, from GITEA_BASE_URL (import "dotenv/config" side-effect)
-```
-
-Only one file. `browserstack.config.ts` used to live here too, but it moved to [`core/selenium/config/`](../selenium/README.md) because one of its functions (`setSessionStatus`) is typed with `WebDriver` — a real Selenium dependency, so it belongs inside `core-selenium`, not in a package meant to be tool-agnostic.
-
-## Imports
+> Where the Gitea under test lives.
 
 ```ts
 import { baseUrl } from "@gitea-automation/core-config/gitea.config";
 ```
+
+| Export    | Source                                             |
+| --------- | -------------------------------------------------- |
+| `baseUrl` | `GITEA_BASE_URL`, `http://localhost:3000` if unset |
+
+It points at the **application under test**: a local or disposable Gitea, never the instance that
+hosts this repository. Tests create and delete users, repositories and organizations there.

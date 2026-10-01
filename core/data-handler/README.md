@@ -1,18 +1,19 @@
 # @gitea-automation/core-data-handler
 
-Naming helpers for test data created by the suites — 100% generic, no Gitea or Selenium knowledge. Renamed from `core/utils` to something that says what it's for.
-
-## Structure
-
-```
-core/data-handler/
-└── data-handler.util.ts   # testDataName(testCaseId, object, at) -> "AT-<caseId>-<object>-<date>-<time>-<browser>-<suffix>"; uniqueSuffix()
-```
-
-`testDataName` is the naming convention used across this monorepo for any Gitea resource a test creates (repos, labels, milestones, organizations, ...), so cleanup and debugging can trace a resource back to the test case that made it. `uniqueSuffix()` keeps names unique under concurrent runs.
-
-## Imports
+> Names for the data a test creates, unique under parallel runs and traceable back to the test.
 
 ```ts
 import { testDataName, uniqueSuffix } from "@gitea-automation/core-data-handler/data-handler.util";
+
+testDataName("ISS-01", "Label");
+// AT-ISS-01-Label-20261001-143005-chrome-1a2b3c4d
 ```
+
+| Part      | Example           | Why                                          |
+| --------- | ----------------- | -------------------------------------------- |
+| `AT-`     | `AT-`             | marks it as automation data                  |
+| Test case | `ISS-01`          | which case created it                        |
+| Object    | `Label`           | what it is                                   |
+| UTC time  | `20261001-143005` | when                                         |
+| Browser   | `chrome`          | from `BROWSER`; three browsers never collide |
+| Suffix    | `1a2b3c4d`        | `uniqueSuffix()`, eight random characters    |

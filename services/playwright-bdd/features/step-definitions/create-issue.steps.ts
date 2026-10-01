@@ -8,7 +8,7 @@ import type { ScenarioState } from "@gitea-automation/business-logic/state/scena
 const ISSUE_DESCRIPTION = "Description created by the create-issue BDD scenario.";
 
 /* The title and the description travel through `scenarioState` rather than a variable in this
-   file, which parallel workers share. */
+   file: module state lives as long as the worker, so it would leak into its next scenario. */
 function getCreatedIssue(scenarioState: ScenarioState): NonNullable<ScenarioState["createdIssue"]> {
   const createdIssue = scenarioState.createdIssue;
 

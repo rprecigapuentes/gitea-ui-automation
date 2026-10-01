@@ -1,3 +1,4 @@
+// Renders the figures and the inventory as one self-contained HTML page.
 import { ACTIONS_BY_ROLE } from "./actions.mjs";
 
 const ESCAPES = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" };

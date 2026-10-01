@@ -1,3 +1,4 @@
+// What changed between two inventories: the surface of the application that appeared or went away.
 const sum = (values) => values.reduce((total, value) => total + value, 0);
 
 function totals(inventory) {

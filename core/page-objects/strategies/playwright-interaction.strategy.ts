@@ -6,6 +6,8 @@ import { simulateHtml5Drag } from "./utils/playwright-html5-drag.util";
 const DEFAULT_TIMEOUT_MS = 5000;
 const POLL_INTERVAL_MS = 100;
 
+// Playwright's Page waits on locators and in-page functions, not on a Node predicate, so this polls
+// the way Selenium's driver.wait does.
 async function poll(predicate: () => Promise<boolean>, timeoutMs: number): Promise<boolean> {
   const deadline = Date.now() + timeoutMs;
   while (!(await predicate())) {
@@ -43,6 +45,11 @@ function toElementHandle(locator: Locator): IElementHandle {
   };
 }
 
+/**
+ * Playwright locators are lazy and auto-wait, so `findElement` returns without waiting; the wait
+ * happens on the first action. `root` scopes reads and click only: `type`, `clearAndType` and
+ * `dragAndDrop` address the whole page.
+ */
 export class PlaywrightInteractionStrategy implements IInteractionStrategy {
   constructor(private readonly page: Page) {}
 
@@ -83,8 +90,8 @@ export class PlaywrightInteractionStrategy implements IInteractionStrategy {
     await this.page.locator(locator).fill(text, { timeout: timeoutMs });
   }
 
-  // Moving the mouse by hand, not Locator.dragTo(), because Gitea's board only reacts to a real,
-  // gradual mousemove/mouseup sequence, not the native HTML5 DragEvents dragTo() dispatches instead.
+  // The mouse is moved by hand, not with Locator.dragTo(): Gitea's board reacts to a real, gradual
+  // mousemove/mouseup sequence, not to the native HTML5 drag events dragTo() dispatches.
   async dragAndDrop(sourceLocator: string, targetLocator: string): Promise<void> {
     const sourceBox = await this.page.locator(sourceLocator).boundingBox();
     const targetBox = await this.page.locator(targetLocator).boundingBox();
@@ -106,12 +113,12 @@ export class PlaywrightInteractionStrategy implements IInteractionStrategy {
     await this.page.mouse.up();
   }
 
-  /** For a browser whose automation protocol moves the pointer and never emits the drop (Firefox). */
+  /** For a browser whose protocol moves the pointer but never emits the drop (Firefox). */
   async dispatchDragEvents(sourceLocator: string, targetLocator: string): Promise<void> {
     await simulateHtml5Drag(this.page.locator(sourceLocator), this.page.locator(targetLocator));
   }
 
-  // The rendered text, trimmed, like WebElement.getText, not the raw text nodes with their whitespace.
+  // The rendered text, trimmed like WebElement.getText, not the raw nodes with their whitespace.
   async getText(locator: string, root?: IElementHandle, timeoutMs?: number): Promise<string> {
     if (root) return (await root.findElement(locator)).getText();
     return ((await this.page.locator(locator).textContent({ timeout: timeoutMs })) ?? "").trim();
@@ -144,8 +151,8 @@ export class PlaywrightInteractionStrategy implements IInteractionStrategy {
       );
       return visible.every(Boolean);
     }
-    // Playwright treats a `timeout` of 0 as "no timeout" (wait forever), the opposite of the
-    // callers here that pass 0 meaning "check right now" — so that case skips waitFor entirely.
+    // Playwright treats a `timeout` of 0 as "wait forever", the opposite of "check right now", so 0
+    // skips waitFor. A locator that never shows is a false here, not an error.
     const results = await Promise.all(
       list.map((locator) =>
         timeoutMs === 0
@@ -284,6 +291,7 @@ export class PlaywrightInteractionStrategy implements IInteractionStrategy {
   }
 
   executeScript<T>(script: (...args: unknown[]) => T, ...args: unknown[]): Promise<T> {
+    // page.evaluate takes one argument, so only the first is forwarded.
     return this.page.evaluate(script, args[0]);
   }
 }

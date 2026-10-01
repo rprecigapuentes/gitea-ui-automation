@@ -12,8 +12,8 @@ const body = {
 
 const ISSUE_DESCRIPTION = `## ${body.heading}\n\n${body.paragraph}\n`;
 
-/* The title travels through `scenarioState` rather than a variable in this file, which parallel
-   workers share. */
+/* The title travels through `scenarioState` rather than a variable in this file: module state
+   lives as long as the worker, so it would leak into its next scenario. */
 function getCreatedIssue(scenarioState: ScenarioState): NonNullable<ScenarioState["createdIssue"]> {
   const createdIssue = scenarioState.createdIssue;
 

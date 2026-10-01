@@ -1,3 +1,5 @@
+// Reads the `locators` object of every page object with the TypeScript compiler, so a selector is
+// found by parsing its declaration and never by running the page object.
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import ts from "typescript";

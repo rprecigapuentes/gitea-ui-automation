@@ -2,6 +2,7 @@ import { BaseComponent } from "@gitea-automation/core-page-objects/base-componen
 import { IElementHandle } from "@gitea-automation/core-page-objects/element-handle.interface";
 import { InteractionInterceptedError } from "@gitea-automation/core-page-objects/errors";
 
+// A timeout of 0 checks once, now, instead of waiting for the element.
 const INSTANT = 0;
 
 export class SpecificTeamFragment extends BaseComponent {
@@ -115,6 +116,8 @@ export class SpecificTeamFragment extends BaseComponent {
   async clickRemoveTeamMemberButton(username: string): Promise<void> {
     const locator = this.locators.removeTeamMemberButton(username);
 
+    // A workaround for a modal that opens late under load: when the first click-and-wait fails for
+    // any reason, click once more without waiting, then wait for the modal. Both allow it 15 s.
     try {
       await this.clickAndWaitFor(locator, [this.locators.removeTeamMemberModal], undefined, 15000);
     } catch {
@@ -155,10 +158,8 @@ export class SpecificTeamFragment extends BaseComponent {
 
   async isRemoveTeamMemberModalHidden(): Promise<boolean> {
     const modal = await this.queryAll(this.locators.removeTeamMemberModal);
-    // The modal is removed from the DOM (not just hidden) once its close transition finishes,
-    // so an element reference fetched a moment ago can go stale before isDisplayed() runs.
-    // A stale reference means the element is gone, which means it is, by definition, not
-    // displayed.
+    // The modal leaves the DOM once its close transition ends, so a reference fetched a moment ago
+    // can go stale before isDisplayed() runs. A stale element is gone, which is not displayed.
     const displayed = await Promise.all(
       modal.map((element) => element.isDisplayed().catch(() => false)),
     );
@@ -190,20 +191,22 @@ export class SpecificTeamFragment extends BaseComponent {
     );
   }
 
-  // Keeps looking while the list settles. One read of it answers for whatever the search had
-  // returned at that instant, which on the CT grid was a filtered list the user had not reached
-  // yet, and no locator can name an entry that carries its username only as text.
+  // Keeps looking while the list settles: one read answers for the search as it stood at that
+  // instant (on the CT grid, a filtered list not yet at the user), and no locator can name an
+  // entry whose username is only text.
   async hasUserSearchResult(username: string): Promise<boolean> {
     return this.waitUntil(async () => (await this.getUserSearchResultNames()).includes(username));
   }
 
   private async getUserSearchResultNames(): Promise<string[]> {
+    // No list yet is an answer, not an error: it reads as no names, and the caller polls on that.
     const results = await this.findElements(
       this.locators.userSearchResults,
       undefined,
       INSTANT,
     ).catch((): IElementHandle[] => []);
 
+    // An entry that re-rendered away mid-read counts as an empty name rather than an error.
     return Promise.all(
       results.map((result) =>
         this.getText(this.locators.userSearchResultName, result, INSTANT).catch(() => ""),
@@ -211,13 +214,9 @@ export class SpecificTeamFragment extends BaseComponent {
     );
   }
 
-  // A suggestion entry carries the username as text and nothing else - no href, no id, no data
-  // attribute - so no selector can name one. Reading the list and clicking the entry that matched
-  // is what fails: it re-renders on every keystroke and every response, and the click lands on
-  // whatever now occupies that position. Typing the rest of the name narrows the list to one entry
-  // instead, and the wait after the click is what proves that entry was taken. The remainder is
-  // typed rather than the whole name retyped because clearing the field leaves Fomantic's search
-  // widget holding a value with no results - confirmed against the instance under test.
+  // An entry is text only (no href, id or data attribute) and the list re-renders on every
+  // keystroke, so clicking an entry found by reading lands on whatever now sits there. Typing the
+  // rest of the name narrows it to one; it is not retyped whole because clearing leaves no results.
   async selectUser(username: string): Promise<void> {
     const queried = await this.getAttribute(this.locators.searchUserInput, "value");
     await this.type(this.locators.searchUserInput, username.slice(queried.length));
@@ -260,6 +259,7 @@ export class SpecificTeamFragment extends BaseComponent {
   }
 
   async hasAssignedRepository(repositoryName: string): Promise<boolean> {
+    // A list that is not there yet has no repository assigned, so the wait around it keeps polling.
     const names = await this.getAssignedRepositoryNames().catch((): string[] => []);
     return names.includes(repositoryName);
   }

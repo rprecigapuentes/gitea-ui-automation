@@ -204,7 +204,7 @@ Then("the repositories were created successfully", async function (this: GiteaWo
 
 When(
   "I add a file to each repository",
-  // The commit's loader redirect can outlast Cucumber's default step timeout under load.
+  // The commit's loader redirect can outlast the 20 s step timeout hooks.ts sets, under load.
   { timeout: 40000 },
   async function (this: GiteaWorld) {
     const organizationName = this.scenarioState.organization!.name;
@@ -290,7 +290,7 @@ Then("the repositories assigned to each team are correct", async function (this:
 
 When(
   "I remove the following team members:",
-  // The remove-modal fetch can outlast Cucumber's default step timeout under load.
+  // The remove-modal fetch can outlast the 20 s step timeout hooks.ts sets, under load.
   { timeout: 25000 },
   async function (this: GiteaWorld, dataTable: DataTable) {
     await this.pages.orgFacade.navigateToTeamsTab();

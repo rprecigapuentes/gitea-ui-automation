@@ -1,10 +1,10 @@
-// src/utils/session-credentials.util.ts
-
 export interface Credentials {
   username: string;
   password: string;
 }
 
+// Accounts and tokens are per browser (GITEA_OWNER_CHROME, ...), so parallel browsers never act as
+// the same user.
 function currentBrowserSuffix(): string {
   return (process.env.BROWSER ?? "chrome").toUpperCase();
 }
