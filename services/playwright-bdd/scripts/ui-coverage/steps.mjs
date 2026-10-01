@@ -51,7 +51,7 @@ function definitionsOf(file) {
   return definitions;
 }
 
-export function stepDefinitions() {
+function stepDefinitions() {
   const directory = path.join(FEATURES, "step-definitions");
   return readdirSync(directory).flatMap((file) => definitionsOf(path.join(directory, file)));
 }
@@ -61,15 +61,18 @@ function parse(text) {
   return parser.parse(text).feature;
 }
 
+const skipped = (tags) => tags.some((tag) => tag.name === "@skip");
+
 function scenarios() {
   const directory = path.join(FEATURES, "scenarios");
 
   return readdirSync(directory).flatMap((file) => {
     const feature = parse(readFileSync(path.join(directory, file), "utf8"));
+    if (skipped(feature.tags)) return [];
     const background = feature.children.find((child) => child.background)?.background.steps ?? [];
 
     return feature.children
-      .filter((child) => child.scenario)
+      .filter((child) => child.scenario && !skipped(child.scenario.tags))
       .map(({ scenario }) => ({
         name: `${feature.name}: ${scenario.name}`,
         steps: [...background, ...scenario.steps].map((step) => step.text),
@@ -86,7 +89,7 @@ function expressionOf(pattern) {
   }
 }
 
-export function testsByPattern(definitions) {
+function testsByPattern(definitions) {
   const tests = new Map(definitions.map(({ pattern }) => [pattern, new Set()]));
   const expressions = definitions.map(({ pattern }) => [pattern, expressionOf(pattern)]);
 
@@ -98,4 +101,14 @@ export function testsByPattern(definitions) {
   }
 
   return tests;
+}
+
+/** The step definitions that a scenario that is not skipped uses, with the scenarios that use them. */
+export function activeDefinitions() {
+  const definitions = stepDefinitions();
+  const tests = testsByPattern(definitions);
+
+  return definitions
+    .filter(({ pattern }) => tests.get(pattern).size > 0)
+    .map((definition) => ({ ...definition, tests: tests.get(definition.pattern) }));
 }

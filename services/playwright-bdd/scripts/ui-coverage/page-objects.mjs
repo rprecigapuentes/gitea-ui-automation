@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { PAGES } from "./locators.mjs";
 import { routeTemplate } from "./route-template.mjs";
-import { stepDefinitions, testsByPattern } from "./steps.mjs";
+import { activeDefinitions } from "./steps.mjs";
 
 export function factoryClasses() {
   const factory = readFileSync(path.join(PAGES, "page.factory.ts"), "utf8");
@@ -37,18 +37,16 @@ export function urlTemplate(file) {
 
 export function reachedUrls() {
   const classes = factoryClasses();
-  const definitions = stepDefinitions();
-  const tests = testsByPattern(definitions);
   const urls = new Map();
 
-  for (const { pattern, calls } of definitions) {
+  for (const { calls, tests } of activeDefinitions()) {
     for (const [getter] of calls) {
       const file = classes.get(getter)?.file;
       const template = file && urlTemplate(file);
       if (!template) continue;
 
       const found = urls.get(template) ?? new Set();
-      tests.get(pattern).forEach((test) => found.add(test));
+      tests.forEach((test) => found.add(test));
       urls.set(template, found);
     }
   }
