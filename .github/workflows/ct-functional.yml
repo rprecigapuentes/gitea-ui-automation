@@ -252,6 +252,8 @@ jobs:
           GITEA__service__REGISTER_EMAIL_CONFIRM: "false"
 
     env:
+      # Firefox refuses to start when $HOME belongs to another user, as GitHub's container HOME does.
+      HOME: /root
       # The two model-backed steps below are skipped when the repository has no OpenAI key.
       HAS_OPENAI_KEY: ${{ secrets.OPENAI_API_KEY != '' }}
       # Every account below is created inside this job's own gitea-test: none of them is a secret.

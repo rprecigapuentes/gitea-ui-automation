@@ -45,6 +45,8 @@ jobs:
           GITEA__service__REGISTER_EMAIL_CONFIRM: "false"
 
     env:
+      # Firefox refuses to start when $HOME belongs to another user, as GitHub's container HOME does.
+      HOME: /root
       GITEA_BASE_URL: http://gitea-test:3000
       # One account per browser project, and the bundled Chromium the scans run on shares the
       # Chrome one, which is what fixtures/credentials.ts resolves it to.
@@ -163,6 +165,8 @@ jobs:
           GITEA__service__REGISTER_EMAIL_CONFIRM: "false"
 
     env:
+      # Firefox refuses to start when $HOME belongs to another user, as GitHub's container HOME does.
+      HOME: /root
       GITEA_BASE_URL: http://gitea-test:3000
       # One owner and one invited account per browser project, so the three run in parallel
       # without sharing state.
@@ -340,6 +344,8 @@ jobs:
           GITEA__service__REGISTER_EMAIL_CONFIRM: "false"
 
     env:
+      # Firefox refuses to start when $HOME belongs to another user, as GitHub's container HOME does.
+      HOME: /root
       GITEA_BASE_URL: http://gitea-test:3000
       # One account per browser project, and the bundled Chromium the measurements run on shares
       # the Chrome one, which is what fixtures/credentials.ts resolves it to.
