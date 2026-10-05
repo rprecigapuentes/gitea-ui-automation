@@ -1,0 +1,429 @@
+# Port of .gitea/workflows/ct-functional.yml to GitHub Actions. The Gitea version runs on the project's
+# self-hosted act_runner; this one runs on GitHub-hosted runners. Differences are noted inline.
+# Runs the four functional suites daily at 11:00 and on demand, each against a Gitea the job starts
+# itself. A dispatch can name a single suite.
+name: CT-functional
+
+on:
+  schedule:
+    - cron: "0 11 * * *"
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: Which suite to run
+        type: choice
+        default: all
+        options:
+          - all
+          - gitea-selenium-vitest
+          - gitea-selenium-cucumber
+          - playwright-native
+          - playwright-bdd
+
+concurrency:
+  group: ct-functional
+  cancel-in-progress: true
+
+jobs:
+  # The two Selenium suites, each against its own gitea-test and a Selenium grid service.
+  selenium:
+    # A dispatch naming a Playwright suite must not fall through to the matrix default below.
+    if: >-
+      github.event_name != 'workflow_dispatch'
+      || github.event.inputs.suite == 'all'
+      || github.event.inputs.suite == 'gitea-selenium-vitest'
+      || github.event.inputs.suite == 'gitea-selenium-cucumber'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    # GitHub reaches service containers by name only from a job that itself runs in a container;
+    # act_runner always does, so the Gitea version needs no image here.
+    container: node:22-bookworm
+    defaults:
+      run:
+        shell: bash
+
+    strategy:
+      fail-fast: false
+      # Each job starts its own gitea-test and browser on one VPS.
+      max-parallel: 1
+      # act_runner plans the matrix before any job output exists.
+      matrix:
+        suite: >-
+          ${{ fromJSON(
+          github.event.inputs.suite == 'gitea-selenium-vitest' && '["gitea-selenium-vitest"]'
+          || github.event.inputs.suite == 'gitea-selenium-cucumber' && '["gitea-selenium-cucumber"]'
+          || '["gitea-selenium-vitest","gitea-selenium-cucumber"]'
+          ) }}
+
+    services:
+      # The application under test: a throwaway Gitea, never the instance hosting this repository.
+      gitea-test:
+        image: docker.gitea.com/gitea:1.27.3
+        env:
+          USER_UID: "1000"
+          USER_GID: "1000"
+          GITEA__server__ROOT_URL: http://gitea-test:3000/
+          GITEA__server__HTTP_PORT: "3000"
+          GITEA__server__START_SSH_SERVER: "false"
+          GITEA__database__DB_TYPE: sqlite3
+          GITEA__security__INSTALL_LOCK: "true"
+          GITEA__security__SECRET_KEY: gitea-test-not-a-secret
+          GITEA__service__DISABLE_REGISTRATION: "false"
+          GITEA__service__REGISTER_EMAIL_CONFIRM: "false"
+
+      selenium:
+        image: selenium/standalone-all-browsers:4.35.0
+        options: --shm-size=2g
+        env:
+          SE_NODE_MAX_SESSIONS: "3"
+          SE_NODE_OVERRIDE_MAX_SESSIONS: "true"
+
+    env:
+      # One per process, and three processes, which is what the grid above allows at once.
+      MAX_WORKERS: "1"
+      # Every account below is created inside this job's own gitea-test: none of them is a secret.
+      GITEA_BASE_URL: http://gitea-test:3000
+      SELENIUM_REMOTE_URL: http://selenium:4444
+      GITEA_ADMIN_USERNAME: ct-admin
+      GITEA_ADMIN_PASSWORD: Qa-admin-not-a-secret-1
+      GITEA_OWNER_CHROME: chrome-owner
+      GITEA_OWNER_CHROME_PASSWORD: Qa-bot-not-a-secret-1
+      GITEA_OWNER_FIREFOX: firefox-owner
+      GITEA_OWNER_FIREFOX_PASSWORD: Qa-bot-not-a-secret-1
+      GITEA_OWNER_EDGE: edge-owner
+      GITEA_OWNER_EDGE_PASSWORD: Qa-bot-not-a-secret-1
+      GITEA_INV_CHROME: inv-chrome
+      GITEA_INV_CHROME_PASSWORD: Qa-bot2-not-a-secret-1
+      GITEA_INV_FIREFOX: inv-firefox
+      GITEA_INV_FIREFOX_PASSWORD: Qa-bot2-not-a-secret-1
+      GITEA_INV_EDGE: inv-edge
+      GITEA_INV_EDGE_PASSWORD: Qa-bot2-not-a-secret-1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - run: npm ci
+
+      - name: Wait for the application under test
+        run: |
+          for _ in $(seq 1 60); do
+            curl -fsS "$GITEA_BASE_URL/api/healthz" > /dev/null && exit 0
+            sleep 2
+          done
+          echo "gitea-test never became healthy"
+          exit 1
+
+      - name: Wait for the browser
+        run: |
+          for _ in $(seq 1 60); do
+            curl -fsS "$SELENIUM_REMOTE_URL/status" | grep -q '"ready": *true' && exit 0
+            sleep 2
+          done
+          echo "the Selenium server at $SELENIUM_REMOTE_URL never reported the browser ready"
+          exit 1
+
+      - name: Register the administrator and the browser accounts, and mint their API tokens
+        run: |
+          register() {
+            local jar="$1" user="$2" pass="$3"
+            csrf=$(curl -fsS -c "$jar" "$GITEA_BASE_URL/user/sign_up" \
+              | sed -n 's/.*name="_csrf" value="\([^"]*\)".*/\1/p' | head -1)
+            curl -fsS -b "$jar" -o /dev/null \
+              -X POST "$GITEA_BASE_URL/user/sign_up" \
+              --data-urlencode "_csrf=$csrf" \
+              --data-urlencode "user_name=$user" \
+              --data-urlencode "email=$user@example.com" \
+              --data-urlencode "password=$pass" \
+              --data-urlencode "retype=$pass"
+            curl -fsS -u "$user:$pass" "$GITEA_BASE_URL/api/v1/user" > /dev/null
+            echo "account $user is usable"
+          }
+
+          # Gitea makes the first user of a fresh instance an administrator, so this one
+          # registers before the browser accounts and none of them inherits the privilege.
+          register "/tmp/gitea-admin.jar" "$GITEA_ADMIN_USERNAME" "$GITEA_ADMIN_PASSWORD"
+
+          for b in CHROME FIREFOX EDGE; do
+            owner_user="GITEA_OWNER_$b"; owner_pass="GITEA_OWNER_${b}_PASSWORD"
+            inv_user="GITEA_INV_$b"; inv_pass="GITEA_INV_${b}_PASSWORD"
+
+            register "/tmp/gitea-$b-owner.jar" "${!owner_user}" "${!owner_pass}"
+            register "/tmp/gitea-$b-inv.jar" "${!inv_user}" "${!inv_pass}"
+
+            token=$(curl -fsS -u "${!owner_user}:${!owner_pass}" \
+              -H "Content-Type: application/json" \
+              -X POST "$GITEA_BASE_URL/api/v1/users/${!owner_user}/tokens" \
+              -d '{"name":"continuous-testing","scopes":["write:user","write:repository","write:issue","write:organization"]}' \
+              | node -pe 'JSON.parse(require("fs").readFileSync(0, "utf8")).sha1')
+            echo "::add-mask::$token"
+            echo "GITEA_TOKEN_$b=$token" >> "$GITHUB_ENV"
+            echo "token minted for ${!owner_user}"
+          done
+
+          # One admin token for all three browser processes: only the users it creates
+          # have to be browser-unique, and they already are.
+          admin_token=$(curl -fsS -u "$GITEA_ADMIN_USERNAME:$GITEA_ADMIN_PASSWORD" \
+            -H "Content-Type: application/json" \
+            -X POST "$GITEA_BASE_URL/api/v1/users/$GITEA_ADMIN_USERNAME/tokens" \
+            -d '{"name":"continuous-testing-admin","scopes":["write:admin"]}' \
+            | node -pe 'JSON.parse(require("fs").readFileSync(0, "utf8")).sha1')
+          echo "::add-mask::$admin_token"
+
+          # Gitea grants the scope to any account but honours it only for an administrator,
+          # so the token is proven here rather than four minutes later in BeforeAll.
+          if ! curl -fsS -o /dev/null \
+            -H "Authorization: token $admin_token" \
+            "$GITEA_BASE_URL/api/v1/admin/users?limit=1"; then
+            echo "$GITEA_ADMIN_USERNAME holds no write:admin privilege, so no suite could seed its users"
+            exit 1
+          fi
+
+          echo "GITEA_ADMIN_TOKEN=$admin_token" >> "$GITHUB_ENV"
+          echo "admin token minted for $GITEA_ADMIN_USERNAME"
+
+      - name: Run the suite
+        run: npm test -w @gitea-automation/${{ matrix.suite }}
+
+      # No results to report on when an earlier step stopped the run.
+      - name: Generate the Allure report
+        if: always()
+        continue-on-error: true
+        run: npm run report -w @gitea-automation/${{ matrix.suite }}
+
+      # Cucumber writes one junit file per browser process; vitest writes a single one
+      # carrying its three projects.
+      - name: Upload the report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report-${{ matrix.suite }}
+          path: |
+            services/${{ matrix.suite }}/allure-report/
+            services/${{ matrix.suite }}/reports/junit*.xml
+          retention-days: 14
+
+  # Playwright launches its browsers inside the job, so this one carries them in its image.
+  playwright:
+    needs: selenium
+    # needs serialises the two jobs on one VPS; always() keeps this one's outcome independent.
+    if: >-
+      always() && (github.event_name != 'workflow_dispatch'
+      || github.event.inputs.suite == 'all'
+      || github.event.inputs.suite == 'playwright-native'
+      || github.event.inputs.suite == 'playwright-bdd')
+    runs-on: ubuntu-24.04
+    # A red run re-runs the failing scenario and then the suite, to check a locator repair
+    # before proposing it. A green run never reaches that step, so the ceiling costs it nothing.
+    timeout-minutes: 40
+    # The tag tracks the @playwright/test version in package-lock.json and is bumped with it.
+    container: mcr.microsoft.com/playwright:v1.63.0-noble
+
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      # One suite after the other, each on its own gitea-test. act_runner plans the matrix before
+      # any job output exists, so a dispatch naming one suite has to shrink it here.
+      matrix:
+        suite: >-
+          ${{ fromJSON(
+          github.event.inputs.suite == 'playwright-native' && '["playwright-native"]'
+          || github.event.inputs.suite == 'playwright-bdd' && '["playwright-bdd"]'
+          || '["playwright-native","playwright-bdd"]'
+          ) }}
+
+    services:
+      # The application under test: a throwaway Gitea, never the instance hosting this repository.
+      gitea-test:
+        image: docker.gitea.com/gitea:1.27.3
+        env:
+          USER_UID: "1000"
+          USER_GID: "1000"
+          GITEA__server__ROOT_URL: http://gitea-test:3000/
+          GITEA__server__HTTP_PORT: "3000"
+          GITEA__server__START_SSH_SERVER: "false"
+          GITEA__database__DB_TYPE: sqlite3
+          GITEA__security__INSTALL_LOCK: "true"
+          GITEA__security__SECRET_KEY: gitea-test-not-a-secret
+          GITEA__service__DISABLE_REGISTRATION: "false"
+          GITEA__service__REGISTER_EMAIL_CONFIRM: "false"
+
+    env:
+      # The two model-backed steps below are skipped when the repository has no OpenAI key.
+      HAS_OPENAI_KEY: ${{ secrets.OPENAI_API_KEY != '' }}
+      # Every account below is created inside this job's own gitea-test: none of them is a secret.
+      GITEA_BASE_URL: http://gitea-test:3000
+      GITEA_ADMIN_USERNAME: pw-admin
+      GITEA_ADMIN_PASSWORD: Qa-admin-not-a-secret-1
+      GITEA_OWNER_CHROME: chrome-owner
+      GITEA_OWNER_CHROME_PASSWORD: Qa-bot-not-a-secret-1
+      GITEA_OWNER_FIREFOX: firefox-owner
+      GITEA_OWNER_FIREFOX_PASSWORD: Qa-bot-not-a-secret-1
+      GITEA_OWNER_EDGE: edge-owner
+      GITEA_OWNER_EDGE_PASSWORD: Qa-bot-not-a-secret-1
+      GITEA_INV_CHROME: inv-chrome
+      GITEA_INV_CHROME_PASSWORD: Qa-bot2-not-a-secret-1
+      GITEA_INV_FIREFOX: inv-firefox
+      GITEA_INV_FIREFOX_PASSWORD: Qa-bot2-not-a-secret-1
+      GITEA_INV_EDGE: inv-edge
+      GITEA_INV_EDGE_PASSWORD: Qa-bot2-not-a-secret-1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # The image ships Node 24; the repo declares >=22 <23 and has no .npmrc to enforce it.
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - run: npm ci
+
+      # The image bundles Chromium, Firefox and WebKit, not the branded products.
+      - name: Install the branded browsers
+        run: npx playwright install chrome msedge
+
+      - name: Wait for the application under test
+        run: |
+          for _ in $(seq 1 60); do
+            curl -fsS "$GITEA_BASE_URL/api/healthz" > /dev/null && exit 0
+            sleep 2
+          done
+          echo "gitea-test never became healthy"
+          exit 1
+
+      - name: Register the browser accounts and mint their API tokens
+        # A container job's steps default to sh, which doesn't support ${!var} indirection -
+        # the selenium job's identical script gets bash for free by running directly on the
+        # runner instead of in a container.
+        shell: bash
+        run: |
+          register() {
+            local jar="$1" user="$2" pass="$3"
+            csrf=$(curl -fsS -c "$jar" "$GITEA_BASE_URL/user/sign_up" \
+              | sed -n 's/.*name="_csrf" value="\([^"]*\)".*/\1/p' | head -1)
+            curl -fsS -b "$jar" -o /dev/null \
+              -X POST "$GITEA_BASE_URL/user/sign_up" \
+              --data-urlencode "_csrf=$csrf" \
+              --data-urlencode "user_name=$user" \
+              --data-urlencode "email=$user@example.com" \
+              --data-urlencode "password=$pass" \
+              --data-urlencode "retype=$pass"
+            curl -fsS -u "$user:$pass" "$GITEA_BASE_URL/api/v1/user" > /dev/null
+            echo "account $user is usable"
+          }
+
+          # Gitea makes the first user of a fresh instance an administrator, so this one
+          # registers before the browser accounts and none of them inherits the privilege.
+          register "/tmp/gitea-pw-admin.jar" "$GITEA_ADMIN_USERNAME" "$GITEA_ADMIN_PASSWORD"
+
+          for b in CHROME FIREFOX EDGE; do
+            owner_user="GITEA_OWNER_$b"; owner_pass="GITEA_OWNER_${b}_PASSWORD"
+            inv_user="GITEA_INV_$b"; inv_pass="GITEA_INV_${b}_PASSWORD"
+
+            register "/tmp/gitea-$b-owner.jar" "${!owner_user}" "${!owner_pass}"
+            register "/tmp/gitea-$b-inv.jar" "${!inv_user}" "${!inv_pass}"
+
+            token=$(curl -fsS -u "${!owner_user}:${!owner_pass}" \
+              -H "Content-Type: application/json" \
+              -X POST "$GITEA_BASE_URL/api/v1/users/${!owner_user}/tokens" \
+              -d '{"name":"continuous-testing","scopes":["write:user","write:repository","write:issue","write:organization"]}' \
+              | node -pe 'JSON.parse(require("fs").readFileSync(0, "utf8")).sha1')
+            echo "::add-mask::$token"
+            echo "GITEA_TOKEN_$b=$token" >> "$GITHUB_ENV"
+            echo "token minted for ${!owner_user}"
+          done
+
+          # One admin token for all three browsers: only the users it creates have to be
+          # browser-unique, and they already are. read:user and write:organization are here
+          # for seededUsers' teardown, which reads and leaves a seeded user's organizations
+          # before deleting them - write:admin alone does not cover either call, and Gitea
+          # does not accept read:organization in place of read:user for the first one.
+          admin_token=$(curl -fsS -u "$GITEA_ADMIN_USERNAME:$GITEA_ADMIN_PASSWORD" \
+            -H "Content-Type: application/json" \
+            -X POST "$GITEA_BASE_URL/api/v1/users/$GITEA_ADMIN_USERNAME/tokens" \
+            -d '{"name":"continuous-testing-admin","scopes":["write:admin","read:user","write:organization"]}' \
+            | node -pe 'JSON.parse(require("fs").readFileSync(0, "utf8")).sha1')
+          echo "::add-mask::$admin_token"
+
+          # Gitea grants the scope to any account but honours it only for an administrator.
+          if ! curl -fsS -o /dev/null \
+            -H "Authorization: token $admin_token" \
+            "$GITEA_BASE_URL/api/v1/admin/users?limit=1"; then
+            echo "$GITEA_ADMIN_USERNAME holds no write:admin privilege, so no test could seed its users"
+            exit 1
+          fi
+
+          echo "GITEA_ADMIN_TOKEN=$admin_token" >> "$GITHUB_ENV"
+          echo "admin token minted for $GITEA_ADMIN_USERNAME"
+
+      - name: Run the suite (${{ matrix.suite }})
+        run: npm test -w @gitea-automation/${{ matrix.suite }}
+
+      - name: Generate the Allure report (${{ matrix.suite }})
+        if: always()
+        continue-on-error: true
+        run: npm run report -w @gitea-automation/${{ matrix.suite }}
+
+      # The crawl seeds its own data on this run's gitea-test and deletes it before it ends.
+      - name: Measure the UI coverage (${{ matrix.suite }})
+        if: always() && matrix.suite == 'playwright-bdd'
+        continue-on-error: true
+        run: |
+          cp services/playwright-bdd/coverage-data/inventory/ui-inventory.json /tmp/baseline-inventory.json
+          npm run ui-coverage:crawl -w @gitea-automation/playwright-bdd
+          npm run ui-coverage -w @gitea-automation/playwright-bdd -- --baseline /tmp/baseline-inventory.json
+
+      # The raw Allure results are the only artifact naming the Gherkin step that failed, and
+      # nothing uploads them, so the explanation is written here while they are still on disk.
+      # The key goes only to the two steps that call a model, this one and the locator repair, never
+      # to the whole job, which also checks out and runs the repository's code.
+      - name: Explain the failures (${{ matrix.suite }})
+        if: failure() && matrix.suite == 'playwright-bdd' && env.HAS_OPENAI_KEY == 'true'
+        continue-on-error: true
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: npm run explain -w @gitea-automation/${{ matrix.suite }}
+
+      # After the issue is filed, so filing is not delayed by a suite run, and before the upload,
+      # because the page it reads is served by this job's own gitea-test and dies with it.
+      - name: Propose the locator to change (${{ matrix.suite }})
+        if: failure() && matrix.suite == 'playwright-bdd' && env.HAS_OPENAI_KEY == 'true'
+        continue-on-error: true
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          # Under the job's own ceiling, so a repair that is taking too long ends this step rather
+          # than the job: a run killed by its timeout publishes nothing at all.
+          HEAL_BUDGET_MINUTES: "8"
+        run: npm run heal -w @gitea-automation/${{ matrix.suite }}
+
+      # test-results/ holds the video and the trace of a retried test, and is absent when
+      # nothing failed, which the upload warns about rather than fails on.
+      - name: Upload the report (${{ matrix.suite }})
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report-${{ matrix.suite }}
+          path: |
+            services/${{ matrix.suite }}/allure-report/
+            services/${{ matrix.suite }}/reports/junit*.xml
+            services/${{ matrix.suite }}/reports/failures.json
+            services/${{ matrix.suite }}/reports/explanation.json
+            services/${{ matrix.suite }}/reports/repairs.json
+            services/${{ matrix.suite }}/reports/*.patch
+            services/${{ matrix.suite }}/test-results/
+          retention-days: 14
+
+      # Apart from the Allure report so that it is found by its own name.
+      - name: Upload the UI coverage report (${{ matrix.suite }})
+        if: always() && matrix.suite == 'playwright-bdd'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-coverage-report
+          path: |
+            services/playwright-bdd/coverage-data/reports/coverage.html
+            services/playwright-bdd/coverage-data/reports/coverage.json
+            services/playwright-bdd/coverage-data/inventory/ui-inventory.json
+          retention-days: 14

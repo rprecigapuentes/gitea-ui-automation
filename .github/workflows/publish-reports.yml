@@ -1,0 +1,72 @@
+# Publishes the reports of the latest CT-functional and CT-non-functional runs to GitHub Pages.
+# Pages serves one site, so every publish rebuilds it from the newest run of both workflows.
+name: Publish reports
+
+on:
+  workflow_run:
+    workflows: [CT-functional, CT-non-functional]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Download the latest artifacts of both workflows
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          mkdir -p site
+          for wf in ct-functional.yml ct-non-functional.yml; do
+            id=$(gh run list -R "$REPO" --workflow "$wf" --status completed --limit 1 --json databaseId -q '.[0].databaseId')
+            [ -n "$id" ] || { echo "no completed run of $wf yet"; continue; }
+            gh run download "$id" -R "$REPO" -D "site/${wf%.yml}" || echo "run $id of $wf has no artifacts"
+            gh run view "$id" -R "$REPO" --json conclusion,createdAt,url -q '"\(.conclusion) \(.createdAt) \(.url)"' > "site/${wf%.yml}.run"
+          done
+          # Traces and videos are for local debugging; the site keeps the reports only.
+          find site -type d -name test-results -prune -exec rm -rf {} +
+
+      - name: Build the index
+        run: |
+          {
+            echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
+            echo '<title>Gitea UI Automation - test reports</title>'
+            echo '<style>body{font-family:system-ui,sans-serif;max-width:52rem;margin:2rem auto;padding:0 1rem;line-height:1.5}code{background:#eee;padding:0 .3rem}</style></head><body>'
+            echo '<h1>Gitea UI Automation: latest test reports</h1>'
+            echo '<p>Published by <code>publish-reports.yml</code> from the newest run of each continuous-testing workflow. Source: <a href="https://github.com/${{ github.repository }}">${{ github.repository }}</a>.</p>'
+            for wf in ct-functional ct-non-functional; do
+              echo "<h2>$wf</h2>"
+              [ -f "site/$wf.run" ] && echo "<p>Run: $(cat site/$wf.run)</p>"
+              echo '<ul>'
+              find "site/$wf" -name index.html \( -path '*allure-report/index.html' -o -path '*playwright-report/index.html' \) 2>/dev/null | sort | while read -r f; do
+                rel=${f#site/}; echo "<li><a href=\"$rel\">$rel</a></li>"
+              done
+              find "site/$wf" -path '*reports/*' -name '*.html' 2>/dev/null | sort | while read -r f; do
+                rel=${f#site/}; echo "<li><a href=\"$rel\">$rel</a></li>"
+              done
+              echo '</ul>'
+            done
+            echo '</body></html>'
+          } > site/index.html
+          touch site/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - id: deploy
+        uses: actions/deploy-pages@v4

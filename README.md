@@ -9,6 +9,13 @@
 ![Selenium 4.48](https://img.shields.io/badge/Selenium-4.48-43B02A?logo=selenium&logoColor=white)
 ![Cucumber 11](https://img.shields.io/badge/Cucumber-11-23D96C?logo=cucumber&logoColor=white)
 ![Vitest 4](https://img.shields.io/badge/Vitest-4.1-6E9F18?logo=vitest&logoColor=white)
+[![CI](https://github.com/rprecigapuentes/gitea-ui-automation/actions/workflows/ci.yml/badge.svg)](https://github.com/rprecigapuentes/gitea-ui-automation/actions/workflows/ci.yml)
+[![CT-functional](https://github.com/rprecigapuentes/gitea-ui-automation/actions/workflows/ct-functional.yml/badge.svg)](https://github.com/rprecigapuentes/gitea-ui-automation/actions/workflows/ct-functional.yml)
+[![CT-non-functional](https://github.com/rprecigapuentes/gitea-ui-automation/actions/workflows/ct-non-functional.yml/badge.svg)](https://github.com/rprecigapuentes/gitea-ui-automation/actions/workflows/ct-non-functional.yml)
+
+**Latest test reports:** <https://rprecigapuentes.github.io/gitea-ui-automation/>
+
+Built by Rosemberth Preciga and René Díaz Crespo in the GUI Automation module of the Jalasoft Software Automation Testing Bootcamp (2026). See [Results](#results) and [Authors](#authors).
 
 ## Contents
 
@@ -21,6 +28,8 @@
 - [Repository layout](#repository-layout)
 - [Known flaky scenarios](#known-flaky-scenarios)
 - [Documentation](#documentation)
+- [Results](#results)
+- [Authors](#authors)
 
 ## The suites
 
@@ -92,7 +101,7 @@ The pre-commit hook (Husky and lint-staged) refuses a commit that breaks a gate.
 
 ## Continuous testing
 
-Three workflows in `.gitea/workflows/`, on the repository's own Gitea Actions:
+Three workflows, kept in two copies: `.gitea/workflows/` runs on the project's self-hosted Gitea with `act_runner`, and `.github/workflows/` is the same pipeline ported to GitHub Actions. A fourth GitHub workflow, `publish-reports.yml`, publishes the latest reports to [GitHub Pages](https://rprecigapuentes.github.io/gitea-ui-automation/).
 
 | Workflow                | When                   | Does                                                                           |
 | ----------------------- | ---------------------- | ------------------------------------------------------------------------------ |
@@ -107,7 +116,7 @@ Allure report, a JUnit file per browser, and the trace and video of a retried te
 
 1. **Explain**: a model classifies each failure (`locator`, `timing`, `data`, `environment`,
    `application`) from the failing step and the source lines it names.
-2. **File**: one issue per distinct failure on this repository, or a comment on the one already open.
+2. **File**: one issue per distinct failure on this repository, or a comment on the one already open. Gitea workflow only.
 3. **Propose**: for a `locator` failure, an agent reads the live page through the Playwright MCP
    server and proposes the new selector, accepted only if the scenario and the suite then pass.
    Nothing is applied; the run stays red.
@@ -137,6 +146,7 @@ Allure report, a JUnit file per browser, and the trace and video of a retried te
 │   └── playwright-bdd/
 ├── openspec/                specs and the history of changes
 ├── .gitea/workflows/        CI and continuous testing
+├── .github/workflows/       the same pipeline on GitHub Actions, plus report publishing
 └── .claude/                 agents, skills and commands for AI-assisted work
 ```
 
@@ -161,3 +171,24 @@ recognised rather than investigated from scratch.
 | Core           | [overview](core/README.md) · [page objects](core/page-objects/README.md) · [API client](core/api-client/README.md) · [Selenium](core/selenium/README.md) · [Playwright](core/playwright/README.md) · [config](core/config/README.md) · [data](core/data-handler/README.md) · [logger](core/logger/README.md) |
 | Business logic | [business-logic](business-logic/README.md)                                                                                                                                                                                                                                                                   |
 | Suites         | [Vitest](services/gitea-selenium-vitest/README.md) · [Cucumber](services/gitea-selenium-cucumber/README.md) · [Playwright native](services/playwright-native/README.md) · [Playwright BDD](services/playwright-bdd/README.md) · [shared fixtures](services/_shared/playwright/README.md)                     |
+
+## Results
+
+Measured on this repository during the bootcamp; conditions are part of each figure.
+
+| Measure                                              | Result                                                                                        | Conditions                                                                    |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Cucumber suite, 13 scenarios on 3 browsers (39 runs) | 17 min 01 s serial, 5 min 48 s parallel (2.9× faster)                                         | CI pipeline, one isolated Gitea account per browser                           |
+| Selenium suite without the implicit wait             | 333 s to 148 s (55.6 % less)                                                                  | same suite, before and after the change                                       |
+| Selenium with Vitest against Playwright              | 122 s and 29 s for the same 4 tests (4.2×)                                                    | one execution per browser, team demo of 2026-09-23                            |
+| Accessibility (axe-core 4.13)                        | 20 of 50 WCAG A/AA criteria evaluated; first scan: 3 rules violated, 1 critical and 2 serious | 3 pages on 4 browsers                                                         |
+| Dashboard load (Chromium)                            | cold 366 ms and 347 KB, warm 251 ms and 24 KB                                                 | median of 5 loads on the CI runner, read through the Chrome DevTools Protocol |
+| AI locator repair                                    | fix proposed and verified against the full suite in 3 min 45 s, unattended                    | proposes only; nothing is committed                                           |
+| Agent-generated tests                                | 0 of 3 to 2 of 2 passing on their first CI run                                                | after seeding the generator with the suite's fixtures                         |
+
+## Authors
+
+- **Rosemberth Preciga** ([@rprecigapuentes](https://github.com/rprecigapuentes)): the CI and continuous-testing pipeline and its self-hosted runner, the accessibility and performance suites, the Healenium and BrowserStack work, the Playwright agents inside the OpenSpec workflow, and the AI failure triage and locator repair.
+- **René Díaz Crespo**: co-author of the framework; the visual regression suite, the UI coverage tool and the playwright-bdd suite setup.
+
+Both authors wrote page objects, suites and specs across the monorepo. The original repository lives on the project's self-hosted Gitea; this GitHub copy carries its full history.

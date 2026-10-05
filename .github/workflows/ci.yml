@@ -1,0 +1,26 @@
+# Port of .gitea/workflows/ci.yml to GitHub Actions. The Gitea version runs on the project's
+# self-hosted act_runner; this one runs on GitHub-hosted runners. Differences are noted inline.
+# The quality gate on every push: format, lint and types. It needs no browser and no Gitea.
+name: CI
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - run: npm ci
+
+      - run: npm run format:check
+
+      - run: npm run lint
+
+      - run: npm run typecheck
